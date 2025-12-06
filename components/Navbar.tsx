@@ -54,6 +54,13 @@ export default function Navbar() {
             Teacher Area
           </Link>
           <Link
+            href="/dashboard"
+            className="text-sm transition-colors hover:opacity-70"
+            style={{ color: "var(--wrife-text-muted)" }}
+          >
+            Dashboard
+          </Link>
+          <Link
             href="/interactive-practice"
             className="text-sm font-medium transition-colors hover:opacity-70"
             style={{ color: "var(--wrife-text-main)" }}
