@@ -1,107 +1,96 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import LessonCard from "./LessonCard";
+import { supabase } from "../lib/supabase";
 
 interface Lesson {
-  lessonNumber: string;
+  id: number;
   title: string;
-  summary: string;
-  chapter: string;
-  yearGroup: string;
-  tags: string[];
+  has_parts: boolean;
+  part: string | null;
+  chapter: number;
+  unit: number;
+  summary: string | null;
+  duration_minutes: number | null;
+  year_groups: string | null;
 }
 
-const demoLessons: Lesson[] = [
-  {
-    lessonNumber: "1",
-    title: "Developing Awareness of Personal Stories",
-    summary:
-      "Students learn to recognize the stories within their own lives, identifying meaningful moments that can become the foundation for personal narrative writing.",
-    chapter: "Chapter 1",
-    yearGroup: "Years 2-3",
-    tags: ["Chapter 1", "Years 2-3", "Foundation"],
-  },
-  {
-    lessonNumber: "10",
-    title: "Present or Past Tense",
-    summary:
-      "Explore the differences between present and past tense, learning when to use each effectively in narrative and descriptive writing.",
-    chapter: "Chapter 1",
-    yearGroup: "Years 2-3",
-    tags: ["Chapter 1", "Years 2-3"],
-  },
-  {
-    lessonNumber: "27a",
-    title: "What is a paragraph?",
-    summary:
-      "Understand the structure and purpose of paragraphs, learning how to organize ideas into coherent units that improve readability.",
-    chapter: "Chapter 2",
-    yearGroup: "Years 3-4",
-    tags: ["Chapter 2", "Years 3-4"],
-  },
-  {
-    lessonNumber: "27b",
-    title: "Introduction to the Connect Grid",
-    summary:
-      "Learn to use the Connect Grid tool for organizing ideas and creating logical connections between different parts of your writing.",
-    chapter: "Chapter 2",
-    yearGroup: "Years 3-4",
-    tags: ["Chapter 2", "Years 3-4"],
-  },
-  {
-    lessonNumber: "35",
-    title: "Developing a Storyline",
-    summary:
-      "Master the art of creating compelling storylines with clear beginnings, middles, and endings that engage readers throughout.",
-    chapter: "Chapter 3",
-    yearGroup: "Years 3-4",
-    tags: ["Chapter 3", "Years 3-4", "Advanced"],
-  },
-  {
-    lessonNumber: "52",
-    title: "Writing a News Report",
-    summary:
-      "Discover the conventions of news writing, including the inverted pyramid structure, headlines, and objective reporting techniques.",
-    chapter: "Chapter 6",
-    yearGroup: "Years 4-5",
-    tags: ["Chapter 6", "Years 4-5", "Non-Fiction"],
-  },
-];
-
 const chapters = [
-  "All Chapters",
-  "Chapter 1",
-  "Chapter 2",
-  "Chapter 3",
-  "Chapter 4",
-  "Chapter 5",
-  "Chapter 6",
-  "Chapter 7",
+  { label: "All Chapters", value: 0 },
+  { label: "Chapter 1", value: 1 },
+  { label: "Chapter 2", value: 2 },
+  { label: "Chapter 3", value: 3 },
+  { label: "Chapter 4", value: 4 },
+  { label: "Chapter 5", value: 5 },
+  { label: "Chapter 6", value: 6 },
+  { label: "Chapter 7", value: 7 },
 ];
 
-const yearGroups = ["All Year Groups", "Years 2-3", "Years 3-4", "Years 4-5"];
+const yearGroups = [
+  "All Year Groups",
+  "Years 2-3",
+  "Years 3-4",
+  "Years 4-5",
+];
+
+function getLessonNumber(lesson: Lesson): string {
+  if (lesson.has_parts && lesson.part) {
+    return `${lesson.id}${lesson.part}`;
+  }
+  return `${lesson.id}`;
+}
+
+function getLessonTags(lesson: Lesson): string[] {
+  const tags: string[] = [];
+  tags.push(`Chapter ${lesson.chapter}`);
+  if (lesson.year_groups) {
+    tags.push(lesson.year_groups);
+  }
+  return tags;
+}
 
 export default function LessonLibrary() {
-  const [selectedChapter, setSelectedChapter] = useState("All Chapters");
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedChapter, setSelectedChapter] = useState(0);
   const [selectedYearGroup, setSelectedYearGroup] = useState("All Year Groups");
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    async function fetchLessons() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("lessons")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching lessons:", error);
+      } else {
+        setLessons(data || []);
+      }
+      setLoading(false);
+    }
+
+    fetchLessons();
+  }, []);
+
   const filteredLessons = useMemo(() => {
-    return demoLessons.filter((lesson) => {
+    return lessons.filter((lesson) => {
       const matchesChapter =
-        selectedChapter === "All Chapters" || lesson.chapter === selectedChapter;
+        selectedChapter === 0 || lesson.chapter === selectedChapter;
       const matchesYearGroup =
         selectedYearGroup === "All Year Groups" ||
-        lesson.yearGroup === selectedYearGroup;
+        lesson.year_groups === selectedYearGroup;
       const matchesSearch =
         searchQuery === "" ||
         lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lesson.summary.toLowerCase().includes(searchQuery.toLowerCase());
+        (lesson.summary && lesson.summary.toLowerCase().includes(searchQuery.toLowerCase()));
 
       return matchesChapter && matchesYearGroup && matchesSearch;
     });
-  }, [selectedChapter, selectedYearGroup, searchQuery]);
+  }, [lessons, selectedChapter, selectedYearGroup, searchQuery]);
 
   return (
     <section
@@ -120,7 +109,7 @@ export default function LessonLibrary() {
             className="text-base"
             style={{ color: "var(--wrife-text-muted)" }}
           >
-            67 comprehensive writing lessons
+            {loading ? "Loading..." : `${lessons.length} comprehensive writing lessons`}
           </p>
         </div>
 
@@ -133,7 +122,7 @@ export default function LessonLibrary() {
         >
           <select
             value={selectedChapter}
-            onChange={(e) => setSelectedChapter(e.target.value)}
+            onChange={(e) => setSelectedChapter(Number(e.target.value))}
             className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2"
             style={{
               backgroundColor: "var(--wrife-bg)",
@@ -142,8 +131,8 @@ export default function LessonLibrary() {
             }}
           >
             {chapters.map((chapter) => (
-              <option key={chapter} value={chapter}>
-                {chapter}
+              <option key={chapter.value} value={chapter.value}>
+                {chapter.label}
               </option>
             ))}
           </select>
@@ -181,20 +170,39 @@ export default function LessonLibrary() {
           </div>
         </div>
 
-        {filteredLessons.length > 0 ? (
+        {loading && (
+          <div
+            className="text-center py-12 rounded-xl"
+            style={{
+              backgroundColor: "var(--wrife-surface)",
+              border: "1px solid var(--wrife-border)",
+            }}
+          >
+            <p
+              className="text-lg font-medium"
+              style={{ color: "var(--wrife-text-main)" }}
+            >
+              Loading lessons...
+            </p>
+          </div>
+        )}
+
+        {!loading && filteredLessons.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredLessons.map((lesson) => (
               <LessonCard
-                key={lesson.lessonNumber}
-                lessonNumber={lesson.lessonNumber}
+                key={`${lesson.id}-${lesson.part || ""}`}
+                lessonNumber={getLessonNumber(lesson)}
                 title={lesson.title}
-                summary={lesson.summary}
-                tags={lesson.tags}
-                onOpen={() => alert(`Opening lesson ${lesson.lessonNumber}: ${lesson.title}`)}
+                summary={lesson.summary || ""}
+                tags={getLessonTags(lesson)}
+                onOpen={() => alert(`Opening lesson ${getLessonNumber(lesson)}: ${lesson.title}`)}
               />
             ))}
           </div>
-        ) : (
+        )}
+
+        {!loading && filteredLessons.length === 0 && (
           <div
             className="text-center py-12 rounded-xl"
             style={{
