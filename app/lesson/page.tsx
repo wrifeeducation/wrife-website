@@ -1,9 +1,11 @@
+"use client";
+
 import Navbar from "../../components/Navbar";
 import LessonDetailPage from "../../components/LessonDetailPage";
 
 export default function LessonDemo() {
   return (
-    <>
+    <div suppressHydrationWarning>
       <Navbar />
       <LessonDetailPage
         lessonNumber="27a"
@@ -14,6 +16,6 @@ export default function LessonDemo() {
         duration="45-50 minutes"
         yearGroups="3-4"
       />
-    </>
+    </div>
   );
 }
