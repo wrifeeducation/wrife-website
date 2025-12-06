@@ -13,13 +13,19 @@ interface LessonDetailProps {
   yearGroups: string;
 }
 
-const tabs = [
-  { id: "teacher-guide", label: "Teacher Guide", icon: "📖" },
-  { id: "presentation", label: "Presentation", icon: "📊" },
-  { id: "practice", label: "Practice Activities", icon: "✏️" },
-  { id: "worksheets", label: "Worksheets", icon: "📄" },
-  { id: "progress", label: "Progress Tracker", icon: "📈" },
-  { id: "assessment", label: "Assessment", icon: "✅" },
+interface Tab {
+  id: string;
+  label: string;
+  iconLabel: string;
+}
+
+const tabs: Tab[] = [
+  { id: "teacher-guide", label: "Teacher Guide", iconLabel: "TG" },
+  { id: "presentation", label: "Presentation", iconLabel: "PR" },
+  { id: "practice", label: "Practice Activities", iconLabel: "PA" },
+  { id: "worksheets", label: "Worksheets", iconLabel: "WS" },
+  { id: "progress", label: "Progress Tracker", iconLabel: "PT" },
+  { id: "assessment", label: "Assessment", iconLabel: "AS" },
 ];
 
 const tabContent: Record<string, { description: string; bullets: string[] }> = {
@@ -73,6 +79,20 @@ const tabContent: Record<string, { description: string; bullets: string[] }> = {
   },
 };
 
+function TabIcon({ label }: { label: string }) {
+  return (
+    <span
+      className="inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-bold mr-2"
+      style={{
+        backgroundColor: "var(--wrife-blue-soft)",
+        color: "var(--wrife-blue)",
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 export default function LessonDetailPage({
   lessonNumber,
   title,
@@ -85,6 +105,7 @@ export default function LessonDetailPage({
   const [activeTab, setActiveTab] = useState("teacher-guide");
 
   const currentTabContent = tabContent[activeTab];
+  const activeTabData = tabs.find((t) => t.id === activeTab);
 
   return (
     <div
@@ -148,7 +169,7 @@ export default function LessonDetailPage({
                 border: "1px solid var(--wrife-border)",
               }}
             >
-              ⏱️ {duration}
+              Duration: {duration}
             </span>
             <span
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
@@ -158,7 +179,7 @@ export default function LessonDetailPage({
                 border: "1px solid var(--wrife-border)",
               }}
             >
-              👥 Years {yearGroups}
+              Years {yearGroups}
             </span>
             <span
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
@@ -168,7 +189,7 @@ export default function LessonDetailPage({
                 border: "1px solid var(--wrife-border)",
               }}
             >
-              📚 Chapter {chapter}, Unit {unit}
+              Chapter {chapter}, Unit {unit}
             </span>
           </div>
         </header>
@@ -184,12 +205,10 @@ export default function LessonDetailPage({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex-shrink-0 px-4 py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
+              className="flex-shrink-0 px-4 py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center"
               style={{
                 backgroundColor:
-                  activeTab === tab.id
-                    ? "var(--wrife-bg)"
-                    : "transparent",
+                  activeTab === tab.id ? "var(--wrife-bg)" : "transparent",
                 color:
                   activeTab === tab.id
                     ? "var(--wrife-blue)"
@@ -200,7 +219,7 @@ export default function LessonDetailPage({
                     : "2px solid transparent",
               }}
             >
-              <span className="mr-2">{tab.icon}</span>
+              <TabIcon label={tab.iconLabel} />
               {tab.label}
             </button>
           ))}
@@ -214,15 +233,21 @@ export default function LessonDetailPage({
           }}
         >
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-4xl">
-              {tabs.find((t) => t.id === activeTab)?.icon}
-            </span>
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold"
+              style={{
+                backgroundColor: "var(--wrife-blue-soft)",
+                color: "var(--wrife-blue)",
+              }}
+            >
+              {activeTabData?.iconLabel}
+            </div>
             <div>
               <h2
                 className="text-xl font-bold"
                 style={{ color: "var(--wrife-text-main)" }}
               >
-                {tabs.find((t) => t.id === activeTab)?.label}
+                {activeTabData?.label}
               </h2>
               <p
                 className="text-sm"
