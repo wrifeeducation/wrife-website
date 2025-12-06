@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 interface Lesson {
   id: number;
+  lesson_number: number;
   title: string;
   has_parts: boolean;
   part: string | null;
@@ -21,53 +22,44 @@ export default async function LessonPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const lessonId = parseInt(id, 10);
+  const lessonNumber = parseInt(id, 10);
 
-  if (isNaN(lessonId)) {
+  if (isNaN(lessonNumber)) {
     notFound();
   }
 
-  const { data: lesson, error } = await supabase
+  const { data: lessons, error } = await supabase
     .from("lessons")
     .select("*")
-    .eq("id", lessonId)
-    .single();
+    .eq("lesson_number", lessonNumber)
+    .order("part", { ascending: true });
 
-  if (error || !lesson) {
+  if (error || !lessons || lessons.length === 0) {
     notFound();
   }
 
-  const typedLesson = lesson as Lesson;
-
-  let displayLessonNumber: number;
-  if (lessonId === 28) {
-    displayLessonNumber = 27;
-  } else if (lessonId > 28) {
-    displayLessonNumber = lessonId - 1;
-  } else {
-    displayLessonNumber = lessonId;
-  }
+  const lesson = lessons[0] as Lesson;
 
   const formattedNumber =
-    typedLesson.has_parts && typedLesson.part
-      ? `${displayLessonNumber}${typedLesson.part}`
-      : `${displayLessonNumber}`;
+    lesson.has_parts && lesson.part
+      ? `${lesson.lesson_number}${lesson.part}`
+      : `${lesson.lesson_number}`;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
       <Navbar />
       <LessonDetailPage
         lessonNumber={formattedNumber}
-        title={typedLesson.title}
-        summary={typedLesson.summary || "No summary available"}
-        chapter={typedLesson.chapter}
-        unit={typedLesson.unit}
+        title={lesson.title}
+        summary={lesson.summary || "No summary available"}
+        chapter={lesson.chapter}
+        unit={lesson.unit}
         duration={
-          typedLesson.duration_minutes
-            ? `${typedLesson.duration_minutes} minutes`
+          lesson.duration_minutes
+            ? `${lesson.duration_minutes} minutes`
             : "Duration not specified"
         }
-        yearGroups={typedLesson.year_groups || "Not specified"}
+        yearGroups={lesson.year_groups || "Not specified"}
       />
     </div>
   );
