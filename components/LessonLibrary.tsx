@@ -35,10 +35,19 @@ const yearGroups = [
 ];
 
 function getLessonNumber(lesson: Lesson): string {
-  if (lesson.has_parts && lesson.part) {
-    return `${lesson.id}${lesson.part}`;
+  let displayNumber: number;
+  if (lesson.id === 28) {
+    displayNumber = 27;
+  } else if (lesson.id > 28) {
+    displayNumber = lesson.id - 1;
+  } else {
+    displayNumber = lesson.id;
   }
-  return `${lesson.id}`;
+  
+  if (lesson.has_parts && lesson.part) {
+    return `${displayNumber}${lesson.part}`;
+  }
+  return `${displayNumber}`;
 }
 
 function getLessonTags(lesson: Lesson): string[] {

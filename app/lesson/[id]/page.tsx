@@ -39,10 +39,19 @@ export default async function LessonPage({
 
   const typedLesson = lesson as Lesson;
 
+  let displayLessonNumber: number;
+  if (lessonId === 28) {
+    displayLessonNumber = 27;
+  } else if (lessonId > 28) {
+    displayLessonNumber = lessonId - 1;
+  } else {
+    displayLessonNumber = lessonId;
+  }
+
   const formattedNumber =
     typedLesson.has_parts && typedLesson.part
-      ? `${typedLesson.id}${typedLesson.part}`
-      : `${typedLesson.id}`;
+      ? `${displayLessonNumber}${typedLesson.part}`
+      : `${displayLessonNumber}`;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
