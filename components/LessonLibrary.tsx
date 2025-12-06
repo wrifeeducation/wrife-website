@@ -53,6 +53,7 @@ function getLessonTags(lesson: Lesson): string[] {
 export default function LessonLibrary() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [selectedYearGroup, setSelectedYearGroup] = useState("All Year Groups");
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,6 +61,7 @@ export default function LessonLibrary() {
   useEffect(() => {
     async function fetchLessons() {
       setLoading(true);
+      setError(null);
       const { data, error } = await supabase
         .from("lessons")
         .select("*")
@@ -67,6 +69,7 @@ export default function LessonLibrary() {
 
       if (error) {
         console.error("Error fetching lessons:", error);
+        setError(error.message);
       } else {
         setLessons(data || []);
       }
@@ -109,8 +112,13 @@ export default function LessonLibrary() {
             className="text-base"
             style={{ color: "var(--wrife-text-muted)" }}
           >
-            {loading ? "Loading..." : `${lessons.length} comprehensive writing lessons`}
+            {loading ? "Loading..." : error ? "Error loading lessons" : `${lessons.length} comprehensive writing lessons`}
           </p>
+          {!loading && !error && lessons.length === 0 && (
+            <p className="text-sm mt-2" style={{ color: "#F59E0B" }}>
+              No lessons found in database. Please check that the lessons table has data in Supabase.
+            </p>
+          )}
         </div>
 
         <div
@@ -183,6 +191,29 @@ export default function LessonLibrary() {
               style={{ color: "var(--wrife-text-main)" }}
             >
               Loading lessons...
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div
+            className="text-center py-12 rounded-xl mb-4"
+            style={{
+              backgroundColor: "#FEE2E2",
+              border: "1px solid #EF4444",
+            }}
+          >
+            <p
+              className="text-lg font-medium mb-2"
+              style={{ color: "#DC2626" }}
+            >
+              Error loading lessons
+            </p>
+            <p
+              className="text-sm"
+              style={{ color: "#991B1B" }}
+            >
+              {error}
             </p>
           </div>
         )}
