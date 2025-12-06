@@ -1,0 +1,129 @@
+"use client";
+
+import MetricCard from "../../components/MetricCard";
+import Navbar from "../../components/Navbar";
+
+export default function DashboardPage() {
+  return (
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
+      <Navbar />
+      
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        <header className="mb-8">
+          <h1
+            className="text-2xl font-extrabold mb-1"
+            style={{ color: "var(--wrife-text-main)" }}
+          >
+            Year 4 Maple — Dashboard
+          </h1>
+          <p
+            className="text-sm"
+            style={{ color: "var(--wrife-text-muted)" }}
+          >
+            Quick view of today's writing activity and progress
+          </p>
+        </header>
+
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <MetricCard
+            label="PWP today"
+            value="22 / 30"
+            tone="blue"
+          />
+          <MetricCard
+            label="Drafts awaiting review"
+            value="5"
+            tone="yellow"
+          />
+          <MetricCard
+            label="Average score"
+            value="2.8 / 4"
+            tone="green"
+          />
+          <MetricCard
+            label="Top skill gap"
+            value="Cohesion"
+            tone="coral"
+          />
+        </section>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div
+            className="lg:col-span-2 rounded-2xl p-6"
+            style={{
+              backgroundColor: "var(--wrife-surface)",
+              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
+              border: "1px solid var(--wrife-border)",
+            }}
+          >
+            <h2
+              className="text-lg font-bold mb-4"
+              style={{ color: "var(--wrife-text-main)" }}
+            >
+              Class progress over time
+            </h2>
+            <div
+              className="h-48 flex items-center justify-center rounded-xl"
+              style={{
+                backgroundColor: "var(--wrife-bg)",
+                border: "1px dashed var(--wrife-border)",
+              }}
+            >
+              <p
+                className="text-sm"
+                style={{ color: "var(--wrife-text-muted)" }}
+              >
+                (Chart will be added in future update)
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="rounded-2xl p-6"
+            style={{
+              backgroundColor: "var(--wrife-surface)",
+              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
+              border: "1px solid var(--wrife-border)",
+            }}
+          >
+            <h2
+              className="text-lg font-bold mb-4"
+              style={{ color: "var(--wrife-text-main)" }}
+            >
+              Recent submissions
+            </h2>
+            <ul className="space-y-3">
+              <li
+                className="text-sm pb-3"
+                style={{
+                  color: "var(--wrife-text-main)",
+                  borderBottom: "1px solid var(--wrife-border)",
+                }}
+              >
+                <span className="font-medium">Amir</span>
+                <span style={{ color: "var(--wrife-text-muted)" }}> — L41 Writing my first draft</span>
+              </li>
+              <li
+                className="text-sm pb-3"
+                style={{
+                  color: "var(--wrife-text-main)",
+                  borderBottom: "1px solid var(--wrife-border)",
+                }}
+              >
+                <span className="font-medium">Sophie</span>
+                <span style={{ color: "var(--wrife-text-muted)" }}> — L27a Paragraph structure</span>
+              </li>
+              <li
+                className="text-sm"
+                style={{ color: "var(--wrife-text-main)" }}
+              >
+                <span className="font-medium">James</span>
+                <span style={{ color: "var(--wrife-text-muted)" }}> — L35 Story development</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
