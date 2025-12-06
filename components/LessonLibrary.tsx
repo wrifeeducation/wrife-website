@@ -227,7 +227,6 @@ export default function LessonLibrary() {
                 title={lesson.title}
                 summary={lesson.summary || ""}
                 tags={getLessonTags(lesson)}
-                onOpen={() => alert(`Opening lesson ${getLessonNumber(lesson)}: ${lesson.title}`)}
               />
             ))}
           </div>
