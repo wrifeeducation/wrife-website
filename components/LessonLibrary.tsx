@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 
 interface Lesson {
   id: number;
+  lesson_number: number;
   title: string;
   has_parts: boolean;
   part: string | null;
@@ -35,19 +36,10 @@ const yearGroups = [
 ];
 
 function getLessonNumber(lesson: Lesson): string {
-  let displayNumber: number;
-  if (lesson.id === 28) {
-    displayNumber = 27;
-  } else if (lesson.id > 28) {
-    displayNumber = lesson.id - 1;
-  } else {
-    displayNumber = lesson.id;
-  }
-  
   if (lesson.has_parts && lesson.part) {
-    return `${displayNumber}${lesson.part}`;
+    return `${lesson.lesson_number}${lesson.part}`;
   }
-  return `${displayNumber}`;
+  return `${lesson.lesson_number}`;
 }
 
 function getLessonTags(lesson: Lesson): string[] {
@@ -233,6 +225,7 @@ export default function LessonLibrary() {
               <LessonCard
                 key={`${lesson.id}-${lesson.part || ""}`}
                 lessonNumber={getLessonNumber(lesson)}
+                linkNumber={lesson.lesson_number}
                 title={lesson.title}
                 summary={lesson.summary || ""}
                 tags={getLessonTags(lesson)}
