@@ -1,16 +1,8 @@
-import type { NextPage } from "next";
-import Head from "next/head";
 import Navbar from "../components/Navbar";
 
-const Home: NextPage = () => {
+export default function Home() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
-      <Head>
-        <title>WriFe - Writing for Everyone</title>
-        <meta name="description" content="WriFe - Writing for Everyone" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
       <Navbar />
 
       <main className="px-4 md:px-8 py-12">
@@ -31,6 +23,4 @@ const Home: NextPage = () => {
       </main>
     </div>
   );
-};
-
-export default Home;
+}
