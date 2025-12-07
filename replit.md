@@ -71,3 +71,10 @@ npm run start # Start production server
 - **Dynamic Imports**: LessonLibrary uses `next/dynamic` with `ssr: false` to prevent hydration mismatches
 - **Client Components**: Pages with interactivity use "use client" directive
 - **Lesson Routing**: Lessons use `lesson_number` for URL paths (e.g., /lesson/27)
+
+## Project Policies
+
+### Navigation Policy
+**Every page must include the Navbar component** to ensure users can always navigate back to the home page. When creating a new page:
+1. Import the Navbar: `import Navbar from '@/components/Navbar';`
+2. Include `<Navbar />` at the top of the page content
