@@ -39,7 +39,8 @@ The project uses CSS custom properties for consistent theming:
 - `--wrife-text-muted`: #6B7280 (secondary text)
 
 ## Database Schema
-The `lessons` table contains:
+
+### lessons table
 - `id`: Primary key
 - `lesson_number`: Lesson number for navigation
 - `title`: Lesson title
@@ -49,7 +50,15 @@ The `lessons` table contains:
 - `unit`: Unit number
 - `summary`: Lesson description
 - `duration_minutes`: Lesson duration
-- `year_groups`: Target year groups
+- `year_group_min`: Minimum year group
+- `year_group_max`: Maximum year group
+
+### lesson_files table
+- `id`: Primary key
+- `lesson_id`: Foreign key to lessons table
+- `file_type`: Type of file (teacher_guide, presentation, interactive_practice, worksheet_support, progress_tracker, assessment)
+- `file_name`: Display name of the file
+- `file_url`: Google Drive URL to the file
 
 ## Running the Project
 ```bash

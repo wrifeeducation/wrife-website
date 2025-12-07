@@ -1,66 +1,37 @@
-import { supabase } from "../../../lib/supabase";
-import Navbar from "../../../components/Navbar";
-import LessonDetailPage from "../../../components/LessonDetailPage";
-import { notFound } from "next/navigation";
+import { notFound } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
+import { LessonDetailPage } from '@/components/LessonDetailPage';
 
-interface Lesson {
-  id: number;
-  lesson_number: number;
-  title: string;
-  has_parts: boolean;
-  part: string | null;
-  chapter: number;
-  unit: number;
-  summary: string | null;
-  duration_minutes: number | null;
-  year_groups: string | null;
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-export default async function LessonPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function LessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const lessonNumber = parseInt(id, 10);
+  const lessonId = parseInt(id, 10);
 
-  if (isNaN(lessonNumber)) {
+  if (isNaN(lessonId)) {
     notFound();
   }
 
-  const { data: lessons, error } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("lesson_number", lessonNumber)
-    .order("part", { ascending: true });
+  const { data: lessons, error: lessonError } = await supabase
+    .from('lessons')
+    .select('*')
+    .eq('lesson_number', lessonId)
+    .order('part', { ascending: true });
 
-  if (error || !lessons || lessons.length === 0) {
+  if (lessonError || !lessons || lessons.length === 0) {
     notFound();
   }
 
-  const lesson = lessons[0] as Lesson;
+  const lesson = lessons[0];
 
-  const formattedNumber =
-    lesson.has_parts && lesson.part
-      ? `${lesson.lesson_number}${lesson.part}`
-      : `${lesson.lesson_number}`;
+  const { data: files, error: filesError } = await supabase
+    .from('lesson_files')
+    .select('id, file_type, file_name, file_url')
+    .eq('lesson_id', lesson.id)
+    .order('file_type');
 
-  return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
-      <Navbar />
-      <LessonDetailPage
-        lessonNumber={formattedNumber}
-        title={lesson.title}
-        summary={lesson.summary || "No summary available"}
-        chapter={lesson.chapter}
-        unit={lesson.unit}
-        duration={
-          lesson.duration_minutes
-            ? `${lesson.duration_minutes} minutes`
-            : "Duration not specified"
-        }
-        yearGroups={lesson.year_groups || "Not specified"}
-      />
-    </div>
-  );
+  return <LessonDetailPage lesson={lesson} files={files || []} />;
 }
