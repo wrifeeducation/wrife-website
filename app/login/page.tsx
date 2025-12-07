@@ -29,10 +29,8 @@ export default function LoginPage() {
         const params = new URLSearchParams(window.location.search);
         const redirectTo = params.get('redirectTo') || '/dashboard';
         
-        setTimeout(() => {
-          router.push(redirectTo);
-          router.refresh();
-        }, 100);
+        console.log('Login successful, redirecting to:', redirectTo);
+        window.location.href = redirectTo;
       }
     } catch (err) {
       console.error('Unexpected error:', err);
