@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
@@ -11,31 +11,30 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { user, signIn } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get('redirectTo') || '/dashboard';
+      router.push(redirectTo);
+    }
+  }, [user, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    try {
-      const { error } = await signIn(email, password);
+    const { error } = await signIn(email, password);
 
-      if (error) {
-        console.error('Login error:', error);
-        setError(error.message);
-        setLoading(false);
-      } else {
-        const params = new URLSearchParams(window.location.search);
-        const redirectTo = params.get('redirectTo') || '/dashboard';
-        
-        console.log('Login successful, redirecting to:', redirectTo);
-        window.location.href = redirectTo;
-      }
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      setError('An unexpected error occurred');
+    if (error) {
+      setError(error.message);
       setLoading(false);
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get('redirectTo') || '/dashboard';
+      window.location.href = redirectTo;
     }
   }
 
