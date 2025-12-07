@@ -63,14 +63,15 @@ export default function LessonLibrary() {
     async function fetchLessons() {
       setLoading(true);
       setError(null);
+
       const { data, error } = await supabase
         .from("lessons")
         .select("*")
-        .order("id", { ascending: true });
+        .order("lesson_number", { ascending: true });
 
       if (error) {
         console.error("Error fetching lessons:", error);
-        setError(error.message);
+        setError("Unable to load lessons. Please refresh the page.");
       } else {
         setLessons(data || []);
       }
@@ -205,25 +206,14 @@ export default function LessonLibrary() {
         )}
 
         {error && (
-          <div
-            className="text-center py-12 rounded-xl mb-4"
-            style={{
-              backgroundColor: "#FEE2E2",
-              border: "1px solid #EF4444",
-            }}
-          >
-            <p
-              className="text-lg font-medium mb-2"
-              style={{ color: "#DC2626" }}
+          <div className="rounded-2xl bg-red-50 border border-red-200 p-6 text-center">
+            <p className="text-red-600 font-semibold mb-2">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-sm text-red-600 underline hover:text-red-700"
             >
-              Error loading lessons
-            </p>
-            <p
-              className="text-sm"
-              style={{ color: "#991B1B" }}
-            >
-              {error}
-            </p>
+              Try again
+            </button>
           </div>
         )}
 
