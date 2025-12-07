@@ -180,19 +180,27 @@ export default function LessonLibrary() {
         </div>
 
         {loading && (
-          <div
-            className="text-center py-12 rounded-xl"
-            style={{
-              backgroundColor: "var(--wrife-surface)",
-              border: "1px solid var(--wrife-border)",
-            }}
-          >
-            <p
-              className="text-lg font-medium"
-              style={{ color: "var(--wrife-text-main)" }}
-            >
-              Loading lessons...
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="rounded-2xl p-4 animate-pulse"
+                style={{
+                  backgroundColor: "var(--wrife-surface)",
+                  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
+                  border: "1px solid var(--wrife-border)",
+                }}
+              >
+                <div className="h-9 w-9 bg-gray-200 rounded-full mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-full mb-1"></div>
+                <div className="h-3 bg-gray-200 rounded w-5/6 mb-3"></div>
+                <div className="flex gap-2">
+                  <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                  <div className="h-5 bg-gray-200 rounded-full w-20"></div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
