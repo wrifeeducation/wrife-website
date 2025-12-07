@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { LessonDetailPage } from '@/components/LessonDetailPage';
+import Navbar from '@/components/Navbar';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,5 +34,10 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     .eq('lesson_id', lesson.id)
     .order('file_type');
 
-  return <LessonDetailPage lesson={lesson} files={files || []} />;
+  return (
+    <>
+      <Navbar />
+      <LessonDetailPage lesson={lesson} files={files || []} />
+    </>
+  );
 }
