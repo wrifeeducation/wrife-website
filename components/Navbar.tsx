@@ -79,7 +79,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="px-4 py-2 text-sm font-medium rounded-lg border transition-colors hover:opacity-80 min-h-[44px] flex items-center justify-center"
+            className="px-4 py-2 text-sm font-semibold rounded-full border transition-colors hover:bg-[var(--wrife-blue-soft)] min-h-[44px] flex items-center justify-center"
             style={{
               color: "var(--wrife-blue)",
               borderColor: "var(--wrife-blue)",
@@ -89,8 +89,8 @@ export default function Navbar() {
             Log in
           </Link>
           <Link
-            href="/get-started"
-            className="hidden md:inline-flex px-4 py-2 text-sm font-medium rounded-lg transition-colors hover:opacity-90 min-h-[44px] items-center justify-center"
+            href="/signup"
+            className="hidden md:inline-flex px-4 py-2 text-sm font-medium rounded-full transition-colors hover:opacity-90 min-h-[44px] items-center justify-center shadow-soft hover:scale-[1.02] hover:shadow-strong"
             style={{
               backgroundColor: "var(--wrife-blue)",
               color: "white",
@@ -186,8 +186,8 @@ export default function Navbar() {
               Interactive Practice
             </Link>
             <Link
-              href="/get-started"
-              className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-90 min-h-[44px] flex items-center justify-center mt-2"
+              href="/signup"
+              className="px-4 py-3 text-sm font-medium rounded-full transition-colors hover:opacity-90 min-h-[44px] flex items-center justify-center mt-2"
               style={{
                 backgroundColor: "var(--wrife-blue)",
                 color: "white",
