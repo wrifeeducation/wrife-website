@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { LessonDetailPage } from '@/components/LessonDetailPage';
 import Navbar from '@/components/Navbar';
+import LessonPageWrapper from '@/components/LessonPageWrapper';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,9 +36,9 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     .order('file_type');
 
   return (
-    <>
+    <LessonPageWrapper>
       <Navbar />
       <LessonDetailPage lesson={lesson} files={files || []} />
-    </>
+    </LessonPageWrapper>
   );
 }
