@@ -18,13 +18,26 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      const { error } = await signIn(email, password);
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        console.error('Login error:', error);
+        setError(error.message);
+        setLoading(false);
+      } else {
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get('redirectTo') || '/dashboard';
+        
+        setTimeout(() => {
+          router.push(redirectTo);
+          router.refresh();
+        }, 100);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred');
       setLoading(false);
-    } else {
-      router.push('/dashboard');
     }
   }
 
