@@ -43,8 +43,8 @@ const fileTypeOrder = [
 
 export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [activeTab, setActiveTab] = useState(fileTypeOrder[0]);
-  const [htmlContent, setHtmlContent] = useState<string>('');
-  const [loadingHtml, setLoadingHtml] = useState(false);
+  const [htmlContent, setHtmlContent] = useState<Record<number, string>>({});
+  const [loadingHtml, setLoadingHtml] = useState<Record<number, boolean>>({});
 
   const filesByType = files.reduce((acc, file) => {
     const baseType = file.file_type.replace(/_core|_support|_challenge/g, '');
@@ -57,17 +57,20 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
     ? `${lesson.lesson_number}${lesson.part}` 
     : lesson.lesson_number;
 
-  const loadHtmlFile = async (fileUrl: string) => {
-    setLoadingHtml(true);
+  const loadHtmlFile = async (fileId: number, fileUrl: string) => {
+    setLoadingHtml(prev => ({ ...prev, [fileId]: true }));
     try {
       const response = await fetch(`/api/fetch-html?url=${encodeURIComponent(fileUrl)}`);
       const html = await response.text();
-      setHtmlContent(html);
+      setHtmlContent(prev => ({ ...prev, [fileId]: html }));
     } catch (error) {
       console.error('Error loading HTML:', error);
-      setHtmlContent('<p>Error loading content. Please try downloading instead.</p>');
+      setHtmlContent(prev => ({ 
+        ...prev, 
+        [fileId]: '<p>Error loading content. Please try downloading instead.</p>' 
+      }));
     } finally {
-      setLoadingHtml(false);
+      setLoadingHtml(prev => ({ ...prev, [fileId]: false }));
     }
   };
 
@@ -146,10 +149,10 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                       <div className="flex gap-2 ml-4">
                         {isHtml ? (
                           <button
-                            onClick={() => loadHtmlFile(file.file_url)}
+                            onClick={() => loadHtmlFile(file.id, file.file_url)}
                             className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
                           >
-                            {loadingHtml ? 'Loading...' : 'View Content'}
+                            {loadingHtml[file.id] ? 'Loading...' : 'View Content'}
                           </button>
                         ) : (
                           <a
@@ -171,10 +174,10 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                       </div>
                     </div>
 
-                    {isHtml && htmlContent && (
+                    {isHtml && htmlContent[file.id] && (
                       <div className="mt-3 p-6 rounded-lg border border-[var(--wrife-border)] bg-white">
                         <iframe
-                          srcDoc={htmlContent}
+                          srcDoc={htmlContent[file.id]}
                           className="w-full min-h-[600px] border-0"
                           title={file.file_name}
                           sandbox="allow-same-origin allow-scripts"
