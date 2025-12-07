@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface LessonFile {
   id: number;
@@ -43,6 +43,8 @@ const fileTypeOrder = [
 
 export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [activeTab, setActiveTab] = useState(fileTypeOrder[0]);
+  const [htmlContent, setHtmlContent] = useState<string>('');
+  const [loadingHtml, setLoadingHtml] = useState(false);
 
   const filesByType = files.reduce((acc, file) => {
     const baseType = file.file_type.replace(/_core|_support|_challenge/g, '');
@@ -54,6 +56,20 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const lessonNumber = lesson.part 
     ? `${lesson.lesson_number}${lesson.part}` 
     : lesson.lesson_number;
+
+  const loadHtmlFile = async (fileUrl: string) => {
+    setLoadingHtml(true);
+    try {
+      const response = await fetch(`/api/fetch-html?url=${encodeURIComponent(fileUrl)}`);
+      const html = await response.text();
+      setHtmlContent(html);
+    } catch (error) {
+      console.error('Error loading HTML:', error);
+      setHtmlContent('<p>Error loading content. Please try downloading instead.</p>');
+    } finally {
+      setLoadingHtml(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[var(--wrife-bg)]">
@@ -111,40 +127,63 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
 
           {filesByType[activeTab] ? (
             <div className="space-y-3">
-              {filesByType[activeTab].map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center justify-between p-4 rounded-lg border border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)] transition"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[var(--wrife-text-main)] truncate">
-                      {file.file_name}
-                    </p>
-                    <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
-                      {file.file_type.includes('worksheet') && 
-                        file.file_type.replace('worksheet_', '').toUpperCase()}
-                    </p>
-                  </div>
+              {filesByType[activeTab].map((file) => {
+                const isHtml = file.file_name.endsWith('.html');
+                
+                return (
+                  <div key={file.id}>
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)] transition">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[var(--wrife-text-main)] truncate">
+                          {file.file_name}
+                        </p>
+                        <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
+                          {file.file_type.includes('worksheet') && 
+                            file.file_type.replace('worksheet_', '').toUpperCase()}
+                        </p>
+                      </div>
 
-                  <div className="flex gap-2 ml-4">
-                    <a
-                      href={file.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
-                    >
-                      View
-                    </a>
-                    <a
-                      href={file.file_url}
-                      download
-                      className="rounded-full border border-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
-                    >
-                      Download
-                    </a>
+                      <div className="flex gap-2 ml-4">
+                        {isHtml ? (
+                          <button
+                            onClick={() => loadHtmlFile(file.file_url)}
+                            className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
+                          >
+                            {loadingHtml ? 'Loading...' : 'View Content'}
+                          </button>
+                        ) : (
+                          <a
+                            href={file.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
+                          >
+                            View
+                          </a>
+                        )}
+                        <a
+                          href={file.file_url}
+                          download
+                          className="rounded-full border border-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    </div>
+
+                    {isHtml && htmlContent && (
+                      <div className="mt-3 p-6 rounded-lg border border-[var(--wrife-border)] bg-white">
+                        <iframe
+                          srcDoc={htmlContent}
+                          className="w-full min-h-[600px] border-0"
+                          title={file.file_name}
+                          sandbox="allow-same-origin allow-scripts"
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-[var(--wrife-text-muted)]">
