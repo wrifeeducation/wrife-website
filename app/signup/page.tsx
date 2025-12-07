@@ -1,0 +1,200 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link';
+
+export default function SignupPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const router = useRouter();
+  const { signUp } = useAuth();
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    // Validation
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await signUp(email, password, displayName);
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      setSuccess(true);
+      setLoading(false);
+    }
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-8 text-center">
+            <div className="mb-4">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--wrife-green)]/20 mb-4">
+                <span className="text-3xl">✓</span>
+              </div>
+            </div>
+            <h2 className="text-xl font-bold text-[var(--wrife-text-main)] mb-2">Check your email</h2>
+            <p className="text-sm text-[var(--wrife-text-muted)] mb-6">
+              We've sent you a confirmation link to <strong>{email}</strong>. 
+              Please check your inbox and click the link to verify your account.
+            </p>
+            <Link
+              href="/login"
+              className="inline-block rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition"
+            >
+              Go to login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--wrife-blue-soft)] flex items-center justify-center">
+              <span className="text-2xl font-black text-[var(--wrife-blue)]">W</span>
+            </div>
+            <div className="flex flex-col leading-tight text-left">
+              <span className="font-extrabold text-xl text-[var(--wrife-text-main)]">WriFe</span>
+              <span className="text-xs text-[var(--wrife-text-muted)]">Writing for Everyone</span>
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-[var(--wrife-text-main)] mb-2">Create your account</h1>
+          <p className="text-sm text-[var(--wrife-text-muted)]">Join WriFe as a teacher</p>
+        </div>
+
+        {/* Signup Form */}
+        <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Error Message */}
+            {error && (
+              <div className="p-3 rounded-lg bg-[var(--wrife-coral)]/10 border border-[var(--wrife-coral)] text-sm text-[var(--wrife-danger)]">
+                {error}
+              </div>
+            )}
+
+            {/* Display Name */}
+            <div>
+              <label htmlFor="displayName" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                Full Name
+              </label>
+              <input
+                id="displayName"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+                className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
+                placeholder="Mr. Smith"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
+                placeholder="your.email@school.com"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
+                placeholder="••••••••"
+              />
+              <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
+                Must be at least 8 characters
+              </p>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition disabled:opacity-50"
+            >
+              {loading ? 'Creating account...' : 'Create account'}
+            </button>
+          </form>
+
+          {/* Sign In Link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-[var(--wrife-text-muted)]">
+              Already have an account?{' '}
+              <Link href="/login" className="text-[var(--wrife-blue)] font-semibold hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Back to Home */}
+        <div className="mt-4 text-center">
+          <Link href="/" className="text-sm text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)]">
+            ← Back to homepage
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
