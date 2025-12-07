@@ -1,9 +1,36 @@
 "use client";
 
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import MetricCard from "../../components/MetricCard";
 import Navbar from "../../components/Navbar";
 
 export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login?redirectTo=/dashboard');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--wrife-blue)] border-r-transparent"></div>
+          <p className="mt-4 text-sm text-[var(--wrife-text-muted)]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
       <Navbar />
