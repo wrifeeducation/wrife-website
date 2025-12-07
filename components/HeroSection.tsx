@@ -10,7 +10,7 @@ export default function HeroSection() {
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           <div className="flex-1 text-center lg:text-left">
             <h1
-              className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6"
               style={{ color: "var(--wrife-text-main)" }}
             >
               A Complete 67-Lesson System for Teaching Writing
@@ -24,10 +24,10 @@ export default function HeroSection() {
               stories to published compositions, every lesson builds on the
               last.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center lg:justify-start">
               <Link
                 href="/lessons"
-                className="px-6 py-3 text-base font-medium rounded-lg transition-all hover:opacity-90 hover:shadow-lg"
+                className="w-full sm:w-auto px-6 py-3 text-base font-medium rounded-lg transition-all hover:opacity-90 hover:shadow-lg min-h-[48px] flex items-center justify-center"
                 style={{
                   backgroundColor: "var(--wrife-blue)",
                   color: "white",
@@ -37,7 +37,7 @@ export default function HeroSection() {
               </Link>
               <Link
                 href="/how-it-works"
-                className="px-6 py-3 text-base font-medium rounded-lg border-2 transition-all hover:opacity-80"
+                className="w-full sm:w-auto px-6 py-3 text-base font-medium rounded-lg border-2 transition-all hover:opacity-80 min-h-[48px] flex items-center justify-center"
                 style={{
                   backgroundColor: "white",
                   color: "var(--wrife-blue)",

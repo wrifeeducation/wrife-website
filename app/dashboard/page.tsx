@@ -8,23 +8,23 @@ export default function DashboardPage() {
     <div style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
       <Navbar />
       
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        <header className="mb-8">
+      <main className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
+        <header className="mb-6 sm:mb-8">
           <h1
-            className="text-2xl font-extrabold mb-1"
+            className="text-xl sm:text-2xl font-extrabold mb-1"
             style={{ color: "var(--wrife-text-main)" }}
           >
             Year 4 Maple — Dashboard
           </h1>
           <p
-            className="text-sm"
+            className="text-xs sm:text-sm"
             style={{ color: "var(--wrife-text-muted)" }}
           >
             Quick view of today's writing activity and progress
           </p>
         </header>
 
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <MetricCard
             label="PWP today"
             value="22 / 30"
@@ -47,9 +47,9 @@ export default function DashboardPage() {
           />
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div
-            className="lg:col-span-2 rounded-2xl p-6"
+            className="lg:col-span-2 rounded-2xl p-4 sm:p-6"
             style={{
               backgroundColor: "var(--wrife-surface)",
               boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
@@ -57,20 +57,20 @@ export default function DashboardPage() {
             }}
           >
             <h2
-              className="text-lg font-bold mb-4"
+              className="text-base sm:text-lg font-bold mb-3 sm:mb-4"
               style={{ color: "var(--wrife-text-main)" }}
             >
               Class progress over time
             </h2>
             <div
-              className="h-48 flex items-center justify-center rounded-xl"
+              className="h-40 sm:h-48 flex items-center justify-center rounded-xl overflow-x-auto"
               style={{
                 backgroundColor: "var(--wrife-bg)",
                 border: "1px dashed var(--wrife-border)",
               }}
             >
               <p
-                className="text-sm"
+                className="text-xs sm:text-sm"
                 style={{ color: "var(--wrife-text-muted)" }}
               >
                 (Chart will be added in future update)
@@ -79,7 +79,7 @@ export default function DashboardPage() {
           </div>
 
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{
               backgroundColor: "var(--wrife-surface)",
               boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
@@ -87,7 +87,7 @@ export default function DashboardPage() {
             }}
           >
             <h2
-              className="text-lg font-bold mb-4"
+              className="text-base sm:text-lg font-bold mb-3 sm:mb-4"
               style={{ color: "var(--wrife-text-main)" }}
             >
               Recent submissions

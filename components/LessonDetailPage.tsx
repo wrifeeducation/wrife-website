@@ -132,13 +132,13 @@ export default function LessonDetailPage({
         </nav>
 
         <header className="mb-8">
-          <div className="flex items-start gap-4 mb-4">
+          <div className="flex items-start gap-3 sm:gap-4 mb-4">
             <div
-              className="flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center"
+              className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center"
               style={{ backgroundColor: "var(--wrife-blue-soft)" }}
             >
               <span
-                className="text-xl font-bold"
+                className="text-base sm:text-xl font-bold"
                 style={{ color: "var(--wrife-blue)" }}
               >
                 L{lessonNumber}
@@ -160,9 +160,9 @@ export default function LessonDetailPage({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 mt-4">
+          <div className="flex flex-wrap gap-2 sm:gap-3 mt-4">
             <span
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium"
               style={{
                 backgroundColor: "var(--wrife-surface)",
                 color: "var(--wrife-text-main)",
@@ -172,7 +172,7 @@ export default function LessonDetailPage({
               Duration: {duration}
             </span>
             <span
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium"
               style={{
                 backgroundColor: "var(--wrife-surface)",
                 color: "var(--wrife-text-main)",
@@ -182,7 +182,7 @@ export default function LessonDetailPage({
               Years {yearGroups}
             </span>
             <span
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium"
               style={{
                 backgroundColor: "var(--wrife-surface)",
                 color: "var(--wrife-text-main)",
@@ -194,39 +194,42 @@ export default function LessonDetailPage({
           </div>
         </header>
 
-        <div
-          className="flex overflow-x-auto gap-1 mb-6 p-1 rounded-xl"
-          style={{
-            backgroundColor: "var(--wrife-surface)",
-            border: "1px solid var(--wrife-border)",
-          }}
-        >
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className="flex-shrink-0 px-4 py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center"
-              style={{
-                backgroundColor:
-                  activeTab === tab.id ? "var(--wrife-bg)" : "transparent",
-                color:
-                  activeTab === tab.id
-                    ? "var(--wrife-blue)"
-                    : "var(--wrife-text-muted)",
-                borderBottom:
-                  activeTab === tab.id
-                    ? "2px solid var(--wrife-blue)"
-                    : "2px solid transparent",
-              }}
-            >
-              <TabIcon label={tab.iconLabel} />
-              {tab.label}
-            </button>
-          ))}
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-6">
+          <div
+            className="flex whitespace-nowrap gap-1 p-1 rounded-xl min-w-max md:min-w-0"
+            style={{
+              backgroundColor: "var(--wrife-surface)",
+              border: "1px solid var(--wrife-border)",
+            }}
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className="flex-shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center min-h-[44px]"
+                style={{
+                  backgroundColor:
+                    activeTab === tab.id ? "var(--wrife-bg)" : "transparent",
+                  color:
+                    activeTab === tab.id
+                      ? "var(--wrife-blue)"
+                      : "var(--wrife-text-muted)",
+                  borderBottom:
+                    activeTab === tab.id
+                      ? "2px solid var(--wrife-blue)"
+                      : "2px solid transparent",
+                }}
+              >
+                <TabIcon label={tab.iconLabel} />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div
-          className="rounded-2xl p-6 md:p-8"
+          className="rounded-2xl p-4 sm:p-6 md:p-8"
           style={{
             backgroundColor: "var(--wrife-surface)",
             boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
@@ -234,7 +237,7 @@ export default function LessonDetailPage({
         >
           <div className="flex items-center gap-3 mb-6">
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-base sm:text-lg font-bold"
               style={{
                 backgroundColor: "var(--wrife-blue-soft)",
                 color: "var(--wrife-blue)",
@@ -279,9 +282,9 @@ export default function LessonDetailPage({
             ))}
           </ul>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
-              className="px-6 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90 hover:shadow-md"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90 hover:shadow-md min-h-[44px]"
               style={{
                 backgroundColor: "var(--wrife-blue)",
                 color: "white",
@@ -290,7 +293,7 @@ export default function LessonDetailPage({
               View Resource
             </button>
             <button
-              className="px-6 py-2.5 rounded-lg text-sm font-medium border-2 transition-all hover:opacity-80"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm font-medium border-2 transition-all hover:opacity-80 min-h-[44px]"
               style={{
                 backgroundColor: "transparent",
                 color: "var(--wrife-blue)",
