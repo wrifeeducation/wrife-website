@@ -11,15 +11,16 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { user, signIn } = useAuth();
+  const { user, signIn, getDashboardPath } = useAuth();
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const redirectTo = params?.get('redirectTo');
 
   useEffect(() => {
     if (user) {
-      const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get('redirectTo') || '/dashboard';
-      router.push(redirectTo);
+      const dashboardPath = getDashboardPath();
+      window.location.href = redirectTo || dashboardPath;
     }
-  }, [user, router]);
+  }, [user, redirectTo, getDashboardPath]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,9 +33,8 @@ export default function LoginPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get('redirectTo') || '/dashboard';
-      window.location.href = redirectTo;
+      const dashboardPath = getDashboardPath();
+      window.location.href = redirectTo || dashboardPath;
     }
   }
 
