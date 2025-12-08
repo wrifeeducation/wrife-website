@@ -33,6 +33,25 @@ const chapterTitles: { [key: number]: string } = {
   7: "Project Based Writing",
 };
 
+const unitTitles: { [key: number]: string } = {
+  1: "Stories",
+  2: "Story Structure",
+  3: "Parts of Speech 1",
+  4: "Parts of Speech 2",
+  5: "Reading Comprehension",
+  6: "Sentence Types",
+  7: "Phrases and Clauses",
+  8: "Simple (Single-Clause) Sentences",
+  9: "Paragraphs",
+  10: "Planning",
+  11: "Developing a Story",
+  12: "Editing",
+  13: "Building Cohesion Within and Across Paragraphs",
+  14: "Non-Fiction Writing",
+  15: "Fictional Writing",
+  16: "Exploring Different Projects",
+};
+
 const yearGroups = [
   "All Year Groups",
   "Years 2-3",
@@ -383,7 +402,7 @@ export default function LessonLibrary() {
                                     className="font-semibold"
                                     style={{ color: "var(--wrife-text-main)" }}
                                   >
-                                    Unit {unit}
+                                    Unit {unit}: {unitTitles[unit] || "Lessons"}
                                   </h4>
                                   <p
                                     className="text-xs"
