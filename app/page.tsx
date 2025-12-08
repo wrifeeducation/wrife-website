@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
 import HeroSection from "../components/HeroSection";
+import Footer from "../components/Footer";
 
 const LessonLibrary = dynamic(() => import("../components/LessonLibrary"), {
   ssr: false,
@@ -30,10 +31,11 @@ const LessonLibrary = dynamic(() => import("../components/LessonLibrary"), {
 
 export default function Home() {
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
+    <div className="flex flex-col" style={{ minHeight: "100vh", backgroundColor: "var(--wrife-bg)" }}>
       <Navbar />
       <HeroSection />
       <LessonLibrary />
+      <Footer />
     </div>
   );
 }
