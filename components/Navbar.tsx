@@ -59,6 +59,13 @@ export default function Navbar() {
               Curriculum
             </Link>
             <Link
+              href="/classes"
+              className="text-sm font-medium transition-colors hover:opacity-70"
+              style={{ color: "var(--wrife-text-main)" }}
+            >
+              Classes
+            </Link>
+            <Link
               href="/teacher-area"
               className="text-sm font-medium transition-colors hover:opacity-70"
               style={{ color: "var(--wrife-text-main)" }}
@@ -137,6 +144,17 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Curriculum
+            </Link>
+            <Link
+              href="/classes"
+              className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
+              style={{
+                color: "var(--wrife-text-main)",
+                backgroundColor: "var(--wrife-surface)",
+              }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Classes
             </Link>
             <Link
               href="/teacher-area"
