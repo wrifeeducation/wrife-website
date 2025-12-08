@@ -17,16 +17,21 @@ interface Lesson {
   year_groups: string | null;
 }
 
-const chapters = [
-  { label: "All Chapters", value: 0 },
-  { label: "Chapter 1", value: 1 },
-  { label: "Chapter 2", value: 2 },
-  { label: "Chapter 3", value: 3 },
-  { label: "Chapter 4", value: 4 },
-  { label: "Chapter 5", value: 5 },
-  { label: "Chapter 6", value: 6 },
-  { label: "Chapter 7", value: 7 },
-];
+interface GroupedLessons {
+  [chapter: number]: {
+    [unit: number]: Lesson[];
+  };
+}
+
+const chapterTitles: { [key: number]: string } = {
+  1: "Getting Started with Writing",
+  2: "Building Paragraphs",
+  3: "Story Elements",
+  4: "Descriptive Writing",
+  5: "Persuasive Writing",
+  6: "Information Writing",
+  7: "Advanced Composition",
+};
 
 const yearGroups = [
   "All Year Groups",
@@ -44,20 +49,33 @@ function getLessonNumber(lesson: Lesson): string {
 
 function getLessonTags(lesson: Lesson): string[] {
   const tags: string[] = [];
-  tags.push(`Chapter ${lesson.chapter}`);
   if (lesson.year_groups) {
     tags.push(lesson.year_groups);
   }
   return tags;
 }
 
+function ChevronIcon({ isOpen }: { isOpen: boolean }) {
+  return (
+    <svg
+      className={`w-5 h-5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
 export default function LessonLibrary() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedChapter, setSelectedChapter] = useState(0);
   const [selectedYearGroup, setSelectedYearGroup] = useState("All Year Groups");
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function fetchLessons() {
@@ -83,8 +101,6 @@ export default function LessonLibrary() {
 
   const filteredLessons = useMemo(() => {
     return lessons.filter((lesson) => {
-      const matchesChapter =
-        selectedChapter === 0 || lesson.chapter === selectedChapter;
       const matchesYearGroup =
         selectedYearGroup === "All Year Groups" ||
         lesson.year_groups === selectedYearGroup;
@@ -93,9 +109,79 @@ export default function LessonLibrary() {
         lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (lesson.summary && lesson.summary.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      return matchesChapter && matchesYearGroup && matchesSearch;
+      return matchesYearGroup && matchesSearch;
     });
-  }, [lessons, selectedChapter, selectedYearGroup, searchQuery]);
+  }, [lessons, selectedYearGroup, searchQuery]);
+
+  const groupedLessons = useMemo(() => {
+    const grouped: GroupedLessons = {};
+    
+    filteredLessons.forEach((lesson) => {
+      if (!grouped[lesson.chapter]) {
+        grouped[lesson.chapter] = {};
+      }
+      if (!grouped[lesson.chapter][lesson.unit]) {
+        grouped[lesson.chapter][lesson.unit] = [];
+      }
+      grouped[lesson.chapter][lesson.unit].push(lesson);
+    });
+
+    return grouped;
+  }, [filteredLessons]);
+
+  const toggleChapter = (chapter: number) => {
+    setExpandedChapters((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(chapter)) {
+        newSet.delete(chapter);
+      } else {
+        newSet.add(chapter);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleUnit = (chapter: number, unit: number) => {
+    const key = `${chapter}-${unit}`;
+    setExpandedUnits((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
+  };
+
+  const expandAll = () => {
+    const allChapters = new Set(Object.keys(groupedLessons).map(Number));
+    const allUnits = new Set<string>();
+    Object.entries(groupedLessons).forEach(([chapter, units]) => {
+      Object.keys(units).forEach((unit) => {
+        allUnits.add(`${chapter}-${unit}`);
+      });
+    });
+    setExpandedChapters(allChapters);
+    setExpandedUnits(allUnits);
+  };
+
+  const collapseAll = () => {
+    setExpandedChapters(new Set());
+    setExpandedUnits(new Set());
+  };
+
+  const getChapterLessonCount = (chapter: number): number => {
+    const units = groupedLessons[chapter];
+    if (!units) return 0;
+    return Object.values(units).reduce((sum, lessons) => sum + lessons.length, 0);
+  };
+
+  const getUnitLessonCount = (chapter: number, unit: number): number => {
+    return groupedLessons[chapter]?.[unit]?.length || 0;
+  };
+
+  const sortedChapters = Object.keys(groupedLessons).map(Number).sort((a, b) => a - b);
 
   return (
     <section
@@ -131,23 +217,6 @@ export default function LessonLibrary() {
           }}
         >
           <select
-            value={selectedChapter}
-            onChange={(e) => setSelectedChapter(Number(e.target.value))}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2"
-            style={{
-              backgroundColor: "var(--wrife-bg)",
-              color: "var(--wrife-text-main)",
-              border: "1px solid var(--wrife-border)",
-            }}
-          >
-            {chapters.map((chapter) => (
-              <option key={chapter.value} value={chapter.value}>
-                {chapter.label}
-              </option>
-            ))}
-          </select>
-
-          <select
             value={selectedYearGroup}
             onChange={(e) => setSelectedYearGroup(e.target.value)}
             className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2"
@@ -178,11 +247,35 @@ export default function LessonLibrary() {
               }}
             />
           </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={expandAll}
+              className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-80"
+              style={{
+                backgroundColor: "var(--wrife-blue)",
+                color: "white",
+              }}
+            >
+              Expand All
+            </button>
+            <button
+              onClick={collapseAll}
+              className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-80"
+              style={{
+                backgroundColor: "var(--wrife-bg)",
+                color: "var(--wrife-text-main)",
+                border: "1px solid var(--wrife-border)",
+              }}
+            >
+              Collapse All
+            </button>
+          </div>
         </div>
 
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
               <div
                 key={i}
                 className="rounded-2xl p-4 animate-pulse"
@@ -192,14 +285,8 @@ export default function LessonLibrary() {
                   border: "1px solid var(--wrife-border)",
                 }}
               >
-                <div className="h-9 w-9 bg-gray-200 rounded-full mb-3"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mb-1"></div>
-                <div className="h-3 bg-gray-200 rounded w-5/6 mb-3"></div>
-                <div className="flex gap-2">
-                  <div className="h-5 bg-gray-200 rounded-full w-16"></div>
-                  <div className="h-5 bg-gray-200 rounded-full w-20"></div>
-                </div>
+                <div className="h-6 bg-gray-200 rounded w-1/3 mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
               </div>
             ))}
           </div>
@@ -217,22 +304,130 @@ export default function LessonLibrary() {
           </div>
         )}
 
-        {!loading && filteredLessons.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredLessons.map((lesson) => (
-              <LessonCard
-                key={`${lesson.id}-${lesson.part || ""}`}
-                lessonNumber={getLessonNumber(lesson)}
-                linkNumber={lesson.lesson_number}
-                title={lesson.title}
-                summary={lesson.summary || ""}
-                tags={getLessonTags(lesson)}
-              />
-            ))}
+        {!loading && !error && sortedChapters.length > 0 && (
+          <div className="space-y-4">
+            {sortedChapters.map((chapter) => {
+              const isChapterExpanded = expandedChapters.has(chapter);
+              const units = groupedLessons[chapter];
+              const sortedUnits = Object.keys(units).map(Number).sort((a, b) => a - b);
+
+              return (
+                <div
+                  key={chapter}
+                  className="rounded-2xl overflow-hidden"
+                  style={{
+                    backgroundColor: "var(--wrife-surface)",
+                    boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
+                    border: "1px solid var(--wrife-border)",
+                  }}
+                >
+                  <button
+                    onClick={() => toggleChapter(chapter)}
+                    className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <div>
+                      <h3
+                        className="text-lg font-bold"
+                        style={{ color: "var(--wrife-text-main)" }}
+                      >
+                        Chapter {chapter}: {chapterTitles[chapter] || "Lessons"}
+                      </h3>
+                      <p
+                        className="text-sm mt-1"
+                        style={{ color: "var(--wrife-text-muted)" }}
+                      >
+                        {getChapterLessonCount(chapter)} lessons in {sortedUnits.length} units
+                      </p>
+                    </div>
+                    <div style={{ color: "var(--wrife-blue)" }}>
+                      <ChevronIcon isOpen={isChapterExpanded} />
+                    </div>
+                  </button>
+
+                  <div
+                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      isChapterExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <div className="px-4 pb-4 space-y-3">
+                      {sortedUnits.map((unit) => {
+                        const unitKey = `${chapter}-${unit}`;
+                        const isUnitExpanded = expandedUnits.has(unitKey);
+                        const unitLessons = units[unit];
+
+                        return (
+                          <div
+                            key={unitKey}
+                            className="rounded-xl overflow-hidden"
+                            style={{
+                              backgroundColor: "var(--wrife-bg)",
+                              border: "1px solid var(--wrife-border)",
+                            }}
+                          >
+                            <button
+                              onClick={() => toggleUnit(chapter, unit)}
+                              className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                                  style={{
+                                    backgroundColor: "var(--wrife-blue-soft)",
+                                    color: "var(--wrife-blue)",
+                                  }}
+                                >
+                                  {unit}
+                                </span>
+                                <div>
+                                  <h4
+                                    className="font-semibold"
+                                    style={{ color: "var(--wrife-text-main)" }}
+                                  >
+                                    Unit {unit}
+                                  </h4>
+                                  <p
+                                    className="text-xs"
+                                    style={{ color: "var(--wrife-text-muted)" }}
+                                  >
+                                    {getUnitLessonCount(chapter, unit)} lessons
+                                  </p>
+                                </div>
+                              </div>
+                              <div style={{ color: "var(--wrife-blue)" }}>
+                                <ChevronIcon isOpen={isUnitExpanded} />
+                              </div>
+                            </button>
+
+                            <div
+                              className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                                isUnitExpanded ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"
+                              }`}
+                            >
+                              <div className="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {unitLessons.map((lesson) => (
+                                  <LessonCard
+                                    key={`${lesson.id}-${lesson.part || ""}`}
+                                    lessonNumber={getLessonNumber(lesson)}
+                                    linkNumber={lesson.lesson_number}
+                                    title={lesson.title}
+                                    summary={lesson.summary || ""}
+                                    tags={getLessonTags(lesson)}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {!loading && filteredLessons.length === 0 && (
+        {!loading && !error && filteredLessons.length === 0 && (
           <div
             className="text-center py-12 rounded-xl"
             style={{
