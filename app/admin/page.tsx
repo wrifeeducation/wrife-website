@@ -172,11 +172,18 @@ export default function AdminDashboard() {
                 Manage all schools and subscriptions
               </p>
             </div>
-            <Link href="/admin/schools/new">
-              <button className="rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition">
-                + New School
-              </button>
-            </Link>
+            <div className="flex gap-3">
+              <Link href="/admin/users">
+                <button className="rounded-full border border-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition">
+                  Manage Users
+                </button>
+              </Link>
+              <Link href="/admin/schools/new">
+                <button className="rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition">
+                  + New School
+                </button>
+              </Link>
+            </div>
           </div>
 
           {schools.length === 0 ? (

@@ -18,15 +18,20 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /classes/page.tsx      # Teacher's classes list
   /classes/new/page.tsx  # Create new class form
   /classes/[id]/page.tsx # Class detail page with pupil management
+  /admin/page.tsx        # Super admin dashboard
+  /admin/login/page.tsx  # Secure admin login
+  /admin/users/page.tsx  # User management (assign to schools)
+  /admin/schools/new/page.tsx # Create new school form
 /components              # React components
   /LessonLibrary.tsx     # Lesson list with filtering
   /LessonCard.tsx        # Individual lesson card
   /LessonDetailPage.tsx  # Lesson detail with tabs
   /Navbar.tsx            # Navigation bar
   /HeroSection.tsx       # Hero section
+  /Footer.tsx            # Footer with admin link
 /lib
   /supabase.ts           # Supabase client configuration
-  /auth-context.tsx      # Authentication context provider
+  /auth-context.tsx      # Authentication context provider (auto-creates profiles on signup)
 /styles
   /globals.css           # Global styles and design tokens
 ```
@@ -89,6 +94,28 @@ The project uses CSS custom properties for consistent theming:
 - `last_name`: Pupil's last name (optional)
 - `display_name`: Full display name
 - `year_group`: Year group number (2-6)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### schools table
+- `id`: Primary key (UUID)
+- `name`: School name
+- `domain`: School domain
+- `subscription_tier`: trial, basic, pro, or enterprise
+- `teacher_limit`: Maximum teachers allowed
+- `pupil_limit`: Maximum pupils allowed
+- `is_active`: Boolean status
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### profiles table
+- `id`: Primary key (UUID, matches auth.users id)
+- `email`: User email
+- `first_name`: User's first name
+- `last_name`: User's last name
+- `display_name`: Full display name
+- `role`: admin, school_admin, teacher, or pupil
+- `school_id`: Foreign key to schools table
 - `created_at`: Timestamp
 - `updated_at`: Timestamp
 
