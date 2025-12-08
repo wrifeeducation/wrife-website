@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { user, signIn, getDashboardPath } = useAuth();
+  const { user, signIn, signOut, getDashboardPath } = useAuth();
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const redirectTo = params?.get('redirectTo');
 
@@ -32,10 +33,29 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
-      const dashboardPath = getDashboardPath();
-      window.location.href = redirectTo || dashboardPath;
+      return;
     }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile?.role === 'admin') {
+        setError('Admin accounts must use the Admin Portal.');
+        await signOut();
+        setLoading(false);
+        router.push('/admin/login');
+        return;
+      }
+    }
+
+    const dashboardPath = getDashboardPath();
+    window.location.href = redirectTo || dashboardPath;
   }
 
   return (
