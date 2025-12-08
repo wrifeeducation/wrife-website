@@ -23,38 +23,15 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
     setError('');
 
     try {
-      const tempEmail = `pupil-${firstName.toLowerCase()}-${lastName.toLowerCase()}-${Date.now()}@wrifepupils.com`;
-      const tempPassword = Math.random().toString(36).slice(-12);
-
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: tempEmail,
-        password: tempPassword,
-        options: {
-          data: {
-            role: 'pupil',
-            first_name: firstName,
-            last_name: lastName,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role: 'pupil' })
-        .eq('id', authData.user.id);
-
-      if (profileError) throw profileError;
+      const pupilId = crypto.randomUUID();
 
       const { error: pupilError } = await supabase
         .from('pupils')
         .insert({
-          id: authData.user.id,
+          id: pupilId,
           first_name: firstName,
           last_name: lastName,
-          display_name: `${firstName} ${lastName}`,
+          display_name: `${firstName} ${lastName}`.trim(),
           year_group: yearGroup,
         });
 
@@ -64,7 +41,7 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
         .from('class_members')
         .insert({
           class_id: classId,
-          pupil_id: authData.user.id,
+          pupil_id: pupilId,
         });
 
       if (memberError) throw memberError;
@@ -148,7 +125,7 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
           </div>
 
           <div className="p-3 rounded-lg bg-[var(--wrife-blue-soft)] text-xs text-[var(--wrife-text-main)]">
-            The pupil will be able to log in using the class code.
+            The pupil will be added to this class and you can track their progress.
           </div>
 
           <div className="flex gap-3 pt-2">
