@@ -23,7 +23,7 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
     setError('');
 
     try {
-      const tempEmail = `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}@wrife-pupil.temp`;
+      const tempEmail = `pupil.${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}@wrife.test`;
       const tempPassword = Math.random().toString(36).slice(-12);
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
