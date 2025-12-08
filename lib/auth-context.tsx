@@ -16,6 +16,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, displayName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  getDashboardPath: () => string;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
   signOut: async () => {},
+  getDashboardPath: () => '/login',
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -50,6 +52,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const getDashboardPath = () => {
+    if (!user) return '/login';
+    if (user.role === 'admin') return '/admin';
+    if (user.role === 'school_admin') return '/admin/school';
+    if (user.role === 'teacher') return '/dashboard';
+    if (user.role === 'pupil') return '/pupil/dashboard';
+    return '/dashboard';
+  };
 
   async function fetchUserProfile(userId: string) {
     const { data: profile } = await supabase
@@ -104,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, getDashboardPath }}>
       {children}
     </AuthContext.Provider>
   );
