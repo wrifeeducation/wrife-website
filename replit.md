@@ -73,6 +73,14 @@ The project uses CSS custom properties for consistent theming:
 - `created_at`: Timestamp
 - `updated_at`: Timestamp
 
+### class_members table
+- `id`: Primary key (serial)
+- `class_id`: Foreign key to classes table (with CASCADE delete)
+- `pupil_name`: Pupil's name
+- `pupil_email`: Optional pupil email
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
 ## Running the Project
 ```bash
 npm run dev   # Start development server on port 5000
