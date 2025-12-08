@@ -28,11 +28,12 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
       const tempEmail = `${firstName.toLowerCase()}${lastName.toLowerCase()}${randomId}@wrife.co.uk`;
       const tempPassword = Math.random().toString(36).slice(-12);
 
-      // Step 2: Create auth user (trigger will auto-create profile with pupil role)
+      // Step 2: Create auth user with auto-confirm
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: tempEmail,
         password: tempPassword,
         options: {
+          emailRedirectTo: undefined,
           data: {
             role: 'pupil',
             first_name: firstName,
