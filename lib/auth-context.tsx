@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUp(email: string, password: string, displayName: string) {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -105,6 +105,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     });
+
+    // If signup successful, create a profile entry
+    if (!error && data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          email: email,
+          display_name: displayName,
+          role: 'teacher', // Default role for new signups
+          school_id: null, // Can be assigned later by admin
+        });
+      
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+      }
+    }
+
     return { error };
   }
 
