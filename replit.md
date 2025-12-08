@@ -15,6 +15,8 @@ WriFe is a writing education platform for primary school teachers, providing a c
 /app                      # Next.js App Router pages
   /page.tsx              # Home page with lesson library
   /lesson/[id]/page.tsx  # Dynamic lesson detail page
+  /classes/page.tsx      # Teacher's classes list
+  /classes/new/page.tsx  # Create new class form
 /components              # React components
   /LessonLibrary.tsx     # Lesson list with filtering
   /LessonCard.tsx        # Individual lesson card
@@ -23,6 +25,7 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /HeroSection.tsx       # Hero section
 /lib
   /supabase.ts           # Supabase client configuration
+  /auth-context.tsx      # Authentication context provider
 /styles
   /globals.css           # Global styles and design tokens
 ```
@@ -59,6 +62,16 @@ The project uses CSS custom properties for consistent theming:
 - `file_type`: Type of file (teacher_guide, presentation, interactive_practice, worksheet_support, progress_tracker, assessment)
 - `file_name`: Display name of the file
 - `file_url`: Google Drive URL to the file
+
+### classes table
+- `id`: Primary key
+- `teacher_id`: Foreign key to auth.users (UUID)
+- `name`: Class name (e.g., "Year 4 Maple")
+- `year_group`: Year group number (2-6)
+- `class_code`: Unique 6-character code for pupils to join
+- `school_name`: Optional school name
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
 
 ## Running the Project
 ```bash
