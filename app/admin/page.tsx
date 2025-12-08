@@ -12,11 +12,11 @@ interface School {
   name: string;
   domain: string;
   subscription_tier: 'trial' | 'basic' | 'pro' | 'enterprise';
-  teacher_count: number;
   teacher_limit: number;
-  pupil_count: number;
   pupil_limit: number;
   is_active: boolean;
+  teacherCount: number;
+  pupilCount: number;
 }
 
 function getQuotaColor(used: number, limit: number): string {
@@ -88,7 +88,32 @@ export default function AdminDashboard() {
         .order('name');
 
       if (error) throw error;
-      setSchools(data || []);
+      
+      const schools = data || [];
+      
+      const schoolsWithCounts = await Promise.all(
+        schools.map(async (school) => {
+          const { count: teacherCount } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('school_id', school.id)
+            .eq('role', 'teacher');
+          
+          const { count: pupilCount } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('school_id', school.id)
+            .eq('role', 'pupil');
+          
+          return {
+            ...school,
+            teacherCount: teacherCount || 0,
+            pupilCount: pupilCount || 0,
+          };
+        })
+      );
+      
+      setSchools(schoolsWithCounts);
     } catch (err) {
       console.error('Error fetching schools:', err);
     } finally {
@@ -200,13 +225,13 @@ export default function AdminDashboard() {
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-[var(--wrife-text-muted)]">Teachers</span>
                         <span className="font-semibold text-[var(--wrife-text-main)]">
-                          {school.teacher_count}/{school.teacher_limit}
+                          {school.teacherCount}/{school.teacher_limit}
                         </span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${getQuotaColor(school.teacher_count, school.teacher_limit)} transition-all`}
-                          style={{ width: `${Math.min((school.teacher_count / school.teacher_limit) * 100, 100)}%` }}
+                          className={`h-full ${getQuotaColor(school.teacherCount, school.teacher_limit)} transition-all`}
+                          style={{ width: `${Math.min((school.teacherCount / school.teacher_limit) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
@@ -215,13 +240,13 @@ export default function AdminDashboard() {
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-[var(--wrife-text-muted)]">Pupils</span>
                         <span className="font-semibold text-[var(--wrife-text-main)]">
-                          {school.pupil_count}/{school.pupil_limit}
+                          {school.pupilCount}/{school.pupil_limit}
                         </span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${getQuotaColor(school.pupil_count, school.pupil_limit)} transition-all`}
-                          style={{ width: `${Math.min((school.pupil_count / school.pupil_limit) * 100, 100)}%` }}
+                          className={`h-full ${getQuotaColor(school.pupilCount, school.pupil_limit)} transition-all`}
+                          style={{ width: `${Math.min((school.pupilCount / school.pupil_limit) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
