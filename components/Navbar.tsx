@@ -50,43 +50,29 @@ export default function Navbar() {
             </div>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
-            <Link
-              href="/curriculum"
-              className="text-sm font-medium transition-colors hover:opacity-70"
-              style={{ color: "var(--wrife-text-main)" }}
+          <nav className="hidden md:flex items-center gap-6">
+            <a
+              href="#curriculum"
+              className="text-sm transition-colors hover:text-[var(--wrife-blue)]"
+              style={{ color: "var(--wrife-text-muted)" }}
             >
               Curriculum
-            </Link>
+            </a>
             <Link
               href="/classes"
-              className="text-sm font-medium transition-colors hover:opacity-70"
-              style={{ color: "var(--wrife-text-main)" }}
+              className="text-sm transition-colors hover:text-[var(--wrife-blue)]"
+              style={{ color: "var(--wrife-text-muted)" }}
             >
               Classes
             </Link>
             <Link
-              href="/teacher-area"
-              className="text-sm font-medium transition-colors hover:opacity-70"
-              style={{ color: "var(--wrife-text-main)" }}
-            >
-              Teacher Area
-            </Link>
-            <Link
               href="/dashboard"
-              className="text-sm transition-colors hover:opacity-70"
+              className="text-sm transition-colors hover:text-[var(--wrife-blue)]"
               style={{ color: "var(--wrife-text-muted)" }}
             >
               Dashboard
             </Link>
-            <Link
-              href="/interactive-practice"
-              className="text-sm font-medium transition-colors hover:opacity-70"
-              style={{ color: "var(--wrife-text-main)" }}
-            >
-              Interactive Practice
-            </Link>
-          </div>
+          </nav>
         </div>
 
         <div className="flex items-center gap-3">
@@ -134,8 +120,8 @@ export default function Navbar() {
           style={{ borderTop: "1px solid var(--wrife-border)" }}
         >
           <div className="flex flex-col gap-2">
-            <Link
-              href="/curriculum"
+            <a
+              href="#curriculum"
               className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
               style={{
                 color: "var(--wrife-text-main)",
@@ -144,7 +130,7 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Curriculum
-            </Link>
+            </a>
             <Link
               href="/classes"
               className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
@@ -157,37 +143,15 @@ export default function Navbar() {
               Classes
             </Link>
             <Link
-              href="/teacher-area"
+              href="/dashboard"
               className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
               style={{
                 color: "var(--wrife-text-main)",
-                backgroundColor: "var(--wrife-surface)",
-              }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Teacher Area
-            </Link>
-            <Link
-              href="/dashboard"
-              className="px-4 py-3 text-sm rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
-              style={{
-                color: "var(--wrife-text-muted)",
                 backgroundColor: "var(--wrife-surface)",
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
               Dashboard
-            </Link>
-            <Link
-              href="/interactive-practice"
-              className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
-              style={{
-                color: "var(--wrife-text-main)",
-                backgroundColor: "var(--wrife-surface)",
-              }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Interactive Practice
             </Link>
             <Link
               href="/signup"
