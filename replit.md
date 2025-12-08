@@ -77,8 +77,18 @@ The project uses CSS custom properties for consistent theming:
 ### class_members table
 - `id`: Primary key (serial)
 - `class_id`: Foreign key to classes table (with CASCADE delete)
-- `pupil_name`: Pupil's name
-- `pupil_email`: Optional pupil email
+- `pupil_id`: Foreign key to pupils table (UUID, with CASCADE delete)
+- `pupil_name`: Pupil's name (legacy)
+- `pupil_email`: Optional pupil email (legacy)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### pupils table
+- `id`: Primary key (UUID, references auth.users)
+- `first_name`: Pupil's first name
+- `last_name`: Pupil's last name (optional)
+- `display_name`: Full display name
+- `year_group`: Year group number (2-6)
 - `created_at`: Timestamp
 - `updated_at`: Timestamp
 
