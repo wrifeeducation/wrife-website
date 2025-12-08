@@ -47,7 +47,7 @@ export default function DashboardPage() {
             className="text-xs sm:text-sm"
             style={{ color: "var(--wrife-text-muted)" }}
           >
-            Quick view of today's writing activity and progress
+            Quick view of today&apos;s writing activity and progress
           </p>
         </header>
 
