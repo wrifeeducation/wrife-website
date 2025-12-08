@@ -92,27 +92,28 @@ export default function AdminDashboard() {
       const schools = data || [];
       
       const schoolsWithCounts = await Promise.all(
-        schools.map(async (school) => {
-          const { count: teacherCount } = await supabase
+        (schools || []).map(async (school) => {
+          const { data: teachers } = await supabase
             .from('profiles')
-            .select('*', { count: 'exact', head: true })
+            .select('id')
             .eq('school_id', school.id)
             .eq('role', 'teacher');
           
-          const { count: pupilCount } = await supabase
+          const { data: pupils } = await supabase
             .from('profiles')
-            .select('*', { count: 'exact', head: true })
+            .select('id')
             .eq('school_id', school.id)
             .eq('role', 'pupil');
           
           return {
             ...school,
-            teacherCount: teacherCount || 0,
-            pupilCount: pupilCount || 0,
+            teacherCount: teachers?.length || 0,
+            pupilCount: pupils?.length || 0,
           };
         })
       );
       
+      console.log('Schools with counts:', schoolsWithCounts);
       setSchools(schoolsWithCounts);
     } catch (err) {
       console.error('Error fetching schools:', err);
