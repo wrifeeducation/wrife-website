@@ -11,7 +11,7 @@ NEXT_TELEMETRY_DISABLED = "1"
 
 [deployment]
 build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
+run = ["npm", "run", "start", "--", "-p", "3000"]
 deploymentTarget = "autoscale"
 
 [[ports]]
@@ -27,10 +27,6 @@ externalPort = 5000
 [[ports]]
 localPort = 36653
 externalPort = 80
-
-[[ports]]
-localPort = 38805
-externalPort = 3000
 
 [agent]
 expertMode = true
