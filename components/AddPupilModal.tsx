@@ -25,7 +25,7 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
     try {
       // Step 1: Create a temporary email
       const randomId = Math.random().toString(36).substring(2, 8);
-      const tempEmail = `${firstName.toLowerCase()}${lastName.toLowerCase()}${randomId}@wrife.app`;
+      const tempEmail = `${firstName.toLowerCase()}${lastName.toLowerCase()}${randomId}@wrife.co.uk`;
       const tempPassword = Math.random().toString(36).slice(-12);
 
       // Step 2: Create auth user
