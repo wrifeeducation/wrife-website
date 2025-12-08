@@ -23,8 +23,8 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
     setError('');
 
     try {
-      // Step 1: Create a temporary email
-      const tempEmail = `pupil.${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}@wrife.test`;
+      // Step 1: Create a temporary email using example.com (IANA reserved domain)
+      const tempEmail = `pupil.${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}@example.com`;
       const tempPassword = Math.random().toString(36).slice(-12);
 
       // Step 2: Create auth user
