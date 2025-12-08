@@ -1,0 +1,176 @@
+Create a page for teachers to create new classes.
+
+FILE: app/classes/new/page.tsx
+
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
+import { Navbar } from '@/components/Navbar';
+import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export default function NewClassPage() {
+  const [name, setName] = useState('');
+  const [yearGroup, setYearGroup] = useState<number>(3);
+  const [schoolName, setSchoolName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const { user } = useAuth();
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Generate class code
+      const { data: codeData, error: codeError } = await supabase
+        .rpc('generate_class_code');
+
+      if (codeError) throw codeError;
+
+      // Create class
+      const { data, error: insertError } = await supabase
+        .from('classes')
+        .insert({
+          teacher_id: user.id,
+          name,
+          year_group: yearGroup,
+          class_code: codeData,
+          school_name: schoolName || null,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      router.push('/classes');
+    } catch (err: any) {
+      console.error('Error creating class:', err);
+      setError(err.message || 'Failed to create class');
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
+        <div className="mx-auto max-w-2xl px-4">
+          {/* Header */}
+          <div className="mb-6">
+            <Link href="/classes" className="text-sm text-[var(--wrife-blue)] hover:underline mb-2 inline-block">
+              ← Back to classes
+            </Link>
+            <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">Create New Class</h1>
+            <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
+              Set up a new class to start managing your pupils
+            </p>
+          </div>
+
+          {/* Form */}
+          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="p-3 rounded-lg bg-[var(--wrife-coral)]/10 border border-[var(--wrife-coral)] text-sm text-[var(--wrife-danger)]">
+                  {error}
+                </div>
+              )}
+
+              {/* Class Name */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                  Class Name <span className="text-[var(--wrife-danger)]">*</span>
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder="e.g., Year 4 Maple"
+                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
+                />
+                <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
+                  This is how you'll identify the class
+                </p>
+              </div>
+
+              {/* Year Group */}
+              <div>
+                <label htmlFor="yearGroup" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                  Year Group <span className="text-[var(--wrife-danger)]">*</span>
+                </label>
+                <select
+                  id="yearGroup"
+                  value={yearGroup}
+                  onChange={(e) => setYearGroup(parseInt(e.target.value))}
+                  required
+                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
+                >
+                  <option value={2}>Year 2</option>
+                  <option value={3}>Year 3</option>
+                  <option value={4}>Year 4</option>
+                  <option value={5}>Year 5</option>
+                  <option value={6}>Year 6</option>
+                </select>
+              </div>
+
+              {/* School Name (Optional) */}
+              <div>
+                <label htmlFor="schoolName" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                  School Name <span className="text-xs text-[var(--wrife-text-muted)] font-normal">(Optional)</span>
+                </label>
+                <input
+                  id="schoolName"
+                  type="text"
+                  value={schoolName}
+                  onChange={(e) => setSchoolName(e.target.value)}
+                  placeholder="e.g., Riverside Primary"
+                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
+                />
+              </div>
+
+              {/* Info Box */}
+              <div className="p-4 rounded-lg bg-[var(--wrife-blue-soft)] border border-[var(--wrife-blue)]">
+                <p className="text-sm text-[var(--wrife-text-main)]">
+                  <strong>💡 Class Code:</strong> A unique code will be automatically generated. 
+                  Share this code with your pupils so they can join the class.
+                </p>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Link href="/classes" className="flex-1">
+                  <button
+                    type="button"
+                    className="w-full rounded-full border border-[var(--wrife-border)] px-6 py-3 text-sm font-semibold text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)] transition"
+                  >
+                    Cancel
+                  </button>
+                </Link>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition disabled:opacity-50"
+                >
+                  {loading ? 'Creating...' : 'Create Class'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
