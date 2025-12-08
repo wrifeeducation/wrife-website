@@ -23,29 +23,82 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
     setError('');
 
     try {
-      const pupilId = crypto.randomUUID();
+      // Step 1: Create a temporary email
+      const tempEmail = `pupil.${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}@wrife.test`;
+      const tempPassword = Math.random().toString(36).slice(-12);
 
+      // Step 2: Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: tempEmail,
+        password: tempPassword,
+        options: {
+          data: {
+            role: 'pupil',
+            first_name: firstName,
+            last_name: lastName,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create user');
+
+      const userId = authData.user.id;
+      console.log('Auth user created:', userId);
+
+      // Step 3: Wait for profile to be created by trigger (give it 2 seconds)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Step 4: Use upsert to ensure profile exists with pupil role
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: tempEmail,
+          role: 'pupil',
+        }, { onConflict: 'id' });
+
+      if (profileError) {
+        console.error('Profile upsert error:', profileError);
+        throw profileError;
+      }
+      console.log('Profile created/updated for:', userId);
+
+      // Step 4b: Wait a bit more to ensure profile is committed
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 5: Create pupil record
       const { error: pupilError } = await supabase
         .from('pupils')
         .insert({
-          id: pupilId,
+          id: userId,
           first_name: firstName,
           last_name: lastName,
-          display_name: `${firstName} ${lastName}`.trim(),
+          display_name: `${firstName} ${lastName}`,
           year_group: yearGroup,
         });
 
-      if (pupilError) throw pupilError;
+      if (pupilError) {
+        console.error('Pupil insert error:', pupilError);
+        throw pupilError;
+      }
+      console.log('Pupil record created for:', userId);
 
+      // Step 6: Add pupil to class
       const { error: memberError } = await supabase
         .from('class_members')
         .insert({
           class_id: classId,
-          pupil_id: pupilId,
+          pupil_id: userId,
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Class member insert error:', memberError);
+        throw memberError;
+      }
+      console.log('Pupil added to class:', classId);
 
+      // Success!
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -125,7 +178,7 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
           </div>
 
           <div className="p-3 rounded-lg bg-[var(--wrife-blue-soft)] text-xs text-[var(--wrife-text-main)]">
-            The pupil will be added to this class and you can track their progress.
+            The pupil will be able to log in using the class code.
           </div>
 
           <div className="flex gap-3 pt-2">

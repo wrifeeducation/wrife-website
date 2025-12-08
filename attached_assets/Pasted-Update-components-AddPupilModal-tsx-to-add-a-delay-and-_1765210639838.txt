@@ -1,0 +1,87 @@
+Update components/AddPupilModal.tsx to add a delay and verification step after creating the auth user.
+
+Replace the try block in handleSubmit (starting from "Step 1") with:
+
+try {
+  // Step 1: Create a temporary email
+  const tempEmail = `pupil.${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}@wrife.test`;
+  const tempPassword = Math.random().toString(36).slice(-12);
+
+  // Step 2: Create auth user
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email: tempEmail,
+    password: tempPassword,
+    options: {
+      data: {
+        role: 'pupil',
+        first_name: firstName,
+        last_name: lastName,
+      },
+    },
+  });
+
+  if (authError) throw authError;
+  if (!authData.user) throw new Error('Failed to create user');
+
+  // Step 3: Wait for profile to be created by trigger (give it 2 seconds)
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  // Step 4: Verify profile exists and update role
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', authData.user.id)
+    .single();
+
+  if (!existingProfile) {
+    // If profile doesn't exist, create it manually
+    const { error: profileInsertError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        email: tempEmail,
+        role: 'pupil',
+      });
+    
+    if (profileInsertError) throw profileInsertError;
+  } else {
+    // Update existing profile to pupil role
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ role: 'pupil' })
+      .eq('id', authData.user.id);
+
+    if (profileError) throw profileError;
+  }
+
+  // Step 5: Create pupil record
+  const { error: pupilError } = await supabase
+    .from('pupils')
+    .insert({
+      id: authData.user.id,
+      first_name: firstName,
+      last_name: lastName,
+      display_name: `${firstName} ${lastName}`,
+      year_group: yearGroup,
+    });
+
+  if (pupilError) throw pupilError;
+
+  // Step 6: Add pupil to class
+  const { error: memberError } = await supabase
+    .from('class_members')
+    .insert({
+      class_id: classId,
+      pupil_id: authData.user.id,
+    });
+
+  if (memberError) throw memberError;
+
+  // Success!
+  onSuccess();
+  onClose();
+} catch (err: any) {
+  console.error('Error creating pupil:', err);
+  setError(err.message || 'Failed to create pupil');
+  setLoading(false);
+}
