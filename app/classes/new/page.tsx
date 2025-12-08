@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
@@ -14,7 +14,37 @@ export default function NewClassPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen py-8" style={{ backgroundColor: 'var(--wrife-bg)' }}>
+          <div className="mx-auto max-w-2xl px-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+              <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--wrife-surface)', border: '1px solid var(--wrife-border)' }}>
+                <div className="space-y-5">
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
