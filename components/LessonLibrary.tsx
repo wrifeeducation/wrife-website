@@ -24,13 +24,13 @@ interface GroupedLessons {
 }
 
 const chapterTitles: { [key: number]: string } = {
-  1: "Getting Started with Writing",
-  2: "Building Paragraphs",
-  3: "Story Elements",
-  4: "Descriptive Writing",
-  5: "Persuasive Writing",
-  6: "Information Writing",
-  7: "Advanced Composition",
+  1: "Stories and Words",
+  2: "Sentences",
+  3: "Planning and Drafting",
+  4: "Editing to Final Composition",
+  5: "Building Cohesion and Final Composition",
+  6: "Writing for Different Purposes/Audiences",
+  7: "Project Based Writing",
 };
 
 const yearGroups = [
