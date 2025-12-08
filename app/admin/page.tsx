@@ -93,27 +93,47 @@ export default function AdminDashboard() {
       
       const schoolsWithCounts = await Promise.all(
         (schools || []).map(async (school) => {
-          const { data: teachers } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('school_id', school.id)
-            .eq('role', 'teacher');
+          console.log('Counting for school:', school.id, school.name);
           
-          const { data: pupils } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('school_id', school.id)
-            .eq('role', 'pupil');
-          
-          return {
-            ...school,
-            teacherCount: teachers?.length || 0,
-            pupilCount: pupils?.length || 0,
-          };
+          try {
+            const { data: teachers, error: teacherError } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('school_id', school.id)
+              .eq('role', 'teacher');
+            
+            console.log('Teacher query result:', { teachers, teacherError });
+            
+            const { data: pupils, error: pupilError } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('school_id', school.id)
+              .eq('role', 'pupil');
+            
+            console.log('Pupil query result:', { pupils, pupilError });
+            
+            const teacherCount = teachers?.length || 0;
+            const pupilCount = pupils?.length || 0;
+            
+            console.log('Final counts:', { teacherCount, pupilCount });
+            
+            return {
+              ...school,
+              teacherCount,
+              pupilCount,
+            };
+          } catch (err) {
+            console.error('Error counting:', err);
+            return {
+              ...school,
+              teacherCount: 0,
+              pupilCount: 0,
+            };
+          }
         })
       );
-      
-      console.log('Schools with counts:', schoolsWithCounts);
+
+      console.log('All schools with counts:', schoolsWithCounts);
       setSchools(schoolsWithCounts);
     } catch (err) {
       console.error('Error fetching schools:', err);
