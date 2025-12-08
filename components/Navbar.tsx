@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useAuth } from "@/lib/auth-context";
 
 const AuthButtons = dynamic(() => import("./AuthButtons"), {
   ssr: false,
@@ -11,6 +12,7 @@ const AuthButtons = dynamic(() => import("./AuthButtons"), {
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { getDashboardPath } = useAuth();
 
   return (
     <nav
@@ -66,7 +68,7 @@ export default function Navbar() {
               Classes
             </Link>
             <Link
-              href="/dashboard"
+              href={getDashboardPath()}
               className="text-sm transition-colors hover:text-[var(--wrife-blue)]"
               style={{ color: "var(--wrife-text-muted)" }}
             >
@@ -143,7 +145,7 @@ export default function Navbar() {
               Classes
             </Link>
             <Link
-              href="/dashboard"
+              href={getDashboardPath()}
               className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
               style={{
                 color: "var(--wrife-text-main)",
