@@ -26,14 +26,14 @@ export default function HeroSection() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center lg:justify-start">
               <Link
-                href="/lessons"
-                className="w-full sm:w-auto px-6 py-3 text-base font-medium rounded-lg transition-all hover:opacity-90 hover:shadow-lg min-h-[48px] flex items-center justify-center"
+                href="/signup"
+                className="w-full sm:w-auto px-6 py-3 text-base font-medium rounded-lg transition-all hover:opacity-90 hover:shadow-lg min-h-[48px] flex items-center justify-center text-center"
                 style={{
                   backgroundColor: "var(--wrife-blue)",
                   color: "white",
                 }}
               >
-                Explore the Lessons
+                Create a free teacher account to Explore the Lessons
               </Link>
               <Link
                 href="/how-it-works"
