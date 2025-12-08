@@ -69,8 +69,10 @@ npm run start # Start production server
 
 ## Architecture Decisions
 - **Dynamic Imports**: LessonLibrary uses `next/dynamic` with `ssr: false` to prevent hydration mismatches
+- **AuthButtons Dynamic Import**: AuthButtons uses `next/dynamic` with `ssr: false` to prevent hydration issues with authentication state
 - **Client Components**: Pages with interactivity use "use client" directive
 - **Lesson Routing**: Lessons use `lesson_number` for URL paths (e.g., /lesson/27)
+- **Client-Side Auth Protection**: Dashboard and lesson pages use client-side authentication checks via LessonPageWrapper component
 
 ## Project Policies
 
