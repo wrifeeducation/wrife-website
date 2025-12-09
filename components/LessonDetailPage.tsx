@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { AssignLessonModal } from './AssignLessonModal';
 
 interface LessonFile {
   id: number;
@@ -45,6 +46,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [activeTab, setActiveTab] = useState(fileTypeOrder[0]);
   const [htmlContent, setHtmlContent] = useState<Record<number, string>>({});
   const [loadingHtml, setLoadingHtml] = useState<Record<number, boolean>>({});
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   const filesByType = files.reduce((acc, file) => {
     const baseType = file.file_type.replace(/_core|_support|_challenge/g, '');
@@ -98,9 +100,24 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                 </span>
               </div>
             </div>
+            <div className="flex-shrink-0 mt-4 sm:mt-0">
+              <button
+                onClick={() => setShowAssignModal(true)}
+                className="rounded-full bg-[var(--wrife-blue)] px-5 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition"
+              >
+                Assign to Class
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      <AssignLessonModal
+        isOpen={showAssignModal}
+        onClose={() => setShowAssignModal(false)}
+        lessonId={lesson.id}
+        lessonTitle={lesson.title}
+      />
 
       <div className="bg-white border-b border-[var(--wrife-border)] overflow-x-auto">
         <div className="mx-auto max-w-6xl px-4">
