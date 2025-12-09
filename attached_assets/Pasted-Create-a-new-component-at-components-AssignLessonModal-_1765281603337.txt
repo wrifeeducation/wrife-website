@@ -1,0 +1,67 @@
+Create a new component at components/AssignLessonModal.tsx
+
+COMPONENT STRUCTURE:
+- Modal overlay (dark semi-transparent background)
+- Centered modal card (white background, rounded-2xl)
+- Close button (X in top-right corner)
+
+PROPS INTERFACE:
+interface AssignLessonModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  lessonId: number;
+  lessonTitle: string;
+}
+
+FORM FIELDS:
+1. Class Dropdown (required)
+   - Fetch teacher's classes: supabase.from('classes').select('id, name, year_group').eq('teacher_id', user.id).order('name')
+   - Display as: "Year X - Class Name"
+   - If no classes, show message: "You need to create a class first"
+
+2. Due Date (optional)
+   - Input type="date"
+   - Default: 1 week from today
+   - Min: today
+
+3. Instructions (optional)
+   - Textarea, 4 rows
+   - Max 500 characters
+   - Placeholder: "Add any instructions for your pupils..."
+   - Show character count
+
+FORM SUBMISSION:
+On submit:
+1. Validate class is selected
+2. Insert into assignments table:
+   - lesson_id: lessonId (from props)
+   - class_id: selected class ID
+   - teacher_id: user.id
+   - title: lessonTitle (from props)
+   - instructions: form value or null
+   - due_date: form value or null
+3. On success:
+   - Show alert: "Lesson assigned to [class name]!"
+   - Call onClose()
+   - Reload window to refresh data
+4. On error:
+   - Show error message in red banner
+
+BUTTONS:
+- Cancel: gray button, calls onClose()
+- Assign Lesson: blue button (var(--wrife-blue)), submits form
+- Both buttons: rounded-full, px-6 py-2
+
+STYLING:
+- Use WriFe design tokens (var(--wrife-blue), var(--wrife-border), etc)
+- Modal max-width: 600px
+- Form inputs: border border-[var(--wrife-border)], rounded-lg, px-4 py-2
+- Labels: text-sm font-semibold text-[var(--wrife-text-main)]
+- Mobile responsive (full width on small screens with padding)
+
+IMPORTS NEEDED:
+- useState, useEffect from 'react'
+- useAuth from '@/lib/auth-context'
+- supabase from '@/lib/supabase'
+
+If modal is not open (isOpen === false), return null.

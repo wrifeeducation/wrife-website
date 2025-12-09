@@ -30,6 +30,8 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /LessonLibrary.tsx     # Lesson list with filtering
   /LessonCard.tsx        # Individual lesson card
   /LessonDetailPage.tsx  # Lesson detail with tabs
+  /AddPupilModal.tsx     # Modal for adding pupils to classes
+  /AssignLessonModal.tsx # Modal for assigning lessons to classes
   /Navbar.tsx            # Navigation bar
   /HeroSection.tsx       # Hero section
   /Footer.tsx            # Footer with admin link
@@ -120,6 +122,17 @@ The project uses CSS custom properties for consistent theming:
 - `display_name`: Full display name
 - `role`: admin, school_admin, teacher, or pupil
 - `school_id`: Foreign key to schools table
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### assignments table
+- `id`: Primary key (serial)
+- `lesson_id`: Lesson ID (integer)
+- `class_id`: Foreign key to classes table (with CASCADE delete)
+- `teacher_id`: Teacher's UUID
+- `title`: Assignment title (from lesson)
+- `instructions`: Optional instructions text
+- `due_date`: Optional due date
 - `created_at`: Timestamp
 - `updated_at`: Timestamp
 
