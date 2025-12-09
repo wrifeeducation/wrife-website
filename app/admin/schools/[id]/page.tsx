@@ -42,7 +42,7 @@ export default function SchoolDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const schoolId = params.id as string;
+  const schoolId = params?.id as string;
 
   const [school, setSchool] = useState<School | null>(null);
   const [classes, setClasses] = useState<ClassData[]>([]);

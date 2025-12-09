@@ -40,7 +40,7 @@ interface LessonFile {
 
 export default function PupilAssignmentPage() {
   const params = useParams();
-  const assignmentId = params.id as string;
+  const assignmentId = params?.id as string;
   const [session, setSession] = useState<PupilSession | null>(null);
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
