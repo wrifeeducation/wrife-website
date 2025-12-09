@@ -46,10 +46,15 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
         .eq('teacher_id', user.id)
         .order('name');
 
-      if (error) throw error;
-      setClasses(data || []);
+      if (error) {
+        console.error('Error fetching classes:', error);
+        setClasses([]);
+      } else {
+        setClasses(data || []);
+      }
     } catch (err) {
       console.error('Error fetching classes:', err);
+      setClasses([]);
     } finally {
       setFetchingClasses(false);
     }
