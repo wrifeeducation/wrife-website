@@ -1,0 +1,291 @@
+🎨 ADDENDUM: UI MOCKUPS & WRIFI MASCOT SPECIFICATION
+Add this section to the specification document above (between sections 5 and 6)
+
+5B️⃣ UI MOCKUPS & VISUAL ASSETS
+Available UI Mockups (10 PNG files in /mnt/project/):
+1. Teacher Login & Auth:
+Teacher_login_ui.png - Teacher login page design
+App_Teacher_Login_page.png - Mobile teacher login
+Teacher_and_Pupil_login_page.png - Both login screens side-by-side
+Key Design Elements:
+
+WriFi mascot on login screen (friendly, welcoming)
+Email/Password fields with rounded corners
+"Don't have an account? Sign Up" link
+Blue primary button (var(--wrife-blue))
+Cream background (var(--wrife-bg))
+2. Teacher Dashboard:
+Teacher_Dashboard_on_App.png - Full teacher dashboard layout
+Teacher_login_AI_page_etc.png - Dashboard with AI features
+Dashboard Components:
+
+Top Nav: WriFe logo, Dashboard/Lessons/Classes links, profile menu
+Metric Cards (4):
+PWP submissions today (green)
+Drafts awaiting review (yellow)
+Average writing score (blue)
+Top skill gap (coral)
+Class Progress Chart: Line/area chart showing progress over time
+Recent Submissions List: Pupil name, lesson, timestamp, status badge
+Upcoming Lessons: Quick links to next lessons
+Color Coding:
+
+Emerging: Red/Coral badges
+Developing: Yellow badges
+Secure: Green badges
+Greater Depth: Blue badges
+3. Pupil Dashboard:
+Pupil_dashboard_and_screens_for_ages_6_10_Years_2_5.png - Pupil interface
+Pupil Dashboard Components:
+
+Friendly Greeting: "Hi, Maya! 👋"
+Writing Streak Card: "5 days 🔥" (gamification)
+Today's 7-minute Writing: Big yellow button with timer icon
+My Assignments List:
+Lesson title with number badge
+Class name
+Due date badge (color-coded)
+Teacher instructions preview
+"Open Lesson" button (yellow, rounded-full)
+Simple Progress Chart: Bar chart showing completed lessons
+Pupil-Friendly Features:
+
+Larger text (16-18px minimum)
+Simple language
+Fewer options (not overwhelming)
+Colorful, encouraging design
+Icons and emojis
+4. Lesson Pages:
+WriFe_website_landing_and_lesson_pages.png - Website lesson library
+Lesson_page.png - Individual lesson detail page
+Lesson Library:
+
+Grid of lesson cards (3-4 per row)
+Each card shows:
+Lesson number badge (circular, blue)
+Lesson title
+2-3 line summary
+Tags (chapter, unit, stage)
+"Open Teacher Page" button (yellow)
+Filters: Chapter dropdown, Unit dropdown, Year group selector
+Lesson Detail Page - 6 Tabs:
+
+
+[Teacher Guide] [Presentation] [Practice Activities] 
+[Worksheets] [Progress Tracker] [Assessment]
+Each tab shows:
+
+Preview card with icon
+Brief description
+"View Content" / "Download" buttons
+Google Drive integration
+5. AI Assessment UI:
+WriFe_AI_Assessment_UI.png - AI feedback interface
+Two-Pane Layout:
+
+LEFT PANE (Pupil Work):
+
+Pupil name and lesson info
+Tabs: Draft 1 / Draft 2 / Final
+Text with line numbers
+Highlighting toggles (spelling, grammar, suggestions)
+RIGHT PANE (AI Feedback):
+
+Overall band badge (large, color-coded)
+Green Card: "What you did well" (2-3 strengths)
+Yellow Card: "One thing to improve" (1 specific target)
+Blue Card: "Try this mini challenge" (practice activity)
+White Card: "Improved paragraph example"
+Bottom Actions:
+"Approve & Send to Pupil" (primary blue button)
+"Edit feedback" (secondary button)
+"Mark for manual review" (danger link)
+WriFi the Pencil - Official Mascot
+Files:
+
+official_WriFi_Mascot_Selection_Pack.docx - Full mascot guide
+Full_Wrife_Mascot_Pack.png - All mascot variations
+Mascot Overview:
+Name: WriFi the Pencil
+Style: Friendly, warm, child-appropriate (ages 6-10)
+Character: Encouraging writing companion
+
+Mascot Personality & Role:
+WriFi Represents:
+
+Assessment IS learning (not testing)
+Self-regulation over teacher burden
+Progressive complexity
+Pupil ownership of writing
+Connect Grid as central tool
+Character Traits:
+
+Encouraging (never critical)
+Patient and supportive
+Celebrates effort and progress
+Makes writing feel achievable
+Guides without overwhelming
+WriFi Mascot Asset Pack (Available):
+1. Full Body Poses:
+
+Standing (default pose)
+Waving (greeting)
+Jumping (celebration)
+Thinking (contemplation, hand on chin)
+Writing (holding paper/pencil)
+Celebrating (arms up, excited)
+2. Emoji Pack:
+
+😊 Happy WriFi
+🤔 Thinking WriFi
+👍 Thumbs up WriFi
+✏️ Ready-to-write WriFi
+🎉 Well-done WriFi
+3. Badge Set (Mastery Levels):
+
+Foundation Badge (Lessons 1-17) - Blue circular badge with WriFi
+Application Badge (Lessons 18-34) - Green badge with WriFi
+Mastery Badge (Lessons 35-67) - Gold badge with WriFi + laurel wreath
+Streak Badges: 5-day, 10-day, 20-day writing streaks
+4. UI Icon Set:
+
+Practice activity icon (WriFi + worksheet)
+Connect Grid helper icon (WriFi + grid)
+Story structure icons (WriFi + storybook)
+Free writing icon (WriFi + blank page)
+Assessment icon (WriFi + checkmark)
+5. Lesson Page Header Characters: Specific WriFi variants for each tab:
+
+Teacher Guide: WriFi with glasses (professional)
+Lesson Presentation: WriFi with presentation pointer
+Student Worksheets: WriFi with pencil and paper
+Assessment Package: WriFi with clipboard
+Interactive Practice: WriFi with game controller
+Progress Tracker: WriFi with chart/graph
+Where to Use WriFi:
+Website (wrife.co.uk):
+
+Homepage hero section: "Meet WriFi—your writing companion"
+Lesson pages: WriFi icon next to each of 6 components
+About page: WriFi introduces the system
+App (app.wrife.co.uk):
+
+Login page: WriFi waves "Welcome back!"
+Class Code entry: WriFi says "Enter your class code!"
+Teacher dashboard: WriFi in corner (small, unobtrusive)
+Pupil dashboard: WriFi shows today's practice target
+Practice activities: WriFi pops up with encouragement
+AI feedback screens: WriFi introduces strengths/targets
+Lesson Resources:
+
+Warm-up helper for PWP formulas
+Marker of success criteria on worksheets
+Guide in student worksheets (speech bubbles)
+Connect Grid stages helper (L27-38)
+Icon for each assessment form (Forms 1-8)
+Feedback & Gamification:
+
+Success celebrations: "Great work! 🎉" with jumping WriFi
+Streak milestones: WriFi with flame emoji
+Badge awards: WriFi presenting the badge
+Encouragement: "Keep going!" with cheering WriFi
+WriFi Usage Guidelines:
+DO:
+
+✅ Use WriFi for encouragement and guidance
+✅ Keep WriFi friendly and supportive
+✅ Use appropriate size (not too large/distracting)
+✅ Animate WriFi for celebrations (subtle bounce/fade)
+✅ Use speech bubbles for tips and hints
+DON'T:
+
+❌ Use WriFi for negative feedback or criticism
+❌ Make WriFi too dominant (overshadowing content)
+❌ Use WriFi in serious/formal contexts (reports, official docs)
+❌ Animate excessively (distracting)
+WriFi Speech Bubble Examples:
+PWP Practice:
+
+"Remember your formula: Subject + Verb + Object!"
+
+Connect Grid:
+
+"The middle column shows the pattern we can reuse!"
+
+Submission Success:
+
+"Well done! Your teacher will review this soon!"
+
+Streak Achievement:
+
+"5 days in a row! You're on fire! 🔥"
+
+Encouragement:
+
+"Writing takes practice—every sentence makes you better!"
+
+Mascot Color Scheme:
+WriFi Colors:
+
+Body: Warm yellow/orange (
+#FFCF4A - var(--wrife-yellow))
+Eraser: Coral pink (
+#FF7A64 - var(--wrife-coral))
+Eyes: Dark blue (
+#19213D - var(--wrife-text-main))
+Outline: Strong black stroke
+Shading: Subtle gradient (lighter at top)
+Badge Backgrounds:
+
+Foundation: Blue circle (var(--wrife-blue))
+Application: Green circle (var(--wrife-green))
+Mastery: Gold/yellow circle with shine effect
+Streaks: Orange/red flame gradient
+UI Mockup Reference Guide for Replit AI:
+When building Teacher Dashboard, reference:
+
+Teacher_Dashboard_on_App.png
+4 metric cards layout
+Chart component positioning
+Recent submissions list styling
+When building Pupil Dashboard, reference:
+
+Pupil_dashboard_and_screens_for_ages_6_10_Years_2_5.png
+Larger text and buttons
+Simplified layout
+WriFi integration points
+When building Lesson Pages, reference:
+
+WriFe_website_landing_and_lesson_pages.png
+6-tab layout structure
+Lesson card design
+Filter bar positioning
+When building AI Feedback UI, reference:
+
+WriFe_AI_Assessment_UI.png
+Two-pane split layout
+Color-coded feedback cards
+Button placement and hierarchy
+When building Login Pages, reference:
+
+Teacher_and_Pupil_login_page.png
+Side-by-side comparison
+WriFi positioning
+Form field styling
+🎯 IMPLEMENTATION PRIORITY FOR VISUALS
+Phase 1 (Current Sprint - Assignments):
+
+WriFi on login pages (simple static image)
+WriFi on pupil dashboard (greeting)
+Basic mascot in assignment banners
+Phase 2 (Submissions & Feedback):
+
+WriFi in feedback cards
+WriFi celebration animations
+Badge system with WriFi
+Phase 3 (AI Integration):
+
+WriFi in AI feedback interface
+Animated WriFi for achievements
+Full mascot asset pack deployment
+END OF UI MOCKUPS & WRIFI ADDENDUM
