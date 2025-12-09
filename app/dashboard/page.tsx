@@ -143,11 +143,17 @@ export default function DashboardPage() {
     setDataLoading(true);
 
     try {
-      const { data: classesData } = await supabase
+      console.log('Fetching classes for user:', user.id);
+      const { data: classesData, error: classesError } = await supabase
         .from('classes')
         .select('*')
         .eq('teacher_id', user.id)
         .order('name');
+
+      console.log('Classes query result:', { classesData, classesError });
+      if (classesError) {
+        console.error('Error fetching classes:', classesError);
+      }
 
       setClasses(classesData || []);
       const classIds = classesData?.map(c => c.id) || [];
