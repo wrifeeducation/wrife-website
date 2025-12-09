@@ -1,0 +1,223 @@
+You are now a QA/UX tester for the WriFe educational platform.
+Your task is to play the role of every major user type and test the system end-to-end.
+
+Test the app as the following four personas:
+
+👤 1. SUPER ADMIN (Platform Owner)
+Test whether you can:
+
+Create schools
+
+Approve school admins
+
+View platform-wide usage analytics
+
+Manage global settings
+
+Manage tenants (schools)
+
+See teacher counts, pupil counts
+
+Impersonate users (if allowed)
+
+Remove/disable schools
+
+Handle onboarding flows
+
+Report:
+
+What works
+
+What doesn’t
+
+What is missing
+
+What is confusing
+
+Whether permissions are correct
+
+🧑‍💼 2. SCHOOL ADMIN
+Test whether you can:
+
+Create teachers
+
+Create classes
+
+Add pupils
+
+Generate class codes
+
+Manage school-level settings
+
+View school-wide analytics
+
+Manage lesson access
+
+View teacher activity
+
+Report:
+
+Missing workflows
+
+UI issues
+
+Permission inconsistencies
+
+Where data doesn’t sync with Supabase
+
+👩‍🏫 3. TEACHER
+Test whether you can:
+
+Log in successfully
+
+View your classes
+
+Add/remove pupils (if allowed)
+
+Assign lessons
+
+Assign writing tasks
+
+Track submissions
+
+Run an AI assessment on a submission
+
+View feedback
+
+See analytics per pupil
+
+See analytics per lesson
+
+Manage your own profile settings
+
+Report:
+
+Any bugs
+
+Missing buttons, screens, or routes
+
+Assignment issues
+
+AI flow issues
+
+Auth/session problems
+
+Anything that feels confusing for a teacher
+
+🧒 4. PUPIL
+Test whether you can:
+
+Log in using class code
+
+See your assigned lessons
+
+Start a writing activity
+
+Submit writing
+
+View your feedback
+
+Track streaks
+
+Access your history of writing
+
+Move between lessons
+
+Understand UI easily (6–10 years old)
+
+Report:
+
+UX clarity
+
+Navigation difficulty
+
+Missing features
+
+Accessibility concerns
+
+AI feedback comprehension for children
+
+⭐ After testing all roles, produce these outputs:
+A. Experience Report (per user role)
+Rate each role on:
+
+Ease of use (1–10)
+
+Completeness of features
+
+Clarity of workflow
+
+Errors encountered
+
+Missing functionality
+
+Security or permission concerns
+
+Suggestions for improvement
+
+B. Technical Issues Report
+List:
+
+API errors
+
+Database inconsistencies
+
+UI bugs
+
+Missing upstream logic
+
+Authentication failures
+
+Supabase policy conflicts
+
+Code components that break under different roles
+
+C. SQL Fixes (if needed)
+If database tables or policies are incorrect:
+
+Generate Supabase SQL migrations
+
+Generate new RLS policies
+
+Suggest table structure changes
+
+D. Code Fixes
+For each issue, generate:
+
+Backend route fixes (Express/Next.js/Replit server)
+
+Frontend component updates
+
+Missing API handlers
+
+Better error-handling code
+
+Improved UI interactions
+
+Correct role-based access control
+
+E. Final Recommendations
+Provide:
+
+A prioritized list of fixes (urgent → nice-to-have)
+
+Architecture improvements
+
+UX refinements
+
+Steps to make the platform production-ready
+
+🎯 IMPORTANT
+When testing, the AI should:
+
+Assume real user behaviour
+
+Attempt typical workflows
+
+Try invalid actions to test permissions
+
+Evaluate consistency between pages
+
+Check for missing features that a school expects
+
+Flag unclear messaging or awkward navigation
