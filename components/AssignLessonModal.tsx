@@ -12,7 +12,7 @@ interface AssignLessonModalProps {
 }
 
 interface ClassOption {
-  id: number;
+  id: string;
   name: string;
   year_group: number;
 }
@@ -85,7 +85,7 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
         .from('assignments')
         .insert({
           lesson_id: lessonId,
-          class_id: parseInt(selectedClassId),
+          class_id: selectedClassId,
           teacher_id: user.id,
           title: lessonTitle,
           instructions: instructions.trim() || null,
@@ -94,7 +94,7 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
 
       if (insertError) throw insertError;
 
-      const selectedClass = classes.find(c => c.id === parseInt(selectedClassId));
+      const selectedClass = classes.find(c => c.id === selectedClassId);
       alert(`Lesson assigned to ${selectedClass?.name || 'class'}!`);
       onClose();
       window.location.reload();
