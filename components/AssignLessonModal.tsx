@@ -24,6 +24,7 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
   const [instructions, setInstructions] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetchingClasses, setFetchingClasses] = useState(true);
+  const [classesError, setClassesError] = useState('');
   const [error, setError] = useState('');
   const { user } = useAuth();
 
@@ -39,21 +40,24 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
   async function fetchClasses() {
     if (!user) return;
     setFetchingClasses(true);
+    setClassesError('');
     try {
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('classes')
         .select('id, name, year_group')
         .eq('teacher_id', user.id)
         .order('name');
 
-      if (error) {
-        console.error('Error fetching classes:', error);
+      if (queryError) {
+        console.error('Error fetching classes:', queryError);
+        setClassesError('Unable to load classes. Please refresh the page.');
         setClasses([]);
       } else {
         setClasses(data || []);
       }
     } catch (err) {
       console.error('Error fetching classes:', err);
+      setClassesError('Unable to load classes. Please refresh the page.');
       setClasses([]);
     } finally {
       setFetchingClasses(false);
@@ -142,7 +146,14 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
               Class <span className="text-red-500">*</span>
             </label>
             {fetchingClasses ? (
-              <div className="text-sm text-[var(--wrife-text-muted)]">Loading classes...</div>
+              <div className="flex items-center gap-2 text-sm text-[var(--wrife-text-muted)]">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--wrife-blue)] border-r-transparent"></div>
+                Loading classes...
+              </div>
+            ) : classesError ? (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+                {classesError}
+              </div>
             ) : classes.length === 0 ? (
               <div className="p-3 rounded-lg bg-[var(--wrife-bg)] border border-[var(--wrife-border)] text-sm text-[var(--wrife-text-muted)]">
                 You need to create a class first
