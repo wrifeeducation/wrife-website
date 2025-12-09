@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 import OpenAI from 'openai';
+import { cookies } from 'next/headers';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -13,7 +15,6 @@ const openai = new OpenAI({
 
 interface AssessmentRequest {
   submission_id: number;
-  teacher_id: string;
 }
 
 interface AssessmentResult {
@@ -26,17 +27,42 @@ interface AssessmentResult {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: AssessmentRequest = await request.json();
-    const { submission_id, teacher_id } = body;
+    // Get authenticated user from session
+    const cookieStore = await cookies();
+    const supabaseAuth = createServerClient(
+      supabaseUrl,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+        },
+      }
+    );
 
-    if (!submission_id || !teacher_id) {
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'Missing required fields: submission_id and teacher_id' },
+        { error: 'Unauthorized - please log in' },
+        { status: 401 }
+      );
+    }
+
+    const teacher_id = user.id;
+
+    const body: AssessmentRequest = await request.json();
+    const { submission_id } = body;
+
+    if (!submission_id) {
+      return NextResponse.json(
+        { error: 'Missing required field: submission_id' },
         { status: 400 }
       );
     }
 
-    const { data: submission, error: submissionError } = await supabase
+    const { data: submission, error: submissionError } = await supabaseAdmin
       .from('submissions')
       .select('*, assignments(*)')
       .eq('id', submission_id)
@@ -51,9 +77,17 @@ export async function POST(request: NextRequest) {
 
     const assignment = submission.assignments;
     
+    // Verify authenticated teacher owns this assignment
+    if (assignment?.teacher_id !== teacher_id) {
+      return NextResponse.json(
+        { error: 'You do not have permission to assess this submission' },
+        { status: 403 }
+      );
+    }
+    
     let lessonInfo = '';
     if (assignment?.lesson_id) {
-      const { data: lesson } = await supabase
+      const { data: lesson } = await supabaseAdmin
         .from('lessons')
         .select('*')
         .eq('id', assignment.lesson_id)
@@ -128,7 +162,7 @@ Return ONLY valid JSON, no other text.`;
       };
     }
 
-    const { data: savedAssessment, error: saveError } = await supabase
+    const { data: savedAssessment, error: saveError } = await supabaseAdmin
       .from('ai_assessments')
       .insert({
         submission_id,
@@ -155,7 +189,7 @@ Return ONLY valid JSON, no other text.`;
       );
     }
 
-    await supabase
+    await supabaseAdmin
       .from('submissions')
       .update({ status: 'reviewed' })
       .eq('id', submission_id);

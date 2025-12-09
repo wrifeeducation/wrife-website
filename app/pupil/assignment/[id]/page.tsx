@@ -31,6 +31,15 @@ interface Submission {
   submitted_at: string | null;
 }
 
+interface AIAssessment {
+  id: number;
+  strengths: string[];
+  improvements: string[];
+  improved_example: string;
+  mechanical_edits: string[];
+  banding_score: number;
+}
+
 interface LessonFile {
   id: number;
   file_type: string;
@@ -44,6 +53,7 @@ export default function PupilAssignmentPage() {
   const [session, setSession] = useState<PupilSession | null>(null);
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
+  const [assessment, setAssessment] = useState<AIAssessment | null>(null);
   const [lessonFiles, setLessonFiles] = useState<LessonFile[]>([]);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
@@ -100,6 +110,18 @@ export default function PupilAssignmentPage() {
       if (submissionData) {
         setSubmission(submissionData);
         setContent(submissionData.content || '');
+
+        if (submissionData.status === 'reviewed') {
+          const { data: assessmentData } = await supabase
+            .from('ai_assessments')
+            .select('*')
+            .eq('submission_id', submissionData.id)
+            .single();
+          
+          if (assessmentData) {
+            setAssessment(assessmentData);
+          }
+        }
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -307,6 +329,67 @@ export default function PupilAssignmentPage() {
                       minute: '2-digit'
                     })}
                   </p>
+                </div>
+              )}
+
+              {assessment && (
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[var(--wrife-text-main)]">Your Feedback</h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      assessment.banding_score >= 3 ? 'bg-green-100 text-green-700' :
+                      assessment.banding_score === 2 ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {assessment.banding_score === 4 ? 'Greater Depth' :
+                       assessment.banding_score === 3 ? 'Secure' :
+                       assessment.banding_score === 2 ? 'Developing' : 'Emerging'}
+                    </span>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
+                      <span>⭐</span> What you did well
+                    </h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      {assessment.strengths.map((s, i) => (
+                        <li key={i} className="text-sm text-green-700">{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-yellow-700 mb-2 flex items-center gap-2">
+                      <span>💡</span> Things to work on
+                    </h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      {assessment.improvements.map((s, i) => (
+                        <li key={i} className="text-sm text-yellow-700">{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {assessment.mechanical_edits.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                        <span>✏️</span> Spelling & Grammar
+                      </h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {assessment.mechanical_edits.map((s, i) => (
+                          <li key={i} className="text-sm text-red-700">{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                      <span>✨</span> Example of how to improve
+                    </h4>
+                    <p className="text-sm text-blue-700 italic">
+                      "{assessment.improved_example}"
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

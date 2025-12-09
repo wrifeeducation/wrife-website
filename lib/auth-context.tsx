@@ -8,6 +8,7 @@ interface User {
   email: string;
   role: string;
   display_name?: string;
+  school_id?: string;
 }
 
 interface AuthContextType {
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: profile.email,
         role: profile.role,
         display_name: profile.display_name,
+        school_id: profile.school_id,
       });
     }
     setLoading(false);

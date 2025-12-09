@@ -67,6 +67,7 @@ export default function NewClassPage() {
           year_group: yearGroup,
           class_code: codeData,
           school_name: schoolName || null,
+          school_id: user.school_id || null,
         })
         .select()
         .single();
