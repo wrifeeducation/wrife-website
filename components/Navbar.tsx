@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/lib/auth-context";
+import BookLogo from "./mascots/BookLogo";
 
 const AuthButtons = dynamic(() => import("./AuthButtons"), {
   ssr: false,
@@ -15,86 +16,68 @@ export default function Navbar() {
   const { getDashboardPath } = useAuth();
 
   return (
-    <nav
-      className="w-full px-4 md:px-8 py-4"
-      style={{
-        backgroundColor: "var(--wrife-bg)",
-        borderBottom: "1px solid var(--wrife-border)",
-      }}
-    >
-      <div className="flex items-center justify-between">
+    <nav className="w-full px-4 md:px-8 py-4 bg-[var(--wrife-bg)] border-b border-[var(--wrife-border)]">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "var(--wrife-blue-soft)" }}
+          <Link href="/" className="flex items-center gap-2">
+            <BookLogo size="md" />
+            <span 
+              className="font-extrabold text-xl text-[var(--wrife-text-main)]"
+              style={{ fontFamily: 'var(--font-display)' }}
             >
-              <span
-                className="text-xl font-bold"
-                style={{ color: "var(--wrife-blue)" }}
-              >
-                W
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span
-                className="font-bold text-lg leading-tight"
-                style={{ color: "var(--wrife-text-main)" }}
-              >
-                WriFe
-              </span>
-              <span
-                className="text-xs leading-tight"
-                style={{ color: "var(--wrife-text-muted)" }}
-              >
-                Writing for Everyone
-              </span>
-            </div>
+              WriFe
+            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
             <a
-              href="#curriculum"
-              className="text-sm transition-colors hover:text-[var(--wrife-blue)]"
-              style={{ color: "var(--wrife-text-muted)" }}
+              href="#lessons"
+              className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
             >
-              Curriculum
+              Lessons
             </a>
-            <Link
-              href="/classes"
-              className="text-sm transition-colors hover:text-[var(--wrife-blue)]"
-              style={{ color: "var(--wrife-text-muted)" }}
+            <a
+              href="#features"
+              className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
             >
-              Classes
-            </Link>
-            <Link
-              href={getDashboardPath()}
-              className="text-sm transition-colors hover:text-[var(--wrife-blue)]"
-              style={{ color: "var(--wrife-text-muted)" }}
+              Features
+            </a>
+            <a
+              href="#pricing"
+              className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
             >
-              Dashboard
-            </Link>
+              Pricing
+            </a>
           </nav>
         </div>
 
         <div className="flex items-center gap-3">
-          <AuthButtons />
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-[var(--wrife-text-main)] hover:text-[var(--wrife-blue)] transition-colors px-4 py-2"
+            >
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              className="text-sm font-bold text-white bg-[var(--wrife-orange)] hover:opacity-90 transition-opacity px-5 py-2.5 rounded-full shadow-soft"
+            >
+              Start Free Trial
+            </Link>
+          </div>
+          
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors hover:opacity-80"
-            style={{
-              backgroundColor: "var(--wrife-surface)",
-              border: "1px solid var(--wrife-border)",
-            }}
+            className="md:hidden p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors bg-white border border-[var(--wrife-border)]"
             aria-label="Toggle mobile menu"
             aria-expanded={mobileMenuOpen}
           >
             <svg
-              className="w-6 h-6"
+              className="w-6 h-6 text-[var(--wrife-text-main)]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              style={{ color: "var(--wrife-text-main)" }}
             >
               {mobileMenuOpen ? (
                 <path
@@ -117,54 +100,42 @@ export default function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-        <div
-          className="md:hidden mt-4 pt-4"
-          style={{ borderTop: "1px solid var(--wrife-border)" }}
-        >
+        <div className="md:hidden mt-4 pt-4 border-t border-[var(--wrife-border)]">
           <div className="flex flex-col gap-2">
             <a
-              href="#curriculum"
-              className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
-              style={{
-                color: "var(--wrife-text-main)",
-                backgroundColor: "var(--wrife-surface)",
-              }}
+              href="#lessons"
+              className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Curriculum
+              Lessons
+            </a>
+            <a
+              href="#features"
+              className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Features
+            </a>
+            <a
+              href="#pricing"
+              className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Pricing
             </a>
             <Link
-              href="/classes"
-              className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
-              style={{
-                color: "var(--wrife-text-main)",
-                backgroundColor: "var(--wrife-surface)",
-              }}
+              href="/login"
+              className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Classes
-            </Link>
-            <Link
-              href={getDashboardPath()}
-              className="px-4 py-3 text-sm font-medium rounded-lg transition-colors hover:opacity-80 min-h-[44px] flex items-center"
-              style={{
-                color: "var(--wrife-text-main)",
-                backgroundColor: "var(--wrife-surface)",
-              }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Dashboard
+              Log in
             </Link>
             <Link
               href="/signup"
-              className="px-4 py-3 text-sm font-medium rounded-full transition-colors hover:opacity-90 min-h-[44px] flex items-center justify-center mt-2"
-              style={{
-                backgroundColor: "var(--wrife-blue)",
-                color: "white",
-              }}
+              className="px-4 py-3 text-sm font-bold rounded-full bg-[var(--wrife-orange)] text-white text-center mt-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Get started
+              Start Free Trial
             </Link>
           </div>
         </div>
