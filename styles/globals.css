@@ -1,24 +1,41 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&display=swap');
 
 :root {
   --wrife-blue: #2E5AFF;
   --wrife-blue-soft: #CDE1FF;
+  --wrife-blue-dark: #1E3A8A;
   --wrife-yellow: #FFCF4A;
+  --wrife-yellow-soft: #FFF3C4;
+  --wrife-orange: #F97316;
+  --wrife-green: #58C791;
+  --wrife-green-soft: #D1FAE5;
+  --wrife-coral: #FF7A64;
+  --wrife-coral-soft: #FEE2E2;
   --wrife-bg: #FFF9F0;
   --wrife-surface: #FFFFFF;
   --wrife-border: #E3E6F0;
   --wrife-text-main: #19213D;
   --wrife-text-muted: #6B7280;
+  --wrife-danger: #E11D48;
+  
+  --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.08);
+  --shadow-strong: 0 12px 28px rgba(15, 23, 42, 0.16);
+  --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
 html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   background-color: var(--wrife-bg);
   color: var(--wrife-text-main);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Baloo 2', cursive;
 }
 
 a {
@@ -28,4 +45,92 @@ a {
 
 * {
   box-sizing: border-box;
+}
+
+.shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+.shadow-strong {
+  box-shadow: var(--shadow-strong);
+}
+
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+.btn-primary {
+  background-color: var(--wrife-orange);
+  color: white;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-family: 'Baloo 2', cursive;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.btn-secondary {
+  background-color: var(--wrife-surface);
+  color: var(--wrife-blue);
+  border: 2px solid var(--wrife-blue);
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-family: 'Baloo 2', cursive;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: var(--wrife-blue-soft);
+}
+
+.card {
+  background-color: var(--wrife-surface);
+  border-radius: 1rem;
+  border: 2px solid var(--wrife-border);
+  box-shadow: var(--shadow-card);
+}
+
+.card-blue {
+  background-color: var(--wrife-blue-soft);
+  border-color: var(--wrife-blue);
+}
+
+.badge-emerging {
+  background-color: var(--wrife-coral-soft);
+  color: var(--wrife-coral);
+}
+
+.badge-developing {
+  background-color: var(--wrife-yellow-soft);
+  color: #B45309;
+}
+
+.badge-secure {
+  background-color: var(--wrife-green-soft);
+  color: #059669;
+}
+
+.badge-greater-depth {
+  background-color: var(--wrife-blue-soft);
+  color: var(--wrife-blue);
+}
+
+.pupil-text {
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 640px) {
+  .pupil-text {
+    font-size: 1rem;
+  }
 }
