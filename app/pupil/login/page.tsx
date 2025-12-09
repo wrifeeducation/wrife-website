@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import ChildMascot from '@/components/mascots/ChildMascot';
 
 interface ClassMember {
   id: number;
@@ -140,15 +141,15 @@ export default function PupilLoginPage() {
       <main className="max-w-md mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-8">
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--wrife-blue-soft)] mb-4">
-              <span className="text-3xl">✏️</span>
+            <div className="flex justify-center mb-4">
+              <ChildMascot size="lg" waving={true} />
             </div>
-            <h1 className="text-2xl font-bold text-[var(--wrife-text-main)]">
-              Pupil Login
+            <h1 className="text-2xl font-bold text-[var(--wrife-text-main)]" style={{ fontFamily: 'var(--font-display)' }}>
+              Hello there!
             </h1>
             <p className="text-sm text-[var(--wrife-text-muted)] mt-2">
               {step === 'code' 
-                ? 'Enter your class code to get started' 
+                ? 'Enter your class code to start learning' 
                 : `Joining ${classInfo?.name}`}
             </p>
           </div>
@@ -186,9 +187,28 @@ export default function PupilLoginPage() {
               <button
                 type="submit"
                 disabled={loading || classCode.length < 4}
-                className="w-full py-3 rounded-full font-bold text-white bg-[var(--wrife-blue)] hover:opacity-90 transition disabled:opacity-50"
+                className="w-full py-3 rounded-full font-bold text-white bg-[var(--wrife-orange)] hover:opacity-90 transition disabled:opacity-50"
               >
                 {loading ? 'Finding class...' : 'Next'}
+              </button>
+
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[var(--wrife-border)]"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-4 text-sm text-[var(--wrife-text-muted)]">or</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="w-full py-3 rounded-full font-bold border-2 border-[var(--wrife-blue)] text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition flex items-center justify-center gap-2"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm14 0h4v4h-4v-4zm-3 0h2v2h-2v-2zm0 5h2v2h-2v-2zm5 0h2v2h-2v-2z"/>
+                </svg>
+                Scan QR Code
               </button>
             </form>
           ) : (
@@ -281,7 +301,7 @@ export default function PupilLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-3 rounded-full font-bold text-white bg-[var(--wrife-blue)] hover:opacity-90 transition disabled:opacity-50"
+                  className="flex-1 py-3 rounded-full font-bold text-white bg-[var(--wrife-orange)] hover:opacity-90 transition disabled:opacity-50"
                 >
                   {loading ? 'Joining...' : 'Start Learning'}
                 </button>

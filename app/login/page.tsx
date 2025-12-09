@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import BookLogo from '@/components/mascots/BookLogo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -62,12 +63,10 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <div className="h-12 w-12 rounded-2xl bg-[var(--wrife-blue-soft)] flex items-center justify-center">
-              <span className="text-2xl font-black text-[var(--wrife-blue)]">W</span>
-            </div>
+          <div className="inline-flex items-center gap-3 mb-4">
+            <BookLogo size="lg" />
             <div className="flex flex-col leading-tight text-left">
-              <span className="font-extrabold text-xl text-[var(--wrife-text-main)]">WriFe</span>
+              <span className="font-extrabold text-2xl text-[var(--wrife-text-main)]" style={{ fontFamily: 'var(--font-display)' }}>WriFe</span>
               <span className="text-xs text-[var(--wrife-text-muted)]">Writing for Everyone</span>
             </div>
           </div>
@@ -122,7 +121,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition disabled:opacity-50"
+              className="w-full rounded-full bg-[var(--wrife-orange)] px-6 py-3 text-sm font-bold text-white shadow-soft hover:opacity-90 transition disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
