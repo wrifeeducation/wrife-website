@@ -78,7 +78,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const tabParam = searchParams.get('tab');
+  const tabParam = searchParams?.get('tab') ?? null;
   const initialTab = tabParam && ['overview', 'lessons', 'pupils', 'assignments', 'classes'].includes(tabParam) 
     ? tabParam as 'overview' | 'lessons' | 'pupils' | 'assignments' | 'classes'
     : 'overview';
@@ -129,6 +129,10 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login?redirectTo=/dashboard');
+    }
+    // Redirect pupils to their own dashboard
+    if (!loading && user && user.role === 'pupil') {
+      router.push('/pupil/dashboard');
     }
   }, [user, loading, router]);
 
