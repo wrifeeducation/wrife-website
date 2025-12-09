@@ -122,7 +122,8 @@ export default function AssignmentReviewPage() {
             .eq('id', sub.pupil_id)
             .single();
 
-          const pupilData = member?.pupils as { first_name: string; last_name?: string } | null;
+          const pupilsData = member?.pupils as { first_name: string; last_name?: string }[] | { first_name: string; last_name?: string } | null;
+          const pupilData = Array.isArray(pupilsData) ? pupilsData[0] : pupilsData;
           const pupilName = pupilData
             ? `${pupilData.first_name} ${pupilData.last_name || ''}`.trim()
             : member?.pupil_name || 'Unknown';
