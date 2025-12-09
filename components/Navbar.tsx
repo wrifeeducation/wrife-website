@@ -93,10 +93,16 @@ export default function Navbar() {
           ) : (
             <div className="hidden md:flex items-center gap-3">
               <Link
+                href="/pupil/login"
+                className="text-sm font-medium text-[var(--wrife-yellow)] hover:text-[var(--wrife-blue)] transition-colors px-4 py-2"
+              >
+                Pupil Login
+              </Link>
+              <Link
                 href="/login"
                 className="text-sm font-medium text-[var(--wrife-text-main)] hover:text-[var(--wrife-blue)] transition-colors px-4 py-2"
               >
-                Log in
+                Teacher Login
               </Link>
               <Link
                 href="/signup"
@@ -201,12 +207,20 @@ export default function Navbar() {
               >
                 Pricing
               </a>
+              <div className="border-t border-[var(--wrife-border)] my-2"></div>
+              <Link
+                href="/pupil/login"
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-yellow-50 text-[var(--wrife-text-main)] hover:bg-yellow-100"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Pupil Login
+              </Link>
               <Link
                 href="/login"
                 className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Log in
+                Teacher Login
               </Link>
               <Link
                 href="/signup"
