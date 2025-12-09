@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 
 export default function NewSchoolPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -17,12 +17,32 @@ export default function NewSchoolPage() {
     teacher_limit: 10,
     pupil_limit: 300,
     subscription_tier: 'trial',
-    active: true,
+    is_active: true,
   });
 
-  if (user && user.role !== 'admin') {
-    router.push('/dashboard');
-    return null;
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.replace('/admin/login');
+      } else if (user.role !== 'admin') {
+        router.replace('/dashboard');
+      } else {
+        setIsAuthorized(true);
+      }
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading || !isAuthorized) {
+    return (
+      <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--wrife-blue)] mx-auto"></div>
+          <p className="mt-2 text-sm text-[var(--wrife-text-muted)]">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,8 +165,8 @@ export default function NewSchoolPage() {
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
-                checked={formData.active}
-                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                 className="h-4 w-4"
               />
               <label className="text-sm font-semibold text-[var(--wrife-text-main)]">
