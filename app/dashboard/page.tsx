@@ -18,7 +18,7 @@ const LessonLibrary = dynamic(() => import('@/components/LessonLibrary'), {
 });
 
 interface ClassData {
-  id: number;
+  id: string;
   name: string;
   year_group: number;
   class_code: string;
@@ -29,7 +29,7 @@ interface PupilData {
   first_name: string;
   last_name: string | null;
   year_group: number;
-  class_id: number;
+  class_id: string;
   class_name: string;
 }
 
@@ -115,7 +115,7 @@ export default function DashboardPage() {
   
   const [showAddPupilModal, setShowAddPupilModal] = useState(false);
   const [showCreateClassModal, setShowCreateClassModal] = useState(false);
-  const [selectedClassForPupil, setSelectedClassForPupil] = useState<number | null>(null);
+  const [selectedClassForPupil, setSelectedClassForPupil] = useState<string | null>(null);
   
   const [newPupilFirstName, setNewPupilFirstName] = useState('');
   const [newPupilLastName, setNewPupilLastName] = useState('');
@@ -345,7 +345,7 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleRemovePupil(pupilId: string, classId: number) {
+  async function handleRemovePupil(pupilId: string, classId: string) {
     if (!user) return;
     if (!confirm('Are you sure you want to remove this pupil from the class?')) return;
 
@@ -370,7 +370,7 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleDeleteClass(classId: number) {
+  async function handleDeleteClass(classId: string) {
     if (!user) return;
     const classToDelete = classes.find(c => c.id === classId);
     if (!classToDelete) {
@@ -854,7 +854,7 @@ export default function DashboardPage() {
                 </label>
                 <select
                   value={selectedClassForPupil || ''}
-                  onChange={(e) => setSelectedClassForPupil(parseInt(e.target.value))}
+                  onChange={(e) => setSelectedClassForPupil(e.target.value || null)}
                   className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
                   required
                 >
