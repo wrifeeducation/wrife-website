@@ -1,0 +1,48 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 // src/components/LessonCard.jsx\
+import React from "react";\
+\
+export function LessonCard(\{ lessonNumber, title, summary, tags = [], onOpen \}) \{\
+  return (\
+    <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-soft border border-[var(--wrife-border)]">\
+      <div className="flex items-center justify-between">\
+        <div className="flex items-center gap-3">\
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--wrife-blue-soft)] text-xs font-bold text-[var(--wrife-blue)]">\
+            L\{lessonNumber\}\
+          </div>\
+          <h3 className="text-sm font-semibold text-[var(--wrife-text-main)]">\
+            \{title\}\
+          </h3>\
+        </div>\
+      </div>\
+      <p className="text-xs text-[var(--wrife-text-muted)] line-clamp-3">\
+        \{summary\}\
+      </p>\
+      <div className="flex flex-wrap gap-1">\
+        \{tags.map((tag) => (\
+          <span\
+            key=\{tag\}\
+            className="rounded-full bg-[var(--wrife-blue-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--wrife-blue)]"\
+          >\
+            \{tag\}\
+          </span>\
+        ))\}\
+      </div>\
+      <div className="mt-2 flex justify-end">\
+        <button\
+          onClick=\{onOpen\}\
+          className="rounded-full bg-[var(--wrife-yellow)] px-3 py-1 text-xs font-semibold text-[var(--wrife-text-main)] hover:shadow-soft transition"\
+        >\
+          Open teacher page\
+        </button>\
+      </div>\
+    </div>\
+  );\
+\}\
+}

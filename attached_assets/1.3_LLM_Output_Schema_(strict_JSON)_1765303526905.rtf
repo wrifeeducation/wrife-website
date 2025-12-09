@@ -1,0 +1,50 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 // types/assessment.ts\
+export type Band = "Emerging" | "Developing" | "Secure" | "Greater Depth";\
+\
+export interface CriterionScore \{\
+  score: 1 | 2 | 3 | 4 | null;  // allow null if not applicable\
+  rationale: string;            // short teacher-facing explanation\
+\}\
+\
+export interface MechanicalEdit \{\
+  orig: string;\
+  fix: string;\
+  // Optional rough location info \'96 para/char index or just a snippet\
+  loc?: \{ para?: number; charIndex?: number; snippet?: string \};\
+\}\
+\
+export interface StudentFeedbackItem \{\
+  type: "Praise" | "NextStep" | "Practice";\
+  text: string; // child-friendly\
+\}\
+\
+export interface ConfidenceInfo \{\
+  score: number;   // 0.0\'961.0\
+  notes: string;   // why low/high\
+\}\
+\
+export interface AiAssessmentResult \{\
+  overallScore: number;  // weighted 1.0\'964.0\
+  band: Band;\
+  criterionScores: Record<RubricCriterionId, CriterionScore>;\
+  teacherRationale: string;          // 2\'963 sentence synthesis\
+  studentFeedback: StudentFeedbackItem[];\
+  mechanicalEdits: \{\
+    spelling: MechanicalEdit[];\
+    punctuation: MechanicalEdit[];\
+    grammarSuggestions: MechanicalEdit[];\
+  \};\
+  improvedParagraphExample: string;  // 1\'962 paragraphs\
+  confidence: ConfidenceInfo;\
+  explainability: string;            // explanation of scoring logic\
+  modelVersion: string;              // "gpt-4.1" etc\
+  promptVersion: string;             // "wf-v1-narrative"\
+\}\
+}
