@@ -18,6 +18,9 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /classes/page.tsx      # Teacher's classes list
   /classes/new/page.tsx  # Create new class form
   /classes/[id]/page.tsx # Class detail page with pupil management
+  /pupil/login/page.tsx  # Pupil login with class code
+  /pupil/dashboard/page.tsx # Pupil dashboard with assignments
+  /pupil/assignment/[id]/page.tsx # Pupil writing submission page
   /admin/page.tsx        # Super admin dashboard
   /admin/login/page.tsx  # Secure admin login
   /admin/users/page.tsx  # User management (assign to schools)
@@ -26,6 +29,7 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /admin/help/page.tsx   # Super admin help guide
   /admin/school/help/page.tsx # School admin help guide
   /dashboard/help/page.tsx # Teacher help guide
+  /api/assess/route.ts   # AI assessment API endpoint
 /components              # React components
   /LessonLibrary.tsx     # Lesson list with filtering
   /LessonCard.tsx        # Individual lesson card
@@ -135,6 +139,46 @@ The project uses CSS custom properties for consistent theming:
 - `due_date`: Optional due date
 - `created_at`: Timestamp
 - `updated_at`: Timestamp
+
+### submissions table
+- `id`: Primary key (serial)
+- `assignment_id`: Foreign key to assignments table
+- `pupil_id`: Foreign key to class_members.id (integer)
+- `content`: Text content of the pupil's writing
+- `status`: draft, submitted, or reviewed
+- `submitted_at`: Timestamp when submitted
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### ai_assessments table
+- `id`: Primary key (serial)
+- `submission_id`: Foreign key to submissions table
+- `teacher_id`: Teacher's UUID who triggered the assessment
+- `strengths`: Array of strength points
+- `improvements`: Array of improvement suggestions
+- `improved_example`: Rewritten example paragraph
+- `mechanical_edits`: Array of spelling/grammar corrections
+- `banding_score`: Score 1-4 (working towards, expected, greater depth, mastery)
+- `raw_response`: JSONB storing the full AI response
+- `created_at`: Timestamp
+
+### rubrics table
+- `id`: Primary key (serial)
+- `name`: Rubric name
+- `description`: Rubric description
+- `criteria`: JSONB storing assessment criteria
+- `year_group_min`: Minimum year group
+- `year_group_max`: Maximum year group
+- `is_default`: Boolean for default rubric
+
+### progress_records table
+- `id`: Primary key (serial)
+- `pupil_id`: Pupil identifier
+- `lesson_id`: Foreign key to lessons table
+- `class_id`: Foreign key to classes table
+- `status`: Progress status
+- `score`: Optional score
+- `completed_at`: Timestamp when completed
 
 ## Running the Project
 ```bash
