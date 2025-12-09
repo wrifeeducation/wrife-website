@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AssignLessonModal } from './AssignLessonModal';
+import { useAuth } from '@/lib/auth-context';
 
 interface LessonFile {
   id: number;
@@ -47,6 +48,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [htmlContent, setHtmlContent] = useState<Record<number, string>>({});
   const [loadingHtml, setLoadingHtml] = useState<Record<number, boolean>>({});
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const { user } = useAuth();
 
   const filesByType = files.reduce((acc, file) => {
     const baseType = file.file_type.replace(/_core|_support|_challenge/g, '');
@@ -100,15 +102,19 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                 </span>
               </div>
             </div>
-            <div className="flex-shrink-0 mt-4 sm:mt-0">
+          </div>
+          
+          {user?.role === 'teacher' && (
+            <div className="mt-4 mb-2">
               <button
                 onClick={() => setShowAssignModal(true)}
-                className="rounded-full bg-[var(--wrife-blue)] px-5 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition"
+                className="inline-flex items-center gap-2 px-6 py-2 bg-[var(--wrife-yellow)] hover:bg-[var(--wrife-yellow)]/90 text-[var(--wrife-text-main)] rounded-full font-semibold shadow-soft transition w-full sm:w-auto justify-center sm:justify-start"
               >
+                <span>📋</span>
                 Assign to Class
               </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
