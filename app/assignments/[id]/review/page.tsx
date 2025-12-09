@@ -218,8 +218,8 @@ export default function AssignmentReviewPage() {
         <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
           <div className="mx-auto max-w-4xl px-4 text-center">
             <h1 className="text-2xl font-bold text-[var(--wrife-text-main)]">Assignment not found</h1>
-            <Link href="/classes" className="text-[var(--wrife-blue)] hover:underline mt-4 inline-block">
-              ← Back to Classes
+            <Link href="/dashboard" className="text-[var(--wrife-blue)] hover:underline mt-4 inline-block">
+              ← Back to Dashboard
             </Link>
           </div>
         </div>
@@ -236,8 +236,8 @@ export default function AssignmentReviewPage() {
       <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-6">
-            <Link href="/classes" className="text-[var(--wrife-blue)] hover:underline text-sm">
-              ← Back to Classes
+            <Link href="/dashboard" className="text-[var(--wrife-blue)] hover:underline text-sm">
+              ← Back to Dashboard
             </Link>
           </div>
 

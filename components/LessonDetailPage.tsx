@@ -104,7 +104,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
             </div>
           </div>
           
-          {user?.role === 'teacher' && (
+          {user && (user.role === 'teacher' || user.role === 'school_admin' || user.role === 'admin') && (
             <div className="mt-4 mb-2">
               <button
                 onClick={() => setShowAssignModal(true)}

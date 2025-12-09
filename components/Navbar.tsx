@@ -13,13 +13,16 @@ const AuthButtons = dynamic(() => import("./AuthButtons"), {
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { getDashboardPath } = useAuth();
+  const { user, getDashboardPath, signOut } = useAuth();
+
+  const isLoggedIn = !!user;
+  const dashboardPath = getDashboardPath();
 
   return (
     <nav className="w-full px-4 md:px-8 py-4 bg-[var(--wrife-bg)] border-b border-[var(--wrife-border)]">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={isLoggedIn ? dashboardPath : "/"} className="flex items-center gap-2">
             <BookLogo size="md" />
             <span 
               className="font-extrabold text-xl text-[var(--wrife-text-main)]"
@@ -29,43 +32,80 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
-            <a
-              href="#lessons"
-              className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
-            >
-              Lessons
-            </a>
-            <a
-              href="#features"
-              className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
-            >
-              Features
-            </a>
-            <a
-              href="#pricing"
-              className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
-            >
-              Pricing
-            </a>
-          </nav>
+          {isLoggedIn ? (
+            <nav className="hidden md:flex items-center gap-6">
+              <Link
+                href={dashboardPath}
+                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard?tab=lessons"
+                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+              >
+                Lessons
+              </Link>
+              <Link
+                href="/dashboard/help"
+                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+              >
+                Help
+              </Link>
+            </nav>
+          ) : (
+            <nav className="hidden md:flex items-center gap-6">
+              <a
+                href="#lessons"
+                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+              >
+                Lessons
+              </a>
+              <a
+                href="#features"
+                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+              >
+                Features
+              </a>
+              <a
+                href="#pricing"
+                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+              >
+                Pricing
+              </a>
+            </nav>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-[var(--wrife-text-main)] hover:text-[var(--wrife-blue)] transition-colors px-4 py-2"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="text-sm font-bold text-white bg-[var(--wrife-orange)] hover:opacity-90 transition-opacity px-5 py-2.5 rounded-full shadow-soft"
-            >
-              Start Free Trial
-            </Link>
-          </div>
+          {isLoggedIn ? (
+            <div className="hidden md:flex items-center gap-3">
+              <span className="text-sm text-[var(--wrife-text-muted)]">
+                {user.display_name || user.email}
+              </span>
+              <button
+                onClick={() => signOut()}
+                className="text-sm font-medium text-[var(--wrife-text-main)] hover:text-[var(--wrife-blue)] transition-colors px-4 py-2"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-3">
+              <Link
+                href="/login"
+                className="text-sm font-medium text-[var(--wrife-text-main)] hover:text-[var(--wrife-blue)] transition-colors px-4 py-2"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="text-sm font-bold text-white bg-[var(--wrife-orange)] hover:opacity-90 transition-opacity px-5 py-2.5 rounded-full shadow-soft"
+              >
+                Start Free Trial
+              </Link>
+            </div>
+          )}
           
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -101,43 +141,82 @@ export default function Navbar() {
 
       {mobileMenuOpen && (
         <div className="md:hidden mt-4 pt-4 border-t border-[var(--wrife-border)]">
-          <div className="flex flex-col gap-2">
-            <a
-              href="#lessons"
-              className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Lessons
-            </a>
-            <a
-              href="#features"
-              className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Features
-            </a>
-            <a
-              href="#pricing"
-              className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Pricing
-            </a>
-            <Link
-              href="/login"
-              className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="px-4 py-3 text-sm font-bold rounded-full bg-[var(--wrife-orange)] text-white text-center mt-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Start Free Trial
-            </Link>
-          </div>
+          {isLoggedIn ? (
+            <div className="flex flex-col gap-2">
+              <Link
+                href={dashboardPath}
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard?tab=lessons"
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Lessons
+              </Link>
+              <Link
+                href="/dashboard/help"
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Help
+              </Link>
+              <div className="border-t border-[var(--wrife-border)] my-2"></div>
+              <div className="px-4 py-2 text-xs text-[var(--wrife-text-muted)]">
+                Signed in as {user.display_name || user.email}
+              </div>
+              <button
+                onClick={() => {
+                  signOut();
+                  setMobileMenuOpen(false);
+                }}
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-left"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <a
+                href="#lessons"
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Lessons
+              </a>
+              <a
+                href="#features"
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Features
+              </a>
+              <a
+                href="#pricing"
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Pricing
+              </a>
+              <Link
+                href="/login"
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="px-4 py-3 text-sm font-bold rounded-full bg-[var(--wrife-orange)] text-white text-center mt-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Start Free Trial
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </nav>

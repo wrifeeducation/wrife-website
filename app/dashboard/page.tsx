@@ -1,11 +1,21 @@
 "use client";
 
 import { useAuth } from '@/lib/auth-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from "../../components/Navbar";
 import { supabase } from '@/lib/supabase';
+import dynamic from 'next/dynamic';
+
+const LessonLibrary = dynamic(() => import('@/components/LessonLibrary'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center py-12">
+      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--wrife-blue)] border-r-transparent"></div>
+    </div>
+  ),
+});
 
 interface ClassData {
   id: number;
@@ -66,8 +76,31 @@ function BandBadge({ score }: { score: number }) {
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
-  const [activeTab, setActiveTab] = useState<'overview' | 'pupils' | 'assignments' | 'classes'>('overview');
+  const tabParam = searchParams.get('tab');
+  const initialTab = tabParam && ['overview', 'lessons', 'pupils', 'assignments', 'classes'].includes(tabParam) 
+    ? tabParam as 'overview' | 'lessons' | 'pupils' | 'assignments' | 'classes'
+    : 'overview';
+  const [activeTab, setActiveTab] = useState<'overview' | 'lessons' | 'pupils' | 'assignments' | 'classes'>(initialTab);
+  
+  function handleTabChange(tab: typeof activeTab) {
+    setActiveTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === 'overview') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }
+  
+  useEffect(() => {
+    if (tabParam && ['overview', 'lessons', 'pupils', 'assignments', 'classes'].includes(tabParam)) {
+      setActiveTab(tabParam as typeof activeTab);
+    }
+  }, [tabParam]);
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [pupils, setPupils] = useState<PupilData[]>([]);
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
@@ -425,10 +458,10 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex gap-2 mb-6 border-b border-[var(--wrife-border)] overflow-x-auto">
-          {(['overview', 'pupils', 'assignments', 'classes'] as const).map((tab) => (
+          {(['overview', 'lessons', 'pupils', 'assignments', 'classes'] as const).map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => handleTabChange(tab)}
               className={`px-4 py-2 text-sm font-semibold whitespace-nowrap transition border-b-2 -mb-px ${
                 activeTab === tab
                   ? 'border-[var(--wrife-blue)] text-[var(--wrife-blue)]'
@@ -436,6 +469,7 @@ export default function DashboardPage() {
               }`}
             >
               {tab === 'overview' && 'Overview'}
+              {tab === 'lessons' && 'Lessons'}
               {tab === 'pupils' && `My Pupils (${stats.totalPupils})`}
               {tab === 'assignments' && `Assignments (${activeAssignments.length})`}
               {tab === 'classes' && `Classes (${stats.totalClasses})`}
@@ -528,28 +562,36 @@ export default function DashboardPage() {
                     <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Quick Actions</h2>
                   </div>
                   <div className="grid sm:grid-cols-4 gap-3">
-                    <Link href="/">
-                      <div className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-[var(--wrife-blue-soft)] transition text-center">
-                        <span className="text-2xl mb-2 block">📖</span>
-                        <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Lesson Library</p>
-                      </div>
-                    </Link>
-                    <button onClick={() => setShowCreateClassModal(true)} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-[var(--wrife-green-soft)] transition text-center">
+                    <button onClick={() => handleTabChange('lessons')} className="p-4 rounded-xl border-2 border-[var(--wrife-blue)] bg-[var(--wrife-blue-soft)] hover:opacity-90 transition text-center">
+                      <span className="text-2xl mb-2 block">📝</span>
+                      <p className="font-semibold text-sm text-[var(--wrife-blue)]">Assign a Lesson</p>
+                    </button>
+                    <button onClick={() => setShowCreateClassModal(true)} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
                       <span className="text-2xl mb-2 block">➕</span>
                       <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Create Class</p>
                     </button>
-                    <button onClick={() => setShowAddPupilModal(true)} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-[var(--wrife-yellow-soft)] transition text-center">
+                    <button onClick={() => setShowAddPupilModal(true)} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
                       <span className="text-2xl mb-2 block">👤</span>
                       <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Add Pupil</p>
                     </button>
                     <Link href="/dashboard/help">
-                      <div className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-[var(--wrife-coral-soft)] transition text-center">
+                      <div className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
                         <span className="text-2xl mb-2 block">❓</span>
                         <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Help Guide</p>
                       </div>
                     </Link>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'lessons' && (
+              <div className="bg-white rounded-2xl border border-[var(--wrife-border)] shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-[var(--wrife-border)]">
+                  <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Lesson Library</h2>
+                  <p className="text-sm text-[var(--wrife-text-muted)]">Browse lessons and click on any lesson to view details and assign to your class</p>
+                </div>
+                <LessonLibrary />
               </div>
             )}
 
@@ -616,9 +658,9 @@ export default function DashboardPage() {
               <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Active Assignments</h2>
-                  <Link href="/" className="text-sm text-[var(--wrife-blue)] font-semibold hover:underline">
+                  <button onClick={() => handleTabChange('lessons')} className="text-sm text-[var(--wrife-blue)] font-semibold hover:underline">
                     Assign New Lesson
-                  </Link>
+                  </button>
                 </div>
                 {activeAssignments.length === 0 ? (
                   <div className="text-center py-12">
