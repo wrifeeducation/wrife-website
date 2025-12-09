@@ -22,6 +22,10 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /admin/login/page.tsx  # Secure admin login
   /admin/users/page.tsx  # User management (assign to schools)
   /admin/schools/new/page.tsx # Create new school form
+  /admin/schools/[id]/page.tsx # School detail page
+  /admin/help/page.tsx   # Super admin help guide
+  /admin/school/help/page.tsx # School admin help guide
+  /dashboard/help/page.tsx # Teacher help guide
 /components              # React components
   /LessonLibrary.tsx     # Lesson list with filtering
   /LessonCard.tsx        # Individual lesson card

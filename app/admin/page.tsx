@@ -193,6 +193,11 @@ export default function AdminDashboard() {
               </p>
             </div>
             <div className="flex gap-3">
+              <Link href="/admin/help">
+                <button className="rounded-full border border-[var(--wrife-border)] px-4 py-3 text-sm font-semibold text-[var(--wrife-text-muted)] hover:bg-gray-50 transition">
+                  ? Help
+                </button>
+              </Link>
               <Link href="/admin/users">
                 <button className="rounded-full border border-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition">
                   Manage Users

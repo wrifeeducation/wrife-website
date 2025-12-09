@@ -3,6 +3,7 @@
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Link from 'next/link';
 import MetricCard from "../../components/MetricCard";
 import Navbar from "../../components/Navbar";
 
@@ -36,19 +37,26 @@ export default function DashboardPage() {
       <Navbar />
       
       <main className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
-        <header className="mb-6 sm:mb-8">
-          <h1
-            className="text-xl sm:text-2xl font-extrabold mb-1"
-            style={{ color: "var(--wrife-text-main)" }}
-          >
-            Year 4 Maple — Dashboard
-          </h1>
-          <p
-            className="text-xs sm:text-sm"
-            style={{ color: "var(--wrife-text-muted)" }}
-          >
-            Quick view of today&apos;s writing activity and progress
-          </p>
+        <header className="mb-6 sm:mb-8 flex items-start justify-between">
+          <div>
+            <h1
+              className="text-xl sm:text-2xl font-extrabold mb-1"
+              style={{ color: "var(--wrife-text-main)" }}
+            >
+              Welcome, {user.display_name || 'Teacher'}
+            </h1>
+            <p
+              className="text-xs sm:text-sm"
+              style={{ color: "var(--wrife-text-muted)" }}
+            >
+              Quick view of today&apos;s writing activity and progress
+            </p>
+          </div>
+          <Link href="/dashboard/help">
+            <button className="rounded-full border border-[var(--wrife-border)] px-4 py-2 text-sm font-semibold text-[var(--wrife-text-muted)] hover:bg-gray-50 transition">
+              ? Help
+            </button>
+          </Link>
         </header>
 
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
