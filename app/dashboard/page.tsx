@@ -1,14 +1,15 @@
 "use client";
 
+import { Suspense } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from "../../components/Navbar";
 import { supabase } from '@/lib/supabase';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 
-const LessonLibrary = dynamic(() => import('@/components/LessonLibrary'), {
+const LessonLibrary = dynamicImport(() => import('@/components/LessonLibrary'), {
   ssr: false,
   loading: () => (
     <div className="flex justify-center py-12">
@@ -73,7 +74,7 @@ function BandBadge({ score }: { score: number }) {
   );
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -938,5 +939,20 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--wrife-blue)] border-r-transparent"></div>
+          <p className="mt-4 text-sm text-[var(--wrife-text-muted)]">Loading dashboard...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
