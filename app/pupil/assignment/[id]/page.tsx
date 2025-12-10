@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
 interface PupilSession {
-  memberId: number;
+  pupilId: string;
   pupilName: string;
-  classId: number;
+  classId: string;
   className: string;
   classCode: string;
   yearGroup: number;
@@ -73,7 +72,7 @@ export default function PupilAssignmentPage() {
     try {
       const parsed = JSON.parse(stored) as PupilSession;
       setSession(parsed);
-      fetchData(parsed.memberId);
+      fetchData(parsed.pupilId);
     } catch (err) {
       console.error('Invalid session:', err);
       localStorage.removeItem('pupilSession');
@@ -81,47 +80,32 @@ export default function PupilAssignmentPage() {
     }
   }, [router, assignmentId]);
 
-  async function fetchData(memberId: number) {
+  async function fetchData(pupilId: string) {
     try {
-      const { data: assignmentData, error: assignmentError } = await supabase
-        .from('assignments')
-        .select('*')
-        .eq('id', assignmentId)
-        .single();
+      const response = await fetch('/api/pupil/assignment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignmentId, pupilId })
+      });
 
-      if (assignmentError) throw assignmentError;
-      setAssignment(assignmentData);
+      const data = await response.json();
 
-      if (assignmentData.lesson_id) {
-        const { data: filesData } = await supabase
-          .from('lesson_files')
-          .select('*')
-          .eq('lesson_id', assignmentData.lesson_id);
-        setLessonFiles(filesData || []);
+      if (!response.ok) {
+        setError(data.error || 'Could not load assignment');
+        setLoading(false);
+        return;
       }
 
-      const { data: submissionData } = await supabase
-        .from('submissions')
-        .select('*')
-        .eq('assignment_id', assignmentId)
-        .eq('pupil_id', memberId)
-        .single();
-
-      if (submissionData) {
-        setSubmission(submissionData);
-        setContent(submissionData.content || '');
-
-        if (submissionData.status === 'reviewed') {
-          const { data: assessmentData } = await supabase
-            .from('ai_assessments')
-            .select('*')
-            .eq('submission_id', submissionData.id)
-            .single();
-          
-          if (assessmentData) {
-            setAssessment(assessmentData);
-          }
-        }
+      setAssignment(data.assignment);
+      setLessonFiles(data.lessonFiles || []);
+      
+      if (data.submission) {
+        setSubmission(data.submission);
+        setContent(data.submission.content || '');
+      }
+      
+      if (data.assessment) {
+        setAssessment(data.assessment);
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -138,26 +122,24 @@ export default function PupilAssignmentPage() {
     setSuccess('');
 
     try {
-      if (submission) {
-        const { error } = await supabase
-          .from('submissions')
-          .update({ content, status: 'draft' })
-          .eq('id', submission.id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('submissions')
-          .insert({
-            assignment_id: assignment.id,
-            pupil_id: session.memberId,
-            content,
-            status: 'draft',
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        setSubmission(data);
+      const response = await fetch('/api/pupil/assignment', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assignmentId: assignment.id,
+          pupilId: session.pupilId,
+          content,
+          status: 'draft'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
       }
+
+      setSubmission(data.submission);
       setSuccess('Draft saved!');
     } catch (err) {
       console.error('Error saving:', err);
@@ -179,32 +161,24 @@ export default function PupilAssignmentPage() {
     setSuccess('');
 
     try {
-      if (submission) {
-        const { error } = await supabase
-          .from('submissions')
-          .update({ 
-            content, 
-            status: 'submitted',
-            submitted_at: new Date().toISOString()
-          })
-          .eq('id', submission.id);
-        if (error) throw error;
-        setSubmission({ ...submission, status: 'submitted', submitted_at: new Date().toISOString() });
-      } else {
-        const { data, error } = await supabase
-          .from('submissions')
-          .insert({
-            assignment_id: assignment.id,
-            pupil_id: session.memberId,
-            content,
-            status: 'submitted',
-            submitted_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        setSubmission(data);
+      const response = await fetch('/api/pupil/assignment', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assignmentId: assignment.id,
+          pupilId: session.pupilId,
+          content,
+          status: 'submitted'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
       }
+
+      setSubmission(data.submission);
       setSuccess('Your work has been submitted! Your teacher will review it soon.');
     } catch (err) {
       console.error('Error submitting:', err);
@@ -226,7 +200,24 @@ export default function PupilAssignmentPage() {
   }
 
   if (!session || !assignment) {
-    return null;
+    return (
+      <div className="min-h-screen bg-[var(--wrife-bg)]">
+        <Navbar />
+        <main className="max-w-4xl mx-auto px-4 py-6">
+          <Link 
+            href="/pupil/dashboard"
+            className="inline-flex items-center text-sm text-[var(--wrife-blue)] hover:underline mb-4"
+          >
+            ← Back to Dashboard
+          </Link>
+          {error && (
+            <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-red-600">{error}</p>
+            </div>
+          )}
+        </main>
+      </div>
+    );
   }
 
   const isSubmitted = submission?.status === 'submitted' || submission?.status === 'reviewed';
