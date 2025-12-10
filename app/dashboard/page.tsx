@@ -473,15 +473,15 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="flex gap-2 mb-6 border-b border-[var(--wrife-border)] overflow-x-auto">
+        <nav className="flex gap-1 mb-6 border-b border-[var(--wrife-border)] overflow-x-auto bg-[var(--wrife-bg)]">
           {(['overview', 'lessons', 'pupils', 'assignments', 'classes'] as const).map((tab) => (
-            <button
+            <Link
               key={tab}
-              onClick={() => handleTabChange(tab)}
-              className={`px-4 py-2 text-sm font-semibold whitespace-nowrap transition border-b-2 -mb-px ${
+              href={tab === 'overview' ? '/dashboard' : `/dashboard?tab=${tab}`}
+              className={`px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${
                 activeTab === tab
-                  ? 'border-[var(--wrife-blue)] text-[var(--wrife-blue)]'
-                  : 'border-transparent text-[var(--wrife-text-muted)] hover:text-[var(--wrife-text-main)]'
+                  ? 'border-[var(--wrife-blue)] text-[var(--wrife-blue)] bg-white'
+                  : 'border-transparent text-[var(--wrife-text-muted)] hover:text-[var(--wrife-text-main)] hover:bg-white/50'
               }`}
             >
               {tab === 'overview' && 'Overview'}
@@ -489,9 +489,9 @@ function DashboardContent() {
               {tab === 'pupils' && `My Pupils (${stats.totalPupils})`}
               {tab === 'assignments' && `Assignments (${activeAssignments.length})`}
               {tab === 'classes' && `Classes (${stats.totalClasses})`}
-            </button>
+            </Link>
           ))}
-        </div>
+        </nav>
 
         {dataLoading ? (
           <div className="flex justify-center py-12">

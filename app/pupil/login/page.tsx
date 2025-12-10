@@ -8,8 +8,10 @@ import Link from 'next/link';
 import ChildMascot from '@/components/mascots/ChildMascot';
 
 interface ClassMember {
-  id: number;
-  pupil_name: string;
+  id: string;
+  pupil_id: string;
+  first_name: string;
+  last_name: string | null;
 }
 
 interface ClassInfo {
@@ -24,9 +26,7 @@ export default function PupilLoginPage() {
   const [classCode, setClassCode] = useState('');
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [classMembers, setClassMembers] = useState<ClassMember[]>([]);
-  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
-  const [newPupilName, setNewPupilName] = useState('');
-  const [isNewPupil, setIsNewPupil] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -53,13 +53,19 @@ export default function PupilLoginPage() {
 
       const { data: members, error: membersError } = await supabase
         .from('class_members')
-        .select('id, pupil_name')
-        .eq('class_id', classData.id)
-        .order('pupil_name');
+        .select('id, pupil_id, pupils(id, first_name, last_name)')
+        .eq('class_id', classData.id);
 
       if (membersError) throw membersError;
 
-      setClassMembers(members || []);
+      const formattedMembers = (members || []).map((m: any) => ({
+        id: m.id,
+        pupil_id: m.pupil_id,
+        first_name: m.pupils?.first_name || 'Unknown',
+        last_name: m.pupils?.last_name || null,
+      })).sort((a, b) => a.first_name.localeCompare(b.first_name));
+      
+      setClassMembers(formattedMembers);
       setStep('name');
     } catch (err) {
       console.error('Error:', err);
@@ -76,46 +82,24 @@ export default function PupilLoginPage() {
     setError('');
 
     try {
-      let pupilName = '';
-      let memberId: number;
-
-      if (isNewPupil) {
-        if (!newPupilName.trim()) {
-          setError('Please enter your name');
-          setLoading(false);
-          return;
-        }
-        pupilName = newPupilName.trim();
-
-        const { data: newMember, error: insertError } = await supabase
-          .from('class_members')
-          .insert({
-            class_id: classInfo.id,
-            pupil_name: pupilName,
-          })
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        memberId = newMember.id;
-      } else {
-        if (!selectedMemberId) {
-          setError('Please select your name from the list');
-          setLoading(false);
-          return;
-        }
-        const member = classMembers.find(m => m.id === selectedMemberId);
-        if (!member) {
-          setError('Please select your name from the list');
-          setLoading(false);
-          return;
-        }
-        pupilName = member.pupil_name;
-        memberId = member.id;
+      if (!selectedMemberId) {
+        setError('Please select your name from the list');
+        setLoading(false);
+        return;
       }
+      
+      const member = classMembers.find(m => m.id === selectedMemberId);
+      if (!member) {
+        setError('Please select your name from the list');
+        setLoading(false);
+        return;
+      }
+      
+      const pupilName = `${member.first_name}${member.last_name ? ' ' + member.last_name : ''}`;
+      const pupilId = member.pupil_id;
 
       const pupilSession = {
-        memberId,
+        pupilId,
         pupilName,
         classId: classInfo.id,
         className: classInfo.name,
@@ -213,7 +197,7 @@ export default function PupilLoginPage() {
             </form>
           ) : (
             <form onSubmit={handleNameSubmit}>
-              {classMembers.length > 0 && !isNewPupil ? (
+              {classMembers.length > 0 ? (
                 <div className="mb-6">
                   <label className="block text-sm font-semibold mb-3 text-[var(--wrife-text-main)]">
                     Select your name
@@ -237,48 +221,23 @@ export default function PupilLoginPage() {
                           className="mr-3"
                         />
                         <span className="font-medium text-[var(--wrife-text-main)]">
-                          {member.pupil_name}
+                          {member.first_name}{member.last_name ? ` ${member.last_name}` : ''}
                         </span>
                       </label>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsNewPupil(true)}
-                    className="mt-4 text-sm text-[var(--wrife-blue)] hover:underline"
-                  >
-                    I'm not on this list
-                  </button>
+                  <p className="mt-4 text-sm text-[var(--wrife-text-muted)]">
+                    Can't find your name? Ask your teacher to add you to the class.
+                  </p>
                 </div>
               ) : (
-                <div className="mb-6">
-                  <label 
-                    htmlFor="pupilName" 
-                    className="block text-sm font-semibold mb-2 text-[var(--wrife-text-main)]"
-                  >
-                    {classMembers.length > 0 ? "Enter your name" : "What's your name?"}
-                  </label>
-                  <input
-                    id="pupilName"
-                    type="text"
-                    value={newPupilName}
-                    onChange={(e) => setNewPupilName(e.target.value)}
-                    placeholder="e.g., Alex Smith"
-                    className="w-full px-4 py-3 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-                    required
-                  />
-                  {classMembers.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsNewPupil(false);
-                        setNewPupilName('');
-                      }}
-                      className="mt-2 text-sm text-[var(--wrife-blue)] hover:underline"
-                    >
-                      Go back to name list
-                    </button>
-                  )}
+                <div className="mb-6 text-center py-4">
+                  <p className="text-[var(--wrife-text-main)] font-semibold mb-2">
+                    No pupils in this class yet
+                  </p>
+                  <p className="text-sm text-[var(--wrife-text-muted)]">
+                    Ask your teacher to add you to the class first, then try again.
+                  </p>
                 </div>
               )}
 
@@ -290,8 +249,6 @@ export default function PupilLoginPage() {
                     setClassInfo(null);
                     setClassMembers([]);
                     setSelectedMemberId(null);
-                    setNewPupilName('');
-                    setIsNewPupil(false);
                     setError('');
                   }}
                   className="flex-1 py-3 rounded-full font-bold border border-[var(--wrife-border)] text-[var(--wrife-text-muted)] hover:bg-gray-50 transition"
