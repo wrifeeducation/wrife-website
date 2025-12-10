@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import OwlMascot from '@/components/mascots/OwlMascot';
 import Link from 'next/link';
 
 interface PupilSession {
-  memberId: number;
+  pupilId: string;
   pupilName: string;
-  classId: number;
+  classId: string;
   className: string;
   classCode: string;
   yearGroup: number;
@@ -67,7 +66,7 @@ export default function PupilDashboardPage() {
     try {
       const parsed = JSON.parse(stored) as PupilSession;
       setSession(parsed);
-      fetchAssignments(parsed.classId, parsed.memberId);
+      fetchAssignments(parsed.classId, parsed.pupilId);
     } catch (err) {
       console.error('Invalid session:', err);
       localStorage.removeItem('pupilSession');
@@ -75,24 +74,23 @@ export default function PupilDashboardPage() {
     }
   }, [router]);
 
-  async function fetchAssignments(classId: number, memberId: number) {
+  async function fetchAssignments(classId: string, pupilId: string) {
     try {
-      const { data: assignmentsData, error: assignmentsError } = await supabase
-        .from('assignments')
-        .select('*')
-        .eq('class_id', classId)
-        .order('created_at', { ascending: false });
+      const response = await fetch('/api/pupil/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classId, pupilId })
+      });
 
-      if (assignmentsError) throw assignmentsError;
-      setAssignments(assignmentsData || []);
+      const data = await response.json();
 
-      const { data: submissionsData, error: submissionsError } = await supabase
-        .from('submissions')
-        .select('*')
-        .eq('pupil_id', memberId);
+      if (!response.ok) {
+        console.error('Failed to fetch assignments:', data.error);
+        return;
+      }
 
-      if (submissionsError) throw submissionsError;
-      setSubmissions(submissionsData || []);
+      setAssignments(data.assignments || []);
+      setSubmissions(data.submissions || []);
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
