@@ -437,10 +437,10 @@ export default function PupilAssignmentPage() {
             </div>
             <div className="flex-1 overflow-hidden">
               <iframe
-                srcDoc={interactiveHtml}
+                src={interactiveHtml}
                 className="w-full h-full border-0"
                 title="Practice Activity"
-                sandbox="allow-same-origin allow-scripts"
+                allow="autoplay"
               />
             </div>
           </div>

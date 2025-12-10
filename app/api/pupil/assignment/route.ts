@@ -6,6 +6,30 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+function getGoogleDriveFileId(shareUrl: string): string | null {
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /id=([a-zA-Z0-9_-]+)/,
+    /\/d\/([a-zA-Z0-9_-]+)/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = shareUrl.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
+function getGoogleDrivePreviewUrl(shareUrl: string): string | null {
+  const fileId = getGoogleDriveFileId(shareUrl);
+  if (fileId) {
+    return `https://drive.google.com/file/d/${fileId}/preview`;
+  }
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { assignmentId, pupilId } = await request.json();
@@ -39,13 +63,14 @@ export async function POST(request: NextRequest) {
       if (lessonFiles.length > 0) {
         const htmlFile = lessonFiles.find((f: any) => f.file_name?.endsWith('.html'));
         if (htmlFile?.file_url) {
-          try {
-            const htmlResponse = await fetch(htmlFile.file_url);
-            if (htmlResponse.ok) {
-              interactiveHtml = await htmlResponse.text();
+          const fileUrl = htmlFile.file_url;
+          if (fileUrl.includes('drive.google.com')) {
+            const previewUrl = getGoogleDrivePreviewUrl(fileUrl);
+            if (previewUrl) {
+              interactiveHtml = previewUrl;
             }
-          } catch (err) {
-            console.log('Could not fetch HTML content:', err);
+          } else {
+            interactiveHtml = fileUrl;
           }
         }
       }
