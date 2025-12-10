@@ -337,7 +337,6 @@ function DashboardContent() {
         .insert({
           class_id: selectedClassForPupil,
           pupil_id: pupilId,
-          pupil_name: `${firstName} ${lastName}`.trim(),
         });
 
       if (memberError) throw memberError;
