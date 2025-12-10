@@ -23,42 +23,17 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
     setError('');
 
     try {
-      // Step 1: Create a temporary email
-      const randomId = Math.random().toString(36).substring(2, 8);
-      const tempEmail = `${firstName.toLowerCase()}${lastName.toLowerCase()}${randomId}@wrife.co.uk`;
-      const tempPassword = Math.random().toString(36).slice(-12);
+      // Generate a unique pupil ID (no auth user needed)
+      const pupilId = crypto.randomUUID();
 
-      // Step 2: Create auth user with auto-confirm
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: tempEmail,
-        password: tempPassword,
-        options: {
-          emailRedirectTo: undefined,
-          data: {
-            role: 'pupil',
-            first_name: firstName,
-            last_name: lastName,
-            display_name: `${firstName} ${lastName}`,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
-
-      const userId = authData.user.id;
-
-      // Step 3: Wait for trigger to complete (2 seconds)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Step 4: Create pupil record
+      // Step 1: Create pupil record
       const { error: pupilError } = await supabase
         .from('pupils')
         .insert({
-          id: userId,
+          id: pupilId,
           first_name: firstName,
-          last_name: lastName,
-          display_name: `${firstName} ${lastName}`,
+          last_name: lastName || null,
+          display_name: lastName ? `${firstName} ${lastName}` : firstName,
           year_group: yearGroup,
         });
 
@@ -67,12 +42,12 @@ export function AddPupilModal({ classId, classYearGroup, onClose, onSuccess }: A
         throw pupilError;
       }
 
-      // Step 5: Add pupil to class
+      // Step 2: Add pupil to class
       const { error: memberError } = await supabase
         .from('class_members')
         .insert({
           class_id: classId,
-          pupil_id: userId,
+          pupil_id: pupilId,
         });
 
       if (memberError) {
