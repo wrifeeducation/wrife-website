@@ -55,6 +55,7 @@ export default function PupilAssignmentPage() {
   const [assessment, setAssessment] = useState<AIAssessment | null>(null);
   const [lessonFiles, setLessonFiles] = useState<LessonFile[]>([]);
   const [interactiveHtml, setInteractiveHtml] = useState<string | null>(null);
+  const [showActivity, setShowActivity] = useState(false);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -390,23 +391,61 @@ export default function PupilAssignmentPage() {
 
           {interactiveHtml && (
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5">
-                <h3 className="font-semibold text-[var(--wrife-text-main)] mb-4 flex items-center gap-2">
-                  <span>🎮</span> Practice Activity
-                </h3>
-                <div className="rounded-lg border border-[var(--wrife-border)] overflow-hidden">
-                  <iframe
-                    srcDoc={interactiveHtml}
-                    className="w-full min-h-[500px] border-0"
-                    title="Practice Activity"
-                    sandbox="allow-same-origin allow-scripts"
-                  />
+              <button
+                onClick={() => setShowActivity(true)}
+                className="w-full bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5 hover:shadow-md transition cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-[var(--wrife-green-soft)] flex items-center justify-center flex-shrink-0">
+                    <span className="text-3xl">🎮</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-[var(--wrife-text-main)]">
+                      Practice Activity
+                    </h3>
+                    <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
+                      Click to open the interactive lesson
+                    </p>
+                  </div>
+                  <div className="text-[var(--wrife-blue)]">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
+              </button>
             </div>
           )}
         </div>
       </main>
+
+      {showActivity && interactiveHtml && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="relative w-full max-w-5xl h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--wrife-border)] bg-[var(--wrife-bg)]">
+              <h2 className="text-lg font-bold text-[var(--wrife-text-main)] flex items-center gap-2">
+                <span>🎮</span> Practice Activity
+              </h2>
+              <button
+                onClick={() => setShowActivity(false)}
+                className="w-10 h-10 rounded-full bg-white border border-[var(--wrife-border)] flex items-center justify-center hover:bg-gray-50 transition"
+              >
+                <svg className="w-5 h-5 text-[var(--wrife-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                srcDoc={interactiveHtml}
+                className="w-full h-full border-0"
+                title="Practice Activity"
+                sandbox="allow-same-origin allow-scripts"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
