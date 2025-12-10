@@ -387,17 +387,20 @@ function DashboardContent() {
     if (!confirm(`Are you sure you want to delete "${classToDelete.name}"? This will remove all pupils and assignments.`)) return;
 
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete class:', classId);
+      const { error, data } = await supabase
         .from('classes')
         .delete()
         .eq('id', classId)
-        .eq('teacher_id', user.id);
+        .eq('teacher_id', user.id)
+        .select();
 
+      console.log('Delete result:', { error, data });
       if (error) throw error;
       fetchAllData();
     } catch (err) {
       console.error('Error deleting class:', err);
-      alert('Failed to delete class');
+      alert('Failed to delete class: ' + (err as any)?.message);
     }
   }
 
