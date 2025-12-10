@@ -30,9 +30,12 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /admin/lessons/page.tsx # Lesson curriculum management
   /admin/school/help/page.tsx # School admin help guide
   /dashboard/help/page.tsx # Teacher help guide
+/app/api                 # API endpoints
+  /pupil/lookup-class/route.ts  # Class code lookup for pupil login (uses service role)
+  /pupil/assignments/route.ts   # Fetch assignments for pupil dashboard (uses service role)
+  /assess/route.ts       # AI assessment API endpoint
 /docs
   /WriFe_Curriculum.md   # Official 68-lesson curriculum outline
-  /api/assess/route.ts   # AI assessment API endpoint
 /components              # React components
   /LessonLibrary.tsx     # Lesson list with filtering
   /LessonCard.tsx        # Individual lesson card
