@@ -165,10 +165,12 @@ function DashboardContent() {
 
       let allPupils: PupilData[] = [];
       if (classIds.length > 0) {
-        const { data: membersData } = await supabase
+        const { data: membersData, error: membersError } = await supabase
           .from('class_members')
-          .select('class_id, pupil_id, pupil_name, pupils(id, first_name, last_name, year_group)')
+          .select('class_id, pupil_id, pupils(id, first_name, last_name, year_group)')
           .in('class_id', classIds);
+        
+        console.log('Members query result:', { membersData, membersError });
 
         if (membersData) {
           const classMap = new Map(classesData?.map(c => [c.id, c.name]) || []);
@@ -176,8 +178,8 @@ function DashboardContent() {
             const pupilData = Array.isArray(m.pupils) ? m.pupils[0] : m.pupils;
             return {
               id: pupilData?.id || m.pupil_id,
-              first_name: pupilData?.first_name || m.pupil_name?.split(' ')[0] || 'Unknown',
-              last_name: pupilData?.last_name || m.pupil_name?.split(' ').slice(1).join(' ') || null,
+              first_name: pupilData?.first_name || 'Unknown',
+              last_name: pupilData?.last_name || null,
               year_group: pupilData?.year_group || 4,
               class_id: m.class_id,
               class_name: classMap.get(m.class_id) || 'Unknown Class',
@@ -235,17 +237,15 @@ function DashboardContent() {
             });
 
             for (const sub of submittedSubs) {
-              const { data: member } = await supabase
-                .from('class_members')
-                .select('pupil_name, pupils(first_name, last_name)')
+              const { data: pupil } = await supabase
+                .from('pupils')
+                .select('first_name, last_name')
                 .eq('id', sub.pupil_id)
                 .single();
 
-              const pupilsData = member?.pupils as { first_name: string; last_name?: string }[] | { first_name: string; last_name?: string } | null;
-              const pupilData = Array.isArray(pupilsData) ? pupilsData[0] : pupilsData;
-              const pupilName = pupilData
-                ? `${pupilData.first_name} ${pupilData.last_name || ''}`.trim()
-                : member?.pupil_name || 'Unknown';
+              const pupilName = pupil
+                ? `${pupil.first_name} ${pupil.last_name || ''}`.trim()
+                : 'Unknown';
 
               pending.push({
                 id: sub.id,
