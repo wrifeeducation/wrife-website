@@ -26,12 +26,29 @@ export async function POST(request: NextRequest) {
     }
 
     let lessonFiles: any[] = [];
+    let interactiveHtml: string | null = null;
+    
     if (assignment.lesson_id) {
       const { data: filesData } = await supabaseAdmin
         .from('lesson_files')
         .select('*')
-        .eq('lesson_id', assignment.lesson_id);
+        .eq('lesson_id', assignment.lesson_id)
+        .like('file_type', '%interactive_practice%');
       lessonFiles = filesData || [];
+      
+      if (lessonFiles.length > 0) {
+        const htmlFile = lessonFiles.find((f: any) => f.file_name?.endsWith('.html'));
+        if (htmlFile?.file_url) {
+          try {
+            const htmlResponse = await fetch(htmlFile.file_url);
+            if (htmlResponse.ok) {
+              interactiveHtml = await htmlResponse.text();
+            }
+          } catch (err) {
+            console.log('Could not fetch HTML content:', err);
+          }
+        }
+      }
     }
 
     let submission = null;
@@ -69,6 +86,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       assignment,
       lessonFiles,
+      interactiveHtml,
       submission,
       assessment
     });

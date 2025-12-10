@@ -54,6 +54,7 @@ export default function PupilAssignmentPage() {
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [assessment, setAssessment] = useState<AIAssessment | null>(null);
   const [lessonFiles, setLessonFiles] = useState<LessonFile[]>([]);
+  const [interactiveHtml, setInteractiveHtml] = useState<string | null>(null);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -98,6 +99,7 @@ export default function PupilAssignmentPage() {
 
       setAssignment(data.assignment);
       setLessonFiles(data.lessonFiles || []);
+      setInteractiveHtml(data.interactiveHtml || null);
       
       if (data.submission) {
         setSubmission(data.submission);
@@ -386,35 +388,23 @@ export default function PupilAssignmentPage() {
             </div>
           </div>
 
-          <div>
-            {lessonFiles.length > 0 && (
+          {interactiveHtml && (
+            <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5">
-                <h3 className="font-semibold text-[var(--wrife-text-main)] mb-4">
-                  Lesson Materials
+                <h3 className="font-semibold text-[var(--wrife-text-main)] mb-4 flex items-center gap-2">
+                  <span>🎮</span> Practice Activity
                 </h3>
-                <div className="space-y-2">
-                  {lessonFiles.map((file) => (
-                    <a
-                      key={file.id}
-                      href={file.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 rounded-lg border border-[var(--wrife-border)] hover:bg-gray-50 transition"
-                    >
-                      <span className="text-lg">
-                        {file.file_type === 'worksheet_support' ? '📝' :
-                         file.file_type === 'presentation' ? '📊' :
-                         file.file_type === 'interactive_practice' ? '🎮' : '📄'}
-                      </span>
-                      <span className="text-sm font-medium text-[var(--wrife-text-main)] truncate">
-                        {file.file_name}
-                      </span>
-                    </a>
-                  ))}
+                <div className="rounded-lg border border-[var(--wrife-border)] overflow-hidden">
+                  <iframe
+                    srcDoc={interactiveHtml}
+                    className="w-full min-h-[500px] border-0"
+                    title="Practice Activity"
+                    sandbox="allow-same-origin allow-scripts"
+                  />
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
