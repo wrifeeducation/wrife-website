@@ -437,7 +437,7 @@ export default function PupilAssignmentPage() {
             </div>
             <div className="flex-1 overflow-hidden">
               <iframe
-                src={interactiveHtml}
+                src={`/api/fetch-html?url=${encodeURIComponent(interactiveHtml)}`}
                 className="w-full h-full border-0"
                 title="Practice Activity"
                 allow="autoplay"

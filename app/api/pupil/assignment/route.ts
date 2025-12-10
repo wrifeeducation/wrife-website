@@ -63,15 +63,7 @@ export async function POST(request: NextRequest) {
       if (lessonFiles.length > 0) {
         const htmlFile = lessonFiles.find((f: any) => f.file_name?.endsWith('.html'));
         if (htmlFile?.file_url) {
-          const fileUrl = htmlFile.file_url;
-          if (fileUrl.includes('drive.google.com')) {
-            const previewUrl = getGoogleDrivePreviewUrl(fileUrl);
-            if (previewUrl) {
-              interactiveHtml = previewUrl;
-            }
-          } else {
-            interactiveHtml = fileUrl;
-          }
+          interactiveHtml = htmlFile.file_url;
         }
       }
     }
