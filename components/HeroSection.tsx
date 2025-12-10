@@ -42,7 +42,7 @@ export default function HeroSection() {
                 <span className="font-bold text-sm text-[var(--wrife-text-main)]">WriFe</span>
               </div>
               <p className="text-xs text-[var(--wrife-text-muted)] mb-3">
-                Write a short story about a magical journey.
+                Lesson 1: Developing Awareness of Personal Stories
               </p>
               <button className="w-full py-2 bg-[var(--wrife-orange)] text-white text-xs font-bold rounded-lg">
                 Start
@@ -64,8 +64,8 @@ export default function HeroSection() {
                 <span className="px-2 py-1 bg-white/20 rounded">Presentation</span>
               </div>
               <div className="bg-white/10 rounded-lg p-3">
-                <h4 className="font-bold text-sm mb-1">The Dragon's Island</h4>
-                <p className="text-xs opacity-75">67 lessons</p>
+                <h4 className="font-bold text-sm mb-1">Stories and Words</h4>
+                <p className="text-xs opacity-75">Chapter 1 - 17 lessons</p>
               </div>
             </div>
 

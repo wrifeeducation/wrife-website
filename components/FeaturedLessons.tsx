@@ -16,12 +16,12 @@ interface Lesson {
 }
 
 const staticLessons: Lesson[] = [
-  { id: 1, lesson_number: 1, title: "My Favourite Things", summary: "Introduce personal narrative writing through describing favourite items, people, and places.", chapter: 1, year_group_min: 2, year_group_max: 3, duration_minutes: 30 },
-  { id: 2, lesson_number: 2, title: "A Day in My Life", summary: "Learn to structure a simple timeline narrative about daily routines and activities.", chapter: 1, year_group_min: 2, year_group_max: 3, duration_minutes: 35 },
-  { id: 3, lesson_number: 3, title: "My Best Friend", summary: "Explore character description through writing about friends and important people.", chapter: 1, year_group_min: 2, year_group_max: 3, duration_minutes: 30 },
-  { id: 4, lesson_number: 4, title: "The Magic Door", summary: "Introduction to imaginative writing with fantasy settings and creative story starters.", chapter: 2, year_group_min: 3, year_group_max: 4, duration_minutes: 40 },
-  { id: 5, lesson_number: 5, title: "Lost in the Woods", summary: "Build suspense and tension through adventure narrative writing techniques.", chapter: 2, year_group_min: 3, year_group_max: 4, duration_minutes: 40 },
-  { id: 6, lesson_number: 6, title: "The Dragon's Island", summary: "Create mythical creatures and fantastical worlds using vivid descriptive language.", chapter: 2, year_group_min: 3, year_group_max: 5, duration_minutes: 45 },
+  { id: 1, lesson_number: 1, title: "Developing Awareness of Personal Stories", summary: "Explore and develop awareness of personal stories from students' own experiences.", chapter: 1, year_group_min: 2, year_group_max: 6, duration_minutes: 45 },
+  { id: 2, lesson_number: 2, title: "Telling Our Story", summary: "Practice telling personal stories with related learning on asking questions.", chapter: 1, year_group_min: 2, year_group_max: 6, duration_minutes: 45 },
+  { id: 3, lesson_number: 3, title: "Learning Other Stories", summary: "Learn to appreciate stories from others with focus on making connections.", chapter: 1, year_group_min: 2, year_group_max: 6, duration_minutes: 45 },
+  { id: 4, lesson_number: 4, title: "Basic Story Structure", summary: "Understanding the basic story structure: beginning, middle, and end.", chapter: 1, year_group_min: 2, year_group_max: 6, duration_minutes: 45 },
+  { id: 5, lesson_number: 5, title: "Story Structure", summary: "Explore story structure including build-up, problem/dilemma, and resolution.", chapter: 1, year_group_min: 2, year_group_max: 6, duration_minutes: 45 },
+  { id: 6, lesson_number: 6, title: "Basic Story Types", summary: "Learn about basic story types such as happy, sad, and funny stories.", chapter: 1, year_group_min: 2, year_group_max: 6, duration_minutes: 45 },
 ];
 
 const chapterColors: Record<number, { bg: string; text: string; border: string }> = {
