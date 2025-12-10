@@ -49,9 +49,14 @@ export default function AdminPracticeFilesPage() {
 
   async function fetchData() {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const [lessonsRes, filesRes] = await Promise.all([
         supabase.from('lessons').select('id, lesson_number, title, part').order('lesson_number'),
-        fetch('/api/admin/storage'),
+        fetch('/api/admin/storage', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        }),
       ]);
 
       setLessons(lessonsRes.data || []);
@@ -59,6 +64,10 @@ export default function AdminPracticeFilesPage() {
       if (filesRes.ok) {
         const filesData = await filesRes.json();
         setUploadedFiles(filesData.files || []);
+      } else {
+        const errorData = await filesRes.json();
+        setErrorMessage(errorData.error || 'Failed to fetch files');
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -104,6 +113,9 @@ export default function AdminPracticeFilesPage() {
     setErrorMessage('');
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);
@@ -112,6 +124,7 @@ export default function AdminPracticeFilesPage() {
 
         const response = await fetch('/api/admin/storage', {
           method: 'POST',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           body: formData,
         });
 
@@ -160,9 +173,15 @@ export default function AdminPracticeFilesPage() {
     if (!confirm('Are you sure you want to delete this file?')) return;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const response = await fetch('/api/admin/storage', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ filePath }),
       });
 

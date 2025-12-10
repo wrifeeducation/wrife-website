@@ -11,29 +11,24 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 const BUCKET_NAME = 'practice-activities';
 
-async function verifyAdmin(): Promise<{ authorized: boolean; error?: string }> {
+async function verifyAdmin(request: NextRequest): Promise<{ authorized: boolean; error?: string }> {
   try {
-    const cookieStore = await cookies();
+    const authHeader = request.headers.get('Authorization');
     
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return { authorized: false, error: 'Unauthorized - Please log in' };
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const token = authHeader.replace('Bearer ', '');
+    
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return { authorized: false, error: 'Unauthorized - Please log in' };
+    }
+
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -51,7 +46,7 @@ async function verifyAdmin(): Promise<{ authorized: boolean; error?: string }> {
 }
 
 export async function POST(request: NextRequest) {
-  const authCheck = await verifyAdmin();
+  const authCheck = await verifyAdmin(request);
   if (!authCheck.authorized) {
     return NextResponse.json({ error: authCheck.error }, { status: 401 });
   }
@@ -113,8 +108,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  const authCheck = await verifyAdmin();
+export async function GET(request: NextRequest) {
+  const authCheck = await verifyAdmin(request);
   if (!authCheck.authorized) {
     return NextResponse.json({ error: authCheck.error }, { status: 401 });
   }
@@ -173,7 +168,7 @@ export async function GET() {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authCheck = await verifyAdmin();
+  const authCheck = await verifyAdmin(request);
   if (!authCheck.authorized) {
     return NextResponse.json({ error: authCheck.error }, { status: 401 });
   }
