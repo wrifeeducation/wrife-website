@@ -759,10 +759,10 @@ function DashboardContent() {
                             </div>
                             <button
                               onClick={() => handleDeleteClass(cls.id)}
-                              className="text-red-400 hover:text-red-600 text-sm"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-semibold transition"
                               title="Delete class"
                             >
-                              x
+                              Delete
                             </button>
                           </div>
                           <div className="mb-3">

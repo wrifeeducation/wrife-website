@@ -92,6 +92,25 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  async function handleDeleteClass() {
+    if (!user || !classData) return;
+    if (!confirm(`Are you sure you want to delete "${classData.name}"? This will remove all pupils and assignments for this class.`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('classes')
+        .delete()
+        .eq('id', resolvedParams.id)
+        .eq('teacher_id', user.id);
+
+      if (error) throw error;
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Error deleting class:', err);
+      alert('Failed to delete class: ' + (err as any)?.message);
+    }
+  }
+
   if (loading) {
     return (
       <>
@@ -145,6 +164,12 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                   <p className="text-sm text-[var(--wrife-text-muted)]">{classData.school_name}</p>
                 )}
               </div>
+              <button
+                onClick={handleDeleteClass}
+                className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg text-sm font-semibold transition border border-red-200"
+              >
+                Delete Class
+              </button>
             </div>
           </div>
 
