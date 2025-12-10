@@ -146,8 +146,12 @@ export default function AdminPracticeFilesPage() {
         }
       }
 
-      setSuccessMessage(`Successfully uploaded ${files.length} file(s)`);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      const selectedLessonData = lessons.find(l => l.id === selectedLesson);
+      const lessonLabel = selectedLessonData 
+        ? `Lesson ${selectedLessonData.lesson_number}${selectedLessonData.part || ''}: ${selectedLessonData.title}`
+        : 'the selected lesson';
+      setSuccessMessage(`Successfully uploaded ${files.length} file(s) and linked to ${lessonLabel}. Pupils can now see this activity!`);
+      setTimeout(() => setSuccessMessage(''), 5000);
       fetchData();
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to upload files');

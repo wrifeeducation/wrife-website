@@ -97,10 +97,42 @@ export async function POST(request: NextRequest) {
       .from(BUCKET_NAME)
       .getPublicUrl(filePath);
 
+    if (lessonId) {
+      const { data: lesson } = await supabaseAdmin
+        .from('lessons')
+        .select('lesson_number, part')
+        .eq('id', parseInt(lessonId))
+        .single();
+
+      const lessonLabel = lesson 
+        ? `Lesson ${lesson.lesson_number}${lesson.part || ''}`
+        : `Lesson ${lessonId}`;
+
+      await supabaseAdmin
+        .from('lesson_files')
+        .delete()
+        .eq('lesson_id', parseInt(lessonId))
+        .eq('file_type', 'interactive_practice');
+
+      const { error: linkError } = await supabaseAdmin
+        .from('lesson_files')
+        .insert({
+          lesson_id: parseInt(lessonId),
+          file_type: 'interactive_practice',
+          file_name: `Interactive Practice - ${lessonLabel}`,
+          file_url: urlData.publicUrl,
+        });
+
+      if (linkError) {
+        console.error('Error linking file to lesson:', linkError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       filePath: uploadData.path,
       publicUrl: urlData.publicUrl,
+      linkedToLesson: !!lessonId,
     });
   } catch (error) {
     console.error('Storage API error:', error);
