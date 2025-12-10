@@ -32,6 +32,18 @@ export default function AdminPracticeFilesPage() {
   const [dragActive, setDragActive] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
+  async function copyToClipboard(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedUrl(url);
+      setTimeout(() => setCopiedUrl(null), 2000);
+    } catch (err) {
+      setErrorMessage('Failed to copy URL');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
+  }
 
   useEffect(() => {
     if (!authLoading) {
@@ -344,14 +356,14 @@ export default function AdminPracticeFilesPage() {
                                     Preview
                                   </a>
                                   <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(subFile.publicUrl);
-                                      setSuccessMessage('URL copied to clipboard!');
-                                      setTimeout(() => setSuccessMessage(''), 2000);
-                                    }}
-                                    className="text-xs text-[var(--wrife-blue)] hover:underline"
+                                    onClick={() => copyToClipboard(subFile.publicUrl)}
+                                    className={`text-xs font-semibold px-2 py-1 rounded transition ${
+                                      copiedUrl === subFile.publicUrl
+                                        ? 'bg-green-500 text-white'
+                                        : 'text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)]'
+                                    }`}
                                   >
-                                    Copy URL
+                                    {copiedUrl === subFile.publicUrl ? '✓ Copied!' : 'Copy URL'}
                                   </button>
                                 </div>
                               </div>
@@ -377,14 +389,14 @@ export default function AdminPracticeFilesPage() {
                                 Preview
                               </a>
                               <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(file.publicUrl!);
-                                  setSuccessMessage('URL copied to clipboard!');
-                                  setTimeout(() => setSuccessMessage(''), 2000);
-                                }}
-                                className="rounded-full border border-[var(--wrife-blue)] px-4 py-1.5 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
+                                onClick={() => copyToClipboard(file.publicUrl!)}
+                                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                                  copiedUrl === file.publicUrl
+                                    ? 'bg-green-500 text-white border border-green-500'
+                                    : 'border border-[var(--wrife-blue)] text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)]'
+                                }`}
                               >
-                                Copy URL
+                                {copiedUrl === file.publicUrl ? '✓ Copied!' : 'Copy URL'}
                               </button>
                             </>
                           )}
