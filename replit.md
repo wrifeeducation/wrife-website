@@ -28,12 +28,16 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /admin/schools/[id]/page.tsx # School detail page
   /admin/help/page.tsx   # Super admin help guide
   /admin/lessons/page.tsx # Lesson curriculum management
+  /admin/practice-files/page.tsx # Upload practice HTML files to Supabase Storage
   /admin/school/help/page.tsx # School admin help guide
   /dashboard/help/page.tsx # Teacher help guide
 /app/api                 # API endpoints
   /pupil/lookup-class/route.ts  # Class code lookup for pupil login (uses service role)
   /pupil/assignments/route.ts   # Fetch assignments for pupil dashboard (uses service role)
+  /pupil/assignment/route.ts    # Fetch individual assignment details for pupil
   /assess/route.ts       # AI assessment API endpoint
+  /admin/storage/route.ts # Admin storage management for practice files (auth protected)
+  /fetch-html/route.ts    # HTML proxy for serving practice activities
 /docs
   /WriFe_Curriculum.md   # Official 68-lesson curriculum outline
 /components              # React components
@@ -199,6 +203,8 @@ npm run start # Start production server
 - **Client Components**: Pages with interactivity use "use client" directive
 - **Lesson Routing**: Lessons use `lesson_number` for URL paths (e.g., /lesson/27)
 - **Client-Side Auth Protection**: Dashboard and lesson pages use client-side authentication checks via LessonPageWrapper component
+- **Practice File Storage**: Interactive HTML practice files should be stored in Supabase Storage (bucket: 'practice-activities') rather than Google Drive for proper interactivity
+- **HTML Proxy**: The `/api/fetch-html` endpoint serves as a secure proxy for loading practice activities, with domain whitelisting for security
 
 ## Project Policies
 

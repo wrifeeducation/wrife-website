@@ -203,6 +203,11 @@ export default function AdminDashboard() {
                   Manage Lessons
                 </button>
               </Link>
+              <Link href="/admin/practice-files">
+                <button className="rounded-full border border-green-500 bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+                  Practice Files
+                </button>
+              </Link>
               <Link href="/admin/users">
                 <button className="rounded-full border border-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition">
                   Manage Users
