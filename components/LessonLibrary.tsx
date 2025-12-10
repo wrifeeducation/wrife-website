@@ -14,7 +14,8 @@ interface Lesson {
   unit: number;
   summary: string | null;
   duration_minutes: number | null;
-  year_groups: string | null;
+  year_group_min: number | null;
+  year_group_max: number | null;
 }
 
 interface GroupedLessons {
@@ -68,8 +69,8 @@ function getLessonNumber(lesson: Lesson): string {
 
 function getLessonTags(lesson: Lesson): string[] {
   const tags: string[] = [];
-  if (lesson.year_groups) {
-    tags.push(lesson.year_groups);
+  if (lesson.year_group_min && lesson.year_group_max) {
+    tags.push(`Years ${lesson.year_group_min}-${lesson.year_group_max}`);
   }
   return tags;
 }
@@ -120,9 +121,11 @@ export default function LessonLibrary() {
 
   const filteredLessons = useMemo(() => {
     return lessons.filter((lesson) => {
-      const matchesYearGroup =
-        selectedYearGroup === "All Year Groups" ||
-        lesson.year_groups === selectedYearGroup;
+      let matchesYearGroup = selectedYearGroup === "All Year Groups";
+      if (!matchesYearGroup && lesson.year_group_min && lesson.year_group_max) {
+        const lessonYears = `Years ${lesson.year_group_min}-${lesson.year_group_max}`;
+        matchesYearGroup = lessonYears === selectedYearGroup;
+      }
       const matchesSearch =
         searchQuery === "" ||
         lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
