@@ -318,29 +318,7 @@ function DashboardContent() {
       const firstName = newPupilFirstName.trim();
       const lastName = newPupilLastName.trim();
       const randomId = Math.random().toString(36).substring(2, 8);
-      const tempEmail = `${firstName.toLowerCase()}${lastName.toLowerCase()}${randomId}@wrife.co.uk`;
-      const tempPassword = Math.random().toString(36).slice(-12);
-
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: tempEmail,
-        password: tempPassword,
-        options: {
-          emailRedirectTo: undefined,
-          data: {
-            role: 'pupil',
-            first_name: firstName,
-            last_name: lastName,
-            display_name: `${firstName} ${lastName}`.trim(),
-          },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
-
-      const pupilId = authData.user.id;
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const pupilId = crypto.randomUUID();
 
       const { error: pupilError } = await supabase
         .from('pupils')
