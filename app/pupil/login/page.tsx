@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import ChildMascot from '@/components/mascots/ChildMascot';
@@ -15,7 +14,7 @@ interface ClassMember {
 }
 
 interface ClassInfo {
-  id: number;
+  id: string;
   name: string;
   year_group: number;
   class_code: string;
@@ -37,35 +36,24 @@ export default function PupilLoginPage() {
     setError('');
 
     try {
-      const { data: classData, error: classError } = await supabase
-        .from('classes')
-        .select('id, name, year_group, class_code')
-        .eq('class_code', classCode.toUpperCase().trim())
-        .single();
+      const response = await fetch('/api/pupil/lookup-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classCode: classCode.trim() })
+      });
 
-      if (classError || !classData) {
-        setError('Class code not found. Please check and try again.');
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error === 'Class code not found' 
+          ? 'Class code not found. Please check and try again.' 
+          : 'Something went wrong. Please try again.');
         setLoading(false);
         return;
       }
 
-      setClassInfo(classData);
-
-      const { data: members, error: membersError } = await supabase
-        .from('class_members')
-        .select('id, pupil_id, pupils(id, first_name, last_name)')
-        .eq('class_id', classData.id);
-
-      if (membersError) throw membersError;
-
-      const formattedMembers = (members || []).map((m: any) => ({
-        id: m.id,
-        pupil_id: m.pupil_id,
-        first_name: m.pupils?.first_name || 'Unknown',
-        last_name: m.pupils?.last_name || null,
-      })).sort((a, b) => a.first_name.localeCompare(b.first_name));
-      
-      setClassMembers(formattedMembers);
+      setClassInfo(data.classInfo);
+      setClassMembers(data.members);
       setStep('name');
     } catch (err) {
       console.error('Error:', err);
