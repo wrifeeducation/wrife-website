@@ -61,7 +61,7 @@ interface PWPAssignment {
     level_name: string;
     grammar_focus: string;
     sentence_structure: string;
-  };
+  } | null;
 }
 
 interface PWPSubmission {
@@ -790,10 +790,10 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                           <th key={assignment.id} className="text-center py-3 px-2 font-semibold text-[var(--wrife-text-main)] min-w-[100px]">
                             <div className="flex flex-col items-center gap-1">
                               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-purple-600 text-xs font-bold">
-                                L{assignment.progressive_activities.level}
+                                L{assignment.progressive_activities?.level ?? '?'}
                               </span>
-                              <span className="block truncate max-w-[80px] text-xs" title={assignment.progressive_activities.level_name}>
-                                {assignment.progressive_activities.level_name.slice(0, 10)}...
+                              <span className="block truncate max-w-[80px] text-xs" title={assignment.progressive_activities?.level_name ?? ''}>
+                                {(assignment.progressive_activities?.level_name ?? 'Unknown').slice(0, 10)}...
                               </span>
                               <button
                                 onClick={() => handleDeletePWPAssignment(assignment.id)}
