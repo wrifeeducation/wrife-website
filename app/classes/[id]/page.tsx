@@ -270,6 +270,30 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     return progressRecords.some(p => p.pupil_id === pupilId && p.lesson_id === lessonId && p.status === 'completed');
   }
 
+  function getPracticeStatus(pupilId: string, lessonId: number): string | null {
+    const record = progressRecords.find(p => p.pupil_id === pupilId && p.lesson_id === lessonId);
+    return record?.status || null;
+  }
+
+  function getPracticeStatusBadge(status: string | null) {
+    switch (status) {
+      case 'completed':
+        return (
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs" title="Practice Completed">
+            🎮
+          </span>
+        );
+      case 'in_progress':
+        return (
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs" title="Practice In Progress">
+            ◐
+          </span>
+        );
+      default:
+        return null;
+    }
+  }
+
   function getStatusBadge(status: string | undefined) {
     switch (status) {
       case 'submitted':
@@ -570,12 +594,16 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                   <p className="text-xs font-semibold text-[var(--wrife-text-main)] mt-3 mb-2">Practice:</p>
                   <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
                     <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 text-purple-600 text-xs">🎮</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">🎮</span>
                       Done
                     </span>
                     <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
+                      In Progress
+                    </span>
+                    <span className="flex items-center gap-1">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">-</span>
-                      Not Done
+                      Not Started
                     </span>
                   </div>
                 </div>
@@ -630,15 +658,28 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                                   ) : (
                                     getStatusBadge(undefined)
                                   )}
-                                  {practiceComplete ? (
-                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-600" title="Practice Complete">
-                                      🎮
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50 text-gray-300" title="Practice Not Done">
-                                      -
-                                    </span>
-                                  )}
+                                  {(() => {
+                                    const practiceStatus = getPracticeStatus(pupil.id, assignment.lesson_id);
+                                    if (practiceStatus === 'completed') {
+                                      return (
+                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600" title="Practice Completed">
+                                          🎮
+                                        </span>
+                                      );
+                                    } else if (practiceStatus === 'in_progress') {
+                                      return (
+                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 text-yellow-600" title="Practice In Progress">
+                                          ◐
+                                        </span>
+                                      );
+                                    } else {
+                                      return (
+                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50 text-gray-300" title="Practice Not Started">
+                                          -
+                                        </span>
+                                      );
+                                    }
+                                  })()}
                                 </div>
                               </td>
                             );
