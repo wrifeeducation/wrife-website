@@ -30,13 +30,17 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /admin/lessons/page.tsx # Lesson curriculum management
   /admin/practice-files/page.tsx # Upload practice HTML files to Supabase Storage
   /admin/school/help/page.tsx # School admin help guide
+  /admin/pwp-activities/page.tsx # Manage Progressive Writing Practice activities
   /dashboard/help/page.tsx # Teacher help guide
+  /pupil/pwp/[id]/page.tsx # Pupil PWP practice page
 /app/api                 # API endpoints
   /pupil/lookup-class/route.ts  # Class code lookup for pupil login (uses service role)
   /pupil/assignments/route.ts   # Fetch assignments and progress records for pupil dashboard
   /pupil/assignment/route.ts    # Fetch individual assignment details for pupil
   /pupil/practice-complete/route.ts # Mark practice activity as complete (GET/POST)
   /assess/route.ts       # AI assessment API endpoint (teacher auth required)
+  /pwp-assess/route.ts   # AI assessment for PWP submissions (grammar-focused)
+  /pupil/pwp-submit/route.ts # Submit PWP writing responses
   /admin/storage/route.ts # Admin storage management for practice files (auth protected)
   /fetch-html/route.ts    # HTML proxy for serving practice activities
 /docs
@@ -47,6 +51,7 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /LessonDetailPage.tsx  # Lesson detail with tabs
   /AddPupilModal.tsx     # Modal for adding pupils to classes
   /AssignLessonModal.tsx # Modal for assigning lessons to classes
+  /AssignPWPModal.tsx    # Modal for assigning PWP activities to classes
   /SubmissionReviewModal.tsx # Modal for viewing submissions and running AI assessments
   /Navbar.tsx            # Navigation bar
   /HeroSection.tsx       # Hero section
@@ -191,6 +196,52 @@ The project uses CSS custom properties for consistent theming:
 - `status`: Progress status
 - `score`: Optional score
 - `completed_at`: Timestamp when completed
+
+### progressive_activities table (PWP)
+- `id`: Primary key (serial)
+- `level`: Level 1-7 indicating difficulty progression
+- `level_name`: Display name (e.g., "Simple Sentences")
+- `grammar_focus`: Grammar concept being taught
+- `sentence_structure`: Target structure pattern (e.g., "Subject + Verb + Object")
+- `instructions`: Activity instructions for pupils
+- `examples`: Array of example sentences
+- `practice_prompts`: Array of writing prompts
+- `year_group_min`: Minimum year group
+- `year_group_max`: Maximum year group
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### pwp_assignments table
+- `id`: Primary key (serial)
+- `activity_id`: Foreign key to progressive_activities
+- `class_id`: Foreign key to classes table
+- `teacher_id`: Teacher's UUID
+- `instructions`: Optional custom instructions
+- `due_date`: Optional due date
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### pwp_submissions table
+- `id`: Primary key (serial)
+- `pwp_assignment_id`: Foreign key to pwp_assignments
+- `pupil_id`: Pupil's UUID
+- `content`: Text content of pupil's writing
+- `status`: draft, submitted, or reviewed
+- `submitted_at`: Timestamp when submitted
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### pwp_assessments table
+- `id`: Primary key (serial)
+- `pwp_submission_id`: Foreign key to pwp_submissions
+- `teacher_id`: Teacher's UUID who triggered assessment
+- `grammar_accuracy`: Score 1-4
+- `structure_correctness`: Score 1-4
+- `feedback`: Text feedback
+- `corrections`: Array of corrections
+- `improved_example`: Improved sentence example
+- `raw_response`: JSONB storing full AI response
+- `created_at`: Timestamp
 
 ## Running the Project
 ```bash
