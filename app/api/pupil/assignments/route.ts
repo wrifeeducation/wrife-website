@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     let submissions: any[] = [];
+    let progressRecords: any[] = [];
     if (pupilId) {
       try {
         const { data: submissionsData, error: submissionsError } = await supabaseAdmin
@@ -42,11 +43,25 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.log('Submissions table may not exist, continuing without submissions');
       }
+
+      try {
+        const { data: progressData, error: progressError } = await supabaseAdmin
+          .from('progress_records')
+          .select('*')
+          .eq('pupil_id', pupilId);
+
+        if (!progressError) {
+          progressRecords = progressData || [];
+        }
+      } catch (err) {
+        console.log('Progress records may not exist, continuing');
+      }
     }
 
     return NextResponse.json({
       assignments: assignmentsData || [],
-      submissions
+      submissions,
+      progressRecords
     });
   } catch (error) {
     console.error('Fetch assignments error:', error);

@@ -32,6 +32,13 @@ interface Submission {
   submitted_at: string | null;
 }
 
+interface ProgressRecord {
+  id: number;
+  lesson_id: number;
+  status: string;
+  completed_at: string | null;
+}
+
 function StarRating({ count }: { count: number }) {
   return (
     <div className="flex gap-0.5">
@@ -53,6 +60,7 @@ export default function PupilDashboardPage() {
   const [session, setSession] = useState<PupilSession | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -91,6 +99,7 @@ export default function PupilDashboardPage() {
 
       setAssignments(data.assignments || []);
       setSubmissions(data.submissions || []);
+      setProgressRecords(data.progressRecords || []);
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -107,6 +116,10 @@ export default function PupilDashboardPage() {
     const submission = submissions.find(s => s.assignment_id === assignmentId);
     if (!submission) return 'not_started';
     return submission.status;
+  }
+
+  function isPracticeComplete(lessonId: number): boolean {
+    return progressRecords.some(p => p.lesson_id === lessonId && p.status === 'completed');
   }
 
   function getStatusBadge(status: string) {
@@ -257,6 +270,7 @@ export default function PupilDashboardPage() {
                 <div className="space-y-3">
                   {assignments.map((assignment) => {
                     const status = getSubmissionStatus(assignment.id);
+                    const practiceComplete = isPracticeComplete(assignment.lesson_id);
                     return (
                       <Link 
                         key={assignment.id} 
@@ -275,11 +289,21 @@ export default function PupilDashboardPage() {
                             </p>
                           )}
                           <div className="flex items-center justify-between text-xs text-[var(--wrife-text-muted)]">
-                            <span>
-                              {assignment.due_date
-                                ? `Due: ${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
-                                : 'No due date'}
-                            </span>
+                            <div className="flex items-center gap-3">
+                              <span>
+                                {assignment.due_date
+                                  ? `Due: ${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+                                  : 'No due date'}
+                              </span>
+                              {practiceComplete && (
+                                <span className="flex items-center gap-1 text-green-600">
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  Practice done
+                                </span>
+                              )}
+                            </div>
                             {status === 'reviewed' && <StarRating count={4} />}
                           </div>
                         </div>
