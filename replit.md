@@ -33,9 +33,10 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /dashboard/help/page.tsx # Teacher help guide
 /app/api                 # API endpoints
   /pupil/lookup-class/route.ts  # Class code lookup for pupil login (uses service role)
-  /pupil/assignments/route.ts   # Fetch assignments for pupil dashboard (uses service role)
+  /pupil/assignments/route.ts   # Fetch assignments and progress records for pupil dashboard
   /pupil/assignment/route.ts    # Fetch individual assignment details for pupil
-  /assess/route.ts       # AI assessment API endpoint
+  /pupil/practice-complete/route.ts # Mark practice activity as complete (GET/POST)
+  /assess/route.ts       # AI assessment API endpoint (teacher auth required)
   /admin/storage/route.ts # Admin storage management for practice files (auth protected)
   /fetch-html/route.ts    # HTML proxy for serving practice activities
 /docs
@@ -46,6 +47,7 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /LessonDetailPage.tsx  # Lesson detail with tabs
   /AddPupilModal.tsx     # Modal for adding pupils to classes
   /AssignLessonModal.tsx # Modal for assigning lessons to classes
+  /SubmissionReviewModal.tsx # Modal for viewing submissions and running AI assessments
   /Navbar.tsx            # Navigation bar
   /HeroSection.tsx       # Hero section
   /Footer.tsx            # Footer with admin link
