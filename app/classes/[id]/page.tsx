@@ -23,12 +23,31 @@ interface Pupil {
   year_group: number;
 }
 
+interface Assignment {
+  id: number;
+  title: string;
+  lesson_id: number;
+  created_at: string;
+}
+
+interface Submission {
+  id: number;
+  assignment_id: number;
+  pupil_id: string;
+  status: string;
+  content: string | null;
+  submitted_at: string | null;
+}
+
 export default function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [classData, setClassData] = useState<Class | null>(null);
   const [pupils, setPupils] = useState<Pupil[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddPupil, setShowAddPupil] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pupils' | 'progress'>('pupils');
   const { user } = useAuth();
   const router = useRouter();
 
@@ -39,6 +58,8 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     }
     fetchClassData();
     fetchPupils();
+    fetchAssignments();
+    fetchSubmissions();
   }, [user, resolvedParams.id, router]);
 
   async function fetchClassData() {
@@ -74,6 +95,80 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  async function fetchAssignments() {
+    try {
+      const { data, error } = await supabase
+        .from('assignments')
+        .select('id, title, lesson_id, created_at')
+        .eq('class_id', resolvedParams.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAssignments(data || []);
+    } catch (err) {
+      console.error('Error fetching assignments:', err);
+    }
+  }
+
+  async function fetchSubmissions() {
+    try {
+      const { data: classAssignments } = await supabase
+        .from('assignments')
+        .select('id')
+        .eq('class_id', resolvedParams.id);
+
+      if (!classAssignments || classAssignments.length === 0) {
+        setSubmissions([]);
+        return;
+      }
+
+      const assignmentIds = classAssignments.map(a => a.id);
+      
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('id, assignment_id, pupil_id, status, content, submitted_at')
+        .in('assignment_id', assignmentIds);
+
+      if (error) throw error;
+      setSubmissions(data || []);
+    } catch (err) {
+      console.error('Error fetching submissions:', err);
+    }
+  }
+
+  function getSubmissionForPupil(pupilId: string, assignmentId: number): Submission | undefined {
+    return submissions.find(s => s.pupil_id === pupilId && s.assignment_id === assignmentId);
+  }
+
+  function getStatusBadge(status: string | undefined) {
+    switch (status) {
+      case 'submitted':
+        return (
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600" title="Submitted">
+            ✓
+          </span>
+        );
+      case 'draft':
+        return (
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 text-yellow-600" title="In Progress">
+            ◐
+          </span>
+        );
+      case 'reviewed':
+        return (
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600" title="Reviewed">
+            ★
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400" title="Not Started">
+            ○
+          </span>
+        );
+    }
+  }
+
   async function handleRemovePupil(pupilId: string) {
     if (!confirm('Are you sure you want to remove this pupil from the class?')) return;
 
@@ -86,6 +181,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
 
       if (error) throw error;
       fetchPupils();
+      fetchSubmissions();
     } catch (err) {
       console.error('Error removing pupil:', err);
       alert('Failed to remove pupil');
@@ -196,6 +292,30 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
+          <div className="mb-4 flex gap-2">
+            <button
+              onClick={() => setActiveTab('pupils')}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                activeTab === 'pupils'
+                  ? 'bg-[var(--wrife-blue)] text-white'
+                  : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
+              }`}
+            >
+              Pupils ({pupils.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('progress')}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                activeTab === 'progress'
+                  ? 'bg-[var(--wrife-blue)] text-white'
+                  : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
+              }`}
+            >
+              Progress
+            </button>
+          </div>
+
+          {activeTab === 'pupils' && (
           <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
@@ -251,6 +371,107 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             )}
           </div>
+          )}
+
+          {activeTab === 'progress' && (
+          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
+            <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">
+              Assignment Progress
+            </h2>
+
+            {assignments.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <span className="text-5xl">📋</span>
+                </div>
+                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No assignments yet</h3>
+                <p className="text-sm text-[var(--wrife-text-muted)] mb-4">
+                  Assign lessons to this class to start tracking progress
+                </p>
+                <Link
+                  href="/"
+                  className="inline-block rounded-full bg-[var(--wrife-blue)] px-6 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition"
+                >
+                  Browse Lessons
+                </Link>
+              </div>
+            ) : pupils.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <span className="text-5xl">👥</span>
+                </div>
+                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No pupils yet</h3>
+                <p className="text-sm text-[var(--wrife-text-muted)]">
+                  Add pupils to see their progress on assignments
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-4 mb-4 text-xs text-[var(--wrife-text-muted)]">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">✓</span>
+                    Submitted
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
+                    In Progress
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs">★</span>
+                    Reviewed
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">○</span>
+                    Not Started
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--wrife-border)]">
+                        <th className="text-left py-3 px-2 font-semibold text-[var(--wrife-text-main)] sticky left-0 bg-white">
+                          Pupil
+                        </th>
+                        {assignments.map((assignment) => (
+                          <th key={assignment.id} className="text-center py-3 px-2 font-semibold text-[var(--wrife-text-main)] min-w-[80px]">
+                            <span className="block truncate max-w-[80px]" title={assignment.title}>
+                              {assignment.title.length > 12 ? assignment.title.slice(0, 12) + '...' : assignment.title}
+                            </span>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pupils.map((pupil) => (
+                        <tr key={pupil.id} className="border-b border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)]">
+                          <td className="py-3 px-2 sticky left-0 bg-white">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-[var(--wrife-blue-soft)] flex items-center justify-center text-xs font-bold text-[var(--wrife-blue)] uppercase">
+                                {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
+                              </div>
+                              <span className="font-medium text-[var(--wrife-text-main)]">
+                                {pupil.first_name} {pupil.last_name || ''}
+                              </span>
+                            </div>
+                          </td>
+                          {assignments.map((assignment) => {
+                            const submission = getSubmissionForPupil(pupil.id, assignment.id);
+                            return (
+                              <td key={assignment.id} className="text-center py-3 px-2">
+                                {getStatusBadge(submission?.status)}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+          )}
 
           {showAddPupil && (
             <AddPupilModal
@@ -259,6 +480,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
               onClose={() => setShowAddPupil(false)}
               onSuccess={() => {
                 fetchPupils();
+                fetchSubmissions();
                 setShowAddPupil(false);
               }}
             />
