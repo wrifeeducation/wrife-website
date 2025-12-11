@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 
 interface Submission {
   id: number;
-  content: string;
+  content: string | null;
   status: string;
   submitted_at: string | null;
 }
