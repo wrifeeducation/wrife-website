@@ -208,7 +208,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPwpAssignments(data || []);
+      setPwpAssignments((data as unknown as PWPAssignment[]) || []);
     } catch (err) {
       console.error('Error fetching PWP assignments:', err);
     }
