@@ -39,12 +39,21 @@ interface Submission {
   submitted_at: string | null;
 }
 
+interface ProgressRecord {
+  id: number;
+  pupil_id: string;
+  lesson_id: number;
+  status: string;
+  completed_at: string | null;
+}
+
 export default function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [classData, setClassData] = useState<Class | null>(null);
   const [pupils, setPupils] = useState<Pupil[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddPupil, setShowAddPupil] = useState(false);
   const [activeTab, setActiveTab] = useState<'pupils' | 'progress'>('pupils');
@@ -60,6 +69,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     fetchPupils();
     fetchAssignments();
     fetchSubmissions();
+    fetchProgressRecords();
   }, [user, resolvedParams.id, router]);
 
   async function fetchClassData() {
@@ -136,8 +146,26 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  async function fetchProgressRecords() {
+    try {
+      const { data, error } = await supabase
+        .from('progress_records')
+        .select('id, pupil_id, lesson_id, status, completed_at')
+        .eq('class_id', resolvedParams.id);
+
+      if (error) throw error;
+      setProgressRecords(data || []);
+    } catch (err) {
+      console.error('Error fetching progress records:', err);
+    }
+  }
+
   function getSubmissionForPupil(pupilId: string, assignmentId: number): Submission | undefined {
     return submissions.find(s => s.pupil_id === pupilId && s.assignment_id === assignmentId);
+  }
+
+  function isPracticeComplete(pupilId: string, lessonId: number): boolean {
+    return progressRecords.some(p => p.pupil_id === pupilId && p.lesson_id === lessonId && p.status === 'completed');
   }
 
   function getStatusBadge(status: string | undefined) {
@@ -407,23 +435,37 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             ) : (
               <>
-                <div className="flex gap-4 mb-4 text-xs text-[var(--wrife-text-muted)]">
-                  <span className="flex items-center gap-1">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">✓</span>
-                    Submitted
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
-                    In Progress
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs">★</span>
-                    Reviewed
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">○</span>
-                    Not Started
-                  </span>
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-[var(--wrife-text-main)] mb-2">Writing:</p>
+                  <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">✓</span>
+                      Submitted
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
+                      In Progress
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs">★</span>
+                      Reviewed
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">○</span>
+                      Not Started
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-[var(--wrife-text-main)] mt-3 mb-2">Practice:</p>
+                  <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 text-purple-600 text-xs">🎮</span>
+                      Done
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">-</span>
+                      Not Done
+                    </span>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -457,9 +499,21 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                           </td>
                           {assignments.map((assignment) => {
                             const submission = getSubmissionForPupil(pupil.id, assignment.id);
+                            const practiceComplete = isPracticeComplete(pupil.id, assignment.lesson_id);
                             return (
                               <td key={assignment.id} className="text-center py-3 px-2">
-                                {getStatusBadge(submission?.status)}
+                                <div className="flex items-center justify-center gap-1">
+                                  {getStatusBadge(submission?.status)}
+                                  {practiceComplete ? (
+                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-600" title="Practice Complete">
+                                      🎮
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50 text-gray-300" title="Practice Not Done">
+                                      -
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                             );
                           })}
