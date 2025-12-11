@@ -149,6 +149,24 @@ export default function PupilDashboardPage() {
     return progressRecords.some(p => p.lesson_id === lessonId && p.status === 'completed');
   }
 
+  function isPracticeInProgress(lessonId: number): boolean {
+    return progressRecords.some(p => p.lesson_id === lessonId && p.status === 'in_progress');
+  }
+
+  function getOverallStatus(assignmentId: number, lessonId: number): string {
+    const submission = submissions.find(s => s.assignment_id === assignmentId);
+    if (submission) {
+      return submission.status;
+    }
+    if (isPracticeComplete(lessonId)) {
+      return 'practice_complete';
+    }
+    if (isPracticeInProgress(lessonId)) {
+      return 'practice_in_progress';
+    }
+    return 'not_started';
+  }
+
   function getPWPSubmissionStatus(pwpAssignmentId: number): string {
     const submission = pwpSubmissions.find(s => s.pwp_assignment_id === pwpAssignmentId);
     if (!submission) return 'not_started';
@@ -173,6 +191,18 @@ export default function PupilDashboardPage() {
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--wrife-blue-soft)] text-[var(--wrife-blue)]">
             Reviewed
+          </span>
+        );
+      case 'practice_complete':
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
+            Practice Done
+          </span>
+        );
+      case 'practice_in_progress':
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-600">
+            Practice Started
           </span>
         );
       default:
@@ -302,8 +332,7 @@ export default function PupilDashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {assignments.map((assignment) => {
-                    const status = getSubmissionStatus(assignment.id);
-                    const practiceComplete = isPracticeComplete(assignment.lesson_id);
+                    const status = getOverallStatus(assignment.id, assignment.lesson_id);
                     return (
                       <Link 
                         key={assignment.id} 
@@ -322,21 +351,11 @@ export default function PupilDashboardPage() {
                             </p>
                           )}
                           <div className="flex items-center justify-between text-xs text-[var(--wrife-text-muted)]">
-                            <div className="flex items-center gap-3">
-                              <span>
-                                {assignment.due_date
-                                  ? `Due: ${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
-                                  : 'No due date'}
-                              </span>
-                              {practiceComplete && (
-                                <span className="flex items-center gap-1 text-green-600">
-                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                  Practice done
-                                </span>
-                              )}
-                            </div>
+                            <span>
+                              {assignment.due_date
+                                ? `Due: ${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+                                : 'No due date'}
+                            </span>
                             {status === 'reviewed' && <StarRating count={4} />}
                           </div>
                         </div>
