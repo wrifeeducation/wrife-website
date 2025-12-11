@@ -39,6 +39,29 @@ interface ProgressRecord {
   completed_at: string | null;
 }
 
+interface PWPActivity {
+  id: number;
+  level: number;
+  level_name: string;
+  grammar_focus: string;
+}
+
+interface PWPAssignment {
+  id: number;
+  activity_id: number;
+  instructions: string | null;
+  due_date: string | null;
+  created_at: string;
+  progressive_activities: PWPActivity;
+}
+
+interface PWPSubmission {
+  id: number;
+  pwp_assignment_id: number;
+  status: string;
+  submitted_at: string | null;
+}
+
 function StarRating({ count }: { count: number }) {
   return (
     <div className="flex gap-0.5">
@@ -61,6 +84,8 @@ export default function PupilDashboardPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
+  const [pwpAssignments, setPwpAssignments] = useState<PWPAssignment[]>([]);
+  const [pwpSubmissions, setPwpSubmissions] = useState<PWPSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -100,6 +125,8 @@ export default function PupilDashboardPage() {
       setAssignments(data.assignments || []);
       setSubmissions(data.submissions || []);
       setProgressRecords(data.progressRecords || []);
+      setPwpAssignments(data.pwpAssignments || []);
+      setPwpSubmissions(data.pwpSubmissions || []);
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -120,6 +147,12 @@ export default function PupilDashboardPage() {
 
   function isPracticeComplete(lessonId: number): boolean {
     return progressRecords.some(p => p.lesson_id === lessonId && p.status === 'completed');
+  }
+
+  function getPWPSubmissionStatus(pwpAssignmentId: number): string {
+    const submission = pwpSubmissions.find(s => s.pwp_assignment_id === pwpAssignmentId);
+    if (!submission) return 'not_started';
+    return submission.status;
   }
 
   function getStatusBadge(status: string) {
@@ -318,27 +351,58 @@ export default function PupilDashboardPage() {
           <div
             className="rounded-2xl p-5"
             style={{
-              backgroundColor: 'var(--wrife-green-soft)',
-              border: '1px solid var(--wrife-green)',
+              backgroundColor: '#f3e8ff',
+              border: '1px solid #c084fc',
             }}
           >
             <h3 className="font-bold text-[var(--wrife-text-main)] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Lessons
+              Sentence Practice
             </h3>
-            <div className="space-y-3">
-              <div className="bg-white rounded-lg p-3 border border-[var(--wrife-border)]">
-                <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Sentences</p>
-                <p className="text-xs text-[var(--wrife-text-muted)]">Build better sentences</p>
+            {pwpAssignments.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-[var(--wrife-text-muted)]">No practice activities yet</p>
               </div>
-              <div className="bg-white rounded-lg p-3 border border-[var(--wrife-border)]">
-                <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Paragraphs</p>
-                <p className="text-xs text-[var(--wrife-text-muted)]">Organise your writing</p>
+            ) : (
+              <div className="space-y-3">
+                {pwpAssignments.map((pwp) => {
+                  const status = getPWPSubmissionStatus(pwp.id);
+                  return (
+                    <Link key={pwp.id} href={`/pupil/pwp/${pwp.id}`}>
+                      <div className="bg-white rounded-lg p-3 border border-[var(--wrife-border)] hover:shadow-soft transition cursor-pointer">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-purple-600 text-xs font-bold">
+                              L{pwp.progressive_activities.level}
+                            </span>
+                            <p className="font-semibold text-sm text-[var(--wrife-text-main)]">
+                              {pwp.progressive_activities.level_name}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-[var(--wrife-text-muted)] mb-2">
+                          {pwp.progressive_activities.grammar_focus}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          {status === 'submitted' || status === 'reviewed' ? (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                              Done
+                            </span>
+                          ) : status === 'draft' ? (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                              In Progress
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
+                              Start
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-              <div className="bg-white rounded-lg p-3 border border-[var(--wrife-border)]">
-                <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Stories</p>
-                <p className="text-xs text-[var(--wrife-text-muted)]">Create amazing stories</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </main>

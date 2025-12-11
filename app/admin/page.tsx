@@ -208,6 +208,11 @@ export default function AdminDashboard() {
                   Practice Files
                 </button>
               </Link>
+              <Link href="/admin/pwp-activities">
+                <button className="rounded-full border border-purple-500 bg-purple-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+                  PWP Activities
+                </button>
+              </Link>
               <Link href="/admin/users">
                 <button className="rounded-full border border-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition">
                   Manage Users

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AddPupilModal } from '@/components/AddPupilModal';
 import { SubmissionReviewModal } from '@/components/SubmissionReviewModal';
+import { AssignPWPModal } from '@/components/AssignPWPModal';
 
 interface Class {
   id: number;
@@ -48,6 +49,30 @@ interface ProgressRecord {
   completed_at: string | null;
 }
 
+interface PWPAssignment {
+  id: number;
+  activity_id: number;
+  instructions: string | null;
+  due_date: string | null;
+  created_at: string;
+  progressive_activities: {
+    id: number;
+    level: number;
+    level_name: string;
+    grammar_focus: string;
+    sentence_structure: string;
+  };
+}
+
+interface PWPSubmission {
+  id: number;
+  pwp_assignment_id: number;
+  pupil_id: string;
+  status: string;
+  content: string | null;
+  submitted_at: string | null;
+}
+
 export default function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [classData, setClassData] = useState<Class | null>(null);
@@ -57,7 +82,10 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddPupil, setShowAddPupil] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pupils' | 'progress'>('pupils');
+  const [showAssignPWP, setShowAssignPWP] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'pwp'>('pupils');
+  const [pwpAssignments, setPwpAssignments] = useState<PWPAssignment[]>([]);
+  const [pwpSubmissions, setPwpSubmissions] = useState<PWPSubmission[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<{
     submission: Submission;
     pupilName: string;
@@ -76,6 +104,8 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     fetchAssignments();
     fetchSubmissions();
     fetchProgressRecords();
+    fetchPWPAssignments();
+    fetchPWPSubmissions();
   }, [user, resolvedParams.id, router]);
 
   async function fetchClassData() {
@@ -163,6 +193,72 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
       setProgressRecords(data || []);
     } catch (err) {
       console.error('Error fetching progress records:', err);
+    }
+  }
+
+  async function fetchPWPAssignments() {
+    try {
+      const { data, error } = await supabase
+        .from('pwp_assignments')
+        .select(`
+          id, activity_id, instructions, due_date, created_at,
+          progressive_activities (id, level, level_name, grammar_focus, sentence_structure)
+        `)
+        .eq('class_id', resolvedParams.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPwpAssignments(data || []);
+    } catch (err) {
+      console.error('Error fetching PWP assignments:', err);
+    }
+  }
+
+  async function fetchPWPSubmissions() {
+    try {
+      const { data: classPWPAssignments } = await supabase
+        .from('pwp_assignments')
+        .select('id')
+        .eq('class_id', resolvedParams.id);
+
+      if (!classPWPAssignments || classPWPAssignments.length === 0) {
+        setPwpSubmissions([]);
+        return;
+      }
+
+      const assignmentIds = classPWPAssignments.map(a => a.id);
+      
+      const { data, error } = await supabase
+        .from('pwp_submissions')
+        .select('id, pwp_assignment_id, pupil_id, status, content, submitted_at')
+        .in('pwp_assignment_id', assignmentIds);
+
+      if (error) throw error;
+      setPwpSubmissions(data || []);
+    } catch (err) {
+      console.error('Error fetching PWP submissions:', err);
+    }
+  }
+
+  function getPWPSubmissionForPupil(pupilId: string, pwpAssignmentId: number): PWPSubmission | undefined {
+    return pwpSubmissions.find(s => s.pupil_id === pupilId && s.pwp_assignment_id === pwpAssignmentId);
+  }
+
+  async function handleDeletePWPAssignment(assignmentId: number) {
+    if (!confirm('Are you sure you want to remove this PWP assignment?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('pwp_assignments')
+        .delete()
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+      fetchPWPAssignments();
+      fetchPWPSubmissions();
+    } catch (err) {
+      console.error('Error deleting PWP assignment:', err);
+      alert('Failed to delete assignment');
     }
   }
 
@@ -346,6 +442,16 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
               }`}
             >
               Progress
+            </button>
+            <button
+              onClick={() => setActiveTab('pwp')}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                activeTab === 'pwp'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white border border-purple-200 text-purple-600 hover:bg-purple-50'
+              }`}
+            >
+              PWP ({pwpAssignments.length})
             </button>
           </div>
 
@@ -567,6 +673,156 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
               assignmentTitle={selectedSubmission.assignmentTitle}
               onClose={() => setSelectedSubmission(null)}
               onAssessmentComplete={() => fetchSubmissions()}
+            />
+          )}
+
+          {activeTab === 'pwp' && (
+          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
+                  Progressive Writing Practice
+                </h2>
+                <p className="text-sm text-[var(--wrife-text-muted)]">
+                  Assign grammar-based writing activities to build sentence construction skills
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAssignPWP(true)}
+                className="rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition"
+              >
+                + Assign PWP
+              </button>
+            </div>
+
+            {pwpAssignments.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <span className="text-5xl">📝</span>
+                </div>
+                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No PWP activities assigned</h3>
+                <p className="text-sm text-[var(--wrife-text-muted)] mb-4">
+                  Assign progressive writing practice activities to help pupils build sentence construction skills
+                </p>
+              </div>
+            ) : pupils.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <span className="text-5xl">👥</span>
+                </div>
+                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No pupils yet</h3>
+                <p className="text-sm text-[var(--wrife-text-muted)]">
+                  Add pupils to see their PWP progress
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">✓</span>
+                      Submitted
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
+                      In Progress
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs">★</span>
+                      Reviewed
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">○</span>
+                      Not Started
+                    </span>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--wrife-border)]">
+                        <th className="text-left py-3 px-2 font-semibold text-[var(--wrife-text-main)] sticky left-0 bg-white">
+                          Pupil
+                        </th>
+                        {pwpAssignments.map((assignment) => (
+                          <th key={assignment.id} className="text-center py-3 px-2 font-semibold text-[var(--wrife-text-main)] min-w-[100px]">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-purple-600 text-xs font-bold">
+                                L{assignment.progressive_activities.level}
+                              </span>
+                              <span className="block truncate max-w-[80px] text-xs" title={assignment.progressive_activities.level_name}>
+                                {assignment.progressive_activities.level_name.slice(0, 10)}...
+                              </span>
+                              <button
+                                onClick={() => handleDeletePWPAssignment(assignment.id)}
+                                className="text-xs text-red-400 hover:text-red-600"
+                                title="Remove assignment"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pupils.map((pupil) => (
+                        <tr key={pupil.id} className="border-b border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)]">
+                          <td className="py-3 px-2 sticky left-0 bg-white">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600 uppercase">
+                                {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
+                              </div>
+                              <span className="font-medium text-[var(--wrife-text-main)]">
+                                {pupil.first_name} {pupil.last_name || ''}
+                              </span>
+                            </div>
+                          </td>
+                          {pwpAssignments.map((assignment) => {
+                            const pwpSubmission = getPWPSubmissionForPupil(pupil.id, assignment.id);
+                            return (
+                              <td key={assignment.id} className="text-center py-3 px-2">
+                                {pwpSubmission ? (
+                                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
+                                    pwpSubmission.status === 'reviewed' 
+                                      ? 'bg-blue-100 text-blue-600'
+                                      : pwpSubmission.status === 'submitted'
+                                      ? 'bg-green-100 text-green-600'
+                                      : 'bg-yellow-100 text-yellow-600'
+                                  }`} title={pwpSubmission.status}>
+                                    {pwpSubmission.status === 'reviewed' ? '★' : pwpSubmission.status === 'submitted' ? '✓' : '◐'}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400" title="Not Started">
+                                    ○
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+          )}
+
+          {showAssignPWP && classData && user && (
+            <AssignPWPModal
+              isOpen={showAssignPWP}
+              onClose={() => setShowAssignPWP(false)}
+              classId={classData.id}
+              className={classData.name}
+              yearGroup={classData.year_group}
+              teacherId={user.id}
+              onAssigned={() => {
+                fetchPWPAssignments();
+                fetchPWPSubmissions();
+              }}
             />
           )}
         </div>
