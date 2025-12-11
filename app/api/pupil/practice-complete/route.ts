@@ -8,27 +8,41 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(request: NextRequest) {
   try {
-    const { pupilId, lessonId, classId, assignmentId } = await request.json();
+    const { pupilId, lessonId, classId, status = 'completed', progressPayload } = await request.json();
     
     if (!pupilId || !lessonId) {
       return NextResponse.json({ error: 'Pupil ID and Lesson ID are required' }, { status: 400 });
     }
 
+    const validStatuses = ['not_started', 'in_progress', 'completed'];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json({ error: 'Invalid status. Must be: not_started, in_progress, or completed' }, { status: 400 });
+    }
+
     const { data: existing } = await supabaseAdmin
       .from('progress_records')
-      .select('id')
+      .select('id, status')
       .eq('pupil_id', pupilId)
       .eq('lesson_id', lessonId)
       .single();
 
+    const updateData: Record<string, unknown> = {
+      status,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (progressPayload !== undefined) {
+      updateData.progress_payload = progressPayload;
+    }
+
+    if (status === 'completed') {
+      updateData.completed_at = new Date().toISOString();
+    }
+
     if (existing) {
       const { data, error } = await supabaseAdmin
         .from('progress_records')
-        .update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', existing.id)
         .select()
         .single();
@@ -36,15 +50,16 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
       return NextResponse.json({ progress: data });
     } else {
+      const insertData = {
+        pupil_id: pupilId,
+        lesson_id: lessonId,
+        class_id: classId ? parseInt(classId) : null,
+        ...updateData,
+      };
+
       const { data, error } = await supabaseAdmin
         .from('progress_records')
-        .insert({
-          pupil_id: pupilId,
-          lesson_id: lessonId,
-          class_id: classId ? parseInt(classId) : null,
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-        })
+        .insert(insertData)
         .select()
         .single();
 
