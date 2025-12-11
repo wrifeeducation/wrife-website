@@ -108,24 +108,39 @@ export async function POST(request: NextRequest) {
         ? `Lesson ${lesson.lesson_number}${lesson.part || ''}`
         : `Lesson ${lessonId}`;
 
-      await supabaseAdmin
+      const { error: deleteError } = await supabaseAdmin
         .from('lesson_files')
         .delete()
         .eq('lesson_id', parseInt(lessonId))
         .eq('file_type', 'interactive_practice');
 
-      const { error: linkError } = await supabaseAdmin
+      if (deleteError) {
+        console.error('Error deleting old lesson file:', deleteError);
+      }
+
+      const { data: insertData, error: linkError } = await supabaseAdmin
         .from('lesson_files')
         .insert({
           lesson_id: parseInt(lessonId),
           file_type: 'interactive_practice',
           file_name: `Interactive Practice - ${lessonLabel}`,
           file_url: urlData.publicUrl,
-        });
+        })
+        .select()
+        .single();
 
       if (linkError) {
         console.error('Error linking file to lesson:', linkError);
+        return NextResponse.json({
+          success: true,
+          filePath: uploadData.path,
+          publicUrl: urlData.publicUrl,
+          linkedToLesson: false,
+          linkError: linkError.message,
+        });
       }
+
+      console.log('Successfully linked file to lesson:', insertData);
     }
 
     return NextResponse.json({

@@ -61,9 +61,9 @@ export async function POST(request: NextRequest) {
       lessonFiles = filesData || [];
       
       if (lessonFiles.length > 0) {
-        const htmlFile = lessonFiles.find((f: any) => f.file_name?.endsWith('.html'));
-        if (htmlFile?.file_url) {
-          interactiveHtml = htmlFile.file_url;
+        const practiceFile = lessonFiles[0];
+        if (practiceFile?.file_url) {
+          interactiveHtml = practiceFile.file_url;
         }
       }
     }
