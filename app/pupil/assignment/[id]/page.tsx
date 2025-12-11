@@ -56,6 +56,8 @@ export default function PupilAssignmentPage() {
   const [lessonFiles, setLessonFiles] = useState<LessonFile[]>([]);
   const [interactiveHtml, setInteractiveHtml] = useState<string | null>(null);
   const [showActivity, setShowActivity] = useState(false);
+  const [practiceCompleted, setPracticeCompleted] = useState(false);
+  const [markingComplete, setMarkingComplete] = useState(false);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -110,11 +112,50 @@ export default function PupilAssignmentPage() {
       if (data.assessment) {
         setAssessment(data.assessment);
       }
+
+      if (data.assignment?.lesson_id) {
+        const progressRes = await fetch(`/api/pupil/practice-complete?pupilId=${pupilId}&lessonId=${data.assignment.lesson_id}`);
+        if (progressRes.ok) {
+          const progressData = await progressRes.json();
+          setPracticeCompleted(progressData.progress?.status === 'completed');
+        }
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Could not load assignment');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleMarkPracticeComplete() {
+    if (!session || !assignment) return;
+    setMarkingComplete(true);
+
+    try {
+      const response = await fetch('/api/pupil/practice-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pupilId: session.pupilId,
+          lessonId: assignment.lesson_id,
+          classId: session.classId,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark complete');
+      }
+
+      setPracticeCompleted(true);
+      setShowActivity(false);
+      setSuccess('Great job! Practice activity marked as complete!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Error marking complete:', err);
+      setError('Could not save your progress');
+    } finally {
+      setMarkingComplete(false);
     }
   }
 
@@ -393,21 +434,29 @@ export default function PupilAssignmentPage() {
             <div className="lg:col-span-1">
               <button
                 onClick={() => setShowActivity(true)}
-                className="w-full bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5 hover:shadow-md transition cursor-pointer text-left"
+                className={`w-full rounded-2xl shadow-soft border p-5 hover:shadow-md transition cursor-pointer text-left ${
+                  practiceCompleted 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-white border-[var(--wrife-border)]'
+                }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-[var(--wrife-green-soft)] flex items-center justify-center flex-shrink-0">
-                    <span className="text-3xl">🎮</span>
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    practiceCompleted ? 'bg-green-100' : 'bg-[var(--wrife-green-soft)]'
+                  }`}>
+                    <span className="text-3xl">{practiceCompleted ? '✓' : '🎮'}</span>
                   </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-[var(--wrife-text-main)]">
                       Practice Activity
                     </h3>
-                    <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
-                      Click to open the interactive lesson
+                    <p className={`text-sm mt-1 ${
+                      practiceCompleted ? 'text-green-600' : 'text-[var(--wrife-text-muted)]'
+                    }`}>
+                      {practiceCompleted ? 'Completed! Click to review' : 'Click to open the interactive lesson'}
                     </p>
                   </div>
-                  <div className="text-[var(--wrife-blue)]">
+                  <div className={practiceCompleted ? 'text-green-600' : 'text-[var(--wrife-blue)]'}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -442,6 +491,29 @@ export default function PupilAssignmentPage() {
                 title="Practice Activity"
                 allow="autoplay"
               />
+            </div>
+            <div className="p-4 border-t border-[var(--wrife-border)] bg-[var(--wrife-bg)] flex items-center justify-between">
+              <p className="text-sm text-[var(--wrife-text-muted)]">
+                {practiceCompleted 
+                  ? 'You have completed this activity!' 
+                  : 'When you finish, click the button to mark as complete'}
+              </p>
+              {practiceCompleted ? (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold text-sm">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Completed
+                </div>
+              ) : (
+                <button
+                  onClick={handleMarkPracticeComplete}
+                  disabled={markingComplete}
+                  className="px-6 py-2 rounded-full bg-green-600 text-white font-semibold text-sm hover:bg-green-700 transition disabled:opacity-50"
+                >
+                  {markingComplete ? 'Saving...' : "I've Finished!"}
+                </button>
+              )}
             </div>
           </div>
         </div>
