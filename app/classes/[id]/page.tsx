@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AddPupilModal } from '@/components/AddPupilModal';
+import { SubmissionReviewModal } from '@/components/SubmissionReviewModal';
 
 interface Class {
   id: number;
@@ -57,6 +58,11 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true);
   const [showAddPupil, setShowAddPupil] = useState(false);
   const [activeTab, setActiveTab] = useState<'pupils' | 'progress'>('pupils');
+  const [selectedSubmission, setSelectedSubmission] = useState<{
+    submission: Submission;
+    pupilName: string;
+    assignmentTitle: string;
+  } | null>(null);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -503,7 +509,21 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                             return (
                               <td key={assignment.id} className="text-center py-3 px-2">
                                 <div className="flex items-center justify-center gap-1">
-                                  {getStatusBadge(submission?.status)}
+                                  {submission ? (
+                                    <button
+                                      onClick={() => setSelectedSubmission({
+                                        submission,
+                                        pupilName: `${pupil.first_name} ${pupil.last_name || ''}`.trim(),
+                                        assignmentTitle: assignment.title
+                                      })}
+                                      className="hover:scale-110 transition cursor-pointer"
+                                      title="Click to view submission"
+                                    >
+                                      {getStatusBadge(submission.status)}
+                                    </button>
+                                  ) : (
+                                    getStatusBadge(undefined)
+                                  )}
                                   {practiceComplete ? (
                                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-600" title="Practice Complete">
                                       🎮
@@ -537,6 +557,16 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                 fetchSubmissions();
                 setShowAddPupil(false);
               }}
+            />
+          )}
+
+          {selectedSubmission && (
+            <SubmissionReviewModal
+              submission={selectedSubmission.submission}
+              pupilName={selectedSubmission.pupilName}
+              assignmentTitle={selectedSubmission.assignmentTitle}
+              onClose={() => setSelectedSubmission(null)}
+              onAssessmentComplete={() => fetchSubmissions()}
             />
           )}
         </div>
