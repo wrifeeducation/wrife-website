@@ -57,6 +57,7 @@ export default function PupilAssignmentPage() {
   const [interactiveHtml, setInteractiveHtml] = useState<string | null>(null);
   const [showActivity, setShowActivity] = useState(false);
   const [practiceCompleted, setPracticeCompleted] = useState(false);
+  const [practiceInProgress, setPracticeInProgress] = useState(false);
   const [markingComplete, setMarkingComplete] = useState(false);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
@@ -117,7 +118,9 @@ export default function PupilAssignmentPage() {
         const progressRes = await fetch(`/api/pupil/practice-complete?pupilId=${pupilId}&lessonId=${data.assignment.lesson_id}`);
         if (progressRes.ok) {
           const progressData = await progressRes.json();
-          setPracticeCompleted(progressData.progress?.status === 'completed');
+          const status = progressData.progress?.status;
+          setPracticeCompleted(status === 'completed');
+          setPracticeInProgress(status === 'in_progress');
         }
       }
     } catch (err) {
@@ -126,6 +129,31 @@ export default function PupilAssignmentPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleStartActivity() {
+    if (!session || !assignment || practiceCompleted || practiceInProgress) {
+      setShowActivity(true);
+      return;
+    }
+
+    try {
+      await fetch('/api/pupil/practice-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pupilId: session.pupilId,
+          lessonId: assignment.lesson_id,
+          classId: session.classId,
+          status: 'in_progress',
+        })
+      });
+      setPracticeInProgress(true);
+    } catch (err) {
+      console.error('Error marking in progress:', err);
+    }
+
+    setShowActivity(true);
   }
 
   async function handleMarkPracticeComplete() {
@@ -140,6 +168,7 @@ export default function PupilAssignmentPage() {
           pupilId: session.pupilId,
           lessonId: assignment.lesson_id,
           classId: session.classId,
+          status: 'completed',
         })
       });
 
@@ -148,6 +177,7 @@ export default function PupilAssignmentPage() {
       }
 
       setPracticeCompleted(true);
+      setPracticeInProgress(false);
       setShowActivity(false);
       setSuccess('Great job! Practice activity marked as complete!');
       setTimeout(() => setSuccess(''), 3000);
@@ -433,30 +463,32 @@ export default function PupilAssignmentPage() {
           {interactiveHtml && (
             <div className="lg:col-span-1">
               <button
-                onClick={() => setShowActivity(true)}
+                onClick={handleStartActivity}
                 className={`w-full rounded-2xl shadow-soft border p-5 hover:shadow-md transition cursor-pointer text-left ${
                   practiceCompleted 
                     ? 'bg-green-50 border-green-200' 
+                    : practiceInProgress 
+                    ? 'bg-yellow-50 border-yellow-200'
                     : 'bg-white border-[var(--wrife-border)]'
                 }`}
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    practiceCompleted ? 'bg-green-100' : 'bg-[var(--wrife-green-soft)]'
+                    practiceCompleted ? 'bg-green-100' : practiceInProgress ? 'bg-yellow-100' : 'bg-[var(--wrife-green-soft)]'
                   }`}>
-                    <span className="text-3xl">{practiceCompleted ? '✓' : '🎮'}</span>
+                    <span className="text-3xl">{practiceCompleted ? '✓' : practiceInProgress ? '◐' : '🎮'}</span>
                   </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-[var(--wrife-text-main)]">
                       Practice Activity
                     </h3>
                     <p className={`text-sm mt-1 ${
-                      practiceCompleted ? 'text-green-600' : 'text-[var(--wrife-text-muted)]'
+                      practiceCompleted ? 'text-green-600' : practiceInProgress ? 'text-yellow-600' : 'text-[var(--wrife-text-muted)]'
                     }`}>
-                      {practiceCompleted ? 'Completed! Click to review' : 'Click to open the interactive lesson'}
+                      {practiceCompleted ? 'Completed! Click to review' : practiceInProgress ? 'In progress - click to continue' : 'Click to open the interactive lesson'}
                     </p>
                   </div>
-                  <div className={practiceCompleted ? 'text-green-600' : 'text-[var(--wrife-blue)]'}>
+                  <div className={practiceCompleted ? 'text-green-600' : practiceInProgress ? 'text-yellow-600' : 'text-[var(--wrife-blue)]'}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
