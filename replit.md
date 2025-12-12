@@ -17,10 +17,12 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /lesson/[id]/page.tsx  # Dynamic lesson detail page
   /classes/page.tsx      # Teacher's classes list
   /classes/new/page.tsx  # Create new class form
-  /classes/[id]/page.tsx # Class detail page with pupil management
+  /classes/[id]/page.tsx # Class detail page with pupil management (includes PWP and DWP tabs)
   /pupil/login/page.tsx  # Pupil login with class code
   /pupil/dashboard/page.tsx # Pupil dashboard with assignments
   /pupil/assignment/[id]/page.tsx # Pupil writing submission page
+  /pupil/pwp/[id]/page.tsx # Pupil PWP practice page
+  /pupil/dwp/[id]/page.tsx # Pupil DWP writing page with AI assessment
   /admin/page.tsx        # Super admin dashboard
   /admin/login/page.tsx  # Secure admin login
   /admin/users/page.tsx  # User management (assign to schools)
@@ -31,8 +33,8 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /admin/practice-files/page.tsx # Upload practice HTML files to Supabase Storage
   /admin/school/help/page.tsx # School admin help guide
   /admin/pwp-activities/page.tsx # Manage Progressive Writing Practice activities
+  /admin/dwp-levels/page.tsx # Manage DWP levels (seed 40 levels)
   /dashboard/help/page.tsx # Teacher help guide
-  /pupil/pwp/[id]/page.tsx # Pupil PWP practice page
 /app/api                 # API endpoints
   /pupil/lookup-class/route.ts  # Class code lookup for pupil login (uses service role)
   /pupil/assignments/route.ts   # Fetch assignments and progress records for pupil dashboard
@@ -40,6 +42,7 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /pupil/practice-complete/route.ts # Mark practice activity as complete (GET/POST)
   /assess/route.ts       # AI assessment API endpoint (teacher auth required)
   /pwp-assess/route.ts   # AI assessment for PWP submissions (grammar-focused)
+  /dwp/assess/route.ts   # AI assessment for DWP submissions (level-specific rubrics)
   /pupil/pwp-submit/route.ts # Submit PWP writing responses
   /admin/storage/route.ts # Admin storage management for practice files (auth protected)
   /fetch-html/route.ts    # HTML proxy for serving practice activities
@@ -52,6 +55,7 @@ WriFe is a writing education platform for primary school teachers, providing a c
   /AddPupilModal.tsx     # Modal for adding pupils to classes
   /AssignLessonModal.tsx # Modal for assigning lessons to classes
   /AssignPWPModal.tsx    # Modal for assigning PWP activities to classes
+  /AssignDWPModal.tsx    # Modal for assigning DWP levels to classes
   /SubmissionReviewModal.tsx # Modal for viewing submissions and running AI assessments
   /Navbar.tsx            # Navigation bar
   /HeroSection.tsx       # Hero section
@@ -59,8 +63,11 @@ WriFe is a writing education platform for primary school teachers, providing a c
 /lib
   /supabase.ts           # Supabase client configuration
   /auth-context.tsx      # Authentication context provider (auto-creates profiles on signup)
+  /dwp-levels-data.ts    # All 40 DWP level definitions with rubrics
 /styles
   /globals.css           # Global styles and design tokens
+/supabase/migrations
+  /20251212_create_dwp_tables.sql # DWP database schema
 ```
 
 ## Design Tokens
@@ -242,6 +249,71 @@ The project uses CSS custom properties for consistent theming:
 - `improved_example`: Improved sentence example
 - `raw_response`: JSONB storing full AI response
 - `created_at`: Timestamp
+
+### writing_levels table (DWP)
+- `id`: Primary key (UUID)
+- `level_number`: Level 1-40
+- `tier_number`: Tier 1-8
+- `level_id`: Unique string identifier (writing_level_1, etc.)
+- `activity_name`: Name of the activity
+- `activity_type`: Type of activity (word_sorting, sentence_completion, etc.)
+- `learning_objective`: What pupils will learn
+- `prompt_title`: Title shown to pupils
+- `prompt_instructions`: Full instructions for the activity
+- `rubric`: JSONB with assessment criteria and scoring bands
+- `passing_threshold`: Percentage needed to pass (usually 80)
+- `tier_finale`: Boolean - is this the last level of a tier
+- `programme_finale`: Boolean - is this Level 40
+
+### dwp_assignments table
+- `id`: Primary key (serial)
+- `level_id`: Reference to writing_levels.level_id
+- `class_id`: Foreign key to classes table
+- `teacher_id`: Teacher's UUID
+- `instructions`: Optional custom instructions
+- `due_date`: Optional due date
+- `created_at`: Timestamp
+
+### writing_attempts table
+- `id`: Primary key (UUID)
+- `pupil_id`: Pupil's UUID
+- `dwp_assignment_id`: Foreign key to dwp_assignments
+- `level_id`: Reference to writing_levels.level_id
+- `pupil_writing`: Text content of pupil's work
+- `word_count`: Number of words
+- `score`: Raw score achieved
+- `percentage`: Percentage score
+- `passed`: Boolean - did pupil pass
+- `performance_band`: mastery, secure, developing, or emerging
+- `ai_assessment`: JSONB storing full AI assessment response
+- `badge_earned`: Badge string if earned
+- `status`: draft, submitted, or assessed
+
+### writing_progress table
+- `id`: Primary key (UUID)
+- `pupil_id`: Pupil's UUID (unique)
+- `current_level_number`: Current level in programme
+- `levels_completed`: Array of completed level_ids
+- `tiers_completed`: Array of completed tier numbers
+- `programme_completed`: Boolean
+- `badges_earned`: JSONB array of badges
+- `total_attempts`: Total number of attempts
+- `total_levels_passed`: Number of levels passed
+
+### writing_badges table
+- `id`: Primary key (UUID)
+- `badge_id`: Unique badge identifier
+- `badge_name`: Display name
+- `badge_icon`: Emoji icon
+- `badge_description`: What the badge is for
+- `badge_type`: tier, programme, special, or streak
+
+### writing_certificates table
+- `id`: Primary key (UUID)
+- `certificate_id`: Unique certificate identifier
+- `certificate_name`: Display name
+- `certificate_type`: tier or programme
+- `tier_number`: Which tier (null for programme)
 
 ## Running the Project
 ```bash

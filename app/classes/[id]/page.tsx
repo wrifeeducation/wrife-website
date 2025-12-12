@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { AddPupilModal } from '@/components/AddPupilModal';
 import { SubmissionReviewModal } from '@/components/SubmissionReviewModal';
 import { AssignPWPModal } from '@/components/AssignPWPModal';
+import { AssignDWPModal } from '@/components/AssignDWPModal';
 
 interface Class {
   id: number;
@@ -73,6 +74,29 @@ interface PWPSubmission {
   submitted_at: string | null;
 }
 
+interface DWPAssignment {
+  id: number;
+  level_id: string;
+  instructions: string | null;
+  due_date: string | null;
+  created_at: string;
+  writing_levels?: {
+    level_number: number;
+    tier_number: number;
+    activity_name: string;
+  } | null;
+}
+
+interface WritingAttempt {
+  id: string;
+  dwp_assignment_id: number;
+  pupil_id: string;
+  status: string;
+  passed: boolean | null;
+  percentage: number | null;
+  performance_band: string | null;
+}
+
 export default function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [classData, setClassData] = useState<Class | null>(null);
@@ -83,9 +107,12 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true);
   const [showAddPupil, setShowAddPupil] = useState(false);
   const [showAssignPWP, setShowAssignPWP] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'pwp'>('pupils');
+  const [showAssignDWP, setShowAssignDWP] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'pwp' | 'dwp'>('pupils');
   const [pwpAssignments, setPwpAssignments] = useState<PWPAssignment[]>([]);
   const [pwpSubmissions, setPwpSubmissions] = useState<PWPSubmission[]>([]);
+  const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
+  const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<{
     submission: Submission;
     pupilName: string;
@@ -106,6 +133,8 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     fetchProgressRecords();
     fetchPWPAssignments();
     fetchPWPSubmissions();
+    fetchDWPAssignments();
+    fetchWritingAttempts();
   }, [user, resolvedParams.id, router]);
 
   async function fetchClassData() {
@@ -258,6 +287,72 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
       fetchPWPSubmissions();
     } catch (err) {
       console.error('Error deleting PWP assignment:', err);
+      alert('Failed to delete assignment');
+    }
+  }
+
+  async function fetchDWPAssignments() {
+    try {
+      const { data, error } = await supabase
+        .from('dwp_assignments')
+        .select(`
+          id, level_id, instructions, due_date, created_at,
+          writing_levels (level_number, tier_number, activity_name)
+        `)
+        .eq('class_id', resolvedParams.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDwpAssignments((data as unknown as DWPAssignment[]) || []);
+    } catch (err) {
+      console.error('Error fetching DWP assignments:', err);
+    }
+  }
+
+  async function fetchWritingAttempts() {
+    try {
+      const { data: classDWPAssignments } = await supabase
+        .from('dwp_assignments')
+        .select('id')
+        .eq('class_id', resolvedParams.id);
+
+      if (!classDWPAssignments || classDWPAssignments.length === 0) {
+        setWritingAttempts([]);
+        return;
+      }
+
+      const assignmentIds = classDWPAssignments.map(a => a.id);
+      
+      const { data, error } = await supabase
+        .from('writing_attempts')
+        .select('id, dwp_assignment_id, pupil_id, status, passed, percentage, performance_band')
+        .in('dwp_assignment_id', assignmentIds);
+
+      if (error) throw error;
+      setWritingAttempts(data || []);
+    } catch (err) {
+      console.error('Error fetching writing attempts:', err);
+    }
+  }
+
+  function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): WritingAttempt | undefined {
+    return writingAttempts.find(a => a.pupil_id === pupilId && a.dwp_assignment_id === dwpAssignmentId);
+  }
+
+  async function handleDeleteDWPAssignment(assignmentId: number) {
+    if (!confirm('Are you sure you want to remove this DWP assignment?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('dwp_assignments')
+        .delete()
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+      fetchDWPAssignments();
+      fetchWritingAttempts();
+    } catch (err) {
+      console.error('Error deleting DWP assignment:', err);
       alert('Failed to delete assignment');
     }
   }
@@ -476,6 +571,16 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
               }`}
             >
               PWP ({pwpAssignments.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('dwp')}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                activeTab === 'dwp'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-blue-200 text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              DWP ({dwpAssignments.length})
             </button>
           </div>
 
@@ -863,6 +968,163 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
               onAssigned={() => {
                 fetchPWPAssignments();
                 fetchPWPSubmissions();
+              }}
+            />
+          )}
+
+          {activeTab === 'dwp' && (
+          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
+                  Daily Writing Practice
+                </h2>
+                <p className="text-sm text-[var(--wrife-text-muted)]">
+                  40-level progressive writing programme with AI assessment
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAssignDWP(true)}
+                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition"
+              >
+                + Assign DWP
+              </button>
+            </div>
+
+            {dwpAssignments.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <span className="text-5xl">📝</span>
+                </div>
+                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No DWP activities assigned</h3>
+                <p className="text-sm text-[var(--wrife-text-muted)] mb-4">
+                  Assign daily writing practice levels to help pupils progress through the 40-level programme
+                </p>
+              </div>
+            ) : pupils.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <span className="text-5xl">👥</span>
+                </div>
+                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No pupils yet</h3>
+                <p className="text-sm text-[var(--wrife-text-muted)]">
+                  Add pupils to see their DWP progress
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">✓</span>
+                      Passed
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
+                      In Progress
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs">✗</span>
+                      Needs Retry
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">○</span>
+                      Not Started
+                    </span>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--wrife-border)]">
+                        <th className="text-left py-3 px-2 font-semibold text-[var(--wrife-text-main)] sticky left-0 bg-white">
+                          Pupil
+                        </th>
+                        {dwpAssignments.map((assignment) => (
+                          <th key={assignment.id} className="text-center py-3 px-2 font-semibold text-[var(--wrife-text-main)] min-w-[100px]">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-xs font-bold">
+                                {assignment.writing_levels?.level_number ?? '?'}
+                              </span>
+                              <span className="block truncate max-w-[80px] text-xs" title={assignment.writing_levels?.activity_name ?? ''}>
+                                {(assignment.writing_levels?.activity_name ?? 'Unknown').slice(0, 12)}...
+                              </span>
+                              <button
+                                onClick={() => handleDeleteDWPAssignment(assignment.id)}
+                                className="text-xs text-red-400 hover:text-red-600"
+                                title="Remove assignment"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pupils.map((pupil) => (
+                        <tr key={pupil.id} className="border-b border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)]">
+                          <td className="py-3 px-2 sticky left-0 bg-white">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 uppercase">
+                                {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
+                              </div>
+                              <span className="font-medium text-[var(--wrife-text-main)]">
+                                {pupil.first_name} {pupil.last_name || ''}
+                              </span>
+                            </div>
+                          </td>
+                          {dwpAssignments.map((assignment) => {
+                            const attempt = getWritingAttemptForPupil(pupil.id, assignment.id);
+                            return (
+                              <td key={assignment.id} className="text-center py-3 px-2">
+                                {attempt ? (
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
+                                      attempt.passed === true
+                                        ? 'bg-green-100 text-green-600'
+                                        : attempt.passed === false
+                                        ? 'bg-red-100 text-red-600'
+                                        : attempt.status === 'draft'
+                                        ? 'bg-yellow-100 text-yellow-600'
+                                        : 'bg-blue-100 text-blue-600'
+                                    }`} title={attempt.passed ? 'Passed' : attempt.passed === false ? 'Needs Retry' : attempt.status}>
+                                      {attempt.passed === true ? '✓' : attempt.passed === false ? '✗' : attempt.status === 'draft' ? '◐' : '?'}
+                                    </span>
+                                    {attempt.percentage !== null && (
+                                      <span className="text-[10px] text-[var(--wrife-text-muted)]">{attempt.percentage}%</span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400" title="Not Started">
+                                    ○
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+          )}
+
+          {showAssignDWP && classData && user && (
+            <AssignDWPModal
+              isOpen={showAssignDWP}
+              onClose={() => setShowAssignDWP(false)}
+              classId={classData.id}
+              className={classData.name}
+              yearGroup={classData.year_group}
+              teacherId={user.id}
+              onAssigned={() => {
+                fetchDWPAssignments();
+                fetchWritingAttempts();
               }}
             />
           )}
