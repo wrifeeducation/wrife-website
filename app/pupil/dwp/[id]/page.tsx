@@ -247,6 +247,11 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
         }),
       });
 
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('The assessment service is temporarily unavailable. Please try again later.');
+      }
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Assessment failed');
