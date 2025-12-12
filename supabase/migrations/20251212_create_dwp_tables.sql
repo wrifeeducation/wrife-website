@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_writing_levels_number ON writing_levels(level_num
 CREATE TABLE IF NOT EXISTS dwp_assignments (
   id SERIAL PRIMARY KEY,
   level_id TEXT NOT NULL REFERENCES writing_levels(level_id) ON DELETE CASCADE,
-  class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+  class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
   teacher_id UUID NOT NULL,
   instructions TEXT,
   due_date TIMESTAMP WITH TIME ZONE,
