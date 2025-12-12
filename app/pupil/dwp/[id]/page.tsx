@@ -70,18 +70,27 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
-    const storedPupilId = sessionStorage.getItem('pupilId');
-    const storedPupilName = sessionStorage.getItem('pupilName');
+    const stored = localStorage.getItem('pupilSession');
     
-    if (!storedPupilId) {
+    if (!stored) {
       router.push('/pupil/login');
       return;
     }
     
-    setPupilId(storedPupilId);
-    setPupilName(storedPupilName || '');
-    setTimeStarted(new Date());
-    fetchAssignmentData(storedPupilId);
+    try {
+      const session = JSON.parse(stored);
+      if (!session.pupilId) {
+        router.push('/pupil/login');
+        return;
+      }
+      
+      setPupilId(session.pupilId);
+      setPupilName(session.pupilName || '');
+      setTimeStarted(new Date());
+      fetchAssignmentData(session.pupilId);
+    } catch {
+      router.push('/pupil/login');
+    }
   }, [id, router]);
 
   async function fetchAssignmentData(pupilId: string) {
