@@ -227,33 +227,115 @@ ALTER TABLE writing_badges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE writing_certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pupil_certificates_earned ENABLE ROW LEVEL SECURITY;
 
--- Policies: Everyone can view level definitions
+-- Policies: Everyone can view level definitions (read-only)
 CREATE POLICY "Anyone can view writing levels" ON writing_levels
   FOR SELECT TO authenticated USING (true);
 
--- Policies: Everyone can view badges
+-- Policies: Everyone can view badges (read-only)
 CREATE POLICY "Anyone can view writing badges" ON writing_badges
   FOR SELECT TO authenticated USING (true);
 
--- Policies: Everyone can view certificates
+-- Policies: Everyone can view certificates (read-only)
 CREATE POLICY "Anyone can view writing certificates" ON writing_certificates
   FOR SELECT TO authenticated USING (true);
 
--- Policies for assignments
-CREATE POLICY "Teachers can manage DWP assignments" ON dwp_assignments
-  FOR ALL TO authenticated USING (true);
+-- Policies for dwp_assignments: Teachers can manage their own assignments
+CREATE POLICY "Teachers can view assignments for their classes" ON dwp_assignments
+  FOR SELECT TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM classes WHERE classes.id = dwp_assignments.class_id 
+      AND classes.teacher_id = auth.uid()
+    )
+    OR EXISTS (
+      SELECT 1 FROM class_members WHERE class_members.class_id = dwp_assignments.class_id 
+      AND class_members.pupil_id = auth.uid()
+    )
+  );
 
--- Policies for attempts
-CREATE POLICY "Authenticated users can manage writing attempts" ON writing_attempts
-  FOR ALL TO authenticated USING (true);
+CREATE POLICY "Teachers can insert assignments for their classes" ON dwp_assignments
+  FOR INSERT TO authenticated WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM classes WHERE classes.id = dwp_assignments.class_id 
+      AND classes.teacher_id = auth.uid()
+    )
+  );
 
--- Policies for progress
-CREATE POLICY "Authenticated users can manage writing progress" ON writing_progress
-  FOR ALL TO authenticated USING (true);
+CREATE POLICY "Teachers can update assignments for their classes" ON dwp_assignments
+  FOR UPDATE TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM classes WHERE classes.id = dwp_assignments.class_id 
+      AND classes.teacher_id = auth.uid()
+    )
+  );
 
--- Policies for pupil certificates
-CREATE POLICY "Authenticated users can manage pupil certificates" ON pupil_certificates_earned
-  FOR ALL TO authenticated USING (true);
+CREATE POLICY "Teachers can delete assignments for their classes" ON dwp_assignments
+  FOR DELETE TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM classes WHERE classes.id = dwp_assignments.class_id 
+      AND classes.teacher_id = auth.uid()
+    )
+  );
+
+-- Policies for writing_attempts: Pupils can manage their own attempts, teachers can view their class attempts
+CREATE POLICY "Pupils can view their own attempts" ON writing_attempts
+  FOR SELECT TO authenticated USING (
+    pupil_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM dwp_assignments da 
+      JOIN classes c ON c.id = da.class_id 
+      WHERE da.id = writing_attempts.dwp_assignment_id 
+      AND c.teacher_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Pupils can insert their own attempts" ON writing_attempts
+  FOR INSERT TO authenticated WITH CHECK (
+    pupil_id = auth.uid()
+  );
+
+CREATE POLICY "Pupils can update their own attempts" ON writing_attempts
+  FOR UPDATE TO authenticated USING (
+    pupil_id = auth.uid()
+  );
+
+-- Policies for writing_progress: Pupils can manage their own progress, teachers can view
+CREATE POLICY "Pupils can view their own progress" ON writing_progress
+  FOR SELECT TO authenticated USING (
+    pupil_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM class_members cm
+      JOIN classes c ON c.id = cm.class_id
+      WHERE cm.pupil_id = writing_progress.pupil_id
+      AND c.teacher_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Pupils can insert their own progress" ON writing_progress
+  FOR INSERT TO authenticated WITH CHECK (
+    pupil_id = auth.uid()
+  );
+
+CREATE POLICY "Pupils can update their own progress" ON writing_progress
+  FOR UPDATE TO authenticated USING (
+    pupil_id = auth.uid()
+  );
+
+-- Policies for pupil_certificates_earned: Pupils can view their own, teachers can view their class
+CREATE POLICY "Pupils can view their own certificates" ON pupil_certificates_earned
+  FOR SELECT TO authenticated USING (
+    pupil_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM class_members cm
+      JOIN classes c ON c.id = cm.class_id
+      WHERE cm.pupil_id = pupil_certificates_earned.pupil_id
+      AND c.teacher_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Pupils can insert their own certificates" ON pupil_certificates_earned
+  FOR INSERT TO authenticated WITH CHECK (
+    pupil_id = auth.uid()
+  );
 
 -- Insert initial badges
 INSERT INTO writing_badges (badge_id, badge_name, badge_icon, badge_description, badge_type, rarity, display_order) VALUES
