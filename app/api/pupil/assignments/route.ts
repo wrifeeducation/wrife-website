@@ -95,12 +95,51 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let dwpAssignments: any[] = [];
+    let writingAttempts: any[] = [];
+
+    try {
+      const { data: dwpData, error: dwpError } = await supabaseAdmin
+        .from('dwp_assignments')
+        .select(`
+          id, level_id, instructions, due_date, created_at,
+          writing_levels (level_number, tier_number, activity_name, prompt_title, prompt_instructions, learning_objective)
+        `)
+        .eq('class_id', classId)
+        .order('created_at', { ascending: false });
+
+      if (!dwpError) {
+        dwpAssignments = dwpData || [];
+      }
+    } catch (err) {
+      console.log('DWP assignments may not exist, continuing');
+    }
+
+    if (pupilId && dwpAssignments.length > 0) {
+      try {
+        const dwpAssignmentIds = dwpAssignments.map(a => a.id);
+        const { data: attemptData, error: attemptError } = await supabaseAdmin
+          .from('writing_attempts')
+          .select('*')
+          .eq('pupil_id', pupilId)
+          .in('dwp_assignment_id', dwpAssignmentIds);
+
+        if (!attemptError) {
+          writingAttempts = attemptData || [];
+        }
+      } catch (err) {
+        console.log('Writing attempts may not exist, continuing');
+      }
+    }
+
     return NextResponse.json({
       assignments: assignmentsData || [],
       submissions,
       progressRecords,
       pwpAssignments,
-      pwpSubmissions
+      pwpSubmissions,
+      dwpAssignments,
+      writingAttempts
     });
   } catch (error) {
     console.error('Fetch assignments error:', error);

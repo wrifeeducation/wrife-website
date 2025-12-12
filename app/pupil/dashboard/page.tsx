@@ -62,6 +62,33 @@ interface PWPSubmission {
   submitted_at: string | null;
 }
 
+interface WritingLevel {
+  level_number: number;
+  tier_number: number;
+  activity_name: string;
+  prompt_title: string;
+  prompt_instructions: string;
+  learning_objective: string;
+}
+
+interface DWPAssignment {
+  id: number;
+  level_id: string;
+  instructions: string | null;
+  due_date: string | null;
+  created_at: string;
+  writing_levels: WritingLevel;
+}
+
+interface WritingAttempt {
+  id: string;
+  dwp_assignment_id: number;
+  status: string;
+  passed: boolean | null;
+  percentage: number | null;
+  performance_band: string | null;
+}
+
 function StarRating({ count }: { count: number }) {
   return (
     <div className="flex gap-0.5">
@@ -86,6 +113,8 @@ export default function PupilDashboardPage() {
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
   const [pwpAssignments, setPwpAssignments] = useState<PWPAssignment[]>([]);
   const [pwpSubmissions, setPwpSubmissions] = useState<PWPSubmission[]>([]);
+  const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
+  const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -127,6 +156,8 @@ export default function PupilDashboardPage() {
       setProgressRecords(data.progressRecords || []);
       setPwpAssignments(data.pwpAssignments || []);
       setPwpSubmissions(data.pwpSubmissions || []);
+      setDwpAssignments(data.dwpAssignments || []);
+      setWritingAttempts(data.writingAttempts || []);
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -171,6 +202,46 @@ export default function PupilDashboardPage() {
     const submission = pwpSubmissions.find(s => s.pwp_assignment_id === pwpAssignmentId);
     if (!submission) return 'not_started';
     return submission.status;
+  }
+
+  function getDWPAttempt(dwpAssignmentId: number): WritingAttempt | undefined {
+    return writingAttempts.find(a => a.dwp_assignment_id === dwpAssignmentId);
+  }
+
+  function getDWPStatusBadge(attempt: WritingAttempt | undefined) {
+    if (!attempt) {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+          Not Started
+        </span>
+      );
+    }
+    if (attempt.status === 'assessed' && attempt.passed) {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+          Passed ({attempt.percentage}%)
+        </span>
+      );
+    }
+    if (attempt.status === 'assessed' && !attempt.passed) {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
+          Try Again ({attempt.percentage}%)
+        </span>
+      );
+    }
+    if (attempt.status === 'submitted') {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+          Submitted
+        </span>
+      );
+    }
+    return (
+      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+        In Progress
+      </span>
+    );
   }
 
   function getStatusBadge(status: string) {
@@ -292,21 +363,31 @@ export default function PupilDashboardPage() {
             <p className="text-sm text-[var(--wrife-text-muted)] mt-1">Total Assignments</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5">
+          <div 
+            className="rounded-2xl p-5"
+            style={{
+              background: 'linear-gradient(135deg, #dbeafe 0%, #f3e8ff 100%)',
+              border: '2px solid #a78bfa',
+            }}
+          >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-[var(--wrife-orange-soft)] flex items-center justify-center">
-                <span className="text-xl">⏱️</span>
+              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                <span className="text-xl">✍️</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[var(--wrife-text-main)]">7-min Writing</p>
-                <p className="text-xs text-[var(--wrife-text-muted)]">Quick practice</p>
+                <p className="text-sm font-semibold text-[var(--wrife-text-main)]">Daily Writing</p>
+                <p className="text-xs text-[var(--wrife-text-muted)]">{dwpAssignments.length} levels assigned</p>
               </div>
             </div>
-            <Link href="/">
-              <button className="w-full py-2.5 rounded-full font-bold text-white bg-[var(--wrife-orange)] hover:opacity-90 transition text-sm">
-                Start Writing
-              </button>
-            </Link>
+            {dwpAssignments.length > 0 ? (
+              <Link href={`/pupil/dwp/${dwpAssignments[0].id}`}>
+                <button className="w-full py-2.5 rounded-full font-bold text-white bg-purple-600 hover:bg-purple-700 transition text-sm">
+                  Start Writing
+                </button>
+              </Link>
+            ) : (
+              <p className="text-xs text-center text-purple-600">No levels assigned yet</p>
+            )}
           </div>
         </div>
 
@@ -424,6 +505,51 @@ export default function PupilDashboardPage() {
             )}
           </div>
         </div>
+
+        {dwpAssignments.length > 0 && (
+          <div className="mt-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border-2 border-purple-200">
+            <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+              Daily Writing Practice
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {dwpAssignments.map((dwp) => {
+                const attempt = getDWPAttempt(dwp.id);
+                return (
+                  <Link key={dwp.id} href={`/pupil/dwp/${dwp.id}`}>
+                    <div className="bg-white rounded-xl p-4 border border-purple-200 hover:border-purple-400 hover:shadow-md transition cursor-pointer">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600 text-sm font-bold">
+                            {dwp.writing_levels?.level_number || '?'}
+                          </span>
+                          <div>
+                            <p className="font-semibold text-sm text-[var(--wrife-text-main)]">
+                              {dwp.writing_levels?.activity_name || 'Writing Level'}
+                            </p>
+                            <p className="text-xs text-[var(--wrife-text-muted)]">
+                              Tier {dwp.writing_levels?.tier_number || '?'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[var(--wrife-text-muted)] mb-3 line-clamp-2">
+                        {dwp.writing_levels?.learning_objective || 'Complete this writing activity'}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        {getDWPStatusBadge(attempt)}
+                        {dwp.due_date && (
+                          <span className="text-xs text-[var(--wrife-text-muted)]">
+                            Due: {new Date(dwp.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
