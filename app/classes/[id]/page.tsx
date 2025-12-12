@@ -187,10 +187,15 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
 
   async function fetchSubmissions() {
     try {
-      const { data: classAssignments } = await supabase
+      const { data: classAssignments, error: assignError } = await supabase
         .from('assignments')
         .select('id')
         .eq('class_id', resolvedParams.id);
+
+      if (assignError?.code === 'PGRST205') {
+        setSubmissions([]);
+        return;
+      }
 
       if (!classAssignments || classAssignments.length === 0) {
         setSubmissions([]);
@@ -204,10 +209,15 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
         .select('id, assignment_id, pupil_id, status, content, submitted_at')
         .in('assignment_id', assignmentIds);
 
+      if (error?.code === 'PGRST205') {
+        setSubmissions([]);
+        return;
+      }
       if (error) throw error;
       setSubmissions(data || []);
     } catch (err) {
       console.error('Error fetching submissions:', err);
+      setSubmissions([]);
     }
   }
 
@@ -218,10 +228,15 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
         .select('id, pupil_id, lesson_id, status, completed_at')
         .eq('class_id', resolvedParams.id);
 
+      if (error?.code === 'PGRST205') {
+        setProgressRecords([]);
+        return;
+      }
       if (error) throw error;
       setProgressRecords(data || []);
     } catch (err) {
       console.error('Error fetching progress records:', err);
+      setProgressRecords([]);
     }
   }
 
@@ -236,19 +251,29 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
         .eq('class_id', resolvedParams.id)
         .order('created_at', { ascending: false });
 
+      if (error?.code === 'PGRST205') {
+        setPwpAssignments([]);
+        return;
+      }
       if (error) throw error;
       setPwpAssignments((data as unknown as PWPAssignment[]) || []);
     } catch (err) {
       console.error('Error fetching PWP assignments:', err);
+      setPwpAssignments([]);
     }
   }
 
   async function fetchPWPSubmissions() {
     try {
-      const { data: classPWPAssignments } = await supabase
+      const { data: classPWPAssignments, error: pwpError } = await supabase
         .from('pwp_assignments')
         .select('id')
         .eq('class_id', resolvedParams.id);
+
+      if (pwpError?.code === 'PGRST205') {
+        setPwpSubmissions([]);
+        return;
+      }
 
       if (!classPWPAssignments || classPWPAssignments.length === 0) {
         setPwpSubmissions([]);
@@ -262,10 +287,15 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
         .select('id, pwp_assignment_id, pupil_id, status, content, submitted_at')
         .in('pwp_assignment_id', assignmentIds);
 
+      if (error?.code === 'PGRST205') {
+        setPwpSubmissions([]);
+        return;
+      }
       if (error) throw error;
       setPwpSubmissions(data || []);
     } catch (err) {
       console.error('Error fetching PWP submissions:', err);
+      setPwpSubmissions([]);
     }
   }
 
