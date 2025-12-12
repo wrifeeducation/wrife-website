@@ -213,6 +213,11 @@ export default function AdminDashboard() {
                   PWP Activities
                 </button>
               </Link>
+              <Link href="/admin/dwp-levels">
+                <button className="rounded-full border border-orange-500 bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+                  DWP Levels
+                </button>
+              </Link>
               <Link href="/admin/users">
                 <button className="rounded-full border border-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition">
                   Manage Users
