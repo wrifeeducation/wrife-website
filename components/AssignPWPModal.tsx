@@ -62,10 +62,15 @@ export function AssignPWPModal({ isOpen, onClose, classId, className, yearGroup,
         .gte('year_group_max', yearGroup)
         .order('level', { ascending: true });
 
+      if (error?.code === 'PGRST205') {
+        setActivities([]);
+        return;
+      }
       if (error) throw error;
       setActivities(data || []);
     } catch (err) {
       console.error('Error fetching PWP activities:', err);
+      setActivities([]);
     } finally {
       setLoading(false);
     }

@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AddPupilModal } from '@/components/AddPupilModal';
 import { SubmissionReviewModal } from '@/components/SubmissionReviewModal';
 import { AssignPWPModal } from '@/components/AssignPWPModal';
@@ -108,7 +108,12 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
   const [showAddPupil, setShowAddPupil] = useState(false);
   const [showAssignPWP, setShowAssignPWP] = useState(false);
   const [showAssignDWP, setShowAssignDWP] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'pwp' | 'dwp'>('pupils');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get('tab');
+  const initialTab = tabParam && ['pupils', 'progress', 'pwp', 'dwp'].includes(tabParam) 
+    ? tabParam as 'pupils' | 'progress' | 'pwp' | 'dwp'
+    : 'pupils';
+  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'pwp' | 'dwp'>(initialTab);
   const [pwpAssignments, setPwpAssignments] = useState<PWPAssignment[]>([]);
   const [pwpSubmissions, setPwpSubmissions] = useState<PWPSubmission[]>([]);
   const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
@@ -136,6 +141,12 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     fetchDWPAssignments();
     fetchWritingAttempts();
   }, [user, resolvedParams.id, router]);
+
+  useEffect(() => {
+    if (tabParam && ['pupils', 'progress', 'pwp', 'dwp'].includes(tabParam)) {
+      setActiveTab(tabParam as 'pupils' | 'progress' | 'pwp' | 'dwp');
+    }
+  }, [tabParam]);
 
   async function fetchClassData() {
     try {

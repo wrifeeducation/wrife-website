@@ -573,6 +573,40 @@ function DashboardContent() {
                   )}
                 </div>
 
+                <div className="lg:col-span-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border-2 border-purple-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Daily Writing Practice (DWP)</h2>
+                      <p className="text-sm text-[var(--wrife-text-muted)]">40-level progressive writing programme with AI assessment</p>
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {classes.length > 0 ? (
+                      classes.map((cls) => (
+                        <Link key={cls.id} href={`/classes/${cls.id}?tab=dwp`}>
+                          <div className="p-4 rounded-xl bg-white border border-purple-200 hover:border-purple-400 hover:shadow-md transition cursor-pointer">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-semibold text-[var(--wrife-text-main)]">{cls.name}</p>
+                                <p className="text-xs text-[var(--wrife-text-muted)]">Year {cls.year_group}</p>
+                              </div>
+                              <span className="text-2xl">✍️</span>
+                            </div>
+                            <p className="mt-2 text-xs text-purple-600 font-medium">Assign DWP Levels →</p>
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="sm:col-span-2 text-center py-6">
+                        <p className="text-[var(--wrife-text-muted)] text-sm">Create a class first to assign DWP levels</p>
+                        <button onClick={() => setShowCreateClassModal(true)} className="mt-2 text-purple-600 font-semibold text-sm hover:underline">
+                          + Create Class
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Quick Actions</h2>
