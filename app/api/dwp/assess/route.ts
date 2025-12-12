@@ -2,9 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing Supabase configuration:', { 
+    hasUrl: !!supabaseUrl, 
+    hasServiceKey: !!supabaseServiceKey 
+  });
+}
+
+const supabaseAdmin = supabaseUrl && supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
 
 const openai = new OpenAI();
 
@@ -17,6 +27,13 @@ interface AssessmentRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error. Please contact your administrator.' },
+        { status: 500 }
+      );
+    }
+
     const { attemptId, pupilId, levelId, pupilWriting }: AssessmentRequest = await request.json();
 
     if (!attemptId || !pupilId || !levelId || !pupilWriting) {
@@ -216,6 +233,8 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
 }
 
 async function updateProgress(pupilId: string, level: any, assessment: any) {
+  if (!supabaseAdmin) return;
+
   const { data: progress } = await supabaseAdmin
     .from('writing_progress')
     .select('*')
