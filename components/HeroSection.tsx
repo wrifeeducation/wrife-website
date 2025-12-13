@@ -33,21 +33,24 @@ export default function HeroSection() {
         </div>
 
         <div className="relative flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-4">
-          <div className="flex flex-wrap justify-center gap-4 lg:gap-6 max-w-4xl">
-            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-4 w-48 transform hover:scale-105 transition-transform">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-[var(--wrife-blue)] flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">W</span>
-                </div>
-                <span className="font-bold text-sm text-[var(--wrife-text-main)]">WriFe</span>
+          <div className="flex flex-wrap justify-center gap-6 lg:gap-8 max-w-5xl items-center">
+            
+            <Link 
+              href="/login"
+              className="group relative transform hover:scale-105 transition-all duration-300"
+            >
+              <div className="absolute -inset-2 bg-gradient-to-r from-orange-400 to-orange-600 rounded-3xl opacity-20 group-hover:opacity-30 blur-xl transition-opacity"></div>
+              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden border-4 border-white" style={{ transform: 'perspective(1000px) rotateY(-5deg) rotateX(2deg)' }}>
+                <img 
+                  src="/demo-assets/teacher-login.png"
+                  alt="Teacher Login Portal"
+                  className="w-[220px] h-auto object-cover"
+                />
               </div>
-              <p className="text-xs text-[var(--wrife-text-muted)] mb-3">
-                Lesson 1: Developing Awareness of Personal Stories
-              </p>
-              <button className="w-full py-2 bg-[var(--wrife-orange)] text-white text-xs font-bold rounded-lg">
-                Start
-              </button>
-            </div>
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--wrife-orange)] text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+                Teacher Portal
+              </div>
+            </Link>
 
             <div className="bg-[var(--wrife-blue)] rounded-2xl shadow-soft p-4 w-64 text-white transform hover:scale-105 transition-transform">
               <div className="flex items-center justify-between mb-3">
@@ -69,23 +72,22 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-4 w-56 transform hover:scale-105 transition-transform">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[var(--wrife-yellow)] flex items-center justify-center">
-                  <span className="text-lg">👧</span>
-                </div>
-                <div>
-                  <span className="font-bold text-sm text-[var(--wrife-text-main)]">Jessica</span>
-                  <div className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-[var(--wrife-green)]"></span>
-                    <span className="text-xs text-[var(--wrife-text-muted)]">Good</span>
-                  </div>
-                </div>
+            <Link 
+              href="/pupil/login"
+              className="group relative transform hover:scale-105 transition-all duration-300"
+            >
+              <div className="absolute -inset-2 bg-gradient-to-r from-blue-400 to-blue-600 rounded-3xl opacity-20 group-hover:opacity-30 blur-xl transition-opacity"></div>
+              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden border-4 border-white" style={{ transform: 'perspective(1000px) rotateY(5deg) rotateX(2deg)' }}>
+                <img 
+                  src="/demo-assets/pupil-login.png"
+                  alt="Pupil Login Portal"
+                  className="w-[220px] h-auto object-cover"
+                />
               </div>
-              <p className="text-sm text-[var(--wrife-text-main)]">
-                One day, I found a...
-              </p>
-            </div>
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--wrife-blue)] text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+                Pupil Portal
+              </div>
+            </Link>
 
             <div className="bg-[var(--wrife-blue)] rounded-2xl shadow-soft p-4 w-52 text-white transform hover:scale-105 transition-transform">
               <div className="flex items-center gap-2 mb-3">
