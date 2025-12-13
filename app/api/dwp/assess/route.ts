@@ -22,14 +22,37 @@ const openai = new OpenAI({
 });
 
 interface AssessmentRequest {
-  attemptId: string;
-  pupilId: string;
-  levelId: string;
+  attemptId?: string;
+  pupilId?: string;
+  levelId?: string;
   pupilWriting: string;
+  isDemo?: boolean;
+  levelNumber?: number;
+  activityName?: string;
+  promptTitle?: string;
+  promptInstructions?: string;
+  rubric?: any;
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const body: AssessmentRequest = await request.json();
+    const { attemptId, pupilId, levelId, pupilWriting, isDemo, levelNumber, activityName, promptTitle, promptInstructions, rubric } = body;
+
+    if (!pupilWriting) {
+      return NextResponse.json({ error: 'Missing pupil writing' }, { status: 400 });
+    }
+
+    if (isDemo) {
+      return handleDemoAssessment(pupilWriting, {
+        levelNumber: levelNumber || 1,
+        activityName: activityName || 'Simple Sentences',
+        promptTitle: promptTitle || 'Level 1: Simple Sentences',
+        promptInstructions: promptInstructions || 'Write 3 simple sentences.',
+        rubric: rubric || { criteria: [] }
+      });
+    }
+
     if (!supabaseAdmin) {
       return NextResponse.json(
         { error: 'Server configuration error. Please contact your administrator.' },
@@ -37,9 +60,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { attemptId, pupilId, levelId, pupilWriting }: AssessmentRequest = await request.json();
-
-    if (!attemptId || !pupilId || !levelId || !pupilWriting) {
+    if (!attemptId || !pupilId || !levelId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -232,6 +253,105 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
   } catch (error: any) {
     console.error('DWP Assessment error:', error);
     return NextResponse.json({ error: error.message || 'Assessment failed' }, { status: 500 });
+  }
+}
+
+async function handleDemoAssessment(pupilWriting: string, demoContext: {
+  levelNumber: number;
+  activityName: string;
+  promptTitle: string;
+  promptInstructions: string;
+  rubric: any;
+}) {
+  try {
+    const systemPrompt = `You are an expert primary school writing teacher assessing young pupils' written work. Your role is to provide encouraging, specific, age-appropriate feedback.
+
+# DEMO ASSESSMENT CONTEXT
+- Level: ${demoContext.levelNumber}
+- Activity: ${demoContext.activityName}
+- Learning Objective: Write simple, clear sentences
+
+# RUBRIC
+${JSON.stringify(demoContext.rubric, null, 2)}
+
+# CRITICAL RULES
+- Use simple words pupils can understand
+- ALWAYS be positive and encouraging
+- Focus on growth, not just correction
+- Give concrete examples from their writing
+- Pick ONE main improvement area only
+
+# RESPONSE FORMAT
+Return valid JSON with this structure:
+{
+  "overallScore": number (0-100),
+  "performanceBand": "mastery" | "secure" | "developing" | "emerging",
+  "feedback": {
+    "strengths": ["2-3 specific things done well"],
+    "improvements": ["1-2 areas to develop"],
+    "encouragement": "positive forward-looking statement"
+  }
+}
+
+PERFORMANCE BANDS:
+- 80-100: mastery
+- 60-79: secure
+- 40-59: developing
+- 0-39: emerging`;
+
+    const userPrompt = `# PUPIL'S WORK FOR DEMO ASSESSMENT
+
+Activity: ${demoContext.promptTitle}
+Instructions: ${demoContext.promptInstructions}
+
+Pupil's response:
+"""
+${pupilWriting}
+"""
+
+Assess this pupil's work. Be encouraging and age-appropriate.`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 800,
+    });
+
+    const responseText = completion.choices[0].message.content;
+    if (!responseText) {
+      throw new Error('No response from AI');
+    }
+
+    let assessment;
+    try {
+      assessment = JSON.parse(responseText);
+    } catch {
+      throw new Error('Failed to parse AI response');
+    }
+
+    const normalizeArray = (val: unknown, fallback: string[]): string[] => {
+      if (Array.isArray(val)) return val.map(String);
+      if (typeof val === 'string') return [val];
+      return fallback;
+    };
+
+    return NextResponse.json({
+      overallScore: typeof assessment.overallScore === 'number' ? assessment.overallScore : 70,
+      performanceBand: assessment.performanceBand || 'developing',
+      feedback: {
+        strengths: normalizeArray(assessment.feedback?.strengths, ['Good effort!']),
+        improvements: normalizeArray(assessment.feedback?.improvements, ['Keep practising!']),
+        encouragement: String(assessment.feedback?.encouragement || 'You are doing great!')
+      }
+    });
+  } catch (error: any) {
+    console.error('Demo assessment error:', error);
+    return NextResponse.json({ error: error.message || 'Demo assessment failed' }, { status: 500 });
   }
 }
 
