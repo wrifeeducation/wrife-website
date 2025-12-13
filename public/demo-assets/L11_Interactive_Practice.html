@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WriFe Lesson 11 - Subject, Main Verb and Object</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #27AE60 0%, #229954 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header h1 { color: #27AE60; font-size: 2.2em; margin-bottom: 10px; }
+        .header p { color: #666; font-size: 1.1em; }
+        .learning-objective {
+            background: #E8F8F0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #27AE60;
+        }
+        .learning-objective strong { color: #27AE60; }
+        .progress-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .progress-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #27AE60 0%, #229954 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .week-badges { display: flex; justify-content: space-around; margin-top: 20px; flex-wrap: wrap; }
+        .badge { text-align: center; padding: 10px; }
+        .badge-circle {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            margin: 0 auto 5px;
+            transition: all 0.3s ease;
+        }
+        .badge-circle.earned {
+            background: linear-gradient(135deg, #27AE60 0%, #229954 100%);
+            color: white;
+            transform: scale(1.1);
+        }
+        .badge-label { font-size: 0.85em; color: #666; font-weight: bold; }
+        .activity {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .activity.active { display: block; }
+        .activity h3 {
+            color: #27AE60;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .week-tag {
+            background: #229954;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        .question { font-size: 1.1em; margin: 15px 0; line-height: 1.6; color: #333; }
+        .story-box {
+            background: #f0f8f4;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #27AE60;
+            line-height: 1.8;
+        }
+        .highlight-subject { background: #3498db; color: white; padding: 2px 6px; border-radius: 4px; }
+        .highlight-verb { background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; }
+        .highlight-object { background: #9b59b6; color: white; padding: 2px 6px; border-radius: 4px; }
+        .options { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+        .option {
+            background: #f5f5f5;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            font-size: 1em;
+        }
+        .option:hover { background: #e8f8f0; border-color: #27AE60; }
+        .option.selected { background: #d4edda; border-color: #27AE60; }
+        .option.correct { background: #d4edda; border-color: #28a745; }
+        .option.incorrect { background: #f8d7da; border-color: #dc3545; }
+        .btn {
+            background: linear-gradient(135deg, #27AE60 0%, #229954 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-top: 15px;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .feedback { padding: 15px; border-radius: 10px; margin-top: 15px; display: none; }
+        .feedback.correct { background: #d4edda; color: #155724; display: block; }
+        .feedback.incorrect { background: #f8d7da; color: #721c24; display: block; }
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin: 10px 0;
+        }
+        .input-field:focus { border-color: #27AE60; outline: none; }
+        select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .key-box {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .key-box h4 { color: #856404; margin-bottom: 10px; }
+        .score-display { text-align: center; font-size: 1.2em; color: #666; margin-top: 10px; }
+        .completion-screen {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+        .completion-screen.active { display: block; }
+        .completion-screen h2 { color: #27AE60; font-size: 2em; margin-bottom: 20px; }
+        .final-score { font-size: 3em; color: #27AE60; margin: 20px 0; }
+        .stars { font-size: 2.5em; margin: 15px 0; }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            min-height: 80px;
+            resize: vertical;
+        }
+        textarea:focus { border-color: #27AE60; outline: none; }
+        .info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .info-card h4 { margin-bottom: 10px; font-size: 1.2em; }
+        .color-key { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; }
+        .color-key span { display: flex; align-items: center; gap: 5px; }
+        .color-dot { width: 20px; height: 20px; border-radius: 50%; display: inline-block; }
+        .dot-subject { background: #3498db; }
+        .dot-verb { background: #e74c3c; }
+        .dot-object { background: #9b59b6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WriFe Lesson 11</h1>
+            <p>Subject, Main Verb and Object</p>
+            <div class="learning-objective">
+                <strong>Learning Objective:</strong> I can identify the subject, main verb and object in sentences. I understand how they work together.
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="week-badges">
+                <div class="badge"><div class="badge-circle" id="badge1">W1</div><div class="badge-label">Week 1</div></div>
+                <div class="badge"><div class="badge-circle" id="badge2">W2</div><div class="badge-label">Week 2</div></div>
+                <div class="badge"><div class="badge-circle" id="badge3">W3</div><div class="badge-label">Week 3</div></div>
+                <div class="badge"><div class="badge-circle" id="badge4">W4</div><div class="badge-label">Week 4</div></div>
+                <div class="badge"><div class="badge-circle" id="badge5">W5</div><div class="badge-label">Week 5</div></div>
+                <div class="badge"><div class="badge-circle" id="badge6">W6</div><div class="badge-label">Week 6</div></div>
+            </div>
+            <div class="score-display">Activity <span id="currentActivity">1</span> of 20 | Score: <span id="score">0</span>/20</div>
+        </div>
+
+        <!-- ACTIVITY 1: W1 -->
+        <div class="activity active" id="activity1">
+            <h3><span class="week-tag">W1</span> Activity 1: Meet the Sentence Parts</h3>
+            <div class="info-card">
+                <h4>Remember This!</h4>
+                <p>Every sentence has important parts that work together:</p>
+                <div class="color-key">
+                    <span><span class="color-dot dot-subject"></span> SUBJECT - Who or what does the action</span>
+                    <span><span class="color-dot dot-verb"></span> VERB - The action word</span>
+                    <span><span class="color-dot dot-object"></span> OBJECT - Who or what receives the action</span>
+                </div>
+            </div>
+            <div class="question">Look at this sentence from "A Visit to the Farm":</div>
+            <div class="story-box">
+                <span class="highlight-subject">The cows</span> <span class="highlight-verb">were eating</span> <span class="highlight-object">hay</span>.
+            </div>
+            <div class="question">What is the SUBJECT in this sentence? (Who is doing the eating?)</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 1)">hay</div>
+                <div class="option" onclick="selectOption(this, 1)">were eating</div>
+                <div class="option" onclick="selectOption(this, 1)" data-correct="true">The cows</div>
+                <div class="option" onclick="selectOption(this, 1)">the farm</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(1)">Check Answer</button>
+            <div class="feedback" id="feedback1"></div>
+        </div>
+
+        <!-- ACTIVITY 2: W1 -->
+        <div class="activity" id="activity2">
+            <h3><span class="week-tag">W1</span> Activity 2: Find the Verb</h3>
+            <div class="question">Look at this sentence:</div>
+            <div class="story-box">Mr. Brown met us at the gate.</div>
+            <div class="question">What is the VERB? (What action did Mr. Brown do?)</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 2)">Mr. Brown</div>
+                <div class="option" onclick="selectOption(this, 2)" data-correct="true">met</div>
+                <div class="option" onclick="selectOption(this, 2)">us</div>
+                <div class="option" onclick="selectOption(this, 2)">the gate</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(2)">Check Answer</button>
+            <div class="feedback" id="feedback2"></div>
+        </div>
+
+        <!-- ACTIVITY 3: W1 -->
+        <div class="activity" id="activity3">
+            <h3><span class="week-tag">W1</span> Activity 3: Find the Object</h3>
+            <div class="question">Look at this sentence:</div>
+            <div class="story-box">We saw three cows.</div>
+            <div class="question">What is the OBJECT? (What did we see?)</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 3)">We</div>
+                <div class="option" onclick="selectOption(this, 3)">saw</div>
+                <div class="option" onclick="selectOption(this, 3)" data-correct="true">three cows</div>
+                <div class="option" onclick="selectOption(this, 3)">the barn</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(3)">Check Answer</button>
+            <div class="feedback" id="feedback3"></div>
+        </div>
+
+        <!-- ACTIVITY 4: W1 -->
+        <div class="activity" id="activity4">
+            <h3><span class="week-tag">W1</span> Activity 4: All Three Parts</h3>
+            <div class="question">Match each part to its name:</div>
+            <div class="story-box">Mrs. Brown gave us fresh milk.</div>
+            <p style="margin: 10px 0;"><strong>Subject:</strong> 
+                <select id="q4a">
+                    <option value="">Choose...</option>
+                    <option value="mrs">Mrs. Brown</option>
+                    <option value="gave">gave</option>
+                    <option value="milk">fresh milk</option>
+                </select>
+            </p>
+            <p style="margin: 10px 0;"><strong>Verb:</strong> 
+                <select id="q4b">
+                    <option value="">Choose...</option>
+                    <option value="mrs">Mrs. Brown</option>
+                    <option value="gave">gave</option>
+                    <option value="milk">fresh milk</option>
+                </select>
+            </p>
+            <p style="margin: 10px 0;"><strong>Object:</strong> 
+                <select id="q4c">
+                    <option value="">Choose...</option>
+                    <option value="mrs">Mrs. Brown</option>
+                    <option value="gave">gave</option>
+                    <option value="milk">fresh milk</option>
+                </select>
+            </p>
+            <button class="btn" onclick="checkActivity4()">Check Answer</button>
+            <div class="feedback" id="feedback4"></div>
+        </div>
+
+        <!-- ACTIVITY 5: W2 -->
+        <div class="activity" id="activity5">
+            <h3><span class="week-tag">W2</span> Activity 5: Which is the Subject?</h3>
+            <div class="question">Read this sentence carefully:</div>
+            <div class="story-box">A pig was rolling in mud.</div>
+            <div class="question">The SUBJECT is the person, animal or thing doing the action. Which is it?</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 5)" data-correct="true">A pig</div>
+                <div class="option" onclick="selectOption(this, 5)">was rolling</div>
+                <div class="option" onclick="selectOption(this, 5)">in mud</div>
+                <div class="option" onclick="selectOption(this, 5)">mud</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(5)">Check Answer</button>
+            <div class="feedback" id="feedback5"></div>
+        </div>
+
+        <!-- ACTIVITY 6: W2 -->
+        <div class="activity" id="activity6">
+            <h3><span class="week-tag">W2</span> Activity 6: Subject or Object?</h3>
+            <div class="key-box">
+                <h4>Quick Tip!</h4>
+                <p>The SUBJECT does the action. The OBJECT receives the action.</p>
+            </div>
+            <div class="question">In this sentence, is "the tractor" the subject or the object?</div>
+            <div class="story-box">Mr. Brown showed us his tractor.</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 6)">Subject (it does the action)</div>
+                <div class="option" onclick="selectOption(this, 6)" data-correct="true">Object (it receives the action)</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(6)">Check Answer</button>
+            <div class="feedback" id="feedback6"></div>
+        </div>
+
+        <!-- ACTIVITY 7: W2 -->
+        <div class="activity" id="activity7">
+            <h3><span class="week-tag">W2</span> Activity 7: Complete the Labels</h3>
+            <div class="story-box">The children thanked the farmers.</div>
+            <div class="question">Fill in the blanks:</div>
+            <p style="margin: 10px 0;"><strong>The children</strong> is the <input type="text" class="input-field" id="q7a" placeholder="subject, verb or object" style="width: 150px; display: inline;"></p>
+            <p style="margin: 10px 0;"><strong>thanked</strong> is the <input type="text" class="input-field" id="q7b" placeholder="subject, verb or object" style="width: 150px; display: inline;"></p>
+            <p style="margin: 10px 0;"><strong>the farmers</strong> is the <input type="text" class="input-field" id="q7c" placeholder="subject, verb or object" style="width: 150px; display: inline;"></p>
+            <button class="btn" onclick="checkActivity7()">Check Answer</button>
+            <div class="feedback" id="feedback7"></div>
+        </div>
+
+        <!-- ACTIVITY 8: W2 -->
+        <div class="activity" id="activity8">
+            <h3><span class="week-tag">W2</span> Activity 8: True or False</h3>
+            <div class="story-box">Some chickens were laying eggs.</div>
+            <div class="question">True or False: "eggs" is the OBJECT in this sentence.</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 8)" data-correct="true">True - eggs receives the action of laying</div>
+                <div class="option" onclick="selectOption(this, 8)">False - eggs is the subject</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(8)">Check Answer</button>
+            <div class="feedback" id="feedback8"></div>
+        </div>
+
+        <!-- ACTIVITY 9: W3 -->
+        <div class="activity" id="activity9">
+            <h3><span class="week-tag">W3</span> Activity 9: Build a Sentence</h3>
+            <div class="key-box">
+                <h4>Sentence Formula</h4>
+                <p><span class="highlight-subject">Subject</span> + <span class="highlight-verb">Verb</span> + <span class="highlight-object">Object</span></p>
+            </div>
+            <div class="question">Put these words in the correct order to make a sentence:</div>
+            <p><strong>Words:</strong> the grain | ate | The chickens</p>
+            <p style="margin-top: 15px;">Write the sentence in the correct order:</p>
+            <textarea id="q9" placeholder="Write your sentence here..."></textarea>
+            <button class="btn" onclick="checkActivity9()">Check Answer</button>
+            <div class="feedback" id="feedback9"></div>
+        </div>
+
+        <!-- ACTIVITY 10: W3 -->
+        <div class="activity" id="activity10">
+            <h3><span class="week-tag">W3</span> Activity 10: Match the Parts</h3>
+            <div class="question">Match each sentence part to its type:</div>
+            <div class="story-box">The ducks made loud sounds.</div>
+            <table style="width: 100%; margin: 15px 0;">
+                <tr><td style="padding: 10px;"><strong>The ducks</strong></td><td><select id="q10a" style="width: 100%;"><option value="">Choose...</option><option value="subject">Subject</option><option value="verb">Verb</option><option value="object">Object</option></select></td></tr>
+                <tr><td style="padding: 10px;"><strong>made</strong></td><td><select id="q10b" style="width: 100%;"><option value="">Choose...</option><option value="subject">Subject</option><option value="verb">Verb</option><option value="object">Object</option></select></td></tr>
+                <tr><td style="padding: 10px;"><strong>loud sounds</strong></td><td><select id="q10c" style="width: 100%;"><option value="">Choose...</option><option value="subject">Subject</option><option value="verb">Verb</option><option value="object">Object</option></select></td></tr>
+            </table>
+            <button class="btn" onclick="checkActivity10()">Check Answer</button>
+            <div class="feedback" id="feedback10"></div>
+        </div>
+
+        <!-- ACTIVITY 11: W3 -->
+        <div class="activity" id="activity11">
+            <h3><span class="week-tag">W3</span> Activity 11: Identify All Parts</h3>
+            <div class="story-box">He wore a big hat.</div>
+            <div class="question">Identify the subject, verb and object:</div>
+            <p style="margin: 10px 0;"><strong>Subject:</strong> <input type="text" class="input-field" id="q11a" placeholder="Who did the action?" style="width: 200px; display: inline;"></p>
+            <p style="margin: 10px 0;"><strong>Verb:</strong> <input type="text" class="input-field" id="q11b" placeholder="What was the action?" style="width: 200px; display: inline;"></p>
+            <p style="margin: 10px 0;"><strong>Object:</strong> <input type="text" class="input-field" id="q11c" placeholder="What received the action?" style="width: 200px; display: inline;"></p>
+            <button class="btn" onclick="checkActivity11()">Check Answer</button>
+            <div class="feedback" id="feedback11"></div>
+        </div>
+
+        <!-- ACTIVITY 12: W3 -->
+        <div class="activity" id="activity12">
+            <h3><span class="week-tag">W3</span> Activity 12: Tricky Sentence</h3>
+            <div class="story-box">First, we visited the barn.</div>
+            <div class="question">What is the OBJECT in this sentence?</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 12)">First</div>
+                <div class="option" onclick="selectOption(this, 12)">we</div>
+                <div class="option" onclick="selectOption(this, 12)">visited</div>
+                <div class="option" onclick="selectOption(this, 12)" data-correct="true">the barn</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(12)">Check Answer</button>
+            <div class="feedback" id="feedback12"></div>
+        </div>
+
+        <!-- ACTIVITY 13: W4 -->
+        <div class="activity" id="activity13">
+            <h3><span class="week-tag">W4</span> Activity 13: Create Your Own</h3>
+            <div class="key-box">
+                <h4>Your Turn!</h4>
+                <p>Create a sentence using: Subject + Verb + Object</p>
+            </div>
+            <div class="question">Write a sentence about the farm. Your sentence must have:</div>
+            <ul style="margin: 10px 20px;">
+                <li>A subject (who or what does the action)</li>
+                <li>A verb (the action)</li>
+                <li>An object (what receives the action)</li>
+            </ul>
+            <textarea id="q13" placeholder="Example: The farmer fed the animals."></textarea>
+            <button class="btn" onclick="checkActivity13()">Check Answer</button>
+            <div class="feedback" id="feedback13"></div>
+        </div>
+
+        <!-- ACTIVITY 14: W4 -->
+        <div class="activity" id="activity14">
+            <h3><span class="week-tag">W4</span> Activity 14: New Story Sentence</h3>
+            <div class="story-box">The tractor had enormous wheels.</div>
+            <div class="question">Complete the table for this sentence:</div>
+            <table style="width: 100%; margin: 15px 0; border-collapse: collapse;">
+                <tr style="background: #27AE60; color: white;">
+                    <th style="padding: 10px;">Subject</th>
+                    <th style="padding: 10px;">Verb</th>
+                    <th style="padding: 10px;">Object</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><input type="text" id="q14a" style="width: 100%; padding: 8px;"></td>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><input type="text" id="q14b" style="width: 100%; padding: 8px;"></td>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><input type="text" id="q14c" style="width: 100%; padding: 8px;"></td>
+                </tr>
+            </table>
+            <button class="btn" onclick="checkActivity14()">Check Answer</button>
+            <div class="feedback" id="feedback14"></div>
+        </div>
+
+        <!-- ACTIVITY 15: W4 -->
+        <div class="activity" id="activity15">
+            <h3><span class="week-tag">W4</span> Activity 15: Compare Sentences</h3>
+            <div class="question">Look at these two sentences:</div>
+            <div class="story-box">
+                <p><strong>Sentence A:</strong> The dog chased the cat.</p>
+                <p><strong>Sentence B:</strong> The cat chased the dog.</p>
+            </div>
+            <div class="question">In Sentence A, who does the chasing?</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 15)" data-correct="true">The dog</div>
+                <div class="option" onclick="selectOption(this, 15)">The cat</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(15)">Check Answer</button>
+            <div class="feedback" id="feedback15"></div>
+        </div>
+
+        <!-- ACTIVITY 16: W4 -->
+        <div class="activity" id="activity16">
+            <h3><span class="week-tag">W4</span> Activity 16: Change the Subject</h3>
+            <div class="story-box">The farmer fed the animals.</div>
+            <div class="question">Rewrite this sentence with a NEW subject. Keep the same verb and object.</div>
+            <p><strong>Hint:</strong> Who else could feed the animals?</p>
+            <textarea id="q16" placeholder="_______ fed the animals."></textarea>
+            <button class="btn" onclick="checkActivity16()">Check Answer</button>
+            <div class="feedback" id="feedback16"></div>
+        </div>
+
+        <!-- ACTIVITY 17: W5 -->
+        <div class="activity" id="activity17">
+            <h3><span class="week-tag">W5</span> Activity 17: Explain Your Thinking</h3>
+            <div class="story-box">We thanked the farmers.</div>
+            <div class="question">Why is "We" the subject and not "the farmers"?</div>
+            <textarea id="q17" placeholder="Explain your answer..."></textarea>
+            <button class="btn" onclick="checkActivity17()">Check Answer</button>
+            <div class="feedback" id="feedback17"></div>
+        </div>
+
+        <!-- ACTIVITY 18: W5 -->
+        <div class="activity" id="activity18">
+            <h3><span class="week-tag">W5</span> Activity 18: Longer Sentence</h3>
+            <div class="story-box">Near the pond, there was a scarecrow wearing an old coat.</div>
+            <div class="question">This sentence has extra information. What is the main SUBJECT?</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 18)">the pond</div>
+                <div class="option" onclick="selectOption(this, 18)" data-correct="true">a scarecrow</div>
+                <div class="option" onclick="selectOption(this, 18)">an old coat</div>
+                <div class="option" onclick="selectOption(this, 18)">there</div>
+            </div>
+            <button class="btn" onclick="checkAnswer(18)">Check Answer</button>
+            <div class="feedback" id="feedback18"></div>
+        </div>
+
+        <!-- ACTIVITY 19: W5 -->
+        <div class="activity" id="activity19">
+            <h3><span class="week-tag">W5</span> Activity 19: PWP Practice</h3>
+            <div class="info-card">
+                <h4>PWP Formula: Subject + Verb + Object</h4>
+                <p>Write 3 sentences about things from YOUR life using this formula.</p>
+            </div>
+            <div class="question">Write 3 sentences. Each must have a subject, verb and object.</div>
+            <p><strong>Sentence 1:</strong></p>
+            <textarea id="q19a" placeholder="Example: My mum makes delicious breakfast."></textarea>
+            <p><strong>Sentence 2:</strong></p>
+            <textarea id="q19b" placeholder="Your sentence..."></textarea>
+            <p><strong>Sentence 3:</strong></p>
+            <textarea id="q19c" placeholder="Your sentence..."></textarea>
+            <button class="btn" onclick="checkActivity19()">Check Answer</button>
+            <div class="feedback" id="feedback19"></div>
+        </div>
+
+        <!-- ACTIVITY 20: W6 -->
+        <div class="activity" id="activity20">
+            <h3><span class="week-tag">W6</span> Activity 20: Final Challenge</h3>
+            <div class="question">Read this paragraph from the farm story and answer the questions:</div>
+            <div class="story-box">
+                Last Saturday, my class went to Meadow Farm. The farmer, Mr. Brown, met us at the gate. He wore a big hat and muddy boots.
+            </div>
+            <div class="question">Find the Subject, Verb and Object in: "Mr. Brown met us."</div>
+            <table style="width: 100%; margin: 15px 0; border-collapse: collapse;">
+                <tr style="background: #27AE60; color: white;">
+                    <th style="padding: 10px;">Subject</th>
+                    <th style="padding: 10px;">Verb</th>
+                    <th style="padding: 10px;">Object</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><input type="text" id="q20a" style="width: 100%; padding: 8px;"></td>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><input type="text" id="q20b" style="width: 100%; padding: 8px;"></td>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><input type="text" id="q20c" style="width: 100%; padding: 8px;"></td>
+                </tr>
+            </table>
+            <div class="question">Now write your OWN sentence about visiting a place. Use Subject + Verb + Object.</div>
+            <textarea id="q20d" placeholder="Write your sentence here..."></textarea>
+            <button class="btn" onclick="checkActivity20()">Complete Lesson</button>
+            <div class="feedback" id="feedback20"></div>
+        </div>
+
+        <!-- Completion Screen -->
+        <div class="completion-screen" id="completionScreen">
+            <h2>Well Done!</h2>
+            <div class="stars" id="starsDisplay">⭐⭐⭐</div>
+            <div class="final-score"><span id="finalScore">0</span>/20</div>
+            <p style="font-size: 1.2em; color: #666; margin: 20px 0;">You completed Lesson 11: Subject, Main Verb and Object</p>
+            <div class="key-box">
+                <h4>What You Learned:</h4>
+                <p>The SUBJECT does the action in a sentence</p>
+                <p>The VERB is the action word</p>
+                <p>The OBJECT receives the action</p>
+                <p>Formula: Subject + Verb + Object</p>
+            </div>
+            <button class="btn" onclick="restartLesson()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        let currentActivity = 1;
+        let score = 0;
+        let answers = {};
+
+        function selectOption(element, activityNum) {
+            const options = element.parentElement.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            answers[activityNum] = element;
+        }
+
+        function checkAnswer(activityNum) {
+            const selected = answers[activityNum];
+            const feedback = document.getElementById('feedback' + activityNum);
+            if (!selected) { feedback.textContent = 'Please select an answer first!'; feedback.className = 'feedback incorrect'; return; }
+            const isCorrect = selected.dataset.correct === 'true';
+            const options = selected.parentElement.querySelectorAll('.option');
+            options.forEach(opt => { if (opt.dataset.correct === 'true') opt.classList.add('correct'); else if (opt.classList.contains('selected')) opt.classList.add('incorrect'); opt.style.pointerEvents = 'none'; });
+            if (isCorrect) { score++; feedback.innerHTML = 'Correct! Well done!'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Not quite. The correct answer is highlighted in green.'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity4() {
+            const a = document.getElementById('q4a').value, b = document.getElementById('q4b').value, c = document.getElementById('q4c').value;
+            const feedback = document.getElementById('feedback4');
+            if (a === 'mrs' && b === 'gave' && c === 'milk') { score++; feedback.innerHTML = 'Correct! Mrs. Brown (subject) gave (verb) fresh milk (object).'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Not quite. Subject = Mrs. Brown, Verb = gave, Object = fresh milk'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity7() {
+            const a = document.getElementById('q7a').value.toLowerCase().trim(), b = document.getElementById('q7b').value.toLowerCase().trim(), c = document.getElementById('q7c').value.toLowerCase().trim();
+            const feedback = document.getElementById('feedback7');
+            if (a === 'subject' && b === 'verb' && c === 'object') { score++; feedback.innerHTML = 'Correct! The children (subject) thanked (verb) the farmers (object).'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Check again: The children = subject, thanked = verb, the farmers = object'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity9() {
+            const answer = document.getElementById('q9').value.toLowerCase().trim();
+            const feedback = document.getElementById('feedback9');
+            if (answer.includes('chicken') && answer.includes('ate') && answer.includes('grain') && answer.indexOf('chicken') < answer.indexOf('ate') && answer.indexOf('ate') < answer.indexOf('grain')) { score++; feedback.innerHTML = 'Correct! The chickens ate the grain. (Subject + Verb + Object)'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'The correct order is: The chickens ate the grain.'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity10() {
+            const a = document.getElementById('q10a').value, b = document.getElementById('q10b').value, c = document.getElementById('q10c').value;
+            const feedback = document.getElementById('feedback10');
+            if (a === 'subject' && b === 'verb' && c === 'object') { score++; feedback.innerHTML = 'Correct! The ducks (subject) made (verb) loud sounds (object).'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Not quite. The ducks = subject, made = verb, loud sounds = object'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity11() {
+            const a = document.getElementById('q11a').value.toLowerCase().trim(), b = document.getElementById('q11b').value.toLowerCase().trim(), c = document.getElementById('q11c').value.toLowerCase().trim();
+            const feedback = document.getElementById('feedback11');
+            if (a === 'he' && b === 'wore' && (c.includes('hat'))) { score++; feedback.innerHTML = 'Correct! He (subject) wore (verb) a big hat (object).'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Check: Subject = He, Verb = wore, Object = a big hat'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity13() {
+            const answer = document.getElementById('q13').value.trim();
+            const feedback = document.getElementById('feedback13');
+            if (answer.length > 10 && answer.includes(' ')) { score++; feedback.innerHTML = 'Great sentence! Check: Does it have a subject, verb and object?'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Write a complete sentence with a subject, verb and object.'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity14() {
+            const a = document.getElementById('q14a').value.toLowerCase().trim(), b = document.getElementById('q14b').value.toLowerCase().trim(), c = document.getElementById('q14c').value.toLowerCase().trim();
+            const feedback = document.getElementById('feedback14');
+            if ((a.includes('tractor')) && b === 'had' && (c.includes('wheels'))) { score++; feedback.innerHTML = 'Correct! The tractor (subject) had (verb) enormous wheels (object).'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Subject = The tractor, Verb = had, Object = enormous wheels'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity16() {
+            const answer = document.getElementById('q16').value.trim();
+            const feedback = document.getElementById('feedback16');
+            if (answer.toLowerCase().includes('fed the animals') && !answer.toLowerCase().startsWith('the farmer')) { score++; feedback.innerHTML = 'Great! You changed the subject but kept the verb and object.'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Try: [New subject] fed the animals. Example: My dad fed the animals.'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity17() {
+            const answer = document.getElementById('q17').value.toLowerCase().trim();
+            const feedback = document.getElementById('feedback17');
+            if (answer.length > 20 && (answer.includes('action') || answer.includes('doing') || answer.includes('thank'))) { score++; feedback.innerHTML = 'Good explanation! "We" does the action (thanking), so it is the subject.'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Hint: Think about who is DOING the thanking. That is the subject.'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity19() {
+            const a = document.getElementById('q19a').value.trim(), b = document.getElementById('q19b').value.trim(), c = document.getElementById('q19c').value.trim();
+            const feedback = document.getElementById('feedback19');
+            if (a.length > 10 && b.length > 10 && c.length > 10) { score++; feedback.innerHTML = 'Excellent! You wrote 3 sentences using the S + V + O formula.'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Write 3 complete sentences. Each needs a subject, verb and object.'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => nextActivity(), 1500);
+        }
+
+        function checkActivity20() {
+            const a = document.getElementById('q20a').value.toLowerCase().trim(), b = document.getElementById('q20b').value.toLowerCase().trim(), c = document.getElementById('q20c').value.toLowerCase().trim(), d = document.getElementById('q20d').value.trim();
+            const feedback = document.getElementById('feedback20');
+            let correct = 0;
+            if ((a.includes('brown') || a === 'mr. brown') && b === 'met' && c === 'us') correct++;
+            if (d.length > 10) correct++;
+            if (correct >= 1) { score++; feedback.innerHTML = 'Well done! You completed the final challenge!'; feedback.className = 'feedback correct'; }
+            else { feedback.innerHTML = 'Check: Subject = Mr. Brown, Verb = met, Object = us'; feedback.className = 'feedback incorrect'; }
+            updateProgress(); setTimeout(() => showCompletion(), 1500);
+        }
+
+        function nextActivity() {
+            if (currentActivity < 20) { document.getElementById('activity' + currentActivity).classList.remove('active'); currentActivity++; document.getElementById('activity' + currentActivity).classList.add('active'); document.getElementById('currentActivity').textContent = currentActivity; window.scrollTo(0, 0); }
+        }
+
+        function updateProgress() {
+            const percentage = Math.round((currentActivity / 20) * 100);
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressFill').textContent = percentage + '%';
+            document.getElementById('score').textContent = score;
+            const badgeThresholds = [3, 7, 10, 14, 17, 20];
+            for (let i = 0; i < badgeThresholds.length; i++) { if (currentActivity >= badgeThresholds[i]) document.getElementById('badge' + (i + 1)).classList.add('earned'); }
+        }
+
+        function showCompletion() {
+            document.getElementById('activity20').classList.remove('active');
+            document.getElementById('completionScreen').classList.add('active');
+            document.getElementById('finalScore').textContent = score;
+            let stars = score >= 18 ? '⭐⭐⭐' : score >= 14 ? '⭐⭐' : score >= 10 ? '⭐' : 'Keep trying!';
+            document.getElementById('starsDisplay').textContent = stars;
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressFill').textContent = '100%';
+        }
+
+        function restartLesson() {
+            currentActivity = 1; score = 0; answers = {};
+            document.querySelectorAll('.activity').forEach(act => act.classList.remove('active'));
+            document.getElementById('activity1').classList.add('active');
+            document.getElementById('completionScreen').classList.remove('active');
+            document.querySelectorAll('.option').forEach(opt => { opt.classList.remove('selected', 'correct', 'incorrect'); opt.style.pointerEvents = 'auto'; });
+            document.querySelectorAll('.feedback').forEach(fb => { fb.className = 'feedback'; fb.textContent = ''; });
+            document.querySelectorAll('input, textarea, select').forEach(el => el.value = '');
+            for (let i = 1; i <= 6; i++) document.getElementById('badge' + i).classList.remove('earned');
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressFill').textContent = '0%';
+            document.getElementById('score').textContent = '0';
+            document.getElementById('currentActivity').textContent = '1';
+        }
+    </script>
+</body>
+</html>

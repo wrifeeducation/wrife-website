@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WriFe Lesson 11 - Teacher Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #2c3e50; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: #f8f9fa;
+        }
+        .header { 
+            background: linear-gradient(135deg, #27AE60 0%, #1E8449 100%); 
+            color: white; 
+            padding: 30px; 
+            text-align: center; 
+            border-radius: 10px; 
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+        .header h1 { font-size: 36px; margin-bottom: 10px; }
+        .header p { font-size: 18px; opacity: 0.95; }
+        .tab { 
+            background: white; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            margin-bottom: 12px; 
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .tab:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tab-header { 
+            background: #27AE60; 
+            color: white; 
+            padding: 18px 25px; 
+            cursor: pointer; 
+            font-size: 20px; 
+            font-weight: bold; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+        .tab-header:hover { background: #229954; }
+        .tab-header .icon { 
+            font-size: 24px; 
+            transition: transform 0.3s ease;
+        }
+        .tab-content { 
+            padding: 30px; 
+            display: none; 
+            background: white;
+        }
+        .tab-content.active { display: block; }
+        .tab.active .tab-header .icon { transform: rotate(180deg); }
+        
+        h2 { color: #27AE60; margin: 25px 0 15px 0; font-size: 24px; }
+        h3 { color: #2c3e50; margin: 20px 0 12px 0; font-size: 20px; }
+        h4 { color: #34495e; margin: 15px 0 10px 0; font-size: 18px; }
+        
+        .objective-box { 
+            background: #d4edda; 
+            border-left: 5px solid #27AE60; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 5px;
+        }
+        .warning-box { 
+            background: #fff3cd; 
+            border-left: 5px solid #ffc107; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 5px;
+        }
+        .tip-box { 
+            background: #d1ecf1; 
+            border-left: 5px solid #17a2b8; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 5px;
+        }
+        .pwp-box {
+            background: #f0f8f4;
+            border: 2px solid #27AE60;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0; 
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        th { 
+            background: #2c3e50; 
+            color: white; 
+            padding: 15px; 
+            text-align: left; 
+            font-weight: bold;
+        }
+        td { 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #e0e0e0; 
+        }
+        tr:hover { background: #f8f9fa; }
+        
+        ul, ol { margin: 15px 0 15px 25px; }
+        li { margin: 8px 0; }
+        
+        .color-key { 
+            display: flex; 
+            gap: 15px; 
+            margin: 20px 0; 
+            flex-wrap: wrap;
+        }
+        .color-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            background: #f8f9fa;
+        }
+        .color-circle { 
+            width: 20px; 
+            height: 20px; 
+            border-radius: 50%; 
+            border: 2px solid #e0e0e0;
+        }
+        .subject { background: #3498db; }
+        .verb { background: #e74c3c; }
+        .object { background: #9b59b6; }
+        
+        .print-button { 
+            background: #27AE60; 
+            color: white; 
+            border: none; 
+            padding: 12px 30px; 
+            font-size: 16px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+        }
+        .print-button:hover { background: #229954; }
+        
+        @media print {
+            body { background: white; padding: 0; }
+            .header { background: #27AE60; }
+            .print-button { display: none; }
+            .tab { page-break-inside: avoid; border: 1px solid #ccc; }
+            .tab-content { display: block !important; }
+            .tab-header .icon { display: none; }
+        }
+        
+        .step-box {
+            background: #f8f9fa;
+            border-left: 4px solid #27AE60;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .step-box h4 { margin-top: 0; color: #27AE60; }
+        
+        .script-box {
+            background: #fff;
+            border: 2px dashed #27AE60;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-style: italic;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📝 WriFe Lesson 11 Teacher Guide</h1>
+    <p>Subject, Main Verb and Object</p>
+    <p style="font-size: 14px; margin-top: 10px;">PWP Formula: Subject + Verb + Object | Duration: 60-70 minutes</p>
+</div>
+
+<button class="print-button" onclick="window.print()">🖨️ Print Teacher Guide</button>
+
+<!-- TAB 1 -->
+<div class="tab active">
+    <div class="tab-header" onclick="toggleTab(this)">
+        <span>📋 At a Glance</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="tab-content active">
+        <div class="objective-box">
+            <h3>🎯 Learning Objective</h3>
+            <p><strong>I can identify the subject, main verb and object in sentences. I understand how they work together.</strong></p>
+        </div>
+
+        <h3>Prerequisites Checklist</h3>
+        <ul>
+            <li>✓ Pupils have mastered Lesson 10 (Noun + Verb pattern)</li>
+            <li>✓ Pupils understand PWP Booklet structure</li>
+            <li>✓ Pupils can identify nouns and verbs</li>
+            <li>✓ Pupils are familiar with personal story writing</li>
+        </ul>
+
+        <h3>Core Text</h3>
+        <p><strong>"A Visit to the Farm"</strong> (WriFe Original, 142 words)</p>
+        <p>Simple narrative about class trip to Meadow Farm, featuring clear Subject-Verb-Object patterns throughout.</p>
+
+        <h3>Materials Needed</h3>
+        <ul>
+            <li>Interactive Practice activities (accessible on devices OR printed copies)</li>
+            <li>PowerPoint Presentation (20 slides)</li>
+            <li>Student Worksheets (3 versions: Support, Core, Challenge) - 1 per pupil</li>
+            <li>PWP Booklets (from Lesson 10)</li>
+            <li>Colour markers (blue, red, purple) for board demonstrations</li>
+            <li>"A Visit to the Farm" text displayed or printed</li>
+            <li>Progress Tracker access</li>
+        </ul>
+
+        <h3>Timing Breakdown (60-70 minutes)</h3>
+        <table>
+            <tr>
+                <th>Step</th>
+                <th>Activity</th>
+                <th>Duration</th>
+            </tr>
+            <tr>
+                <td><strong>1</strong></td>
+                <td>Connection & Review</td>
+                <td>3 minutes</td>
+            </tr>
+            <tr>
+                <td><strong>2</strong></td>
+                <td>Review Previous Formula (Noun + Verb)</td>
+                <td>5 minutes</td>
+            </tr>
+            <tr>
+                <td><strong>3</strong></td>
+                <td>Introduce Subject, Verb, Object</td>
+                <td>15 minutes</td>
+            </tr>
+            <tr>
+                <td><strong>4</strong></td>
+                <td>Whole Class Practice with "A Visit to the Farm"</td>
+                <td>10 minutes</td>
+            </tr>
+            <tr>
+                <td><strong>5</strong></td>
+                <td>Guided Application</td>
+                <td>10 minutes</td>
+            </tr>
+            <tr>
+                <td><strong>6</strong></td>
+                <td>Independent PWP Work</td>
+                <td>15 minutes</td>
+            </tr>
+            <tr>
+                <td><strong>7</strong></td>
+                <td>Share and Celebrate</td>
+                <td>5 minutes</td>
+            </tr>
+        </table>
+
+        <h3>Success Indicators</h3>
+        <ul>
+            <li>Pupils can identify the subject in sentences from the text</li>
+            <li>Pupils can identify the main verb in sentences</li>
+            <li>Pupils can identify the object in sentences</li>
+            <li>Pupils understand the Subject + Verb + Object pattern</li>
+            <li>Pupils can apply the pattern in their PWP writing</li>
+            <li>Pupils can identify whether their sentence is Beginning, Middle or End of story</li>
+        </ul>
+
+        <div class="tip-box">
+            <h4>💡 Big Idea Summary</h4>
+            <p>Lesson 11 introduces the <strong>Subject + Verb + Object</strong> sentence pattern, building on the Noun + Verb foundation from Lesson 10. This is the first time pupils see the complete basic sentence structure. The pattern is heavily scaffolded with colour-coding (blue, red, purple) and clear definitions. Pupils learn that sentences have three main parts that work together: WHO/WHAT does something (subject), WHAT they do (verb), and WHAT receives the action (object).</p>
+        </div>
+
+        <h3>Colour Code System</h3>
+        <div class="color-key">
+            <div class="color-item">
+                <div class="color-circle subject"></div>
+                <span><strong>Blue = Subject</strong> (WHO or WHAT does the action)</span>
+            </div>
+            <div class="color-item">
+                <div class="color-circle verb"></div>
+                <span><strong>Red = Verb</strong> (the ACTION word)</span>
+            </div>
+            <div class="color-item">
+                <div class="color-circle object"></div>
+                <span><strong>Purple = Object</strong> (RECEIVES the action)</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab">
+    <div class="tab-header" onclick="toggleTab(this)">
+        <span>✅ Before the Lesson</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="tab-content">
+        <h3>Teacher Preparation (15-20 minutes)</h3>
+        
+        <h4>1. Read and Familiarize (5 minutes)</h4>
+        <ul>
+            <li>Read "A Visit to the Farm" text multiple times</li>
+            <li>Identify clear Subject-Verb-Object examples you'll use in modeling</li>
+            <li>Practice identifying each part aloud</li>
+            <li>Review colour-coding system (blue, red, purple)</li>
+        </ul>
+
+        <h4>2. Prepare Visual Aids (5 minutes)</h4>
+        <ul>
+            <li>Test PowerPoint presentation (20 slides)</li>
+            <li>Prepare colour markers for board work (blue, red, purple)</li>
+            <li>Write formula on board: <code>Subject + Verb + Object</code></li>
+            <li>Prepare sentence strips if using (optional enhancement)</li>
+        </ul>
+
+        <h4>3. Organize Materials (5 minutes)</h4>
+        <ul>
+            <li>Print Student Worksheets (determine which pupils get Support/Core/Challenge)</li>
+            <li>Ensure pupils have PWP Booklets from Lesson 10</li>
+            <li>Prepare Interactive Practice access (devices OR printed activities)</li>
+            <li>Have Progress Tracker accessible for post-lesson recording</li>
+        </ul>
+
+        <h4>4. Review Key Vocabulary (3 minutes)</h4>
+        <ul>
+            <li><strong>Subject:</strong> WHO or WHAT does the action</li>
+            <li><strong>Verb:</strong> The ACTION word (what someone/something does)</li>
+            <li><strong>Object:</strong> WHAT receives the action</li>
+            <li><strong>Pattern/Formula:</strong> The way parts fit together</li>
+        </ul>
+
+        <div class="warning-box">
+            <h4>⚠️ Essential Warnings</h4>
+            <ul>
+                <li><strong>Heavy Scaffolding Required:</strong> L11 is the first time pupils see the full Subject-Verb-Object pattern. Spend adequate time modeling with multiple examples.</li>
+                <li><strong>Colour-Coding is Critical:</strong> Use the colour system consistently throughout (blue=subject, red=verb, purple=object). This visual support is essential for understanding.</li>
+                <li><strong>Not All Verbs Have Objects:</strong> Some pupils may notice sentences without objects. Acknowledge this briefly but focus on the SVO pattern for this lesson.</li>
+                <li><strong>Subject vs. Noun Confusion:</strong> Pupils may confuse "subject" with "noun." Clarify that the subject is the noun doing the action.</li>
+            </ul>
+        </div>
+
+        <h3>Room Setup</h3>
+        <ul>
+            <li>Display area visible to all pupils</li>
+            <li>Colour markers accessible for demonstrations</li>
+            <li>Space for pupils to work independently during PWP time</li>
+            <li>Devices ready if using digital Interactive Practice</li>
+        </ul>
+
+        <div class="pwp-box">
+            <h4>📝 PWP Formula Preparation</h4>
+            <p><strong>Today's Formula:</strong> Subject + Verb + Object</p>
+            <p><strong>Example:</strong> "My dog chased the ball."</p>
+            <ul>
+                <li>Subject (blue): My dog</li>
+                <li>Verb (red): chased</li>
+                <li>Object (purple): the ball</li>
+            </ul>
+            <p>Pupils will write ONE sentence using this formula in their PWP Booklet, then identify if it's Beginning, Middle or End of their story.</p>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 3 -->
+<div class="tab">
+    <div class="tab-header" onclick="toggleTab(this)">
+        <span>🎯 Teaching Steps (Complete Script)</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="tab-content">
+        <div class="step-box">
+            <h4>Step 1: Connection & Review (3 minutes)</h4>
+            <p><strong>Purpose:</strong> Connect to previous learning and activate prior knowledge of Noun + Verb pattern</p>
+            
+            <div class="script-box">
+                <p><strong>SAY:</strong> "Last lesson, we learned about the Noun + Verb pattern. Can anyone remind me what a noun is? What about a verb? Excellent! Today we're going to learn about a complete sentence pattern that uses three parts. By the end of today, you'll be able to write sentences using this pattern in your PWP."</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Display slide 1 (title slide)</li>
+                <li>Briefly review Noun + Verb with 1-2 examples</li>
+                <li>Generate enthusiasm: "This is one of the most important patterns in English!"</li>
+            </ul>
+        </div>
+
+        <div class="step-box">
+            <h4>Step 2: Review Previous Formula (5 minutes)</h4>
+            <p><strong>Purpose:</strong> Bridge from Lesson 10 to today's expanded pattern</p>
+            
+            <div class="script-box">
+                <p><strong>SAY:</strong> "Let's review what we learned in Lesson 10. We practiced the Noun + Verb pattern. For example: 'The dog barked.' What's the noun? What's the verb? Great! Today we're going to add ONE more part to make our sentences even better."</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Write on board: <code>Noun + Verb</code></li>
+                <li>Get 3-4 quick examples from pupils</li>
+                <li>Transition: "Now let's see what happens when we add another part..."</li>
+            </ul>
+        </div>
+
+        <div class="step-box">
+            <h4>Step 3: Introduce Subject, Verb, Object (15 minutes)</h4>
+            <p><strong>Purpose:</strong> Explicitly teach the three parts with heavy scaffolding</p>
+            
+            <h4>Part A: Introduce SUBJECT (5 min)</h4>
+            <div class="script-box">
+                <p><strong>SAY:</strong> "A SUBJECT is the WHO or the WHAT that does something in a sentence. It's the person, animal or thing doing the action. We're going to use the colour BLUE for subjects. Let me show you..."</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Display slides 3-4 (What is a Subject? + Examples)</li>
+                <li>Write on board in BLUE marker: "Mr. Brown met us."</li>
+                <li>Circle/underline "Mr. Brown" in blue</li>
+                <li>Ask: "WHO met us? Mr. Brown! He's the subject."</li>
+                <li>Show 2-3 more examples from "A Visit to the Farm"</li>
+            </ul>
+            
+            <h4>Part B: Introduce VERB (5 min)</h4>
+            <div class="script-box">
+                <p><strong>SAY:</strong> "A VERB is the action word. It tells us what the subject DOES. We use the colour RED for verbs because red means action, like a stop sign or a red light. Watch..."</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Display slides 5-6 (What is a Verb? + Examples)</li>
+                <li>Return to "Mr. Brown met us" on board</li>
+                <li>Circle/underline "met" in RED marker</li>
+                <li>Ask: "What did Mr. Brown DO? He met us!"</li>
+                <li>Show 2-3 more verb examples</li>
+            </ul>
+            
+            <h4>Part C: Introduce OBJECT (5 min)</h4>
+            <div class="script-box">
+                <p><strong>SAY:</strong> "An OBJECT is the part that RECEIVES the action. It answers the question 'what?' or 'who?' after the verb. We use PURPLE for objects. Let me show you how it works..."</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Display slides 7-8 (What is an Object? + Examples)</li>
+                <li>Return to sentence: "Mr. Brown met us"</li>
+                <li>Circle/underline "us" in PURPLE marker</li>
+                <li>Ask: "Mr. Brown met WHO? Us! We're the object."</li>
+                <li>Show sentence pattern: <span style="color:#3498db">Subject</span> + <span style="color:#e74c3c">Verb</span> + <span style="color:#9b59b6">Object</span></li>
+                <li>Display slide 9 (The Sentence Pattern)</li>
+            </ul>
+            
+            <div class="tip-box">
+                <h4>💡 Teaching Tip</h4>
+                <p>Use exaggerated gestures to reinforce each part. Point to yourself for SUBJECT, make action movements for VERB, and point away for OBJECT. This kinesthetic support helps memory.</p>
+            </div>
+        </div>
+
+        <div class="step-box">
+            <h4>Step 4: Whole Class Practice with Text (10 minutes)</h4>
+            <p><strong>Purpose:</strong> Guided practice identifying all three parts in context</p>
+            
+            <div class="script-box">
+                <p><strong>SAY:</strong> "Now let's practice together with our story 'A Visit to the Farm.' I'll read it aloud, and then we'll find the subject, verb and object in some sentences. Remember: blue for subject, red for verb, purple for object!"</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Display story text on board/screen</li>
+                <li>Read "A Visit to the Farm" aloud with expression</li>
+                <li>Display slides 12-14 (Practice slides)</li>
+                <li>Work through 3-4 sentences together:
+                    <ul>
+                        <li>"The cows were eating hay" → Subject? Verb? Object?</li>
+                        <li>"We visited the barn" → Subject? Verb? Object?</li>
+                        <li>"The chickens were laying eggs" → Subject? Verb? Object?</li>
+                    </ul>
+                </li>
+                <li>Use Think-Pair-Share: think individually, discuss with partner, share with class</li>
+            </ul>
+            
+            <div class="tip-box">
+                <h4>💡 Questioning Strategy</h4>
+                <p>Always ask in this order:</p>
+                <ol>
+                    <li>"What is the ACTION word?" (verb - easiest to spot)</li>
+                    <li>"WHO or WHAT does that action?" (subject)</li>
+                    <li>"WHAT receives the action?" (object)</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="step-box">
+            <h4>Step 5: Guided Application (10 minutes)</h4>
+            <p><strong>Purpose:</strong> Pupils begin applying with teacher support</p>
+            
+            <div class="script-box">
+                <p><strong>SAY:</strong> "You've done brilliantly identifying the parts! Now let's practice with your worksheets. I'll give you a few minutes to work on the first activity, then we'll share what you found."</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Distribute appropriate worksheets (Support/Core/Challenge)</li>
+                <li>Direct pupils to Activity 1 on their worksheet</li>
+                <li>Circulate and provide support</li>
+                <li>Check for understanding with key pupils</li>
+                <li>Stop and share: ask 3-4 pupils to share their answers</li>
+                <li>Correct any misconceptions immediately</li>
+            </ul>
+            
+            <div class="warning-box">
+                <h4>⚠️ Watch For:</h4>
+                <ul>
+                    <li>Pupils confusing subject with object</li>
+                    <li>Pupils selecting entire sentences instead of specific parts</li>
+                    <li>Pupils struggling with "the" and "a" (include these with the noun)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="step-box">
+            <h4>Step 6: Independent PWP Work (15 minutes)</h4>
+            <p><strong>Purpose:</strong> Apply Subject + Verb + Object pattern in personal writing</p>
+            
+            <div class="script-box">
+                <p><strong>SAY:</strong> "Now it's time for your PWP! You're going to write ONE sentence about YOUR story using our new formula: Subject + Verb + Object. Then you'll tell me if this sentence would be at the Beginning, Middle or End of your story. Let me show you an example first..."</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Display slide 16-18 (PWP slides)</li>
+                <li>Model with your own example: "I visited my grandmother" → Identify Subject/Verb/Object, then BME</li>
+                <li>Show ideas on slide 18 for subjects, verbs, objects</li>
+                <li>Direct pupils to PWP section of worksheet</li>
+                <li>Give 12 minutes independent work time</li>
+                <li>Circulate actively - this is heavy scaffolding phase</li>
+                <li>Provide sentence starters for struggling pupils</li>
+                <li>Check BME identification (Beginning/Middle/End)</li>
+            </ul>
+            
+            <div class="pwp-box">
+                <h4>📝 PWP Success Criteria</h4>
+                <ul>
+                    <li>✓ Sentence includes a clear subject (who/what)</li>
+                    <li>✓ Sentence includes an action verb</li>
+                    <li>✓ Sentence includes an object (what receives action)</li>
+                    <li>✓ Pupil can identify each part when asked</li>
+                    <li>✓ Pupil identifies BME position correctly</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="step-box">
+            <h4>Step 7: Share and Celebrate (5 minutes)</h4>
+            <p><strong>Purpose:</strong> Celebrate success and reinforce learning</p>
+            
+            <div class="script-box">
+                <p><strong>SAY:</strong> "Let's hear some of your brilliant sentences! Who would like to share their PWP sentence? As you share, tell us your subject, verb and object, and whether it's Beginning, Middle or End of your story."</p>
+            </div>
+            
+            <p><strong>DO:</strong></p>
+            <ul>
+                <li>Select 4-6 pupils to share (aim for variety of examples)</li>
+                <li>Have class identify the Subject/Verb/Object in each</li>
+                <li>Praise specific successes: "I love how you chose an interesting verb!"</li>
+                <li>Display slide 19-20 (Remember! + Well Done!)</li>
+                <li>Preview next lesson: "Next time we'll add even more to our sentences!"</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 4 -->
+<div class="tab">
+    <div class="tab-header" onclick="toggleTab(this)">
+        <span>🔄 Adaptation Guidance</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="tab-content">
+        <h3>Three-Tiered Approach</h3>
+        
+        <h4>🟢 SUPPORT Level (Extra Help)</h4>
+        <p><strong>When to Use:</strong> Pupils who struggle with identifying sentence parts, need visual supports, or are working below year level</p>
+        
+        <p><strong>Worksheet Features:</strong></p>
+        <ul>
+            <li>Word banks provided for all activities</li>
+            <li>Matching activities (instead of fill-in-blank)</li>
+            <li>Circling/underlining tasks (easier than writing)</li>
+            <li>Heavy PWP scaffolding (step-by-step)</li>
+        </ul>
+        
+        <p><strong>Teaching Adaptations:</strong></p>
+        <ul>
+            <li>Work in small group or 1-1 during Step 6</li>
+            <li>Use sentence strips pupils can physically move</li>
+            <li>Provide extra modeling with more examples</li>
+            <li>Allow oral responses instead of written</li>
+            <li>Pre-highlight subjects in text before identifying verb/object</li>
+        </ul>
+        
+        <div class="tip-box">
+            <h4>💡 Support Success Strategy</h4>
+            <p>Create a reference card for each pupil:</p>
+            <ul>
+                <li>Subject = WHO or WHAT (blue)</li>
+                <li>Verb = ACTION (red)</li>
+                <li>Object = RECEIVES (purple)</li>
+            </ul>
+            <p>Include simple example: "The dog chased the ball"</p>
+        </div>
+
+        <h4>🟡 CORE Level (Standard)</h4>
+        <p><strong>When to Use:</strong> Most pupils working at expected year level</p>
+        
+        <p><strong>Worksheet Features:</strong></p>
+        <ul>
+            <li>Balanced activities (identify, label, apply)</li>
+            <li>True/False questions for checking understanding</li>
+            <li>Independent sentence writing with formula support</li>
+            <li>Medium PWP scaffolding (planning template)</li>
+        </ul>
+        
+        <p><strong>Teaching Adaptations:</strong></p>
+        <ul>
+            <li>Standard whole-class instruction sufficient</li>
+            <li>Brief check-ins during independent work</li>
+            <li>Peer support partnerships</li>
+            <li>Self-check opportunities</li>
+        </ul>
+
+        <h4>🔴 CHALLENGE Level (Extension)</h4>
+        <p><strong>When to Use:</strong> Pupils who quickly grasp concept and need deeper thinking</p>
+        
+        <p><strong>Worksheet Features:</strong></p>
+        <ul>
+            <li>Analysis table (analyze multiple sentences)</li>
+            <li>Error correction ("Spot the Mistake")</li>
+            <li>Multi-sentence paragraph writing</li>
+            <li>Minimal PWP scaffolding</li>
+            <li>Extra challenge (sentence transformation)</li>
+        </ul>
+        
+        <p><strong>Teaching Adaptations:</strong></p>
+        <ul>
+            <li>Minimal teacher support during independent work</li>
+            <li>Challenge: "Can you write 3 sentences that all connect?"</li>
+            <li>Ask pupils to create their own examples for others</li>
+            <li>Introduce compound subjects/objects if appropriate</li>
+        </ul>
+        
+        <h3>Year Group Considerations</h3>
+        
+        <table>
+            <tr>
+                <th>Year</th>
+                <th>Typical Level</th>
+                <th>Adaptations</th>
+            </tr>
+            <tr>
+                <td><strong>Year 2</strong></td>
+                <td>Support or Core</td>
+                <td>Use simpler vocabulary, more modeling, extended time, heavy visual supports</td>
+            </tr>
+            <tr>
+                <td><strong>Year 3</strong></td>
+                <td>Core</td>
+                <td>Standard approach works well; some may need support, few need challenge</td>
+            </tr>
+            <tr>
+                <td><strong>Year 4-5</strong></td>
+                <td>Core or Challenge</td>
+                <td>May grasp quickly; ready for challenge activities and extensions</td>
+            </tr>
+        </table>
+        
+        <h3>SEN Adaptations</h3>
+        <ul>
+            <li><strong>Working Memory:</strong> Reduce number of examples, use visual cards, allow note-taking</li>
+            <li><strong>Processing Speed:</strong> Extra time, fewer activities, oral responses allowed</li>
+            <li><strong>Fine Motor:</strong> Typing instead of handwriting, scribe support, verbal responses</li>
+            <li><strong>Attention:</strong> Movement breaks, shorter segments, fidget tools, proximity seating</li>
+            <li><strong>Language:</strong> Simplified vocabulary, visual supports, translation support if EAL</li>
+        </ul>
+    </div>
+</div>
+
+<!-- TAB 5 -->
+<div class="tab">
+    <div class="tab-header" onclick="toggleTab(this)">
+        <span>📊 Assessment & Progress Tracking</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="tab-content">
+        <h3>Formative Assessment During Lesson</h3>
+        
+        <h4>What to Observe</h4>
+        <table>
+            <tr>
+                <th>Phase</th>
+                <th>What to Look For</th>
+                <th>Green Flag (Mastery)</th>
+                <th>Red Flag (Needs Support)</th>
+            </tr>
+            <tr>
+                <td><strong>Step 4<br>Whole Class</strong></td>
+                <td>Correct identification of S/V/O</td>
+                <td>Quickly identifies all three parts with confidence</td>
+                <td>Confuses parts, guesses randomly, cannot find parts</td>
+            </tr>
+            <tr>
+                <td><strong>Step 5<br>Guided Work</strong></td>
+                <td>Worksheet accuracy</td>
+                <td>Completes Activity 1 independently with 80%+ accuracy</td>
+                <td>Multiple errors, cannot complete without help</td>
+            </tr>
+            <tr>
+                <td><strong>Step 6<br>PWP</strong></td>
+                <td>Application in writing</td>
+                <td>Writes sentence with clear S/V/O, identifies BME</td>
+                <td>Cannot create sentence, missing parts, BME confusion</td>
+            </tr>
+            <tr>
+                <td><strong>Step 7<br>Sharing</strong></td>
+                <td>Explanation ability</td>
+                <td>Can explain why each part is S/V/O</td>
+                <td>Cannot explain choices</td>
+            </tr>
+        </table>
+        
+        <h3>Recording Progress</h3>
+        
+        <h4>During the Lesson:</h4>
+        <ul>
+            <li>Use Progress Tracker "Individual Tracking" tab</li>
+            <li>Note pupils who need intervention</li>
+            <li>Record worksheet completion levels (Support/Core/Challenge)</li>
+            <li>Mark PWP completion (Yes/No)</li>
+            <li>Note PWP formula accuracy (Correct/Needs Work)</li>
+        </ul>
+        
+        <h4>After the Lesson:</h4>
+        <ul>
+            <li>Review collected worksheets</li>
+            <li>Score Interactive Practice activities as pupils complete (target 80%+)</li>
+            <li>Update Progress Tracker fully</li>
+            <li>Identify pupils ready for formal assessment</li>
+            <li>Plan interventions for struggling pupils</li>
+        </ul>
+        
+        <h3>Mastery Criteria for Lesson 11</h3>
+        
+        <div class="objective-box">
+            <h4>✓ Mastery Achieved When:</h4>
+            <ul>
+                <li><strong>Interactive Practice:</strong> 80%+ accuracy on 5 consecutive activities</li>
+                <li><strong>Worksheet:</strong> Correctly identifies S/V/O in 4+ out of 5 examples</li>
+                <li><strong>PWP:</strong> Writes sentence using Subject + Verb + Object pattern</li>
+                <li><strong>BME:</strong> Correctly identifies Beginning, Middle or End position</li>
+                <li><strong>Formal Assessment:</strong> Passes 3 out of 4 parts (see Assessment Package)</li>
+            </ul>
+        </div>
+        
+        <h3>Intervention Protocol</h3>
+        
+        <p><strong>If pupils score below 60% or show significant confusion:</strong></p>
+        
+        <h4>Immediate Actions (Same Day)</h4>
+        <ol>
+            <li>Pull pupil for 1-1 or small group reteach (5-10 min)</li>
+            <li>Use physical sentence strips to manipulate parts</li>
+            <li>Simplify to 2-3 word sentences initially</li>
+            <li>Focus on ONE part at a time (subject first, then verb, then object)</li>
+        </ol>
+        
+        <h4>Ongoing Support (Next 1-2 Days)</h4>
+        <ul>
+            <li>Provide extra practice activities</li>
+            <li>Create personal reference card</li>
+            <li>Practice with TA or support staff</li>
+            <li>Use Support worksheet exclusively</li>
+            <li>Check in daily until mastery achieved</li>
+        </ul>
+        
+        <h4>When to Reassess</h4>
+        <p>After 3-5 days of intervention, re-check with fresh examples. If still struggling, consider deeper assessment for language/comprehension needs.</p>
+    </div>
+</div>
+
+<!-- TAB 6 -->
+<div class="tab">
+    <div class="tab-header" onclick="toggleTab(this)">
+        <span>🔧 Common Misconceptions & Solutions</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="tab-content">
+        <h3>Top 8 Misconceptions for Lesson 11</h3>
+        
+        <div class="step-box">
+            <h4>1. Confusing Subject with Object</h4>
+            <p><strong>What Pupils Say/Do:</strong> "The ball is the subject in 'The dog chased the ball'."</p>
+            <p><strong>Why It Happens:</strong> Both are nouns; pupils pick the wrong one</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Always ask: "WHO or WHAT is DOING the action?" (subject)</li>
+                <li>Then: "WHAT is RECEIVING the action?" (object)</li>
+                <li>Use gestures: point to doer (subject), point away to receiver (object)</li>
+                <li>Practice with more obvious examples first: "I kicked the football" (I = doer)</li>
+            </ul>
+        </div>
+        
+        <div class="step-box">
+            <h4>2. Including Extra Words with the Verb</h4>
+            <p><strong>What Pupils Say/Do:</strong> Say the verb is "were eating" or "was rolling"</p>
+            <p><strong>Why It Happens:</strong> Helping verbs confuse them</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>For this lesson, accept "were eating" as the verb phrase (don't overcomplicate)</li>
+                <li>Focus on identifying the action part</li>
+                <li>Say: "Great! The action is 'were eating' - that's our verb."</li>
+            </ul>
+        </div>
+        
+        <div class="step-box">
+            <h4>3. Forgetting "The" or "A" with Subjects/Objects</h4>
+            <p><strong>What Pupils Say/Do:</strong> Write "cows" instead of "the cows" as subject</p>
+            <p><strong>Why It Happens:</strong> Unsure if articles count</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Include articles with the noun: "the cows," "a pig," "my friend"</li>
+                <li>Explain: "We want the WHOLE subject, including 'the' or 'a'"</li>
+                <li>Model this consistently</li>
+            </ul>
+        </div>
+        
+        <div class="step-box">
+            <h4>4. Thinking Every Sentence Has an Object</h4>
+            <p><strong>What Pupils Say/Do:</strong> In "The dog barked," pupils try to find an object</p>
+            <p><strong>Why It Happens:</strong> They've learned the pattern and think it's universal</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Acknowledge: "You're right, some sentences don't have objects!"</li>
+                <li>Say: "For today, we're focusing on sentences that DO have objects."</li>
+                <li>Don't worry about this too much at L11; it comes later</li>
+            </ul>
+        </div>
+        
+        <div class="step-box">
+            <h4>5. Confusing "Subject" with "Topic"</h4>
+            <p><strong>What Pupils Say/Do:</strong> "The subject is 'farm' because the story is about a farm"</p>
+            <p><strong>Why It Happens:</strong> The word "subject" has multiple meanings</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Clarify: "The SUBJECT is WHO does the action in THIS sentence."</li>
+                <li>Avoid saying "what the sentence is about" (too vague)</li>
+                <li>Use "WHO or WHAT does the action" consistently</li>
+            </ul>
+        </div>
+        
+        <div class="step-box">
+            <h4>6. Identifying the Wrong Noun as Subject</h4>
+            <p><strong>What Pupils Say/Do:</strong> In "The farmer fed the chickens," say "chickens" is the subject</p>
+            <p><strong>Why It Happens:</strong> Multiple nouns in sentence</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Start with the verb FIRST</li>
+                <li>Ask: "What's the action? Fed. WHO fed? The farmer!"</li>
+                <li>Then: "What did the farmer feed? The chickens (object)"</li>
+                <li>Order matters: Verb → Subject → Object questioning sequence</li>
+            </ul>
+        </div>
+        
+        <div class="step-box">
+            <h4>7. PWP Sentence Doesn't Follow Pattern</h4>
+            <p><strong>What Pupils Say/Do:</strong> Write "I went to the park" (no clear object)</p>
+            <p><strong>Why It Happens:</strong> Pupils write what sounds natural vs. following formula</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Before writing, have pupils PLAN: Subject? Verb? Object?</li>
+                <li>Check plan before they write full sentence</li>
+                <li>Provide sentence frames if needed: "___ [verb] ___"</li>
+                <li>Give examples of good Subject + Verb + Object sentences</li>
+            </ul>
+        </div>
+        
+        <div class="step-box">
+            <h4>8. BME Confusion (Beginning/Middle/End)</h4>
+            <p><strong>What Pupils Say/Do:</strong> Mark every PWP sentence as "Beginning"</p>
+            <p><strong>Why It Happens:</strong> Not thinking about story position</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Ask: "Where would this sentence go in YOUR story?"</li>
+                <li>Clarify: "Is this something that happens at the start? In the middle? At the end?"</li>
+                <li>Example: "I was born" = Beginning; "I went to school" = Middle; "I celebrated" = could be End</li>
+                <li>Remind: There's no one "right" answer, as long as reasoning is sound</li>
+            </ul>
+        </div>
+        
+        <h3>Quick Fixes Reference</h3>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Quick Fix</th>
+            </tr>
+            <tr>
+                <td>Pupil can't find subject</td>
+                <td>Find verb first, then ask "WHO does this?"</td>
+            </tr>
+            <tr>
+                <td>Pupil selects entire sentence</td>
+                <td>Ask them to choose the ONE word/phrase for each part</td>
+            </tr>
+            <tr>
+                <td>Pupil confuses S and O</td>
+                <td>Use DOER vs. RECEIVER language; act it out physically</td>
+            </tr>
+            <tr>
+                <td>Pupil writes sentence with no object</td>
+                <td>Give sentence starter: "I ____ the ____" or "My ____ saw ____"</td>
+            </tr>
+            <tr>
+                <td>Pupil can't identify BME</td>
+                <td>Narrate mini story together; show where sentence fits</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- TAB 7 -->
+<div class="tab">
+    <div class="tab-header" onclick="toggleTab(this)">
+        <span>🌟 Extension Activities & Next Steps</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="tab-content">
+        <h3>For Fast Finishers</h3>
+        
+        <h4>During Lesson 11</h4>
+        <ol>
+            <li><strong>Create Example Bank:</strong> Write 5 more Subject + Verb + Object sentences about the farm</li>
+            <li><strong>Illustrate the Pattern:</strong> Draw a sentence showing each part in different colors</li>
+            <li><strong>Sentence Surgery:</strong> Take a simple sentence and try changing the object to make new meanings</li>
+            <li><strong>Story Sequence:</strong> Write 3 sentences (Beginning, Middle, End) that connect together</li>
+            <li><strong>Teach a Friend:</strong> Explain Subject/Verb/Object to a younger pupil or classmate</li>
+        </ol>
+        
+        <h4>Follow-Up Activities (Next Days)</h4>
+        <ul>
+            <li><strong>Subject Swap:</strong> Take 3 sentences and change only the subjects (keep verbs and objects same)</li>
+            <li><strong>Object Transformation:</strong> Change objects to create silly or interesting new meanings</li>
+            <li><strong>Pattern Detective:</strong> Find Subject + Verb + Object patterns in their reading books</li>
+            <li><strong>Sentence Building Competition:</strong> Who can make the most interesting sentence following the pattern?</li>
+            <li><strong>BME Story:</strong> Write a complete mini-story using 3 S+V+O sentences (one for each part)</li>
+        </ul>
+        
+        <h3>Cross-Curricular Connections</h3>
+        
+        <h4>Science</h4>
+        <ul>
+            <li>Write observation sentences: "The seed grew roots" (Subject + Verb + Object)</li>
+            <li>Describe experiments: "We heated the water" / "The ice melted quickly"</li>
+        </ul>
+        
+        <h4>History</h4>
+        <ul>
+            <li>Write sentences about historical figures: "Queen Victoria ruled Britain"</li>
+            <li>Describe events: "The Vikings invaded England"</li>
+        </ul>
+        
+        <h4>Geography</h4>
+        <ul>
+            <li>Location sentences: "Rivers carry water" / "Mountains block wind"</li>
+            <li>Climate description: "The sun warms the earth"</li>
+        </ul>
+        
+        <h4>PE</h4>
+        <ul>
+            <li>Action sentences: "I kicked the ball" / "She caught the beanbag"</li>
+            <li>Game instructions: "The player throws the disc"</li>
+        </ul>
+        
+        <h3>Home Learning (Optional)</h3>
+        
+        <div class="tip-box">
+            <h4>📝 Home Practice Task</h4>
+            <p><strong>For Pupils:</strong> Write 3 sentences about your day using the Subject + Verb + Object pattern. Use different subjects in each sentence!</p>
+            <p><strong>For Parents:</strong> Your child is learning about how sentences are built. Help them find the WHO/WHAT (subject), ACTION (verb), and RECEIVES (object) in their sentences. The colour code is:</p>
+            <ul>
+                <li>Blue = Subject (who/what does the action)</li>
+                <li>Red = Verb (the action)</li>
+                <li>Purple = Object (what receives the action)</li>
+            </ul>
+            <p><strong>Example:</strong> "My sister baked a cake"</p>
+            <ul>
+                <li>Subject: My sister</li>
+                <li>Verb: baked</li>
+                <li>Object: a cake</li>
+            </ul>
+        </div>
+        
+        <h3>Links to Future Lessons</h3>
+        
+        <h4>Lesson 12: Subject, Verb, Object + Time/Place</h4>
+        <p>Pupils will add when/where information to their basic S+V+O sentences. Today's mastery prepares them for expansion.</p>
+        
+        <h4>Lessons 13-34: Continued PWP Practice</h4>
+        <p>The Subject + Verb + Object pattern becomes one of many sentence formulas pupils use in their Progressive Writing Practice. Mastery of L11 is essential for success throughout Units 3-4.</p>
+        
+        <h4>Lesson 35-38: Connect Grid Planning</h4>
+        <p>Understanding sentence structure (S+V+O) helps pupils later when they plan multi-paragraph compositions using the Connect Grid system.</p>
+        
+        <h3>What Comes Next?</h3>
+        <p><strong>Immediate Next Steps:</strong></p>
+        <ol>
+            <li>Complete all 20 Interactive Practice activities (W1-W6 progression)</li>
+            <li>Achieve 80%+ on 5 consecutive activities</li>
+            <li>Complete formal assessment (Assessment Package)</li>
+            <li>Pass 3 out of 4 assessment parts</li>
+            <li>Ready for Lesson 12!</li>
+        </ol>
+    </div>
+</div>
+
+<!-- TAB 8 -->
+<div class="tab">
+    <div class="tab-header" onclick="toggleTab(this)">
+        <span>📝 Post-Lesson Reflection</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="tab-content">
+        <h3>Teacher Reflection Questions</h3>
+        
+        <h4>Effectiveness Questions</h4>
+        <ol>
+            <li>Which moments showed pupils truly understanding the Subject + Verb + Object pattern?</li>
+            <li>Where did confusion occur? Which part (S/V/O) caused the most difficulty?</li>
+            <li>Was the colour-coding system effective? Did pupils use it independently?</li>
+            <li>How successful was the "A Visit to the Farm" text for teaching this concept?</li>
+            <li>What timing adjustments should I make if teaching this again?</li>
+        </ol>
+        
+        <h4>Individual Pupils</h4>
+        <ol>
+            <li>Which pupils achieved mastery during the lesson?</li>
+            <li>Which pupils need immediate intervention?</li>
+            <li>Were Support/Core/Challenge levels appropriate for pupils selected?</li>
+            <li>Did any pupils surprise me (positively or negatively)?</li>
+        </ol>
+        
+        <h4>PWP Success</h4>
+        <ol>
+            <li>How many pupils wrote a correct Subject + Verb + Object sentence?</li>
+            <li>Were pupils able to identify BME (Beginning/Middle/End) positions?</li>
+            <li>What sentence starters or supports were most helpful?</li>
+            <li>Do pupils understand that PWP builds across lessons?</li>
+        </ol>
+        
+        <h3>Action Planning</h3>
+        
+        <table>
+            <tr>
+                <th>Area</th>
+                <th>What Worked Well</th>
+                <th>What to Improve</th>
+                <th>Actions for Next Time</th>
+            </tr>
+            <tr>
+                <td><strong>Modeling</strong></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><strong>Practice Time</strong></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><strong>Differentiation</strong></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><strong>PWP Support</strong></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><strong>Materials</strong></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+        
+        <h3>Progress Tracker Update Checklist</h3>
+        <ul>
+            <li>☐ All pupils' worksheet levels recorded (Support/Core/Challenge)</li>
+            <li>☐ Worksheet completion status noted</li>
+            <li>☐ PWP sentence completion recorded (Yes/No)</li>
+            <li>☐ PWP formula accuracy noted (Correct/Needs Work)</li>
+            <li>☐ BME identification recorded</li>
+            <li>☐ Pupils needing intervention flagged</li>
+            <li>☐ Notes added for specific pupils</li>
+            <li>☐ Interactive Practice access set up for Week 1 activities</li>
+        </ul>
+        
+        <h3>Intervention Planning</h3>
+        
+        <p><strong>Pupils Needing Immediate Support:</strong></p>
+        <p>[List names and specific areas of difficulty]</p>
+        
+        <p><strong>Intervention Actions:</strong></p>
+        <ul>
+            <li>When: [Schedule intervention time]</li>
+            <li>Who: [TA support? Teacher time? Peer support?]</li>
+            <li>What: [Specific activities/approaches]</li>
+            <li>Duration: [How many sessions?]</li>
+            <li>Re-assess: [When will you check progress again?]</li>
+        </ul>
+        
+        <h3>Materials Organization</h3>
+        <ul>
+            <li>☐ Collect and review completed worksheets</li>
+            <li>☐ File exemplar work for future reference</li>
+            <li>☐ Return PWP Booklets to pupils (or store securely)</li>
+            <li>☐ Update classroom display with Subject/Verb/Object examples</li>
+            <li>☐ Prepare intervention materials if needed</li>
+            <li>☐ Ensure Interactive Practice access is working for all pupils</li>
+        </ul>
+        
+        <h3>Celebration & Recognition</h3>
+        
+        <p><strong>Pupils to Recognize:</strong></p>
+        <ul>
+            <li>Most improved from Lesson 10</li>
+            <li>Best example of Subject + Verb + Object sentence</li>
+            <li>Most creative PWP sentence</li>
+            <li>Excellent peer support</li>
+            <li>Perseverance through difficulty</li>
+        </ul>
+        
+        <div class="tip-box">
+            <h4>💡 Teacher Wellbeing Note</h4>
+            <p>Lesson 11 is heavy scaffolding phase (L10-12). It's normal for this lesson to feel intensive. You're doing essential foundational work that will pay off in Lessons 13-67 when scaffolding reduces. Well done for getting pupils through this critical learning!</p>
+        </div>
+        
+        <h3>Looking Ahead to Lesson 12</h3>
+        <p><strong>Preparation Needed:</strong></p>
+        <ul>
+            <li>Review Lesson 12 content (adds Time/Place to S+V+O)</li>
+            <li>Identify pupils who may need continued support</li>
+            <li>Consider grouping strategies for L12</li>
+            <li>Ensure L11 mastery before progressing majority of class</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    function toggleTab(header) {
+        const tab = header.parentElement;
+        const content = header.nextElementSibling;
+        const isActive = tab.classList.contains('active');
+        
+        // Close all tabs
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        
+        // If wasn't active, open this one
+        if (!isActive) {
+            tab.classList.add('active');
+            content.style.display = 'block';
+        }
+    }
+    
+    // Open first tab by default
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstTab = document.querySelector('.tab');
+        if (firstTab && !firstTab.classList.contains('active')) {
+            firstTab.classList.add('active');
+            firstTab.querySelector('.tab-content').style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>
