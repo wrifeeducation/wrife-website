@@ -147,7 +147,9 @@ export default function PWPDemo() {
                   <span className="font-bold text-purple-800">{formula.structure}</span>
                 </div>
                 <p className="text-sm text-purple-700">
-                  Example: {formula.example.replace('[', '<span class="underline font-bold">').replace(']', '</span>')}
+                  Example: {formula.example.split('[')[0]}
+                  <span className="underline font-bold">{formula.newElement}</span>
+                  {formula.example.split(']')[1]}
                 </p>
                 <p className="text-xs text-purple-600 mt-2">
                   Type the <strong className="underline">{formula.newElement}</strong> word yourself!
