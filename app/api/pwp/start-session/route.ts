@@ -19,68 +19,215 @@ interface Formula {
   formula_number: number;
   formula_structure: string;
   labelled_example: string;
+  labelled_parts: { text: string; label: string }[];
   word_bank: string[];
-  new_elements: string[];
-  hint_text?: string;
+  new_element: string;
+  new_element_examples: string[];
+  hint_text: string;
+  previous_sentence?: string;
 }
 
-const FORMULA_TEMPLATES: Record<string, (subject: string) => Formula> = {
-  noun_verb: (subject) => ({
-    formula_number: 1,
-    formula_structure: 'N + V',
-    labelled_example: `The [N]${subject}[/N] [V]runs[/V].`,
-    word_bank: ['runs', 'jumps', 'sleeps', 'eats', 'plays', 'swims', 'flies', 'walks'],
-    new_elements: ['noun', 'verb'],
-    hint_text: 'Start with your subject, then add what it does.'
-  }),
-  det_noun_verb: (subject) => ({
-    formula_number: 2,
-    formula_structure: 'Det + N + V',
-    labelled_example: `[Det]The[/Det] [N]${subject}[/N] [V]runs[/V].`,
-    word_bank: ['The', 'A', 'An', 'runs', 'jumps', 'sleeps', 'eats', 'plays'],
-    new_elements: ['determiner'],
-    hint_text: 'Add a word like "The" or "A" before your subject.'
-  }),
-  det_adj_noun_verb: (subject) => ({
-    formula_number: 3,
-    formula_structure: 'Det + Adj + N + V',
-    labelled_example: `[Det]The[/Det] [Adj]happy[/Adj] [N]${subject}[/N] [V]runs[/V].`,
-    word_bank: ['The', 'A', 'happy', 'big', 'small', 'fast', 'slow', 'brave', 'runs', 'jumps', 'plays'],
-    new_elements: ['adjective'],
-    hint_text: 'Describe your subject with a word like "happy" or "big".'
-  }),
-  det_adj_noun_verb_adv: (subject) => ({
-    formula_number: 4,
-    formula_structure: 'Det + Adj + N + V + Adv',
-    labelled_example: `[Det]The[/Det] [Adj]happy[/Adj] [N]${subject}[/N] [V]runs[/V] [Adv]quickly[/Adv].`,
-    word_bank: ['The', 'A', 'happy', 'big', 'fast', 'runs', 'jumps', 'quickly', 'slowly', 'happily', 'always', 'never'],
-    new_elements: ['adverb'],
-    hint_text: 'Add a word that tells us how the action is done.'
-  }),
-  det_noun_verb_det_noun: (subject) => ({
-    formula_number: 5,
-    formula_structure: 'Det + N + V + Det + N',
-    labelled_example: `[Det]The[/Det] [N]${subject}[/N] [V]chases[/V] [Det]the[/Det] [N]ball[/N].`,
-    word_bank: ['The', 'A', 'chases', 'finds', 'sees', 'likes', 'ball', 'toy', 'bone', 'leaf'],
-    new_elements: ['object'],
-    hint_text: 'Add what your subject acts upon.'
-  }),
-  full_sentence: (subject) => ({
-    formula_number: 6,
-    formula_structure: 'Det + Adj + N + V + Adv + Det + Adj + N',
-    labelled_example: `[Det]The[/Det] [Adj]playful[/Adj] [N]${subject}[/N] [V]catches[/V] [Adv]quickly[/Adv] [Det]a[/Det] [Adj]red[/Adj] [N]ball[/N].`,
-    word_bank: ['The', 'A', 'playful', 'happy', 'big', 'catches', 'finds', 'quickly', 'happily', 'red', 'small', 'ball', 'toy'],
-    new_elements: ['full_sentence'],
-    hint_text: 'Build a complete sentence with all the elements you have learned.'
-  })
-};
+interface FormulaDefinition {
+  structure: string;
+  example_parts: { text: string; label: string }[];
+  new_element: string;
+  new_element_examples: string[];
+  hint_text: string;
+}
 
-const STAGE_FORMULAS: Record<string, string[]> = {
-  foundation: ['noun_verb', 'det_noun_verb', 'det_adj_noun_verb', 'det_adj_noun_verb_adv'],
-  development: ['det_noun_verb', 'det_adj_noun_verb', 'det_adj_noun_verb_adv', 'det_noun_verb_det_noun'],
-  application: ['det_adj_noun_verb', 'det_adj_noun_verb_adv', 'det_noun_verb_det_noun', 'full_sentence'],
-  advanced: ['det_adj_noun_verb_adv', 'det_noun_verb_det_noun', 'full_sentence']
-};
+const VERBS_FOR_PLACES = ['opens', 'sits', 'stands', 'welcomes', 'holds', 'contains', 'waits'];
+const VERBS_FOR_PEOPLE = ['walks', 'runs', 'dances', 'sings', 'reads', 'writes', 'plays'];
+const VERBS_FOR_ANIMALS = ['runs', 'jumps', 'sleeps', 'barks', 'flies', 'swims', 'plays'];
+const VERBS_FOR_THINGS = ['sits', 'stands', 'waits', 'shines', 'moves', 'falls', 'floats'];
+
+const ADVERBS = ['quietly', 'slowly', 'quickly', 'gently', 'happily', 'carefully', 'softly'];
+const ADJECTIVES = ['old', 'quiet', 'busy', 'peaceful', 'small', 'large', 'bright', 'tired'];
+const DETERMINERS = ['The', 'A', 'An', 'My', 'Our', 'This', 'That'];
+
+const PREP_PHRASES_WHEN = ['in the morning', 'at nine o\'clock', 'on weekdays', 'every day', 'after lunch'];
+const PREP_PHRASES_WHERE = ['in the town', 'near the park', 'by the river', 'on the hill', 'through the door'];
+
+const TIME_PHRASES = ['Every morning,', 'Each day,', 'On weekdays,', 'In winter,', 'During summer,'];
+const FRONTED_ADVERBIALS = ['Quietly,', 'Slowly,', 'Carefully,', 'Happily,', 'Gently,', 'Suddenly,'];
+
+function getVerbsForSubject(subject: string): string[] {
+  const places = ['library', 'school', 'park', 'museum', 'shop', 'beach', 'house', 'building', 'street', 'hospital', 'classroom', 'kitchen', 'bedroom', 'hall', 'office', 'forest', 'playground'];
+  const animals = ['dog', 'cat', 'bird', 'fish', 'rabbit', 'horse', 'mouse', 'elephant', 'lion', 'tiger'];
+  
+  const lowerSubject = subject.toLowerCase();
+  
+  if (places.some(p => lowerSubject.includes(p))) {
+    return VERBS_FOR_PLACES;
+  }
+  if (animals.some(a => lowerSubject.includes(a))) {
+    return VERBS_FOR_ANIMALS;
+  }
+  if (/^[A-Z]/.test(subject) && !places.some(p => lowerSubject.includes(p))) {
+    return VERBS_FOR_PEOPLE;
+  }
+  return VERBS_FOR_THINGS;
+}
+
+function generateProgressiveFormulas(
+  subject: string,
+  stage: string,
+  minFormulas: number,
+  maxFormulas: number
+): Formula[] {
+  const formulas: Formula[] = [];
+  const verbs = getVerbsForSubject(subject);
+  const exampleVerb = verbs[0];
+  
+  const exampleSubject = subject.toLowerCase().includes('library') ? 'Park' : 
+                         subject.toLowerCase().includes('park') ? 'School' : 'Park';
+  
+  let formulaCount: number;
+  switch (stage) {
+    case 'foundation':
+      formulaCount = Math.min(Math.max(minFormulas, 3), Math.min(maxFormulas, 4));
+      break;
+    case 'development':
+      formulaCount = Math.min(Math.max(minFormulas, 5), Math.min(maxFormulas, 7));
+      break;
+    case 'application':
+      formulaCount = Math.min(Math.max(minFormulas, 8), Math.min(maxFormulas, 10));
+      break;
+    case 'advanced':
+      formulaCount = Math.min(Math.max(minFormulas, 10), Math.min(maxFormulas, 12));
+      break;
+    default:
+      formulaCount = Math.min(Math.max(minFormulas, 3), Math.min(maxFormulas, 4));
+  }
+
+  const allFormulaDefs: FormulaDefinition[] = [
+    {
+      structure: 'subject + verb',
+      example_parts: [
+        { text: exampleSubject, label: 'subject' },
+        { text: 'sits', label: 'verb' }
+      ],
+      new_element: 'verb',
+      new_element_examples: verbs,
+      hint_text: `Think: What does a ${subject.toLowerCase()} DO?`
+    },
+    {
+      structure: 'subject + adverb + verb',
+      example_parts: [
+        { text: exampleSubject, label: 'subject' },
+        { text: 'quietly', label: 'adverb' },
+        { text: 'sits', label: 'verb' }
+      ],
+      new_element: 'adverb',
+      new_element_examples: ADVERBS,
+      hint_text: 'Add an adverb between subject and verb. Adverbs describe HOW the action happens.'
+    },
+    {
+      structure: 'subject + adverb + verb + prepositional phrase',
+      example_parts: [
+        { text: exampleSubject, label: 'subject' },
+        { text: 'quietly', label: 'adverb' },
+        { text: 'sits', label: 'verb' },
+        { text: 'in the town centre', label: 'prepositional phrase' }
+      ],
+      new_element: 'prepositional phrase',
+      new_element_examples: [...PREP_PHRASES_WHEN, ...PREP_PHRASES_WHERE],
+      hint_text: 'Add a prepositional phrase at the end. These tell WHERE or WHEN.'
+    },
+    {
+      structure: 'determiner + adjective + subject + adverb + verb + prepositional phrase',
+      example_parts: [
+        { text: 'The', label: 'determiner' },
+        { text: 'peaceful', label: 'adjective' },
+        { text: exampleSubject.toLowerCase(), label: 'subject' },
+        { text: 'quietly', label: 'adverb' },
+        { text: 'sits', label: 'verb' },
+        { text: 'in the town centre', label: 'prepositional phrase' }
+      ],
+      new_element: 'determiner + adjective',
+      new_element_examples: DETERMINERS.flatMap(d => ADJECTIVES.map(a => `${d} ${a}`)),
+      hint_text: 'Add a determiner and adjective BEFORE your subject.'
+    },
+    {
+      structure: 'determiner + adjective + subject + adverb + verb + preposition + determiner + adjective + object',
+      example_parts: [
+        { text: 'The', label: 'determiner' },
+        { text: 'peaceful', label: 'adjective' },
+        { text: exampleSubject.toLowerCase(), label: 'subject' },
+        { text: 'quietly', label: 'adverb' },
+        { text: 'sits', label: 'verb' },
+        { text: 'in', label: 'preposition' },
+        { text: 'the', label: 'determiner' },
+        { text: 'busy', label: 'adjective' },
+        { text: 'town centre', label: 'object' }
+      ],
+      new_element: 'adjective before object',
+      new_element_examples: ADJECTIVES,
+      hint_text: 'Make your prepositional phrase more descriptive by adding an adjective.'
+    },
+    {
+      structure: 'time phrase + determiner + adjective + subject + adverb + verb + prepositional phrase',
+      example_parts: [
+        { text: 'Every morning,', label: 'time phrase' },
+        { text: 'the', label: 'determiner' },
+        { text: 'peaceful', label: 'adjective' },
+        { text: exampleSubject.toLowerCase(), label: 'subject' },
+        { text: 'quietly', label: 'adverb' },
+        { text: 'sits', label: 'verb' },
+        { text: 'in the busy town centre', label: 'prepositional phrase' }
+      ],
+      new_element: 'time phrase',
+      new_element_examples: TIME_PHRASES,
+      hint_text: 'Add a TIME PHRASE at the start of your sentence, followed by a comma.'
+    },
+    {
+      structure: 'fronted adverbial + determiner + adjective + subject + adverb + verb + prepositional phrase',
+      example_parts: [
+        { text: 'Quietly,', label: 'fronted adverbial' },
+        { text: 'the', label: 'determiner' },
+        { text: 'peaceful', label: 'adjective' },
+        { text: exampleSubject.toLowerCase(), label: 'subject' },
+        { text: 'gently', label: 'adverb' },
+        { text: 'welcomes', label: 'verb' },
+        { text: 'visitors in the morning', label: 'prepositional phrase' }
+      ],
+      new_element: 'fronted adverbial',
+      new_element_examples: FRONTED_ADVERBIALS,
+      hint_text: 'Start with a fronted adverbial (adverb + comma) to set the scene.'
+    }
+  ];
+
+  const wordBank: string[] = [];
+  let previousSentence = '';
+
+  for (let i = 0; i < formulaCount && i < allFormulaDefs.length; i++) {
+    const def = allFormulaDefs[i];
+    
+    const labelledExample = def.example_parts.map(p => p.text).join(' ');
+    
+    const formula: Formula = {
+      formula_number: i + 1,
+      formula_structure: def.structure,
+      labelled_example: labelledExample,
+      labelled_parts: def.example_parts,
+      word_bank: [...wordBank],
+      new_element: def.new_element,
+      new_element_examples: def.new_element_examples.slice(0, 6),
+      hint_text: def.hint_text,
+      previous_sentence: i > 0 ? previousSentence : undefined
+    };
+    
+    formulas.push(formula);
+    
+    if (i === 0) {
+      wordBank.push(subject);
+      previousSentence = `${subject} ${exampleVerb}`;
+    } else {
+      previousSentence = `Formula ${i} sentence`;
+    }
+  }
+
+  return formulas;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -105,36 +252,27 @@ export async function POST(request: NextRequest) {
     const minFormulas = curriculum.pwp_formula_count_min || 2;
     const maxFormulas = curriculum.pwp_formula_count_max || 4;
 
-    const availableFormulas = STAGE_FORMULAS[stage] || STAGE_FORMULAS.foundation;
-    const numFormulas = Math.min(
-      Math.floor(Math.random() * (maxFormulas - minFormulas + 1)) + minFormulas,
-      availableFormulas.length
+    const formulas = generateProgressiveFormulas(
+      subject_text,
+      stage,
+      minFormulas,
+      maxFormulas
     );
-
-    const selectedFormulas: Formula[] = [];
-    const usedIndices = new Set<number>();
-
-    for (let i = 0; i < numFormulas; i++) {
-      let index: number;
-      do {
-        index = Math.floor(Math.random() * availableFormulas.length);
-      } while (usedIndices.has(index) && usedIndices.size < availableFormulas.length);
-      usedIndices.add(index);
-
-      const templateKey = availableFormulas[index];
-      const formula = FORMULA_TEMPLATES[templateKey](subject_text);
-      formula.formula_number = i + 1;
-      selectedFormulas.push(formula);
-    }
 
     const sessionId = `pwp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
     return NextResponse.json({
       session_id: sessionId,
-      formulas: selectedFormulas,
+      formulas,
       lesson_number,
       subject: subject_text,
-      stage
+      stage,
+      total_formulas: formulas.length,
+      instructions: {
+        rewrite_rule: 'You must REWRITE the entire sentence each time, adding the new element.',
+        word_bank_usage: 'Click words from your word bank, then type new words to complete your sentence.',
+        progression: 'Each formula builds on the previous one by adding ONE new element.'
+      }
     });
 
   } catch (error) {
