@@ -11,8 +11,11 @@ interface Formula {
   formula_structure: string;
   labelled_example: string;
   word_bank: string[];
-  new_elements: string[];
+  new_element: string;
+  new_element_examples?: string[];
   hint_text?: string;
+  evolution_instruction?: string;
+  concepts_used?: string[];
 }
 
 interface PWPSessionProps {
@@ -175,7 +178,7 @@ export default function PWPSession({
           formulaStructure={currentFormula.formula_structure}
           labelledExample={currentFormula.labelled_example}
           previousSentence={completedSentences[currentFormulaIndex - 1]}
-          newElements={currentFormula.new_elements}
+          newElements={currentFormula.new_element ? [currentFormula.new_element] : []}
           hintText={currentFormula.hint_text}
         />
 
@@ -191,7 +194,7 @@ export default function PWPSession({
         <SentenceBuilder
           tokens={tokens}
           onTokensChange={handleTokensChange}
-          currentNewElement={currentFormula.new_elements[0] || ''}
+          currentNewElement={currentFormula.new_element || ''}
           placeholder={isFirstFormula 
             ? `Write your complete sentence with "${subject}"...` 
             : "Click words and type new words to build your sentence..."
