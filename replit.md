@@ -30,6 +30,12 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Class Management:** Teachers can create classes, manage pupils, and assign various activities (lessons, PWP, DWP).
 - **Pupil Progress Tracking:** Records pupil progress, submission statuses, and AI assessment results.
 - **PWP (Progressive Writing Practice):** Structured activities focusing on grammar and sentence structure with AI feedback.
+- **PWP MVP (L10-15):** Simplified PWP flow at `/pupil-mvp` for lessons 10-15. Features:
+  - Login via email → Lesson selection → Subject choice → Formula-based practice
+  - L10: 2 formulas (Nouns + Verbs), L11: 3 (Determiners), L12: 3 (Adjectives)
+  - L13: 4 formulas (Adverbs), L14: 4 (Conjunctions), L15: 4 (Pronouns)
+  - API endpoints: `/api/pwp-mvp/start-session`, `/api/pwp-mvp/submit-formula`, `/api/pwp-mvp/complete-session`
+  - Formula generator: `lib/formulaGenerator.ts`
 - **DWP (Differentiated Writing Programme):** A 40-level program with level-specific rubrics and AI assessment, leading to badges and certificates.
 - **Admin Dashboards:** Separate dashboards for super administrators (user/school/curriculum management) and school administrators (school-specific help).
 
