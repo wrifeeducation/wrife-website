@@ -706,7 +706,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const result = await evaluateWithAI(
+    const result = evaluateSentence(
       pupil_sentence, 
       formula_structure || 'subject + verb', 
       subject || '',
