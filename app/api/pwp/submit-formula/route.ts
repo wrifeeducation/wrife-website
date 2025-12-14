@@ -121,6 +121,92 @@ function normalizeWord(word: string): string {
   return word.toLowerCase().replace(/[,.]$/, '');
 }
 
+function matchesSubject(inputWord: string, expectedSubject: string): boolean {
+  const input = inputWord.toLowerCase().replace(/[,.]$/, '');
+  const expected = expectedSubject.toLowerCase();
+  
+  if (input === expected) return true;
+  
+  if (input === expected + 's') return true;
+  if (input + 's' === expected) return true;
+  
+  if (expected.endsWith('y') && input === expected.slice(0, -1) + 'ies') return true;
+  if (input.endsWith('y') && expected === input.slice(0, -1) + 'ies') return true;
+  
+  if (expected.endsWith('s') || expected.endsWith('x') || expected.endsWith('ch') || expected.endsWith('sh')) {
+    if (input === expected + 'es') return true;
+  }
+  if (input.endsWith('es') && (expected === input.slice(0, -2) || expected === input.slice(0, -1))) return true;
+  
+  return false;
+}
+
+function isValidVerb(word: string): boolean {
+  const input = word.toLowerCase().replace(/[,.]$/, '');
+  
+  if (WORD_TYPES.verbs.includes(input)) return true;
+  
+  const verbRoots = ['run', 'jump', 'sleep', 'eat', 'play', 'swim', 'fly', 'walk', 'chase', 'find', 'see', 'like', 'catch', 'sit', 'stand', 'climb', 'read', 'write', 'sing', 'dance', 'laugh', 'cry', 'smile', 'talk', 'listen', 'help', 'make', 'take', 'give', 'go', 'come', 'open', 'close', 'welcome', 'hold', 'contain', 'wait', 'bark', 'hop', 'skip', 'gallop', 'crawl', 'dive', 'soar', 'glide', 'leap', 'bounce', 'sprint', 'dash', 'waddle', 'slither', 'hunt', 'graze', 'roam', 'prowl'];
+  
+  for (const root of verbRoots) {
+    if (input === root) return true;
+    if (input === root + 's') return true;
+    if (input === root + 'es') return true;
+    if (input === root + 'ing') return true;
+    if (input === root + 'ed') return true;
+    
+    if (root.endsWith('e')) {
+      if (input === root.slice(0, -1) + 'ing') return true;
+      if (input === root + 'd') return true;
+    }
+    
+    if (root.endsWith('y')) {
+      if (input === root.slice(0, -1) + 'ies') return true;
+      if (input === root.slice(0, -1) + 'ied') return true;
+    }
+    
+    const lastChar = root[root.length - 1];
+    const secondLastChar = root[root.length - 2];
+    const vowels = 'aeiou';
+    if (!vowels.includes(lastChar) && vowels.includes(secondLastChar) && root.length <= 4) {
+      if (input === root + lastChar + 'ing') return true;
+      if (input === root + lastChar + 'ed') return true;
+    }
+  }
+  
+  if (input.endsWith('s') || input.endsWith('es') || input.endsWith('ing') || input.endsWith('ed')) {
+    return true;
+  }
+  
+  return false;
+}
+
+function wordsMatch(word1: string, word2: string): boolean {
+  const w1 = word1.toLowerCase().replace(/[,.]$/, '');
+  const w2 = word2.toLowerCase().replace(/[,.]$/, '');
+  
+  if (w1 === w2) return true;
+  
+  if (matchesSubject(w1, w2)) return true;
+  
+  if (isValidVerb(w1) && isValidVerb(w2)) {
+    const getVerbRoot = (verb: string): string => {
+      if (verb.endsWith('ing')) return verb.slice(0, -3);
+      if (verb.endsWith('ied')) return verb.slice(0, -3) + 'y';
+      if (verb.endsWith('ed')) return verb.slice(0, -2);
+      if (verb.endsWith('ies')) return verb.slice(0, -3) + 'y';
+      if (verb.endsWith('es')) return verb.slice(0, -2);
+      if (verb.endsWith('s')) return verb.slice(0, -1);
+      return verb;
+    };
+    const root1 = getVerbRoot(w1);
+    const root2 = getVerbRoot(w2);
+    if (root1 === root2 || root1 === w2 || w1 === root2) return true;
+  }
+  
+  return false;
+}
+
 function checkWordOrderPreservation(
   currentWords: string[], 
   previousWords: string[],
@@ -135,7 +221,8 @@ function checkWordOrderPreservation(
   
   const missingWords: string[] = [];
   for (const prevWord of previousNormalized) {
-    if (!currentNormalized.includes(prevWord)) {
+    const hasMatch = currentNormalized.some(cw => wordsMatch(cw, prevWord));
+    if (!hasMatch) {
       missingWords.push(prevWord);
     }
   }
@@ -161,7 +248,7 @@ function checkWordOrderPreservation(
     for (let i = 0; i < previousNormalized.length; i++) {
       const expectedWord = previousNormalized[i];
       const actualWord = currentNormalized[startIndex + i];
-      if (expectedWord !== actualWord) {
+      if (!wordsMatch(actualWord || '', expectedWord)) {
         return {
           valid: false,
           issue: 'reordered',
@@ -173,7 +260,7 @@ function checkWordOrderPreservation(
     for (let i = 0; i < previousNormalized.length; i++) {
       const expectedWord = previousNormalized[i];
       const actualWord = currentNormalized[i];
-      if (expectedWord !== actualWord) {
+      if (!wordsMatch(actualWord || '', expectedWord)) {
         return {
           valid: false,
           issue: 'reordered',
@@ -217,24 +304,24 @@ function validateFormula1(words: string[], subject: string): FormulaResult {
     };
   }
 
-  if (firstWordLower !== subjectLower) {
+  if (!matchesSubject(words[0], subject)) {
     return {
       correct: false,
       feedback: `Your sentence should start with your chosen subject: "${subject}"`,
       score: 40,
-      suggestions: [`Start with "${subject}"`],
+      suggestions: [`Start with "${subject}" or "${subject}s"`],
       words_saved: [],
       previous_sentence: ''
     };
   }
 
   const secondWord = words[1]?.toLowerCase();
-  if (!WORD_TYPES.verbs.includes(secondWord)) {
+  if (!isValidVerb(secondWord)) {
     return {
       correct: false,
       feedback: `"${words[1]}" doesn't appear to be a verb. The second word needs to be an action word.`,
       score: 50,
-      suggestions: ['Use a verb like "opens", "sits", "runs", "walks"'],
+      suggestions: ['Use a verb like "opens", "sits", "runs", "walks", "fly", "flies"'],
       words_saved: [],
       previous_sentence: ''
     };
@@ -278,7 +365,7 @@ function validateFormula2(words: string[], subject: string, previousWords: strin
     };
   }
 
-  if (firstWordLower !== subjectLower) {
+  if (!matchesSubject(words[0], subject)) {
     return {
       correct: false,
       feedback: `Start with your subject "${subject}" then add an adverb, then your verb.`,
@@ -292,7 +379,7 @@ function validateFormula2(words: string[], subject: string, previousWords: strin
   const prevSubject = previousWords[0];
   const prevVerb = previousWords[1];
   
-  if (normalizeWord(words[0]) !== normalizeWord(prevSubject)) {
+  if (!matchesSubject(words[0], prevSubject)) {
     return {
       correct: false,
       feedback: `Keep your subject "${prevSubject}" at the start.`,
@@ -303,10 +390,10 @@ function validateFormula2(words: string[], subject: string, previousWords: strin
     };
   }
   
-  if (normalizeWord(words[2]) !== normalizeWord(prevVerb)) {
+  if (!isValidVerb(words[2])) {
     return {
       correct: false,
-      feedback: `Keep your verb "${prevVerb}" from Formula 1. Don't change it!`,
+      feedback: `Keep a verb at the end. Your previous verb was "${prevVerb}".`,
       score: 45,
       suggestions: [`Your verb was "${prevVerb}". Write: ${subject} [adverb] ${prevVerb}`],
       words_saved: previousWords,
@@ -327,12 +414,12 @@ function validateFormula2(words: string[], subject: string, previousWords: strin
   }
 
   const thirdWord = words[2]?.toLowerCase();
-  if (!WORD_TYPES.verbs.includes(thirdWord)) {
+  if (!isValidVerb(thirdWord)) {
     return {
       correct: false,
       feedback: `"${words[2]}" should be a verb. End with an action word.`,
       score: 60,
-      suggestions: ['End with a verb like "opens", "sits", "runs"'],
+      suggestions: ['End with a verb like "opens", "sits", "runs", "fly", "flies"'],
       words_saved: previousWords,
       previous_sentence: previousSentence
     };
@@ -390,13 +477,13 @@ function validateFormula3Plus(
     };
   }
 
-  const hasVerb = words.some(w => WORD_TYPES.verbs.includes(normalizeWord(w)));
+  const hasVerb = words.some(w => isValidVerb(normalizeWord(w)));
   if (!hasVerb) {
     return {
       correct: false,
       feedback: 'Your sentence needs a verb - an action word.',
       score: 40,
-      suggestions: ['Add a verb like "opens", "sits", "runs", "walks"'],
+      suggestions: ['Add a verb like "opens", "sits", "runs", "walks", "fly", "flies"'],
       words_saved: previousWords,
       previous_sentence: previousSentence
     };
