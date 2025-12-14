@@ -702,6 +702,15 @@ export async function POST(request: NextRequest) {
       concepts_used = []
     } = await request.json();
 
+    console.log('PWP Submit received:', {
+      pupil_sentence,
+      subject,
+      formula_number,
+      sentenceLength: pupil_sentence?.length,
+      words: extractWords(pupil_sentence || ''),
+      wordsCount: extractWords(pupil_sentence || '').length
+    });
+
     if (!session_id || formula_number === undefined || !pupil_sentence) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
