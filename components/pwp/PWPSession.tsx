@@ -26,12 +26,9 @@ interface PWPSessionProps {
   formulas: Formula[];
   onComplete: (stats: SessionStats) => void;
   onFormulaSubmit: (formulaNumber: number, sentence: string) => Promise<{
-    is_correct: boolean;
-    feedback?: {
-      type: 'success' | 'error';
-      message: string;
-      socraticQuestions?: string[];
-    };
+    correct: boolean;
+    feedback?: string;
+    suggestions?: string[];
     repetitionStats?: Record<string, number>;
   }>;
 }
@@ -102,7 +99,7 @@ export default function PWPSession({
     try {
       const result = await onFormulaSubmit(currentFormula.formula_number, sentence);
       
-      if (result.is_correct) {
+      if (result.correct) {
         const newRepStats = { ...overallRepetitionStats };
         sentence.split(' ').forEach(word => {
           const lowerWord = word.toLowerCase();
@@ -112,7 +109,7 @@ export default function PWPSession({
 
         setFeedback({
           type: 'success',
-          message: result.feedback?.message || 'Excellent! Your sentence is correct!',
+          message: result.feedback || 'Excellent! Your sentence is correct!',
           repetitionStats: result.repetitionStats || newRepStats
         });
         
@@ -120,8 +117,8 @@ export default function PWPSession({
       } else {
         setFeedback({
           type: 'error',
-          message: result.feedback?.message || 'Not quite right. Try again!',
-          socraticQuestions: result.feedback?.socraticQuestions
+          message: result.feedback || 'Not quite right. Try again!',
+          socraticQuestions: result.suggestions
         });
       }
     } catch (error) {
