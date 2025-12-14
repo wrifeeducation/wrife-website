@@ -7,12 +7,13 @@ interface FormulaStep {
   structure: string;
   structureParts: { label: string; color: string }[];
   exampleParts: { label: string; word: string; color: string }[];
-  previousWords: string[];
-  newElement: { label: string; words: string[]; placeholder: string };
-  targetSentence: string[];
+  newElementLabel: string;
+  newElementHint: string;
+  minWords: number;
+  validateFn: (words: string[], previousWords: string[]) => { valid: boolean; hint?: string };
 }
 
-const demoSession: FormulaStep[] = [
+const createFormulas = (): FormulaStep[] => [
   {
     formulaNumber: 1,
     structure: "subject + verb",
@@ -24,9 +25,14 @@ const demoSession: FormulaStep[] = [
       { label: "Subject", word: "Park", color: "bg-blue-500" },
       { label: "Verb", word: "sits", color: "bg-green-500" },
     ],
-    previousWords: [],
-    newElement: { label: "Complete Sentence", words: ["Library", "opens"], placeholder: "Type your sentence (e.g., Library opens)" },
-    targetSentence: ["Library", "opens"],
+    newElementLabel: "Complete Sentence",
+    newElementHint: "Type any subject + verb (e.g., Dog runs, Mary dances, Library opens)",
+    minWords: 2,
+    validateFn: (words) => {
+      if (words.length < 2) return { valid: false, hint: "Your sentence needs at least 2 words: a subject and a verb" };
+      if (words.length > 3) return { valid: false, hint: "Keep it simple for Formula 1 - just subject + verb" };
+      return { valid: true };
+    }
   },
   {
     formulaNumber: 2,
@@ -41,9 +47,18 @@ const demoSession: FormulaStep[] = [
       { label: "Adverb", word: "quietly", color: "bg-amber-500" },
       { label: "Verb", word: "sits", color: "bg-green-500" },
     ],
-    previousWords: ["Library", "opens"],
-    newElement: { label: "Adverb", words: ["quietly"], placeholder: "Type an adverb (how it happens)" },
-    targetSentence: ["Library", "quietly", "opens"],
+    newElementLabel: "Adverb",
+    newElementHint: "Add an adverb (how it happens): quietly, slowly, quickly, happily...",
+    minWords: 3,
+    validateFn: (words, prevWords) => {
+      if (words.length < 3) return { valid: false, hint: "Add an adverb between your subject and verb" };
+      const hasAdverb = words.some(w => 
+        w.toLowerCase().endsWith('ly') || 
+        ['fast', 'hard', 'well', 'early', 'daily'].includes(w.toLowerCase())
+      );
+      if (!hasAdverb) return { valid: false, hint: "Add an adverb (often ends in -ly) to describe HOW the action happens" };
+      return { valid: true };
+    }
   },
   {
     formulaNumber: 3,
@@ -60,9 +75,16 @@ const demoSession: FormulaStep[] = [
       { label: "Verb", word: "sits", color: "bg-green-500" },
       { label: "Prep Phrase", word: "in the town", color: "bg-purple-500" },
     ],
-    previousWords: ["Library", "quietly", "opens"],
-    newElement: { label: "Prepositional Phrase", words: ["in", "the", "morning"], placeholder: "Type where/when (e.g., in the morning)" },
-    targetSentence: ["Library", "quietly", "opens", "in", "the", "morning"],
+    newElementLabel: "Prepositional Phrase",
+    newElementHint: "Add where/when: in the morning, at school, by the river...",
+    minWords: 5,
+    validateFn: (words, prevWords) => {
+      if (words.length < 5) return { valid: false, hint: "Add a prepositional phrase (where or when) at the end" };
+      const preps = ['in', 'at', 'on', 'by', 'for', 'to', 'with', 'from', 'under', 'over', 'through', 'during', 'before', 'after'];
+      const hasPrep = words.some(w => preps.includes(w.toLowerCase()));
+      if (!hasPrep) return { valid: false, hint: "Add a prepositional phrase starting with: in, at, on, by, for, etc." };
+      return { valid: true };
+    }
   },
   {
     formulaNumber: 4,
@@ -83,9 +105,23 @@ const demoSession: FormulaStep[] = [
       { label: "Verb", word: "sits", color: "bg-green-500" },
       { label: "Prep Phrase", word: "in the town", color: "bg-purple-500" },
     ],
-    previousWords: ["Library", "quietly", "opens", "in", "the", "morning"],
-    newElement: { label: "Determiner + Adjective", words: ["The", "old"], placeholder: "Type determiner + adjective (e.g., The old)" },
-    targetSentence: ["The", "old", "Library", "quietly", "opens", "in", "the", "morning"],
+    newElementLabel: "Determiner + Adjective",
+    newElementHint: "Add 'The old', 'A quiet', 'My little' before your subject",
+    minWords: 7,
+    validateFn: (words, prevWords) => {
+      if (words.length < 7) return { valid: false, hint: "Add a determiner and adjective before your subject" };
+      const determiners = ['the', 'a', 'an', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'this', 'that'];
+      const commonAdjectives = ['old', 'young', 'big', 'small', 'little', 'tall', 'short', 'beautiful', 'peaceful', 'quiet', 'loud', 'happy', 'sad', 'bright', 'dark', 'new', 'ancient', 'modern', 'busy', 'calm', 'gentle', 'fierce', 'kind', 'wise', 'silly', 'clever', 'brave', 'friendly', 'lonely', 'pretty', 'ugly', 'clean', 'dirty', 'warm', 'cold', 'hot', 'cool', 'fast', 'slow', 'strong', 'weak', 'rich', 'poor', 'famous', 'great', 'wonderful', 'amazing', 'terrible', 'lovely', 'sleepy', 'hungry', 'lazy', 'tired', 'excited', 'nervous', 'curious', 'playful', 'adorable', 'majestic', 'magnificent', 'humble', 'proud', 'fearless', 'mysterious', 'enchanted', 'magical', 'royal', 'sacred', 'serene', 'tranquil', 'vibrant', 'lively', 'dull', 'rusty', 'shiny', 'golden', 'silver', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'white', 'black', 'grey', 'gray', 'brown'];
+      const firstWord = words[0].toLowerCase();
+      if (!determiners.includes(firstWord)) {
+        return { valid: false, hint: "Start with a determiner: the, a, my, our..." };
+      }
+      const secondWord = words[1]?.toLowerCase() || '';
+      if (!commonAdjectives.includes(secondWord)) {
+        return { valid: false, hint: "Add an adjective after the determiner: 'The OLD park', 'A QUIET library'..." };
+      }
+      return { valid: true };
+    }
   },
   {
     formulaNumber: 5,
@@ -108,9 +144,18 @@ const demoSession: FormulaStep[] = [
       { label: "Verb", word: "sits", color: "bg-green-500" },
       { label: "Prep Phrase", word: "in the town", color: "bg-purple-500" },
     ],
-    previousWords: ["The", "old", "Library", "quietly", "opens", "in", "the", "morning"],
-    newElement: { label: "Time Phrase", words: ["Every", "weekday,"], placeholder: "Type a time phrase (e.g., Every weekday,)" },
-    targetSentence: ["Every", "weekday,", "The", "old", "Library", "quietly", "opens", "in", "the", "morning"],
+    newElementLabel: "Time Phrase",
+    newElementHint: "Add when: Every morning, Yesterday, On weekdays...",
+    minWords: 9,
+    validateFn: (words, prevWords) => {
+      if (words.length < 9) return { valid: false, hint: "Add a time phrase at the beginning" };
+      const timeWords = ['every', 'yesterday', 'today', 'tomorrow', 'always', 'sometimes', 'never', 'often', 'usually', 'on', 'in', 'at', 'during', 'before', 'after'];
+      const hasTimePhrase = timeWords.includes(words[0].toLowerCase().replace(/,/g, ''));
+      if (!hasTimePhrase) {
+        return { valid: false, hint: "Start with a time phrase: Every morning, Yesterday, On weekdays..." };
+      }
+      return { valid: true };
+    }
   },
   {
     formulaNumber: 6,
@@ -133,47 +178,69 @@ const demoSession: FormulaStep[] = [
       { label: "Verb", word: "sits", color: "bg-green-500" },
       { label: "Enhanced Prep", word: "in the sunny town", color: "bg-teal-500" },
     ],
-    previousWords: ["Every", "weekday,", "The", "old", "Library", "quietly", "opens", "in", "the", "morning"],
-    newElement: { label: "Enhanced Adjective", words: ["early"], placeholder: "Add an adjective to morning (e.g., early)" },
-    targetSentence: ["Every", "weekday,", "The", "old", "Library", "quietly", "opens", "in", "the", "early", "morning"],
+    newElementLabel: "Enhanced Ending",
+    newElementHint: "Add an adjective to your ending: 'in the EARLY morning', 'at the BUSY school'",
+    minWords: 10,
+    validateFn: (words, prevWords) => {
+      if (words.length < 10) return { valid: false, hint: "Add an adjective to enhance your ending" };
+      const commonAdjectives = ['old', 'young', 'big', 'small', 'little', 'tall', 'short', 'beautiful', 'peaceful', 'quiet', 'loud', 'happy', 'sad', 'bright', 'dark', 'new', 'ancient', 'modern', 'busy', 'calm', 'gentle', 'fierce', 'kind', 'wise', 'silly', 'clever', 'brave', 'friendly', 'lonely', 'pretty', 'ugly', 'clean', 'dirty', 'warm', 'cold', 'hot', 'cool', 'fast', 'slow', 'strong', 'weak', 'rich', 'poor', 'famous', 'great', 'wonderful', 'amazing', 'terrible', 'lovely', 'sleepy', 'hungry', 'lazy', 'tired', 'excited', 'nervous', 'curious', 'playful', 'adorable', 'majestic', 'magnificent', 'humble', 'proud', 'fearless', 'mysterious', 'enchanted', 'magical', 'royal', 'sacred', 'serene', 'tranquil', 'vibrant', 'lively', 'dull', 'rusty', 'shiny', 'golden', 'silver', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'white', 'black', 'grey', 'gray', 'brown', 'early', 'late', 'sunny', 'cloudy', 'rainy', 'snowy', 'windy', 'foggy', 'misty', 'stormy', 'frosty', 'icy'];
+      const preps = ['in', 'at', 'on', 'by', 'for', 'to', 'with', 'from', 'under', 'over', 'through', 'during', 'before', 'after'];
+      let lastPrepIndex = -1;
+      for (let i = words.length - 1; i >= 0; i--) {
+        if (preps.includes(words[i].toLowerCase())) {
+          lastPrepIndex = i;
+          break;
+        }
+      }
+      if (lastPrepIndex === -1) {
+        return { valid: false, hint: "Include a prepositional phrase at the end" };
+      }
+      const endingWords = words.slice(lastPrepIndex).map(w => w.toLowerCase());
+      const hasAdjectiveInEnding = endingWords.some(w => commonAdjectives.includes(w));
+      if (!hasAdjectiveInEnding) {
+        return { valid: false, hint: "Add an adjective in your ending phrase: 'in the SUNNY town', 'at the BUSY school'" };
+      }
+      return { valid: true };
+    }
   },
 ];
 
 export default function PWPDemo() {
   const [isOpen, setIsOpen] = useState(false);
+  const [phase, setPhase] = useState<'subject' | 'practice' | 'paragraph'>('subject');
+  const [userSubject, setUserSubject] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
   const [builtSentence, setBuiltSentence] = useState<string[]>([]);
+  const [previousWords, setPreviousWords] = useState<string[]>([]);
   const [typedNewWord, setTypedNewWord] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [attempts, setAttempts] = useState(0);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [wordWriteCounts, setWordWriteCounts] = useState<Record<string, number>>({});
-  const [showParagraphPrompt, setShowParagraphPrompt] = useState(false);
+  const [completedSentences, setCompletedSentences] = useState<string[]>([]);
 
-  const step = demoSession[currentStep];
+  const formulas = useMemo(() => createFormulas(), []);
+  const step = formulas[currentStep];
   const isFirstFormula = currentStep === 0;
-  const isFinalStep = currentStep === demoSession.length - 1;
 
   const wordCountProgression = useMemo(() => {
-    return demoSession.map(s => s.targetSentence.length);
-  }, []);
+    return completedSentences.map(s => s.split(/\s+/).length);
+  }, [completedSentences]);
 
   const handleWordClick = (word: string, wordIndex: number) => {
-    const wordKey = `${word}-${wordIndex}`;
-    const isUsed = builtSentence.some((w, i) => {
-      const builtWordKey = `${w}-${step.previousWords.indexOf(w)}`;
-      return builtWordKey === wordKey;
-    });
-    
-    if (!isUsed) {
-      setBuiltSentence([...builtSentence, word]);
+    let usedCount = 0;
+    const targetCount = previousWords.filter((w, i) => i <= wordIndex && w === word).length;
+    for (const w of builtSentence) {
+      if (w === word) usedCount++;
+      if (usedCount >= targetCount) return;
     }
+    setBuiltSentence([...builtSentence, word]);
   };
 
   const isWordUsed = (word: string, wordIndex: number) => {
     let usedCount = 0;
-    const targetCount = step.previousWords.filter((w, i) => i <= wordIndex && w === word).length;
-    for (let i = 0; i < builtSentence.length; i++) {
-      if (builtSentence[i] === word) {
+    const targetCount = previousWords.filter((w, i) => i <= wordIndex && w === word).length;
+    for (const w of builtSentence) {
+      if (w === word) {
         usedCount++;
         if (usedCount >= targetCount) return true;
       }
@@ -194,34 +261,36 @@ export default function PWPDemo() {
   };
 
   const checkSentence = () => {
-    const userJoined = builtSentence.join(' ').toLowerCase().trim();
-    const targetJoined = step.targetSentence.join(' ').toLowerCase().trim();
+    const result = step.validateFn(builtSentence, previousWords);
     
-    const isCorrect = userJoined === targetJoined;
-    
-    if (isCorrect) {
+    if (result.valid) {
       setShowSuccess(true);
+      setFeedback({ type: 'success', message: 'Excellent! Your sentence follows the formula correctly!' });
       
       const newCounts = { ...wordWriteCounts };
-      step.targetSentence.forEach(word => {
+      builtSentence.forEach(word => {
         const normalizedWord = word.toLowerCase().replace(/[,.]$/, '');
         newCounts[normalizedWord] = (newCounts[normalizedWord] || 0) + 1;
       });
       setWordWriteCounts(newCounts);
       
+      const completedSentence = builtSentence.join(' ');
+      setCompletedSentences([...completedSentences, completedSentence]);
+      
       setTimeout(() => {
-        if (currentStep < demoSession.length - 1) {
+        if (currentStep < formulas.length - 1) {
+          setPreviousWords([...builtSentence]);
           setCurrentStep(currentStep + 1);
           setBuiltSentence([]);
           setTypedNewWord('');
           setShowSuccess(false);
-          setAttempts(0);
+          setFeedback(null);
         } else {
-          setShowParagraphPrompt(true);
+          setPhase('paragraph');
         }
       }, 1800);
     } else {
-      setAttempts(attempts + 1);
+      setFeedback({ type: 'error', message: result.hint || 'Try again!' });
     }
   };
 
@@ -229,26 +298,31 @@ export default function PWPDemo() {
     setBuiltSentence([]);
     setTypedNewWord('');
     setShowSuccess(false);
-    setAttempts(0);
+    setFeedback(null);
   };
 
   const resetDemo = () => {
+    setPhase('subject');
+    setUserSubject('');
     setCurrentStep(0);
     setBuiltSentence([]);
+    setPreviousWords([]);
     setTypedNewWord('');
     setShowSuccess(false);
-    setAttempts(0);
+    setFeedback(null);
     setWordWriteCounts({});
-    setShowParagraphPrompt(false);
+    setCompletedSentences([]);
   };
 
-  const getWordCountForStep = (stepIndex: number) => {
-    return demoSession[stepIndex].targetSentence.length;
+  const startPractice = () => {
+    if (userSubject.trim()) {
+      setPhase('practice');
+    }
   };
 
   const getTopRepeatedWords = () => {
     return Object.entries(wordWriteCounts)
-      .filter(([word]) => !['the', 'in', 'a', 'an'].includes(word))
+      .filter(([word]) => word.length > 2 && !['the', 'in', 'a', 'an', 'at', 'on', 'by'].includes(word))
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
   };
@@ -274,7 +348,7 @@ export default function PWPDemo() {
             Progressive Writing Practice
           </h3>
           <p className="text-sm text-[var(--wrife-text-muted)] mb-3">
-            Watch one sentence evolve from 2 words to 11+ words as you add grammatical elements step by step.
+            Choose your own subject and watch your sentence evolve from 2 words to 10+ words.
           </p>
           <div className="flex items-center gap-2 text-purple-600 text-sm font-medium">
             <span>Try Sentence Evolution</span>
@@ -295,7 +369,9 @@ export default function PWPDemo() {
               <div>
                 <h2 className="text-xl font-bold">PWP Demo: Sentence Evolution</h2>
                 <p className="text-sm opacity-90">
-                  {showParagraphPrompt ? 'Bonus: Paragraph Challenge!' : `Formula ${currentStep + 1} of ${demoSession.length}`}
+                  {phase === 'subject' ? 'Choose Your Subject' : 
+                   phase === 'paragraph' ? 'Paragraph Challenge!' :
+                   `Formula ${currentStep + 1} of ${formulas.length}`}
                 </p>
               </div>
               <button 
@@ -309,7 +385,59 @@ export default function PWPDemo() {
             </div>
             
             <div className="p-5 overflow-y-auto max-h-[calc(90vh-72px)]">
-              {showParagraphPrompt ? (
+              {phase === 'subject' && (
+                <div className="space-y-5">
+                  <div className="text-center">
+                    <div className="text-4xl mb-3">✏️</div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">First, Choose Your Subject</h3>
+                    <p className="text-gray-600">Pick any person, animal, place, or thing to write about.</p>
+                  </div>
+
+                  <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+                    <label className="block text-sm font-semibold text-purple-700 mb-2">
+                      Type your subject:
+                    </label>
+                    <input
+                      type="text"
+                      value={userSubject}
+                      onChange={(e) => setUserSubject(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && startPractice()}
+                      placeholder="e.g., Dog, Library, Maria, Car..."
+                      className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:border-purple-500 focus:outline-none text-lg"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Need ideas?</p>
+                    <div className="flex flex-wrap gap-2">
+                      {['Dog', 'Library', 'Maria', 'Park', 'Ben', 'School', 'Bird', 'Castle'].map(idea => (
+                        <button
+                          key={idea}
+                          onClick={() => setUserSubject(idea)}
+                          className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                        >
+                          {idea}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={startPractice}
+                    disabled={!userSubject.trim()}
+                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
+                      userSubject.trim()
+                        ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Start PWP Practice →
+                  </button>
+                </div>
+              )}
+
+              {phase === 'paragraph' && (
                 <div className="space-y-5">
                   <div className="p-4 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl border-2 border-purple-300">
                     <div className="flex items-center gap-2 mb-3">
@@ -317,25 +445,20 @@ export default function PWPDemo() {
                       <h3 className="text-lg font-bold text-purple-700">Paragraph Challenge!</h3>
                     </div>
                     <p className="text-gray-700 mb-4">
-                      You've mastered the sentence! Now imagine expanding it into a paragraph. 
-                      Think about these questions:
+                      You've mastered the sentence! Now imagine expanding it into a paragraph.
                     </p>
                     <ul className="space-y-2 text-gray-600">
                       <li className="flex items-start gap-2">
                         <span className="text-purple-500">•</span>
-                        <span>Who visits the old library in the early morning?</span>
+                        <span>What happened before this moment?</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-500">•</span>
-                        <span>What books are on the dusty shelves?</span>
+                        <span>What can you see, hear, or feel?</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-500">•</span>
-                        <span>Why does the library open so quietly?</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-purple-500">•</span>
-                        <span>What sounds can you hear inside?</span>
+                        <span>What happens next?</span>
                       </li>
                     </ul>
                   </div>
@@ -343,8 +466,21 @@ export default function PWPDemo() {
                   <div className="p-4 bg-green-50 rounded-xl border border-green-200">
                     <p className="font-semibold text-green-700 mb-2">Your Final Sentence:</p>
                     <p className="text-lg text-green-800 italic">
-                      "{demoSession[demoSession.length - 1].targetSentence.join(' ')}."
+                      "{completedSentences[completedSentences.length - 1]}."
                     </p>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <p className="font-semibold text-blue-700 mb-2">📈 Sentence Evolution:</p>
+                    <div className="space-y-1">
+                      {completedSentences.map((sentence, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm">
+                          <span className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">{i + 1}</span>
+                          <span className="text-gray-700 truncate">{sentence}</span>
+                          <span className="text-xs text-gray-400 whitespace-nowrap">({sentence.split(/\s+/).length} words)</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {Object.keys(wordWriteCounts).length > 0 && (
@@ -361,54 +497,46 @@ export default function PWPDemo() {
                     </div>
                   )}
 
-                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl text-center">
-                    <p className="text-lg font-bold text-purple-700 mb-2">Amazing work!</p>
-                    <div className="text-sm text-purple-600 mb-3">
-                      <p>Word count journey: {wordCountProgression.slice(0, currentStep + 1).join(' → ')} words</p>
-                      <p className="mt-1 text-purple-500">That's {Math.round((getWordCountForStep(demoSession.length - 1) / getWordCountForStep(0)) * 100)}% growth!</p>
-                    </div>
-                    <button
-                      onClick={resetDemo}
-                      className="px-6 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
-                    >
-                      Try Again
-                    </button>
-                  </div>
+                  <button
+                    onClick={resetDemo}
+                    className="w-full py-3 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                  >
+                    Try Again with Different Subject
+                  </button>
                 </div>
-              ) : (
-                <>
-                  <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">Word Count Growth:</p>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {wordCountProgression.map((count, i) => (
-                        <div key={i} className="flex items-center">
-                          <span className={`px-2 py-1 rounded text-sm font-bold ${
-                            i < currentStep 
-                              ? 'bg-green-500 text-white' 
-                              : i === currentStep 
-                                ? 'bg-purple-500 text-white ring-2 ring-purple-300' 
-                                : 'bg-gray-200 text-gray-500'
-                          }`}>
-                            {count}
-                          </span>
-                          {i < wordCountProgression.length - 1 && (
-                            <span className={`mx-1 text-lg ${i < currentStep ? 'text-green-500' : 'text-gray-300'}`}>→</span>
-                          )}
-                        </div>
-                      ))}
-                      <span className="ml-2 text-xs text-gray-500">words</span>
-                    </div>
-                  </div>
+              )}
 
-                  {currentStep > 0 && (
+              {phase === 'practice' && (
+                <>
+                  {wordCountProgression.length > 0 && (
+                    <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                      <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">Word Count Growth:</p>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {wordCountProgression.map((count, i) => (
+                          <div key={i} className="flex items-center">
+                            <span className="px-2 py-1 rounded text-sm font-bold bg-green-500 text-white">
+                              {count}
+                            </span>
+                            <span className="mx-1 text-lg text-green-500">→</span>
+                          </div>
+                        ))}
+                        <span className="px-2 py-1 rounded text-sm font-bold bg-purple-500 text-white ring-2 ring-purple-300">
+                          {step.minWords}+
+                        </span>
+                        <span className="ml-2 text-xs text-gray-500">words</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {completedSentences.length > 0 && (
                     <div className="mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                      <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">Sentence Evolution So Far:</p>
+                      <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">Sentence Evolution:</p>
                       <div className="space-y-1">
-                        {demoSession.slice(0, currentStep).map((s, i) => (
+                        {completedSentences.map((sentence, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm">
                             <span className="w-5 h-5 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                            <span className="text-gray-700">{s.targetSentence.join(' ')}</span>
-                            <span className="text-xs text-gray-400">({getWordCountForStep(i)} words)</span>
+                            <span className="text-gray-700">{sentence}</span>
+                            <span className="text-xs text-gray-400">({sentence.split(/\s+/).length} words)</span>
                           </div>
                         ))}
                       </div>
@@ -420,6 +548,7 @@ export default function PWPDemo() {
                       <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-bold">
                         FORMULA {step.formulaNumber}
                       </span>
+                      <span className="text-sm text-gray-500">Your subject: <strong>{userSubject}</strong></span>
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-1.5 mb-4">
@@ -436,7 +565,7 @@ export default function PWPDemo() {
                     </div>
 
                     <div className="bg-white/70 rounded-lg p-3 border border-indigo-100">
-                      <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">Labelled Example:</p>
+                      <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">Example:</p>
                       <div className="flex flex-wrap items-end gap-1.5">
                         {step.exampleParts.map((part, i) => (
                           <div key={i} className="flex flex-col items-center">
@@ -457,9 +586,10 @@ export default function PWPDemo() {
                       <div className="flex items-center gap-2 mb-2">
                         <p className="text-sm font-semibold text-gray-700">Type your complete sentence:</p>
                         <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700">
-                          {step.newElement.label}
+                          {step.newElementLabel}
                         </span>
                       </div>
+                      <p className="text-xs text-gray-500 mb-2">{step.newElementHint}</p>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -471,7 +601,7 @@ export default function PWPDemo() {
                               setTypedNewWord('');
                             }
                           }}
-                          placeholder={step.newElement.placeholder}
+                          placeholder={`e.g., ${userSubject} runs, ${userSubject} opens...`}
                           disabled={showSuccess}
                           className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-400 focus:outline-none disabled:opacity-50"
                         />
@@ -491,10 +621,10 @@ export default function PWPDemo() {
                     <>
                       <div className="mb-4">
                         <p className="text-sm font-semibold text-gray-700 mb-2">
-                          Your words from before <span className="text-gray-400 font-normal">(click each word in order)</span>:
+                          Your words from before <span className="text-gray-400 font-normal">(click each to add)</span>:
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {step.previousWords.map((word, i) => {
+                          {previousWords.map((word, i) => {
                             const isUsed = isWordUsed(word, i);
                             return (
                               <button
@@ -517,17 +647,18 @@ export default function PWPDemo() {
                       <div className="mb-5">
                         <div className="flex items-center gap-2 mb-2">
                           <p className="text-sm font-semibold text-gray-700">Type the NEW element:</p>
-                          <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${step.structureParts[step.structureParts.length - 1]?.color || step.structureParts[0]?.color || 'bg-purple-500'}`}>
-                            {step.newElement.label}
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${step.structureParts[0]?.color || 'bg-purple-500'}`}>
+                            {step.newElementLabel}
                           </span>
                         </div>
+                        <p className="text-xs text-gray-500 mb-2">{step.newElementHint}</p>
                         <div className="flex gap-2">
                           <input
                             type="text"
                             value={typedNewWord}
                             onChange={(e) => setTypedNewWord(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleTypeSubmit()}
-                            placeholder={step.newElement.placeholder}
+                            placeholder="Type new word(s)..."
                             disabled={showSuccess}
                             className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-400 focus:outline-none disabled:opacity-50"
                           />
@@ -557,7 +688,7 @@ export default function PWPDemo() {
                               key={i}
                               onClick={() => !showSuccess && handleRemoveWord(i)}
                               className={`px-3 py-1 rounded-lg text-sm font-medium cursor-pointer transition-all ${
-                                step.previousWords.includes(word)
+                                previousWords.includes(word)
                                   ? 'bg-blue-100 text-blue-700 border border-blue-300 hover:bg-red-100 hover:text-red-700 hover:border-red-300'
                                   : 'bg-purple-100 text-purple-700 border border-purple-300 hover:bg-red-100 hover:text-red-700 hover:border-red-300'
                               }`}
@@ -573,44 +704,28 @@ export default function PWPDemo() {
                     {builtSentence.length > 0 && (
                       <p className="text-xs text-gray-500 mt-1">
                         Current: {builtSentence.length} words
-                        {currentStep > 0 && (
-                          <span className="text-green-600 ml-2">
-                            (↑ from {getWordCountForStep(currentStep - 1)} words)
-                          </span>
-                        )}
                         <span className="text-purple-600 ml-2">
-                          Target: {step.targetSentence.length} words
+                          (Target: {step.minWords}+ words)
                         </span>
                       </p>
                     )}
                   </div>
 
-                  {showSuccess && (
-                    <div className="mb-5 p-4 bg-green-100 border border-green-300 rounded-xl text-center">
-                      <span className="text-2xl">🎉</span>
-                      <p className="font-bold text-green-700 mt-1">Excellent! You REWROTE your sentence with the new element!</p>
-                      <p className="text-sm text-green-600 mt-1">
-                        {getWordCountForStep(0)} → {getWordCountForStep(currentStep)} words
+                  {feedback && (
+                    <div className={`mb-5 p-4 rounded-xl text-center ${
+                      feedback.type === 'success' 
+                        ? 'bg-green-100 border border-green-300' 
+                        : 'bg-yellow-50 border border-yellow-200'
+                    }`}>
+                      <span className="text-2xl">{feedback.type === 'success' ? '🎉' : '💡'}</span>
+                      <p className={`font-medium mt-1 ${
+                        feedback.type === 'success' ? 'text-green-700' : 'text-yellow-700'
+                      }`}>
+                        {feedback.message}
                       </p>
-                      {currentStep < demoSession.length - 1 && (
+                      {feedback.type === 'success' && currentStep < formulas.length - 1 && (
                         <p className="text-sm text-green-600 mt-1">Moving to next formula...</p>
                       )}
-                      {isFinalStep && (
-                        <p className="text-sm text-purple-600 mt-1 font-medium">Get ready for the paragraph challenge!</p>
-                      )}
-                    </div>
-                  )}
-
-                  {attempts > 0 && !showSuccess && (
-                    <div className="mb-5 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                      <p className="text-sm text-yellow-700">
-                        <strong>Hint:</strong> {isFirstFormula 
-                          ? `Type: "${step.targetSentence.join(' ')}"` 
-                          : `Click your previous words in order, then add "${step.newElement.words.join(' ')}" as the new element.`}
-                      </p>
-                      <p className="text-xs text-yellow-600 mt-2">
-                        Target: {step.targetSentence.join(' ')}
-                      </p>
                     </div>
                   )}
 
@@ -630,23 +745,9 @@ export default function PWPDemo() {
                     </button>
                   </div>
 
-                  {Object.keys(wordWriteCounts).length > 0 && currentStep > 0 && (
-                    <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                      <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">Word Practice Stats:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {getTopRepeatedWords().map(([word, count]) => (
-                          <span key={word} className="px-2 py-1 bg-amber-100 rounded text-xs">
-                            <span className="font-medium text-amber-800">{word}</span>
-                            <span className="text-amber-600 ml-1">×{count}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   <div className="mt-5 pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-1">
-                      {demoSession.map((_, i) => (
+                      {formulas.map((_, i) => (
                         <div
                           key={i}
                           className={`h-2 flex-1 rounded-full transition-all ${
@@ -656,7 +757,7 @@ export default function PWPDemo() {
                       ))}
                     </div>
                     <p className="text-xs text-center text-gray-500 mt-2">
-                      Progress: {currentStep + 1}/{demoSession.length} formulas
+                      Progress: {currentStep + 1}/{formulas.length} formulas
                     </p>
                   </div>
                 </>
