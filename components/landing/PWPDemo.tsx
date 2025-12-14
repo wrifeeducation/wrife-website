@@ -2,32 +2,94 @@
 
 import { useState } from 'react';
 
-interface Formula {
-  structure: string;
-  example: string;
-  wordBank: string[];
-  newElement: string;
+interface WordWithType {
+  word: string;
+  type: 'article' | 'adjective' | 'noun' | 'verb' | 'object' | 'where' | 'when';
 }
+
+interface FormulaPartExample {
+  part: string;
+  word: string;
+  color: string;
+}
+
+interface Formula {
+  structure: string[];
+  structureColors: string[];
+  example: FormulaPartExample[];
+  wordBank: WordWithType[];
+  targetWord: WordWithType;
+  targetSentence: string[];
+}
+
+const typeColors: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  article: { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-300', label: 'Article' },
+  adjective: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-300', label: 'Adjective' },
+  noun: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300', label: 'Noun' },
+  verb: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300', label: 'Verb' },
+  object: { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-300', label: 'Object' },
+  where: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300', label: 'Where' },
+  when: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300', label: 'When' },
+};
+
+const formulaPartColors = [
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-amber-500',
+  'bg-purple-500',
+  'bg-pink-500',
+];
 
 const demoFormulas: Formula[] = [
   {
-    structure: "Subject + Verb",
-    example: "The dog [runs].",
-    wordBank: ["The", "dog"],
-    newElement: "runs"
+    structure: ['Subject', 'Verb'],
+    structureColors: ['bg-blue-500', 'bg-green-500'],
+    example: [
+      { part: 'Subject', word: 'The dog', color: 'bg-blue-500' },
+      { part: 'Verb', word: 'runs', color: 'bg-green-500' },
+    ],
+    wordBank: [
+      { word: 'The', type: 'article' },
+      { word: 'dog', type: 'noun' },
+    ],
+    targetWord: { word: 'runs', type: 'verb' },
+    targetSentence: ['The', 'dog', 'runs'],
   },
   {
-    structure: "Subject + Verb + Object",
-    example: "The dog [chases] the ball.",
-    wordBank: ["The", "dog", "the", "ball"],
-    newElement: "chases"
+    structure: ['Subject', 'Verb', 'Object'],
+    structureColors: ['bg-blue-500', 'bg-green-500', 'bg-pink-500'],
+    example: [
+      { part: 'Subject', word: 'The dog', color: 'bg-blue-500' },
+      { part: 'Verb', word: 'chases', color: 'bg-green-500' },
+      { part: 'Object', word: 'the ball', color: 'bg-pink-500' },
+    ],
+    wordBank: [
+      { word: 'The', type: 'article' },
+      { word: 'dog', type: 'noun' },
+      { word: 'the', type: 'article' },
+      { word: 'ball', type: 'object' },
+    ],
+    targetWord: { word: 'chases', type: 'verb' },
+    targetSentence: ['The', 'dog', 'chases', 'the', 'ball'],
   },
   {
-    structure: "Article + Adjective + Noun + Verb",
-    example: "The [happy] dog runs.",
-    wordBank: ["The", "dog", "runs"],
-    newElement: "happy"
-  }
+    structure: ['Adjective', 'Noun', 'Verb', 'Where'],
+    structureColors: ['bg-amber-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500'],
+    example: [
+      { part: 'Adjective', word: 'The happy', color: 'bg-amber-500' },
+      { part: 'Noun', word: 'dog', color: 'bg-blue-500' },
+      { part: 'Verb', word: 'runs', color: 'bg-green-500' },
+      { part: 'Where', word: 'in the park', color: 'bg-purple-500' },
+    ],
+    wordBank: [
+      { word: 'The', type: 'article' },
+      { word: 'dog', type: 'noun' },
+      { word: 'runs', type: 'verb' },
+      { word: 'in the park', type: 'where' },
+    ],
+    targetWord: { word: 'happy', type: 'adjective' },
+    targetSentence: ['The', 'happy', 'dog', 'runs', 'in the park'],
+  },
 ];
 
 export default function PWPDemo() {
@@ -52,8 +114,9 @@ export default function PWPDemo() {
   };
 
   const checkSentence = () => {
-    const sentence = userSentence.join(' ') + '.';
-    const isCorrect = sentence.toLowerCase().includes(formula.newElement.toLowerCase());
+    const userJoined = userSentence.join(' ').toLowerCase();
+    const targetJoined = formula.targetSentence.join(' ').toLowerCase();
+    const isCorrect = userJoined === targetJoined;
     
     if (isCorrect) {
       setShowSuccess(true);
@@ -85,6 +148,26 @@ export default function PWPDemo() {
     setAttempts(0);
   };
 
+  const getCurrentFormulaPosition = () => {
+    const targetWords = formula.targetSentence;
+    const currentIndex = userSentence.length;
+    if (currentIndex >= targetWords.length) return -1;
+    
+    let position = 0;
+    let wordCount = 0;
+    for (const part of formula.example) {
+      const wordsInPart = part.word.split(' ').length;
+      if (currentIndex < wordCount + wordsInPart) {
+        return position;
+      }
+      wordCount += wordsInPart;
+      position++;
+    }
+    return -1;
+  };
+
+  const currentPosition = getCurrentFormulaPosition();
+
   return (
     <>
       <div 
@@ -106,7 +189,7 @@ export default function PWPDemo() {
             Progressive Writing Practice
           </h3>
           <p className="text-sm text-[var(--wrife-text-muted)] mb-3">
-            Learn grammar through sentence building. Click words from the bank, type new ones, and build correct sentences.
+            Learn grammar through sentence building. Follow the formula pattern to build correct sentences.
           </p>
           <div className="flex items-center gap-2 text-purple-600 text-sm font-medium">
             <span>Try Formula Builder</span>
@@ -120,7 +203,7 @@ export default function PWPDemo() {
       {isOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setIsOpen(false)}>
           <div 
-            className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-hidden shadow-2xl"
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-purple-500 to-indigo-600 text-white">
@@ -139,50 +222,95 @@ export default function PWPDemo() {
             </div>
             
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-72px)]">
-              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold">
-                    Formula
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-5 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                    FORMULA PATTERN
                   </span>
-                  <span className="font-bold text-purple-800">{formula.structure}</span>
                 </div>
-                <p className="text-sm text-purple-700">
-                  Example: {formula.example.split('[')[0]}
-                  <span className="underline font-bold">{formula.newElement}</span>
-                  {formula.example.split(']')[1]}
-                </p>
-                <p className="text-xs text-purple-600 mt-2">
-                  Type the <strong className="underline">{formula.newElement}</strong> word yourself!
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <p className="text-sm font-semibold text-gray-700 mb-2">Word Bank (click to add):</p>
-                <div className="flex flex-wrap gap-2">
-                  {formula.wordBank.map((word, i) => (
-                    <button
-                      key={`${word}-${i}`}
-                      onClick={() => handleWordClick(word)}
-                      disabled={showSuccess}
-                      className="px-4 py-2 bg-[var(--wrife-blue-soft)] text-[var(--wrife-blue)] rounded-lg font-medium hover:bg-[var(--wrife-blue)] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {word}
-                    </button>
+                
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {formula.structure.map((part, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span 
+                        className={`px-4 py-2 rounded-lg text-white font-bold text-lg ${formula.structureColors[i]} ${currentPosition === i ? 'ring-4 ring-yellow-400 animate-pulse' : ''}`}
+                      >
+                        {part}
+                      </span>
+                      {i < formula.structure.length - 1 && (
+                        <span className="text-2xl font-bold text-gray-400">+</span>
+                      )}
+                    </div>
                   ))}
                 </div>
+
+                <div className="bg-white/70 rounded-lg p-4 border border-indigo-100">
+                  <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">Example with Labels:</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {formula.example.map((part, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="flex flex-col items-center">
+                          <span className={`text-xs font-bold text-white px-2 py-0.5 rounded-t ${part.color}`}>
+                            {part.part}
+                          </span>
+                          <span className={`px-3 py-1.5 rounded-b-lg text-sm font-medium bg-white border-2 ${part.color.replace('bg-', 'border-').replace('-500', '-300')}`}>
+                            {part.word}
+                          </span>
+                        </div>
+                        {i < formula.example.length - 1 && (
+                          <span className="text-xl font-bold text-gray-400">+</span>
+                        )}
+                      </div>
+                    ))}
+                    <span className="text-gray-600 text-lg">.</span>
+                  </div>
+                </div>
+
+                {currentPosition >= 0 && (
+                  <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+                    <p className="text-sm font-semibold text-yellow-800">
+                      Now add: <span className={`inline-block px-2 py-0.5 rounded text-white ml-1 ${formula.structureColors[currentPosition]}`}>{formula.structure[currentPosition]}</span>
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="mb-6">
-                <p className="text-sm font-semibold text-gray-700 mb-2">Type your word:</p>
+                <p className="text-sm font-semibold text-gray-700 mb-3">Word Bank <span className="text-gray-400 font-normal">(click to add)</span>:</p>
+                <div className="flex flex-wrap gap-2">
+                  {formula.wordBank.map((item, i) => {
+                    const colors = typeColors[item.type];
+                    return (
+                      <button
+                        key={`${item.word}-${i}`}
+                        onClick={() => handleWordClick(item.word)}
+                        disabled={showSuccess}
+                        className={`flex flex-col items-center px-4 py-2 ${colors.bg} border-2 ${colors.border} rounded-lg hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        <span className={`text-[10px] font-bold uppercase tracking-wide ${colors.text} opacity-70`}>{colors.label}</span>
+                        <span className={`font-semibold ${colors.text}`}>{item.word}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-sm font-semibold text-gray-700">Type the missing word:</p>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${typeColors[formula.targetWord.type].bg} ${typeColors[formula.targetWord.type].text}`}>
+                    {typeColors[formula.targetWord.type].label}
+                  </span>
+                </div>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={typedWord}
                     onChange={(e) => setTypedWord(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleTypeSubmit()}
-                    placeholder={`Type "${formula.newElement}"...`}
+                    placeholder={`Type "${formula.targetWord.word}"...`}
                     disabled={showSuccess}
-                    className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-400 focus:outline-none disabled:opacity-50"
+                    className={`flex-1 px-4 py-2 border-2 rounded-lg focus:outline-none disabled:opacity-50 ${typeColors[formula.targetWord.type].border} focus:ring-2 focus:ring-purple-300`}
                   />
                   <button
                     onClick={handleTypeSubmit}
@@ -201,18 +329,20 @@ export default function PWPDemo() {
                     <span className="text-gray-400 italic">Click words or type to build your sentence...</span>
                   ) : (
                     <>
-                      {userSentence.map((word, i) => (
-                        <span
-                          key={i}
-                          className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                            !formula.wordBank.includes(word)
-                              ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                              : 'bg-white border border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          {word}
-                        </span>
-                      ))}
+                      {userSentence.map((word, i) => {
+                        const bankItem = formula.wordBank.find(w => w.word === word);
+                        const isTarget = word.toLowerCase() === formula.targetWord.word.toLowerCase();
+                        const wordType = isTarget ? formula.targetWord.type : (bankItem?.type || 'noun');
+                        const colors = typeColors[wordType];
+                        return (
+                          <span
+                            key={i}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium ${colors.bg} ${colors.text} border ${colors.border}`}
+                          >
+                            {word}
+                          </span>
+                        );
+                      })}
                       <span className="text-gray-600">.</span>
                     </>
                   )}
@@ -232,8 +362,13 @@ export default function PWPDemo() {
               {attempts > 0 && !showSuccess && (
                 <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
                   <p className="text-sm text-yellow-700">
-                    <strong>Hint:</strong> Make sure to type the word &quot;{formula.newElement}&quot; in your sentence. 
-                    Try clicking words in the right order: {formula.wordBank.join(' + ')} + {formula.newElement}
+                    <strong>Hint:</strong> Follow the formula pattern! Build: 
+                    {formula.structure.map((part, i) => (
+                      <span key={i}>
+                        <span className={`inline-block px-1.5 py-0.5 mx-1 rounded text-xs font-bold text-white ${formula.structureColors[i]}`}>{part}</span>
+                        {i < formula.structure.length - 1 && '+'}
+                      </span>
+                    ))}
                   </p>
                 </div>
               )}
