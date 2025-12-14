@@ -111,13 +111,14 @@ const createFormulas = (): FormulaStep[] => [
     validateFn: (words, prevWords) => {
       if (words.length < 7) return { valid: false, hint: "Add a determiner and adjective before your subject" };
       const determiners = ['the', 'a', 'an', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'this', 'that'];
-      const commonAdjectives = ['old', 'young', 'big', 'small', 'little', 'tall', 'short', 'beautiful', 'peaceful', 'quiet', 'loud', 'happy', 'sad', 'bright', 'dark', 'new', 'ancient', 'modern', 'busy', 'calm', 'gentle', 'fierce', 'kind', 'wise', 'silly', 'clever', 'brave', 'friendly', 'lonely', 'pretty', 'ugly', 'clean', 'dirty', 'warm', 'cold', 'hot', 'cool', 'fast', 'slow', 'strong', 'weak', 'rich', 'poor', 'famous', 'great', 'wonderful', 'amazing', 'terrible', 'lovely', 'sleepy', 'hungry', 'lazy', 'tired', 'excited', 'nervous', 'curious', 'playful', 'adorable', 'majestic', 'magnificent', 'humble', 'proud', 'fearless', 'mysterious', 'enchanted', 'magical', 'royal', 'sacred', 'serene', 'tranquil', 'vibrant', 'lively', 'dull', 'rusty', 'shiny', 'golden', 'silver', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'white', 'black', 'grey', 'gray', 'brown'];
-      const firstWord = words[0].toLowerCase();
+      const functionWords = ['the', 'a', 'an', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'this', 'that', 'in', 'at', 'on', 'by', 'for', 'to', 'with', 'from', 'under', 'over', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been', 'being'];
+      const cleanWord = (w: string) => w.toLowerCase().replace(/[,.:;!?]/g, '');
+      const firstWord = cleanWord(words[0]);
       if (!determiners.includes(firstWord)) {
         return { valid: false, hint: "Start with a determiner: the, a, my, our..." };
       }
-      const secondWord = words[1]?.toLowerCase() || '';
-      if (!commonAdjectives.includes(secondWord)) {
+      const secondWord = cleanWord(words[1] || '');
+      if (!secondWord || functionWords.includes(secondWord) || secondWord.length < 2) {
         return { valid: false, hint: "Add an adjective after the determiner: 'The OLD park', 'A QUIET library'..." };
       }
       return { valid: true };
@@ -183,11 +184,12 @@ const createFormulas = (): FormulaStep[] => [
     minWords: 10,
     validateFn: (words, prevWords) => {
       if (words.length < 10) return { valid: false, hint: "Add an adjective to enhance your ending" };
-      const commonAdjectives = ['old', 'young', 'big', 'small', 'little', 'tall', 'short', 'beautiful', 'peaceful', 'quiet', 'loud', 'happy', 'sad', 'bright', 'dark', 'new', 'ancient', 'modern', 'busy', 'calm', 'gentle', 'fierce', 'kind', 'wise', 'silly', 'clever', 'brave', 'friendly', 'lonely', 'pretty', 'ugly', 'clean', 'dirty', 'warm', 'cold', 'hot', 'cool', 'fast', 'slow', 'strong', 'weak', 'rich', 'poor', 'famous', 'great', 'wonderful', 'amazing', 'terrible', 'lovely', 'sleepy', 'hungry', 'lazy', 'tired', 'excited', 'nervous', 'curious', 'playful', 'adorable', 'majestic', 'magnificent', 'humble', 'proud', 'fearless', 'mysterious', 'enchanted', 'magical', 'royal', 'sacred', 'serene', 'tranquil', 'vibrant', 'lively', 'dull', 'rusty', 'shiny', 'golden', 'silver', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'white', 'black', 'grey', 'gray', 'brown', 'early', 'late', 'sunny', 'cloudy', 'rainy', 'snowy', 'windy', 'foggy', 'misty', 'stormy', 'frosty', 'icy'];
       const preps = ['in', 'at', 'on', 'by', 'for', 'to', 'with', 'from', 'under', 'over', 'through', 'during', 'before', 'after'];
+      const functionWords = ['the', 'a', 'an', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'this', 'that', 'in', 'at', 'on', 'by', 'for', 'to', 'with', 'from', 'under', 'over', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been', 'being'];
+      const cleanWord = (w: string) => w.toLowerCase().replace(/[,.:;!?]/g, '');
       let lastPrepIndex = -1;
       for (let i = words.length - 1; i >= 0; i--) {
-        if (preps.includes(words[i].toLowerCase())) {
+        if (preps.includes(cleanWord(words[i]))) {
           lastPrepIndex = i;
           break;
         }
@@ -195,10 +197,13 @@ const createFormulas = (): FormulaStep[] => [
       if (lastPrepIndex === -1) {
         return { valid: false, hint: "Include a prepositional phrase at the end" };
       }
-      const endingWords = words.slice(lastPrepIndex).map(w => w.toLowerCase());
-      const hasAdjectiveInEnding = endingWords.some(w => commonAdjectives.includes(w));
-      if (!hasAdjectiveInEnding) {
-        return { valid: false, hint: "Add an adjective in your ending phrase: 'in the SUNNY town', 'at the BUSY school'" };
+      const endingWords = words.slice(lastPrepIndex).map(w => cleanWord(w));
+      if (endingWords.length < 3) {
+        return { valid: false, hint: "Your ending needs more detail - add 'in the SUNNY town' style phrase" };
+      }
+      const hasDescriptiveWord = endingWords.some(w => w.length >= 3 && !functionWords.includes(w) && !preps.includes(w));
+      if (!hasDescriptiveWord) {
+        return { valid: false, hint: "Add a descriptive word in your ending: 'in the SUNNY town', 'at the BUSY school'" };
       }
       return { valid: true };
     }
