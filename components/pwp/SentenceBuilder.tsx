@@ -14,6 +14,7 @@ interface SentenceBuilderProps {
   currentNewElement: string;
   placeholder?: string;
   disabled?: boolean;
+  onGetFullSentence?: (getter: () => string) => void;
 }
 
 export default function SentenceBuilder({ 
@@ -21,10 +22,22 @@ export default function SentenceBuilder({
   onTokensChange, 
   currentNewElement,
   placeholder = "Click words or type here...",
-  disabled = false 
+  disabled = false,
+  onGetFullSentence
 }: SentenceBuilderProps) {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const getFullSentence = () => {
+    const allWords = [...tokens.map(t => t.text), inputValue.trim()].filter(Boolean);
+    return allWords.join(' ');
+  };
+
+  useEffect(() => {
+    if (onGetFullSentence) {
+      onGetFullSentence(() => getFullSentence());
+    }
+  }, [tokens, inputValue, onGetFullSentence]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);

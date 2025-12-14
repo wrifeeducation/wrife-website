@@ -63,6 +63,7 @@ export default function PWPSession({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startTime] = useState(Date.now());
   const [overallRepetitionStats, setOverallRepetitionStats] = useState<Record<string, number>>({});
+  const [getFullSentence, setGetFullSentence] = useState<(() => string) | null>(null);
 
   const currentFormula = formulas[currentFormulaIndex];
   const isFirstFormula = currentFormulaIndex === 0;
@@ -86,6 +87,9 @@ export default function PWPSession({
   }, [currentFormula?.word_bank]);
 
   const getCurrentSentence = () => {
+    if (getFullSentence) {
+      return getFullSentence();
+    }
     return tokens.map(t => t.text).join(' ');
   };
 
@@ -197,6 +201,7 @@ export default function PWPSession({
             : "Click words and type new words to build your sentence..."
           }
           disabled={feedback.type === 'success'}
+          onGetFullSentence={setGetFullSentence}
         />
 
         <FeedbackDisplay
