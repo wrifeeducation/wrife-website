@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+declare global {
+  var pgPool: Pool | undefined;
+}
+
+function getPool(): Pool {
+  if (!globalThis.pgPool) {
+    globalThis.pgPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 3,
+    });
+  }
+  return globalThis.pgPool;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const lessonNumber = parseInt(searchParams.get('lesson') || '10');
 
   try {
+    const pool = getPool();
     const result = await pool.query(
       'SELECT * FROM curriculum_map WHERE lesson_number = $1',
       [lessonNumber]
