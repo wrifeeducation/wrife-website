@@ -97,6 +97,22 @@ const WORD_TYPES = {
   prepositions: ['in', 'on', 'at', 'to', 'for', 'from', 'with', 'by', 'near', 'through', 'during', 'after', 'before', 'under', 'over', 'between', 'behind', 'beside', 'above', 'below']
 };
 
+function getExampleVerbForSubject(subject: string): string {
+  const lowerSubject = subject.toLowerCase();
+  const animals = ['dog', 'cat', 'bird', 'fish', 'rabbit', 'horse', 'mouse', 'elephant', 'lion', 'tiger', 'frog', 'butterfly', 'bear'];
+  const places = ['library', 'school', 'park', 'museum', 'shop', 'beach', 'house', 'building'];
+  
+  if (animals.some(a => lowerSubject.includes(a))) {
+    if (lowerSubject.includes('frog')) return 'jumps';
+    if (lowerSubject.includes('bird') || lowerSubject.includes('butterfly')) return 'flies';
+    if (lowerSubject.includes('fish')) return 'swims';
+    if (lowerSubject.includes('dog')) return 'barks';
+    return 'runs';
+  }
+  if (places.some(p => lowerSubject.includes(p))) return 'opens';
+  return 'walks';
+}
+
 function extractWords(sentence: string): string[] {
   return sentence.trim().replace(/[.!?]$/, '').split(/\s+/).filter(w => w);
 }
@@ -179,11 +195,12 @@ function validateFormula1(words: string[], subject: string): FormulaResult {
   const firstWordLower = words[0]?.toLowerCase();
   
   if (words.length !== 2) {
+    const exampleVerb = getExampleVerbForSubject(subject);
     return {
       correct: false,
       feedback: 'Formula 1 needs exactly 2 words: your subject + a verb.',
       score: 40,
-      suggestions: [`Write just: "${subject} [verb]" - for example: "${subject} opens"`],
+      suggestions: [`Write just: "${subject} [verb]" - for example: "${subject} ${exampleVerb}"`],
       words_saved: [],
       previous_sentence: ''
     };

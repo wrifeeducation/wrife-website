@@ -351,8 +351,7 @@ function generateAdaptiveFormulas(
   const verbs = getVerbsForSubject(subject);
   const exampleVerb = verbs[0] || 'sits';
   
-  const exampleSubject = subject.toLowerCase().includes('library') ? 'Park' : 
-                         subject.toLowerCase().includes('park') ? 'School' : 'Park';
+  const exampleSubject = subject;
   
   let formulaCount: number;
   switch (stage) {
