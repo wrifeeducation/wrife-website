@@ -52,10 +52,11 @@ const createFormulas = (): FormulaStep[] => [
     minWords: 3,
     validateFn: (words, prevWords) => {
       if (words.length < 3) return { valid: false, hint: "Add an adverb between your subject and verb" };
-      const hasAdverb = words.some(w => 
-        w.toLowerCase().endsWith('ly') || 
-        ['fast', 'hard', 'well', 'early', 'daily'].includes(w.toLowerCase())
-      );
+      const cleanWord = (w: string) => w.toLowerCase().replace(/[,.:;!?]/g, '');
+      const hasAdverb = words.some(w => {
+        const clean = cleanWord(w);
+        return clean.endsWith('ly') || ['fast', 'hard', 'well', 'early', 'daily'].includes(clean);
+      });
       if (!hasAdverb) return { valid: false, hint: "Add an adverb (often ends in -ly) to describe HOW the action happens" };
       return { valid: true };
     }
@@ -80,8 +81,9 @@ const createFormulas = (): FormulaStep[] => [
     minWords: 5,
     validateFn: (words, prevWords) => {
       if (words.length < 5) return { valid: false, hint: "Add a prepositional phrase (where or when) at the end" };
+      const cleanWord = (w: string) => w.toLowerCase().replace(/[,.:;!?]/g, '');
       const preps = ['in', 'at', 'on', 'by', 'for', 'to', 'with', 'from', 'under', 'over', 'through', 'during', 'before', 'after'];
-      const hasPrep = words.some(w => preps.includes(w.toLowerCase()));
+      const hasPrep = words.some(w => preps.includes(cleanWord(w)));
       if (!hasPrep) return { valid: false, hint: "Add a prepositional phrase starting with: in, at, on, by, for, etc." };
       return { valid: true };
     }
@@ -150,8 +152,9 @@ const createFormulas = (): FormulaStep[] => [
     minWords: 9,
     validateFn: (words, prevWords) => {
       if (words.length < 9) return { valid: false, hint: "Add a time phrase at the beginning" };
+      const cleanWord = (w: string) => w.toLowerCase().replace(/[,.:;!?]/g, '');
       const timeWords = ['every', 'yesterday', 'today', 'tomorrow', 'always', 'sometimes', 'never', 'often', 'usually', 'on', 'in', 'at', 'during', 'before', 'after'];
-      const hasTimePhrase = timeWords.includes(words[0].toLowerCase().replace(/,/g, ''));
+      const hasTimePhrase = timeWords.includes(cleanWord(words[0]));
       if (!hasTimePhrase) {
         return { valid: false, hint: "Start with a time phrase: Every morning, Yesterday, On weekdays..." };
       }
