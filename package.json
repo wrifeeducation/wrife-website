@@ -15,6 +15,7 @@
     "@tailwindcss/postcss": "^4.1.17",
     "next": "^15.2.3",
     "openai": "^6.10.0",
+    "pg": "^8.16.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.0.15"
