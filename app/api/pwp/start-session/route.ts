@@ -74,6 +74,7 @@ const CONCEPT_DEFINITIONS: Record<string, ConceptDefinition> = {
   'determiner': {
     concept: 'determiner',
     position: 'before_subject',
+    requires: ['prepositional_phrase'],
     examples: DETERMINERS,
     hint: 'Determiners: the, a, my, our.'
   },
@@ -87,12 +88,14 @@ const CONCEPT_DEFINITIONS: Record<string, ConceptDefinition> = {
   'time_phrase': {
     concept: 'time_phrase',
     position: 'sentence_start',
+    requires: ['adjective', 'prepositional_phrase'],
     examples: TIME_PHRASES,
     hint: 'Time phrases: Every morning, Each day, On weekdays.'
   },
   'fronted_adverbial': {
     concept: 'fronted_adverbial',
     position: 'sentence_start',
+    requires: ['time_phrase'],
     examples: FRONTED_ADVERBIALS,
     hint: 'Fronted adverbials: Quietly, Slowly, Carefully (with comma).'
   }
