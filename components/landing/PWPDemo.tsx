@@ -53,9 +53,10 @@ const createFormulas = (): FormulaStep[] => [
     validateFn: (words, prevWords) => {
       if (words.length < 3) return { valid: false, hint: "Add an adverb between your subject and verb" };
       const cleanWord = (w: string) => w.toLowerCase().replace(/[,.:;!?]/g, '');
+      const nonLyAdverbs = ['fast', 'hard', 'well', 'early', 'daily', 'always', 'never', 'often', 'sometimes', 'usually', 'seldom', 'rarely', 'frequently', 'soon', 'now', 'then', 'today', 'tomorrow', 'yesterday', 'here', 'there', 'away', 'back', 'quite', 'rather', 'very', 'really', 'just', 'still', 'already', 'yet', 'ever', 'almost', 'also', 'too', 'together', 'alone', 'again', 'twice', 'once', 'forever', 'abroad', 'everywhere', 'nowhere', 'somewhere', 'anywhere'];
       const hasAdverb = words.some(w => {
         const clean = cleanWord(w);
-        return clean.endsWith('ly') || ['fast', 'hard', 'well', 'early', 'daily'].includes(clean);
+        return clean.endsWith('ly') || nonLyAdverbs.includes(clean);
       });
       if (!hasAdverb) return { valid: false, hint: "Add an adverb (often ends in -ly) to describe HOW the action happens" };
       return { valid: true };
