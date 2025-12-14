@@ -174,10 +174,6 @@ function isValidVerb(word: string): boolean {
     }
   }
   
-  if (input.endsWith('s') || input.endsWith('es') || input.endsWith('ing') || input.endsWith('ed')) {
-    return true;
-  }
-  
   return false;
 }
 
