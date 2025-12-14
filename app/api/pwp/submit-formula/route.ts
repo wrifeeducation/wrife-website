@@ -1,4 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Pool } from 'pg';
+
+declare global {
+  var pgPool: Pool | undefined;
+}
+
+function getPool(): Pool {
+  if (!globalThis.pgPool) {
+    globalThis.pgPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 3,
+    });
+  }
+  return globalThis.pgPool;
+}
+
+async function updateConceptMastery(
+  pool: Pool,
+  pupilId: string,
+  conceptsUsed: string[],
+  lessonNumber: number,
+  isCorrect: boolean
+): Promise<void> {
+  if (!pupilId || conceptsUsed.length === 0) return;
+
+  try {
+    for (const concept of conceptsUsed) {
+      if (concept === 'noun' || concept === 'verb') continue;
+      
+      await pool.query(`
+        INSERT INTO concept_mastery (
+          id, pupil_id, concept, lesson_introduced, current_lesson,
+          total_uses, correct_uses, recent_uses, recent_correct,
+          trend, mastery_status, last_used, updated_at
+        ) VALUES (
+          gen_random_uuid(), $1, $2, $3, $3,
+          1, $4::int, 1, $4::int,
+          'stable', 
+          CASE WHEN $4 THEN 'PRACTICING' ELSE 'NEW' END,
+          NOW(), NOW()
+        )
+        ON CONFLICT (pupil_id, concept) DO UPDATE SET
+          current_lesson = $3,
+          total_uses = concept_mastery.total_uses + 1,
+          correct_uses = concept_mastery.correct_uses + $4::int,
+          recent_uses = LEAST(concept_mastery.recent_uses + 1, 10),
+          recent_correct = CASE 
+            WHEN concept_mastery.recent_uses >= 10 
+            THEN concept_mastery.recent_correct - 
+                 FLOOR(concept_mastery.recent_correct::float / 10)::int + $4::int
+            ELSE concept_mastery.recent_correct + $4::int
+          END,
+          trend = CASE
+            WHEN concept_mastery.correct_uses::float / NULLIF(concept_mastery.total_uses, 0) < 
+                 (concept_mastery.recent_correct::float / NULLIF(concept_mastery.recent_uses, 0))
+            THEN 'improving'
+            WHEN concept_mastery.correct_uses::float / NULLIF(concept_mastery.total_uses, 0) >
+                 (concept_mastery.recent_correct::float / NULLIF(concept_mastery.recent_uses, 0))
+            THEN 'declining'
+            ELSE 'stable'
+          END,
+          mastery_status = CASE
+            WHEN (concept_mastery.correct_uses + $4::int)::float / 
+                 (concept_mastery.total_uses + 1) >= 0.85 
+                 AND concept_mastery.total_uses >= 10
+            THEN 'MASTERED'
+            WHEN (concept_mastery.correct_uses + $4::int)::float / 
+                 (concept_mastery.total_uses + 1) >= 0.65
+            THEN 'PRACTICING'
+            ELSE 'NEW'
+          END,
+          last_used = NOW(),
+          updated_at = NOW()
+      `, [pupilId, concept, lessonNumber, isCorrect ? 1 : 0]);
+    }
+  } catch (error) {
+    console.error('Error updating concept mastery:', error);
+  }
+}
 
 interface FormulaResult {
   correct: boolean;
@@ -425,7 +504,10 @@ export async function POST(request: NextRequest) {
       formula_structure,
       subject,
       previous_words = [],
-      previous_sentence = ''
+      previous_sentence = '',
+      pupil_id,
+      lesson_number,
+      concepts_used = []
     } = await request.json();
 
     if (!session_id || formula_number === undefined || !pupil_sentence) {
@@ -440,6 +522,17 @@ export async function POST(request: NextRequest) {
       previous_words,
       previous_sentence
     );
+
+    if (pupil_id && lesson_number && concepts_used.length > 0) {
+      const pool = getPool();
+      await updateConceptMastery(
+        pool,
+        pupil_id,
+        concepts_used,
+        lesson_number,
+        result.correct
+      );
+    }
 
     return NextResponse.json({
       session_id,
