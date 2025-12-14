@@ -97,6 +97,31 @@ interface WritingAttempt {
   performance_band: string | null;
 }
 
+interface PWPCurriculumAssignment {
+  id: number;
+  lesson_number: number;
+  assigned_date: string;
+  due_date: string | null;
+  is_active: boolean;
+  custom_instructions: string | null;
+  curriculum_map?: {
+    lesson_name: string;
+    pwp_stage: string;
+    concepts_introduced: string[];
+  } | null;
+}
+
+interface PWPSession {
+  id: string;
+  pupil_id: string;
+  lesson_number: number;
+  status: string;
+  formulas_completed: number;
+  formulas_total: number;
+  accuracy_percentage: number | null;
+  completed_at: string | null;
+}
+
 export default function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [classData, setClassData] = useState<Class | null>(null);
@@ -118,6 +143,8 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
   const [pwpSubmissions, setPwpSubmissions] = useState<PWPSubmission[]>([]);
   const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
   const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
+  const [pwpCurriculumAssignments, setPwpCurriculumAssignments] = useState<PWPCurriculumAssignment[]>([]);
+  const [pwpSessions, setPwpSessions] = useState<PWPSession[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<{
     submission: Submission;
     pupilName: string;
@@ -140,7 +167,14 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     fetchPWPSubmissions();
     fetchDWPAssignments();
     fetchWritingAttempts();
+    fetchPWPCurriculumAssignments();
   }, [user, resolvedParams.id, router]);
+
+  useEffect(() => {
+    if (pupils.length > 0) {
+      fetchPWPSessions();
+    }
+  }, [pupils, resolvedParams.id]);
 
   useEffect(() => {
     if (tabParam && ['pupils', 'progress', 'pwp', 'dwp'].includes(tabParam)) {
@@ -374,6 +408,61 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     } catch (err) {
       console.error('Error fetching writing attempts:', err);
     }
+  }
+
+  async function fetchPWPCurriculumAssignments() {
+    try {
+      const { data, error } = await supabase
+        .from('pwp_class_assignments')
+        .select(`
+          id, lesson_number, assigned_date, due_date, is_active, custom_instructions,
+          curriculum_map (lesson_name, pwp_stage, concepts_introduced)
+        `)
+        .eq('class_id', resolvedParams.id)
+        .eq('is_active', true)
+        .order('lesson_number', { ascending: true });
+
+      if (error?.code === 'PGRST205') {
+        setPwpCurriculumAssignments([]);
+        return;
+      }
+      if (error) throw error;
+      setPwpCurriculumAssignments((data as unknown as PWPCurriculumAssignment[]) || []);
+    } catch (err) {
+      console.error('Error fetching PWP curriculum assignments:', err);
+      setPwpCurriculumAssignments([]);
+    }
+  }
+
+  async function fetchPWPSessions() {
+    try {
+      const { data, error } = await supabase
+        .from('pwp_sessions')
+        .select('id, pupil_id, lesson_number, status, formulas_completed, formulas_total, accuracy_percentage, completed_at')
+        .eq('class_id', resolvedParams.id)
+        .order('started_at', { ascending: false });
+
+      if (error?.code === 'PGRST205') {
+        setPwpSessions([]);
+        return;
+      }
+      if (error) throw error;
+      setPwpSessions((data as unknown as PWPSession[]) || []);
+    } catch (err) {
+      console.error('Error fetching PWP sessions:', err);
+      setPwpSessions([]);
+    }
+  }
+
+  function getPWPSessionForPupil(pupilId: string, lessonNumber: number): PWPSession | undefined {
+    return pwpSessions.find(s => s.pupil_id === pupilId && s.lesson_number === lessonNumber && s.status === 'completed');
+  }
+
+  function getPWPSessionStatus(pupilId: string, lessonNumber: number): 'completed' | 'in_progress' | 'not_started' {
+    const sessions = pwpSessions.filter(s => s.pupil_id === pupilId && s.lesson_number === lessonNumber);
+    if (sessions.some(s => s.status === 'completed')) return 'completed';
+    if (sessions.some(s => s.status === 'in_progress')) return 'in_progress';
+    return 'not_started';
   }
 
   function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): WritingAttempt | undefined {
@@ -994,6 +1083,106 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                   </table>
                 </div>
               </>
+            )}
+
+            {/* New PWP Curriculum Progress Section */}
+            {pwpCurriculumAssignments.length > 0 && pupils.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-[var(--wrife-border)]">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">🧩</span>
+                  <div>
+                    <h3 className="text-lg font-bold text-[var(--wrife-text-main)]">
+                      PWP Curriculum Progress (L10-67)
+                    </h3>
+                    <p className="text-sm text-[var(--wrife-text-muted)]">
+                      Track pupil progress through the formula-based writing curriculum
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">✓</span>
+                      Completed
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
+                      In Progress
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">○</span>
+                      Not Started
+                    </span>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--wrife-border)]">
+                        <th className="text-left py-3 px-2 font-semibold text-[var(--wrife-text-main)] sticky left-0 bg-white">
+                          Pupil
+                        </th>
+                        {pwpCurriculumAssignments.map((assignment) => (
+                          <th key={assignment.id} className="text-center py-3 px-2 font-semibold text-[var(--wrife-text-main)] min-w-[100px]">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-purple-600 text-xs font-bold">
+                                L{assignment.lesson_number}
+                              </span>
+                              <span className="block truncate max-w-[80px] text-xs text-[var(--wrife-text-muted)]" title={assignment.curriculum_map?.lesson_name ?? ''}>
+                                {(assignment.curriculum_map?.lesson_name ?? 'Lesson').slice(0, 12)}...
+                              </span>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pupils.map((pupil) => (
+                        <tr key={pupil.id} className="border-b border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)]">
+                          <td className="py-3 px-2 sticky left-0 bg-white">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600 uppercase">
+                                {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
+                              </div>
+                              <span className="font-medium text-[var(--wrife-text-main)]">
+                                {pupil.first_name} {pupil.last_name || ''}
+                              </span>
+                            </div>
+                          </td>
+                          {pwpCurriculumAssignments.map((assignment) => {
+                            const sessionStatus = getPWPSessionStatus(pupil.id, assignment.lesson_number);
+                            const session = getPWPSessionForPupil(pupil.id, assignment.lesson_number);
+                            return (
+                              <td key={assignment.id} className="text-center py-3 px-2">
+                                {sessionStatus === 'completed' ? (
+                                  <div className="flex flex-col items-center">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600" title="Completed">
+                                      ✓
+                                    </span>
+                                    {session?.accuracy_percentage != null && (
+                                      <span className="text-xs text-green-600 mt-1">{Math.round(session.accuracy_percentage)}%</span>
+                                    )}
+                                  </div>
+                                ) : sessionStatus === 'in_progress' ? (
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 text-yellow-600" title="In Progress">
+                                    ◐
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400" title="Not Started">
+                                    ○
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
           )}

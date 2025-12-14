@@ -4,6 +4,7 @@ import InteractivePracticeDemo from './InteractivePracticeDemo';
 import TeacherGuideDemo from './TeacherGuideDemo';
 import PresentationDemo from './PresentationDemo';
 import DWPAIDemo from './DWPAIDemo';
+import PWPDemo from './PWPDemo';
 
 export default function DemoSection() {
   return (
@@ -21,14 +22,15 @@ export default function DemoSection() {
             Experience the WriFe Difference
           </h2>
           <p className="text-[var(--wrife-text-muted)] text-lg max-w-2xl mx-auto">
-            Don&apos;t just take our word for it. Try Lesson 11 materials right now and see how WriFe transforms writing education.
+            Don&apos;t just take our word for it. Try our interactive demos right now and see how WriFe transforms writing education.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           <InteractivePracticeDemo />
           <TeacherGuideDemo />
           <PresentationDemo />
+          <PWPDemo />
           <DWPAIDemo />
         </div>
 

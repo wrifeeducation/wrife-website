@@ -366,28 +366,24 @@ export default function PupilDashboardPage() {
           <div 
             className="rounded-2xl p-5"
             style={{
-              background: 'linear-gradient(135deg, #dbeafe 0%, #f3e8ff 100%)',
-              border: '2px solid #a78bfa',
+              background: 'linear-gradient(135deg, #e0f2fe 0%, #fef3c7 100%)',
+              border: '2px solid #fbbf24',
             }}
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <span className="text-xl">✍️</span>
+              <div className="w-10 h-10 rounded-lg bg-[var(--wrife-yellow)] flex items-center justify-center">
+                <span className="text-xl">✨</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[var(--wrife-text-main)]">Daily Writing</p>
-                <p className="text-xs text-[var(--wrife-text-muted)]">{dwpAssignments.length} levels assigned</p>
+                <p className="text-sm font-semibold text-[var(--wrife-text-main)]">PWP Practice</p>
+                <p className="text-xs text-[var(--wrife-text-muted)]">Build sentences step by step</p>
               </div>
             </div>
-            {dwpAssignments.length > 0 ? (
-              <Link href={`/pupil/dwp/${dwpAssignments[0].id}`}>
-                <button className="w-full py-2.5 rounded-full font-bold text-white bg-purple-600 hover:bg-purple-700 transition text-sm">
-                  Start Writing
-                </button>
-              </Link>
-            ) : (
-              <p className="text-xs text-center text-purple-600">No levels assigned yet</p>
-            )}
+            <Link href="/pupil/pwp/10">
+              <button className="w-full py-2.5 rounded-full font-bold text-white bg-[var(--wrife-blue)] hover:bg-opacity-90 transition text-sm">
+                Start Today's Practice
+              </button>
+            </Link>
           </div>
         </div>
 
