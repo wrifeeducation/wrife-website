@@ -643,6 +643,10 @@ Pupil's sentence: "${sentence}"
 
 Does this sentence follow the formula structure? Remember to be lenient on word forms and minor errors.`;
 
+  if (formulaNumber > 1) {
+    return evaluateSentence(sentence, formulaStructure, subject, formulaNumber, previousWords, previousSentence);
+  }
+
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
