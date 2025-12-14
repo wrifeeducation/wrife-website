@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Pool } from 'pg';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
+});
 
 declare global {
   var pgPool: Pool | undefined;
@@ -595,6 +601,90 @@ function evaluateSentence(
   return validateFormula3Plus(words, formulaStructure, subject, previousWords, previousSentence, formulaNumber);
 }
 
+async function evaluateWithAI(
+  sentence: string,
+  formulaStructure: string,
+  subject: string,
+  formulaNumber: number,
+  previousWords: string[] = [],
+  previousSentence: string = ''
+): Promise<FormulaResult> {
+  const words = extractWords(sentence);
+  
+  const systemPrompt = `You are assessing a primary school pupil's sentence for a writing exercise called PWP (Progressive Writing Practice).
+
+The pupil must write sentences following specific formula patterns. Your job is to check if their sentence follows the STRUCTURE correctly, while being LENIENT on:
+- Spelling mistakes and typos
+- Singular/plural variations (fish/fishes, bird/birds)
+- Verb tense variations (fly/flies/flying/flew)
+- Creative word choices
+
+FORMULA PATTERNS:
+- Formula 1: subject + verb (e.g., "Bird flies", "Fish swims", "Dogs run")
+- Formula 2: subject + adverb + verb (e.g., "Bird quickly flies", "Fish slowly swims")
+- Formula 3+: More complex patterns building on previous formulas
+
+CRITICAL RULES:
+1. Focus on STRUCTURE, not exact word matching
+2. Accept plural forms: "fishes swim" is valid for subject "fish"
+3. Accept verb variations: "fly", "flies", "flying" are all valid verbs
+4. Be encouraging - this is for young learners
+5. Minor typos should NOT cause rejection if the structure is correct
+
+Return JSON with this exact structure:
+{
+  "correct": boolean,
+  "score": number (0-100),
+  "feedback": "encouraging feedback message",
+  "suggestions": ["helpful suggestion if incorrect"] or null if correct
+}`;
+
+  const userPrompt = `Assess this sentence:
+
+Subject chosen: "${subject}"
+Formula ${formulaNumber}: ${formulaStructure}
+${previousSentence ? `Previous sentence: "${previousSentence}"` : ''}
+Pupil's sentence: "${sentence}"
+
+Does this sentence follow the formula structure? Remember to be lenient on word forms and minor errors.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 300,
+    });
+
+    const responseText = completion.choices[0].message.content;
+    if (!responseText) {
+      throw new Error('No AI response');
+    }
+
+    const aiResult = JSON.parse(responseText);
+    
+    const savedWords = words.map(w => w.replace(/[,.]$/, ''));
+    const sentenceClean = savedWords.join(' ');
+    
+    return {
+      correct: aiResult.correct === true,
+      feedback: aiResult.feedback || (aiResult.correct ? 'Well done!' : 'Try again.'),
+      score: typeof aiResult.score === 'number' ? aiResult.score : (aiResult.correct ? 100 : 50),
+      suggestions: aiResult.suggestions || undefined,
+      words_saved: aiResult.correct ? savedWords : previousWords,
+      previous_sentence: aiResult.correct ? sentenceClean : previousSentence,
+      repetition_count: aiResult.correct ? { [subject]: formulaNumber } : undefined
+    };
+  } catch (error) {
+    console.error('AI validation error, falling back to rule-based:', error);
+    return evaluateSentence(sentence, formulaStructure, subject, formulaNumber, previousWords, previousSentence);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { 
@@ -614,7 +704,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const result = evaluateSentence(
+    const result = await evaluateWithAI(
       pupil_sentence, 
       formula_structure || 'subject + verb', 
       subject || '',
