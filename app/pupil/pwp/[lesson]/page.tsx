@@ -75,13 +75,22 @@ export default function PWPPracticePage() {
   };
 
   const handleFormulaSubmit = async (formulaNumber: number, sentence: string) => {
+    const currentFormula = formulas[formulaNumber - 1];
+    const previousFormula = formulaNumber > 1 ? formulas[formulaNumber - 2] : null;
+    
     const res = await fetch('/api/pwp/submit-formula', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         session_id: sessionId,
         formula_number: formulaNumber,
-        pupil_sentence: sentence
+        pupil_sentence: sentence,
+        formula_structure: currentFormula?.formula_structure || 'subject + verb',
+        subject: subject.trim(),
+        previous_words: previousFormula?.word_bank || [],
+        previous_sentence: formulaNumber > 1 ? '' : '',
+        concepts_used: currentFormula?.concepts_used || [],
+        lesson_number: lessonNumber
       })
     });
 
