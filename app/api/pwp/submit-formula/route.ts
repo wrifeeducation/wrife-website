@@ -611,28 +611,31 @@ async function evaluateWithAI(
 ): Promise<FormulaResult> {
   const words = extractWords(sentence);
   
-  const systemPrompt = `You are a friendly primary school writing teacher assessing sentence structure for PWP (Progressive Writing Practice).
+  const systemPrompt = `You are assessing a simple sentence for a children's writing exercise.
 
-YOUR TASK: Check if the pupil's sentence matches the required formula structure. Be LENIENT and ENCOURAGING.
+TASK: Check if the sentence has the correct structure for Formula 1: subject + verb (exactly 2 words).
 
-WHAT TO CHECK:
-- Formula 1 (subject + verb): Does the sentence have a subject and a verb? (e.g., "Fish swims", "Birds fly", "Frog jumps")
-- Formula 2 (subject + adverb + verb): Does it have subject + adverb + verb? Is it about the same subject as before?
-- Formula 3+: Does it build on the previous sentence by adding the new element while keeping the core meaning?
+EXAMPLES OF CORRECT SENTENCES:
+- "Birds fly" ✓ (birds=subject, fly=verb)
+- "Fish swims" ✓ (fish=subject, swims=verb)
+- "Frog jumps" ✓ (frog=subject, jumps=verb)
+- "Dog runs" ✓ (dog=subject, runs=verb)
+- "Cat sleeps" ✓ (cat=subject, sleeps=verb)
 
-LENIENCY RULES - Be accepting of:
-- Plural/singular variations: "fish" = "fishes", "bird" = "birds"  
-- Verb form variations: "fly" = "flies" = "flying" = "flew"
-- Minor typos: "fihes" should be accepted as "fishes"
-- Creative vocabulary: Any real verb is fine, not just a preset list
+COMMON VERBS TO RECOGNIZE: fly, flies, swim, swims, run, runs, jump, jumps, walk, walks, eat, eats, sleep, sleeps, sing, sings, dance, dances, play, plays, bark, barks, hop, hops, crawl, crawls, glide, glides
+
+ACCEPT IF:
+- Has 2 words
+- First word is a noun (the subject)
+- Second word is a verb (action word)
+- Accept any plural form: "birds fly" is correct if subject is "bird"
 
 REJECT ONLY IF:
-- Wrong structure (e.g., 3 words when formula needs 2)
-- Missing required element (no verb, no subject)
-- Formula 1 starts with "the", "a", or "an"
-- Formula 2+ completely changes the subject to something unrelated
+- Not 2 words
+- Starts with "the", "a", or "an"
+- Second word is clearly NOT a verb
 
-Return JSON: {"correct": boolean, "score": 0-100, "feedback": "encouraging message", "suggestions": ["hint"] or null}`;
+Return JSON: {"correct": true/false, "score": 0-100, "feedback": "encouraging message", "suggestions": null or ["hint"]}`;
 
   const userPrompt = `Assess this sentence:
 
