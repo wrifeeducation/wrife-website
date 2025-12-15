@@ -37,6 +37,15 @@ interface ClassData {
   pupil_count: number;
 }
 
+interface TeacherInvite {
+  id: string;
+  email: string;
+  invite_code: string;
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  created_at: string;
+  expires_at: string;
+}
+
 function getTierBadgeStyle(tier: string): string {
   switch (tier) {
     case 'trial':
@@ -59,6 +68,15 @@ function getQuotaColor(used: number, limit: number): string {
   return 'bg-green-500';
 }
 
+function generateInviteCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export default function SchoolAdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -66,12 +84,14 @@ export default function SchoolAdminDashboard() {
   const [teachers, setTeachers] = useState<Profile[]>([]);
   const [pupils, setPupils] = useState<Profile[]>([]);
   const [classes, setClasses] = useState<ClassData[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<TeacherInvite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'pupils' | 'classes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'pupils' | 'classes' | 'invites'>('overview');
   const [showAddTeacher, setShowAddTeacher] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteError, setInviteError] = useState('');
   const [inviteSuccess, setInviteSuccess] = useState('');
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -120,6 +140,15 @@ export default function SchoolAdminDashboard() {
 
       setPupils(pupilsData || []);
 
+      const { data: invitesData } = await supabase
+        .from('teacher_invites')
+        .select('*')
+        .eq('school_id', schoolId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      setPendingInvites(invitesData || []);
+
       const { data: classesData } = await supabase
         .from('classes')
         .select(`
@@ -165,9 +194,9 @@ export default function SchoolAdminDashboard() {
       return;
     }
 
-    if (!school) return;
+    if (!school || !user) return;
 
-    if (teachers.length >= school.teacher_limit) {
+    if (teachers.length + pendingInvites.length >= school.teacher_limit) {
       setInviteError(`Teacher limit reached (${school.teacher_limit}). Please upgrade your subscription.`);
       return;
     }
@@ -194,14 +223,65 @@ export default function SchoolAdminDashboard() {
 
         setInviteSuccess(`${inviteEmail} has been added to your school!`);
         setInviteEmail('');
+        setShowAddTeacher(false);
         fetchSchoolData(school.id);
       } else {
-        setInviteSuccess(`Invitation sent to ${inviteEmail}. They will be added to your school when they sign up.`);
+        const { data: existingInvite } = await supabase
+          .from('teacher_invites')
+          .select('id')
+          .eq('email', inviteEmail.trim())
+          .eq('school_id', school.id)
+          .eq('status', 'pending')
+          .single();
+
+        if (existingInvite) {
+          setInviteError('An invitation has already been sent to this email');
+          return;
+        }
+
+        const inviteCode = generateInviteCode();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        
+        const { error: inviteError } = await supabase
+          .from('teacher_invites')
+          .insert({
+            email: inviteEmail.trim(),
+            school_id: school.id,
+            invite_code: inviteCode,
+            invited_by: user.id,
+            status: 'pending',
+            expires_at: expiresAt.toISOString(),
+          });
+
+        if (inviteError) throw inviteError;
+
+        setInviteSuccess(`Invitation created for ${inviteEmail}. Share the invite code with them to join.`);
         setInviteEmail('');
+        setShowAddTeacher(false);
+        fetchSchoolData(school.id);
       }
     } catch (err) {
       console.error('Error inviting teacher:', err);
       setInviteError('Failed to invite teacher. Please try again.');
+    }
+  }
+
+  async function handleCancelInvite(inviteId: string) {
+    if (!confirm('Are you sure you want to cancel this invitation?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('teacher_invites')
+        .update({ status: 'cancelled' })
+        .eq('id', inviteId);
+
+      if (error) throw error;
+      
+      if (school) fetchSchoolData(school.id);
+    } catch (err) {
+      console.error('Error cancelling invite:', err);
+      alert('Failed to cancel invitation');
     }
   }
 
@@ -221,6 +301,12 @@ export default function SchoolAdminDashboard() {
       console.error('Error removing teacher:', err);
       alert('Failed to remove teacher');
     }
+  }
+
+  function copyToClipboard(code: string) {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
   }
 
   if (authLoading || loading) {
@@ -287,7 +373,7 @@ export default function SchoolAdminDashboard() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div className="bg-white rounded-xl shadow-soft border border-[var(--wrife-border)] p-4">
               <p className="text-xs text-[var(--wrife-text-muted)] mb-1">Teachers</p>
               <p className="text-2xl font-bold text-[var(--wrife-text-main)]">
@@ -319,6 +405,10 @@ export default function SchoolAdminDashboard() {
               <p className="text-2xl font-bold text-[var(--wrife-text-main)]">{classes.length}</p>
             </div>
             <div className="bg-white rounded-xl shadow-soft border border-[var(--wrife-border)] p-4">
+              <p className="text-xs text-[var(--wrife-text-muted)] mb-1">Pending Invites</p>
+              <p className="text-2xl font-bold text-orange-500">{pendingInvites.length}</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-soft border border-[var(--wrife-border)] p-4">
               <p className="text-xs text-[var(--wrife-text-muted)] mb-1">Status</p>
               <p className={`text-lg font-bold ${school.is_active ? 'text-green-600' : 'text-red-500'}`}>
                 {school.is_active ? '✓ Active' : '✗ Inactive'}
@@ -327,7 +417,7 @@ export default function SchoolAdminDashboard() {
           </div>
 
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-            {(['overview', 'teachers', 'pupils', 'classes'] as const).map(tab => (
+            {(['overview', 'teachers', 'invites', 'pupils', 'classes'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -337,7 +427,7 @@ export default function SchoolAdminDashboard() {
                     : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-gray-50'
                 }`}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab === 'invites' ? `Invites (${pendingInvites.length})` : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
@@ -376,32 +466,30 @@ export default function SchoolAdminDashboard() {
               </div>
 
               <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
-                <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Recent Classes</h2>
-                {classes.length === 0 ? (
-                  <p className="text-sm text-[var(--wrife-text-muted)]">No classes yet</p>
+                <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Pending Invites</h2>
+                {pendingInvites.length === 0 ? (
+                  <p className="text-sm text-[var(--wrife-text-muted)]">No pending invitations</p>
                 ) : (
                   <div className="space-y-3">
-                    {classes.slice(0, 5).map(cls => (
-                      <div key={cls.id} className="flex items-center justify-between py-2 border-b border-[var(--wrife-border)] last:border-0">
+                    {pendingInvites.slice(0, 5).map(invite => (
+                      <div key={invite.id} className="flex items-center justify-between py-2 border-b border-[var(--wrife-border)] last:border-0">
                         <div>
-                          <p className="text-sm font-medium text-[var(--wrife-text-main)]">{cls.name}</p>
+                          <p className="text-sm font-medium text-[var(--wrife-text-main)]">{invite.email}</p>
                           <p className="text-xs text-[var(--wrife-text-muted)]">
-                            Year {cls.year_group} • {cls.pupil_count} pupils
+                            Code: <code className="bg-gray-100 px-1 rounded">{invite.invite_code}</code>
                           </p>
                         </div>
-                        <span className="text-xs text-[var(--wrife-text-muted)]">
-                          {cls.teacher?.display_name || 'Unassigned'}
-                        </span>
+                        <span className="text-xs text-orange-500 font-medium">Pending</span>
                       </div>
                     ))}
                   </div>
                 )}
-                {classes.length > 5 && (
+                {pendingInvites.length > 5 && (
                   <button
-                    onClick={() => setActiveTab('classes')}
+                    onClick={() => setActiveTab('invites')}
                     className="mt-4 text-sm text-[var(--wrife-blue)] hover:underline"
                   >
-                    View all {classes.length} classes →
+                    View all {pendingInvites.length} invites →
                   </button>
                 )}
               </div>
@@ -416,7 +504,7 @@ export default function SchoolAdminDashboard() {
                   onClick={() => setShowAddTeacher(!showAddTeacher)}
                   className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
                 >
-                  + Add Teacher
+                  + Invite Teacher
                 </button>
               </div>
 
@@ -434,7 +522,7 @@ export default function SchoolAdminDashboard() {
                       type="submit"
                       className="px-4 py-2 rounded-lg bg-[var(--wrife-blue)] text-white text-sm font-semibold hover:opacity-90 transition"
                     >
-                      Add
+                      Send Invite
                     </button>
                     <button
                       type="button"
@@ -465,7 +553,7 @@ export default function SchoolAdminDashboard() {
                   </div>
                   <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No teachers yet</h3>
                   <p className="text-sm text-[var(--wrife-text-muted)]">
-                    Add teachers to your school to get started
+                    Invite teachers to your school to get started
                   </p>
                 </div>
               ) : (
@@ -501,6 +589,84 @@ export default function SchoolAdminDashboard() {
                             className="text-red-500 hover:text-red-700 text-sm font-medium"
                           >
                             Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'invites' && (
+            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] overflow-hidden">
+              <div className="p-6 border-b border-[var(--wrife-border)] flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Pending Invitations ({pendingInvites.length})</h2>
+                  <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
+                    Share invite codes with teachers to join your school
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveTab('teachers');
+                    setShowAddTeacher(true);
+                  }}
+                  className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
+                >
+                  + New Invite
+                </button>
+              </div>
+
+              {pendingInvites.length === 0 ? (
+                <div className="p-12 text-center">
+                  <div className="mb-4">
+                    <span className="text-5xl">📧</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No pending invitations</h3>
+                  <p className="text-sm text-[var(--wrife-text-muted)]">
+                    Invite teachers from the Teachers tab
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[var(--wrife-border)] bg-gray-50">
+                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Email</th>
+                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Invite Code</th>
+                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Sent</th>
+                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Expires</th>
+                      <th className="text-right px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingInvites.map(invite => (
+                      <tr key={invite.id} className="border-b border-[var(--wrife-border)] last:border-0 hover:bg-gray-50">
+                        <td className="px-6 py-4 text-[var(--wrife-text-main)]">{invite.email}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">{invite.invite_code}</code>
+                            <button
+                              onClick={() => copyToClipboard(invite.invite_code)}
+                              className="text-xs text-[var(--wrife-blue)] hover:underline"
+                            >
+                              {copiedCode === invite.invite_code ? 'Copied!' : 'Copy'}
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-[var(--wrife-text-muted)] text-sm">
+                          {new Date(invite.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-[var(--wrife-text-muted)] text-sm">
+                          {new Date(invite.expires_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => handleCancelInvite(invite.id)}
+                            className="text-red-500 hover:text-red-700 text-sm font-medium"
+                          >
+                            Cancel
                           </button>
                         </td>
                       </tr>
