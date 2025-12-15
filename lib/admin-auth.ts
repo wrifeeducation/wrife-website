@@ -37,11 +37,7 @@ export async function getAuthenticatedAdmin(): Promise<AuthResult> {
 
   const { data: userData, error: authError } = await supabase.auth.getUser();
   
-  if (authError) {
-    throw new AuthError(`Authentication failed: ${authError.message}`, 500);
-  }
-  
-  if (!userData.user) {
+  if (authError || !userData.user) {
     throw new AuthError('Unauthorized', 401);
   }
 
