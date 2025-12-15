@@ -30,6 +30,16 @@ const levelDescriptions: { [key: number]: string } = {
   7: 'Multi-clause Sentences',
 };
 
+const grammarFocusDefaults: { [key: number]: string } = {
+  1: 'Subject + Verb + Object',
+  2: 'Prepositions of place and time',
+  3: 'Articles (a, an, the)',
+  4: 'Combined sentence elements',
+  5: 'Coordinating conjunctions',
+  6: 'Subordinating conjunctions',
+  7: 'Multiple clauses',
+};
+
 export default function AdminPWPActivitiesPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -43,6 +53,8 @@ export default function AdminPWPActivitiesPage() {
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [schemaReloading, setSchemaReloading] = useState(false);
+  const [quickAddLevel, setQuickAddLevel] = useState(1);
+  const [addingActivity, setAddingActivity] = useState(false);
   
   const [formData, setFormData] = useState({
     level: 1,
@@ -124,6 +136,40 @@ export default function AdminPWPActivitiesPage() {
   function openAddModal() {
     resetForm();
     setShowAddModal(true);
+  }
+
+  async function handleQuickAdd() {
+    setAddingActivity(true);
+    setFormError('');
+    
+    try {
+      const response = await fetch('/api/admin/pwp-activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: quickAddLevel,
+          level_name: levelDescriptions[quickAddLevel] || `Level ${quickAddLevel}`,
+          grammar_focus: grammarFocusDefaults[quickAddLevel] || '',
+          sentence_structure: grammarFocusDefaults[quickAddLevel] || '',
+          instructions: 'Complete this practice activity independently.',
+          examples: [],
+          practice_prompts: [],
+          year_group_min: 2,
+          year_group_max: 6,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      setSuccessMessage(`Level ${quickAddLevel} activity added!`);
+      fetchActivities();
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to add activity');
+    } finally {
+      setAddingActivity(false);
+    }
   }
 
   function openEditModal(activity: PWPActivity) {
@@ -294,12 +340,42 @@ export default function AdminPWPActivitiesPage() {
                 {activities.length} activities across 7 progression levels
               </p>
             </div>
-            <button
-              onClick={openAddModal}
-              className="rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition"
-            >
-              + Add Activity
-            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-4 mb-6">
+            <h3 className="font-bold text-[var(--wrife-text-main)] mb-3">Quick Add Activity</h3>
+            <p className="text-sm text-[var(--wrife-text-muted)] mb-4">
+              Select a level and click to instantly add a new independent practice activity
+            </p>
+            {formError && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {formError}
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                value={quickAddLevel}
+                onChange={(e) => setQuickAddLevel(parseInt(e.target.value))}
+                className="px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+              >
+                {[1, 2, 3, 4, 5, 6, 7].map(level => (
+                  <option key={level} value={level}>Level {level}: {levelDescriptions[level]}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleQuickAdd}
+                disabled={addingActivity}
+                className="rounded-full bg-[var(--wrife-blue)] px-6 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition disabled:opacity-50"
+              >
+                {addingActivity ? 'Adding...' : '+ Add Activity'}
+              </button>
+              <button
+                onClick={openAddModal}
+                className="rounded-full border border-[var(--wrife-border)] px-4 py-2 text-sm font-medium text-[var(--wrife-text-muted)] hover:bg-gray-50 transition"
+              >
+                Advanced Options
+              </button>
+            </div>
           </div>
 
           {successMessage && (
@@ -308,44 +384,24 @@ export default function AdminPWPActivitiesPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-4 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <select
-                value={selectedLevel ?? ''}
-                onChange={(e) => setSelectedLevel(e.target.value ? parseInt(e.target.value) : null)}
-                className="flex-1 px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-              >
-                <option value="">All Levels</option>
-                {Object.entries(levelDescriptions).map(([num, desc]) => (
-                  <option key={num} value={num}>Level {num}: {desc}</option>
-                ))}
-              </select>
-              <button
-                onClick={handleReloadSchema}
-                disabled={schemaReloading}
-                className="px-4 py-2 rounded-lg border border-orange-300 text-sm font-medium text-orange-600 hover:bg-orange-50 transition disabled:opacity-50"
-              >
-                {schemaReloading ? 'Refreshing...' : 'Refresh Schema Cache'}
-              </button>
-            </div>
-          </div>
-
-          <div className="mb-6 p-4 bg-[var(--wrife-blue-soft)] rounded-2xl border border-[var(--wrife-blue)]/20">
-            <h3 className="font-bold text-[var(--wrife-text-main)] mb-2">Content Generation Guide</h3>
-            <p className="text-sm text-[var(--wrife-text-muted)] mb-2">
-              Use Claude AI to generate PWP activities with this prompt format:
-            </p>
-            <div className="bg-white rounded-lg p-3 text-xs font-mono text-[var(--wrife-text-muted)] whitespace-pre-wrap">
-{`Generate a Progressive Writing Practice activity for Level [1-7].
-
-Level Name: [e.g., "Simple Sentences"]
-Grammar Focus: [e.g., "Subject + Verb + Object"]
-Sentence Structure: [e.g., "Subject + Verb + Object"]
-Instructions: [Clear pupil-facing instructions, 2-3 sentences]
-Examples: [5 example sentences at this level, one per line]
-Practice Prompts: [5 sentence starters with blanks, one per line]
-Year Groups: [Min and Max, e.g., 2-4]`}
-            </div>
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <select
+              value={selectedLevel ?? ''}
+              onChange={(e) => setSelectedLevel(e.target.value ? parseInt(e.target.value) : null)}
+              className="px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] bg-white"
+            >
+              <option value="">Filter: All Levels</option>
+              {Object.entries(levelDescriptions).map(([num, desc]) => (
+                <option key={num} value={num}>Level {num}: {desc}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleReloadSchema}
+              disabled={schemaReloading}
+              className="px-3 py-2 rounded-lg text-xs font-medium text-orange-600 hover:bg-orange-50 transition disabled:opacity-50"
+            >
+              {schemaReloading ? 'Refreshing...' : 'Refresh Cache'}
+            </button>
           </div>
 
           {Object.keys(groupedByLevel).length === 0 ? (
