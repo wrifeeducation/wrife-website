@@ -80,10 +80,10 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   
   const tabParam = searchParams?.get('tab') ?? null;
-  const initialTab = tabParam && ['overview', 'lessons', 'pupils', 'assignments', 'classes'].includes(tabParam) 
-    ? tabParam as 'overview' | 'lessons' | 'pupils' | 'assignments' | 'classes'
+  const initialTab = tabParam && ['overview', 'lessons', 'pwp', 'dwp', 'pupils', 'assignments', 'classes'].includes(tabParam) 
+    ? tabParam as 'overview' | 'lessons' | 'pwp' | 'dwp' | 'pupils' | 'assignments' | 'classes'
     : 'overview';
-  const [activeTab, setActiveTab] = useState<'overview' | 'lessons' | 'pupils' | 'assignments' | 'classes'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'lessons' | 'pwp' | 'dwp' | 'pupils' | 'assignments' | 'classes'>(initialTab);
   
   function handleTabChange(tab: typeof activeTab) {
     setActiveTab(tab);
@@ -98,7 +98,7 @@ function DashboardContent() {
   }
   
   useEffect(() => {
-    if (tabParam && ['overview', 'lessons', 'pupils', 'assignments', 'classes'].includes(tabParam)) {
+    if (tabParam && ['overview', 'lessons', 'pwp', 'dwp', 'pupils', 'assignments', 'classes'].includes(tabParam)) {
       setActiveTab(tabParam as typeof activeTab);
     }
   }, [tabParam]);
@@ -474,18 +474,22 @@ function DashboardContent() {
         </div>
 
         <nav className="flex gap-1 mb-6 border-b border-[var(--wrife-border)] overflow-x-auto bg-[var(--wrife-bg)]">
-          {(['overview', 'lessons', 'pupils', 'assignments', 'classes'] as const).map((tab) => (
+          {(['overview', 'lessons', 'pwp', 'dwp', 'pupils', 'assignments', 'classes'] as const).map((tab) => (
             <Link
               key={tab}
               href={tab === 'overview' ? '/dashboard' : `/dashboard?tab=${tab}`}
               className={`px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${
                 activeTab === tab
-                  ? 'border-[var(--wrife-blue)] text-[var(--wrife-blue)] bg-white'
+                  ? tab === 'pwp' ? 'border-green-500 text-green-600 bg-green-50'
+                  : tab === 'dwp' ? 'border-purple-500 text-purple-600 bg-purple-50'
+                  : 'border-[var(--wrife-blue)] text-[var(--wrife-blue)] bg-white'
                   : 'border-transparent text-[var(--wrife-text-muted)] hover:text-[var(--wrife-text-main)] hover:bg-white/50'
               }`}
             >
               {tab === 'overview' && 'Overview'}
               {tab === 'lessons' && 'Lessons'}
+              {tab === 'pwp' && '📝 PWP'}
+              {tab === 'dwp' && '✍️ DWP'}
               {tab === 'pupils' && `My Pupils (${stats.totalPupils})`}
               {tab === 'assignments' && `Assignments (${activeAssignments.length})`}
               {tab === 'classes' && `Classes (${stats.totalClasses})`}
@@ -676,6 +680,100 @@ function DashboardContent() {
                   <p className="text-sm text-[var(--wrife-text-muted)]">Browse lessons and click on any lesson to view details and assign to your class</p>
                 </div>
                 <LessonLibrary />
+              </div>
+            )}
+
+            {activeTab === 'pwp' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-2xl p-6 border-2 border-green-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h2 className="text-xl font-bold text-[var(--wrife-text-main)]">Progressive Writing Practice (PWP)</h2>
+                      <p className="text-sm text-[var(--wrife-text-muted)]">Formula-based sentence building with AI feedback</p>
+                    </div>
+                    <span className="text-4xl">📝</span>
+                  </div>
+                  <p className="text-sm text-green-700 mb-4">
+                    PWP helps pupils build sentences using word formulas. Each lesson focuses on different parts of speech.
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
+                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Select a Class to Assign PWP</h3>
+                  {classes.length > 0 ? (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {classes.map((cls) => (
+                        <Link key={cls.id} href={`/classes/${cls.id}?tab=pwp`}>
+                          <div className="p-5 rounded-xl bg-green-50 border-2 border-green-200 hover:border-green-400 hover:shadow-lg transition cursor-pointer">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="font-bold text-lg text-[var(--wrife-text-main)]">{cls.name}</p>
+                                <p className="text-sm text-[var(--wrife-text-muted)]">Year {cls.year_group}</p>
+                              </div>
+                              <span className="text-3xl">📝</span>
+                            </div>
+                            <p className="text-sm text-green-600 font-semibold">Assign PWP Lessons →</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <span className="text-5xl mb-4 block">📚</span>
+                      <p className="text-[var(--wrife-text-muted)] mb-4">Create a class first to assign PWP lessons</p>
+                      <button onClick={() => setShowCreateClassModal(true)} className="rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+                        + Create Class
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'dwp' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border-2 border-purple-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h2 className="text-xl font-bold text-[var(--wrife-text-main)]">Daily Writing Practice (DWP)</h2>
+                      <p className="text-sm text-[var(--wrife-text-muted)]">40-level progressive writing programme with AI assessment</p>
+                    </div>
+                    <span className="text-4xl">✍️</span>
+                  </div>
+                  <p className="text-sm text-purple-700 mb-4">
+                    DWP guides pupils through 40 carefully structured levels, from word sorting to extended writing with AI-powered feedback.
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
+                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Select a Class to Assign DWP Levels</h3>
+                  {classes.length > 0 ? (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {classes.map((cls) => (
+                        <Link key={cls.id} href={`/classes/${cls.id}?tab=dwp`}>
+                          <div className="p-5 rounded-xl bg-purple-50 border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg transition cursor-pointer">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="font-bold text-lg text-[var(--wrife-text-main)]">{cls.name}</p>
+                                <p className="text-sm text-[var(--wrife-text-muted)]">Year {cls.year_group}</p>
+                              </div>
+                              <span className="text-3xl">✍️</span>
+                            </div>
+                            <p className="text-sm text-purple-600 font-semibold">Assign DWP Levels →</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <span className="text-5xl mb-4 block">📚</span>
+                      <p className="text-[var(--wrife-text-muted)] mb-4">Create a class first to assign DWP levels</p>
+                      <button onClick={() => setShowCreateClassModal(true)} className="rounded-full bg-purple-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+                        + Create Class
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
