@@ -42,6 +42,7 @@ export default function AdminPWPActivitiesPage() {
   const [editingActivity, setEditingActivity] = useState<PWPActivity | null>(null);
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [schemaReloading, setSchemaReloading] = useState(false);
   
   const [formData, setFormData] = useState({
     level: 1,
@@ -78,10 +79,34 @@ export default function AdminPWPActivitiesPage() {
 
       if (error) throw error;
       setActivities(data || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching activities:', err);
+      if (err.message?.includes('schema cache')) {
+        setFormError('Database schema cache issue detected. Please click "Refresh Schema Cache" to fix.');
+      }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleReloadSchema() {
+    setSchemaReloading(true);
+    setFormError('');
+    try {
+      const response = await fetch('/api/admin/reload-schema', { method: 'POST' });
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      setSuccessMessage('Schema cache refreshed. Please try your operation again.');
+      setTimeout(() => {
+        setSuccessMessage('');
+        fetchActivities();
+      }, 2000);
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to reload schema');
+    } finally {
+      setSchemaReloading(false);
     }
   }
 
@@ -293,6 +318,13 @@ export default function AdminPWPActivitiesPage() {
                   <option key={num} value={num}>Level {num}: {desc}</option>
                 ))}
               </select>
+              <button
+                onClick={handleReloadSchema}
+                disabled={schemaReloading}
+                className="px-4 py-2 rounded-lg border border-orange-300 text-sm font-medium text-orange-600 hover:bg-orange-50 transition disabled:opacity-50"
+              >
+                {schemaReloading ? 'Refreshing...' : 'Refresh Schema Cache'}
+              </button>
             </div>
           </div>
 
