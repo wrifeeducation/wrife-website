@@ -9,7 +9,7 @@ import Link from 'next/link';
 export default function AddPupilPage() {
   const router = useRouter();
   const params = useParams();
-  const schoolId = params.id as string;
+  const schoolId = params?.id as string || '';
   const { user, loading: authLoading } = useAuth();
   
   const [email, setEmail] = useState('');

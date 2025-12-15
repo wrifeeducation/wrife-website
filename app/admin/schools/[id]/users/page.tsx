@@ -25,7 +25,7 @@ interface SchoolStats {
 export default function SchoolUsersPage() {
   const router = useRouter();
   const params = useParams();
-  const schoolId = params.id as string;
+  const schoolId = params?.id as string || '';
   const { user, loading: authLoading } = useAuth();
   
   const [stats, setStats] = useState<SchoolStats | null>(null);
