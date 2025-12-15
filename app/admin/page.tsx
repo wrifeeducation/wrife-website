@@ -82,59 +82,14 @@ export default function AdminDashboard() {
 
   async function fetchSchools() {
     try {
-      const { data, error } = await supabase
-        .from('schools')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
+      const response = await fetch('/api/admin/school-stats');
+      const data = await response.json();
       
-      const schools = data || [];
+      if (data.error) {
+        throw new Error(data.error);
+      }
       
-      const schoolsWithCounts = await Promise.all(
-        (schools || []).map(async (school) => {
-          console.log('Counting for school:', school.id, school.name);
-          
-          try {
-            const { data: teachers, error: teacherError } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('school_id', school.id)
-              .eq('role', 'teacher');
-            
-            console.log('Teacher query result:', { teachers, teacherError });
-            
-            const { data: pupils, error: pupilError } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('school_id', school.id)
-              .eq('role', 'pupil');
-            
-            console.log('Pupil query result:', { pupils, pupilError });
-            
-            const teacherCount = teachers?.length || 0;
-            const pupilCount = pupils?.length || 0;
-            
-            console.log('Final counts:', { teacherCount, pupilCount });
-            
-            return {
-              ...school,
-              teacherCount,
-              pupilCount,
-            };
-          } catch (err) {
-            console.error('Error counting:', err);
-            return {
-              ...school,
-              teacherCount: 0,
-              pupilCount: 0,
-            };
-          }
-        })
-      );
-
-      console.log('All schools with counts:', schoolsWithCounts);
-      setSchools(schoolsWithCounts);
+      setSchools(data.schools || []);
     } catch (err) {
       console.error('Error fetching schools:', err);
     } finally {
