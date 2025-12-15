@@ -125,8 +125,8 @@ export default function NewSchoolPage() {
                   type="number"
                   required
                   min="1"
-                  value={formData.teacher_limit}
-                  onChange={(e) => setFormData({ ...formData, teacher_limit: parseInt(e.target.value) })}
+                  value={formData.teacher_limit || ''}
+                  onChange={(e) => setFormData({ ...formData, teacher_limit: e.target.value ? parseInt(e.target.value) : 0 })}
                   className="w-full rounded-xl border border-[var(--wrife-border)] px-4 py-2 text-sm"
                 />
               </div>
@@ -139,8 +139,8 @@ export default function NewSchoolPage() {
                   type="number"
                   required
                   min="1"
-                  value={formData.pupil_limit}
-                  onChange={(e) => setFormData({ ...formData, pupil_limit: parseInt(e.target.value) })}
+                  value={formData.pupil_limit || ''}
+                  onChange={(e) => setFormData({ ...formData, pupil_limit: e.target.value ? parseInt(e.target.value) : 0 })}
                   className="w-full rounded-xl border border-[var(--wrife-border)] px-4 py-2 text-sm"
                 />
               </div>
