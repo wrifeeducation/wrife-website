@@ -7,8 +7,8 @@ export default function HeroSection() {
     <section className="w-full px-4 md:px-8 py-12 md:py-20 bg-[var(--wrife-bg)]">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          {/* Animated WriFe Logo */}
-          <div className="flex justify-center mb-6 animate-fade-in-scale">
+          {/* Animated WriFe Logo and Tagline - Inline */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-6 animate-fade-in-scale">
             <div className="flex items-center gap-3">
               <BookLogo size="2xl" className="drop-shadow-lg" />
               <span 
@@ -18,12 +18,10 @@ export default function HeroSection() {
                 WriFe
               </span>
             </div>
+            <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--wrife-blue)]" style={{ fontFamily: "'Baloo 2', cursive" }}>
+              ✨ Writing for everyone ✨
+            </span>
           </div>
-          
-          {/* Animated "Writing for everyone" tagline */}
-          <p className="text-lg md:text-xl font-semibold text-[var(--wrife-blue)] mb-4 animate-slide-up-fade">
-            ✨ Writing for everyone ✨
-          </p>
           
           <h1 
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-[var(--wrife-text-main)]"
