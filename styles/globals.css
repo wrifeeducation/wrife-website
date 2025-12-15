@@ -166,3 +166,32 @@ a {
   animation: slideUpFade 0.6s ease-out 0.3s forwards;
   opacity: 0;
 }
+
+@keyframes flash {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 5px var(--wrife-blue), 0 0 10px var(--wrife-blue), 0 0 20px var(--wrife-blue);
+  }
+  50% {
+    opacity: 0.5;
+    text-shadow: 0 0 20px var(--wrife-yellow), 0 0 40px var(--wrife-yellow), 0 0 60px var(--wrife-yellow);
+  }
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-flash {
+  animation: flash 0.6s ease-in-out 2;
+}
+
+.animate-blink {
+  animation: blink 0.8s infinite;
+  font-weight: 100;
+}

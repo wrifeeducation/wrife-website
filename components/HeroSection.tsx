@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import PencilMascot from "./mascots/PencilMascot";
 import BookLogo from "./mascots/BookLogo";
+import TypewriterText from "./TypewriterText";
 
 export default function HeroSection() {
   return (
@@ -18,9 +21,12 @@ export default function HeroSection() {
                 WriFe
               </span>
             </div>
-            <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--wrife-blue)]" style={{ fontFamily: "'Baloo 2', cursive" }}>
-              ✨ Writing for everyone ✨
-            </span>
+            <TypewriterText 
+              text="Writing for everyone"
+              className="text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--wrife-blue)]"
+              typingSpeed={80}
+              pauseBeforeRestart={2000}
+            />
           </div>
           
           <h1 
