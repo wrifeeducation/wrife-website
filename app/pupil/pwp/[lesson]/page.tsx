@@ -21,7 +21,7 @@ type SessionStatus = 'loading' | 'subject_select' | 'practicing' | 'completed' |
 export default function PWPPracticePage() {
   const params = useParams();
   const router = useRouter();
-  const lessonNumber = parseInt(params.lesson as string);
+  const lessonNumber = parseInt((params?.lesson as string) ?? '0');
 
   const [status, setStatus] = useState<SessionStatus>('loading');
   const [curriculum, setCurriculum] = useState<CurriculumData | null>(null);
