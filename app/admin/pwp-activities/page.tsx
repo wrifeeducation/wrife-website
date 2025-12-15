@@ -72,18 +72,14 @@ export default function AdminPWPActivitiesPage() {
 
   async function fetchActivities() {
     try {
-      const { data, error } = await supabase
-        .from('progressive_activities')
-        .select('*')
-        .order('level', { ascending: true });
+      const response = await fetch('/api/admin/pwp-activities');
+      const data = await response.json();
 
-      if (error) throw error;
-      setActivities(data || []);
+      if (data.error) throw new Error(data.error);
+      setActivities(data.activities || []);
     } catch (err: any) {
       console.error('Error fetching activities:', err);
-      if (err.message?.includes('schema cache')) {
-        setFormError('Database schema cache issue detected. Please click "Refresh Schema Cache" to fix.');
-      }
+      setFormError(err.message || 'Failed to fetch activities');
     } finally {
       setLoading(false);
     }
@@ -160,9 +156,10 @@ export default function AdminPWPActivitiesPage() {
       const examplesArray = formData.examples.split('\n').filter(e => e.trim());
       const promptsArray = formData.practice_prompts.split('\n').filter(p => p.trim());
 
-      const { error } = await supabase
-        .from('progressive_activities')
-        .insert({
+      const response = await fetch('/api/admin/pwp-activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           level: formData.level,
           level_name: formData.level_name.trim(),
           grammar_focus: formData.grammar_focus.trim(),
@@ -172,9 +169,11 @@ export default function AdminPWPActivitiesPage() {
           practice_prompts: promptsArray,
           year_group_min: formData.year_group_min,
           year_group_max: formData.year_group_max,
-        });
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
       setSuccessMessage('Activity added successfully!');
       setShowAddModal(false);
@@ -199,9 +198,11 @@ export default function AdminPWPActivitiesPage() {
       const examplesArray = formData.examples.split('\n').filter(e => e.trim());
       const promptsArray = formData.practice_prompts.split('\n').filter(p => p.trim());
 
-      const { error } = await supabase
-        .from('progressive_activities')
-        .update({
+      const response = await fetch('/api/admin/pwp-activities', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingActivity.id,
           level: formData.level,
           level_name: formData.level_name.trim(),
           grammar_focus: formData.grammar_focus.trim(),
@@ -211,10 +212,11 @@ export default function AdminPWPActivitiesPage() {
           practice_prompts: promptsArray,
           year_group_min: formData.year_group_min,
           year_group_max: formData.year_group_max,
-        })
-        .eq('id', editingActivity.id);
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
       setSuccessMessage('Activity updated successfully!');
       setShowEditModal(false);
@@ -232,12 +234,12 @@ export default function AdminPWPActivitiesPage() {
     }
 
     try {
-      const { error } = await supabase
-        .from('progressive_activities')
-        .delete()
-        .eq('id', activity.id);
+      const response = await fetch(`/api/admin/pwp-activities?id=${activity.id}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
       setSuccessMessage('Activity deleted successfully!');
       fetchActivities();
