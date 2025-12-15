@@ -35,7 +35,7 @@ interface CurriculumData {
 function PWPContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const lessonNumber = searchParams.get('lesson');
+  const lessonNumber = searchParams?.get('lesson') ?? null;
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentFormula, setCurrentFormula] = useState<number>(1);
