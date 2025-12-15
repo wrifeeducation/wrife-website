@@ -73,6 +73,12 @@ export default function Navbar() {
               >
                 Pricing
               </a>
+              <Link
+                href="/contact"
+                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+              >
+                Contact
+              </Link>
             </nav>
           )}
         </div>
@@ -207,6 +213,13 @@ export default function Navbar() {
               >
                 Pricing
               </a>
+              <Link
+                href="/contact"
+                className="px-4 py-3 text-sm font-medium rounded-lg bg-white text-[var(--wrife-text-main)] hover:bg-gray-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Contact
+              </Link>
               <div className="border-t border-[var(--wrife-border)] my-2"></div>
               <Link
                 href="/pupil/login"
