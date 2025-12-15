@@ -38,6 +38,7 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
   - Formula generator: `lib/formulaGenerator.ts`
 - **DWP (Differentiated Writing Programme):** A 40-level program with level-specific rubrics and AI assessment, leading to badges and certificates.
 - **Admin Dashboards:** Separate dashboards for super administrators (user/school/curriculum management) and school administrators (school-specific help).
+- **PWP Admin Quick Add:** Simplified activity creation with one-click "Quick Add" that auto-populates level name, grammar focus, and default instructions for independent practice. Full form available via "Advanced Options".
 
 ## External Dependencies
 - **Next.js 15**: Web framework.
