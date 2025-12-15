@@ -185,46 +185,46 @@ export default function AdminDashboard() {
       <Navbar />
       <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">Super Admin Dashboard</h1>
               <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
                 Manage all schools and subscriptions
               </p>
             </div>
-            <div className="flex gap-3 flex-wrap">
-              <Link href="/admin/help">
-                <button className="rounded-full border border-[var(--wrife-border)] px-4 py-3 text-sm font-semibold text-[var(--wrife-text-muted)] hover:bg-gray-50 transition">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:gap-3">
+              <Link href="/admin/help" className="contents">
+                <button className="rounded-full border border-[var(--wrife-border)] px-3 py-2 lg:px-4 lg:py-3 text-xs lg:text-sm font-semibold text-[var(--wrife-text-muted)] hover:bg-gray-50 transition whitespace-nowrap">
                   ? Help
                 </button>
               </Link>
-              <Link href="/admin/lessons">
-                <button className="rounded-full border border-[var(--wrife-yellow)] bg-[var(--wrife-yellow)] px-6 py-3 text-sm font-semibold text-[var(--wrife-text-main)] hover:opacity-90 transition">
+              <Link href="/admin/lessons" className="contents">
+                <button className="rounded-full border border-[var(--wrife-yellow)] bg-[var(--wrife-yellow)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-[var(--wrife-text-main)] hover:opacity-90 transition whitespace-nowrap">
                   Manage Lessons
                 </button>
               </Link>
-              <Link href="/admin/practice-files">
-                <button className="rounded-full border border-green-500 bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+              <Link href="/admin/practice-files" className="contents">
+                <button className="rounded-full border border-green-500 bg-green-500 px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition whitespace-nowrap">
                   Practice Files
                 </button>
               </Link>
-              <Link href="/admin/pwp-activities">
-                <button className="rounded-full border border-purple-500 bg-purple-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+              <Link href="/admin/pwp-activities" className="contents">
+                <button className="rounded-full border border-purple-500 bg-purple-500 px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition whitespace-nowrap">
                   PWP Activities
                 </button>
               </Link>
-              <Link href="/admin/dwp-levels">
-                <button className="rounded-full border border-orange-500 bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+              <Link href="/admin/dwp-levels" className="contents">
+                <button className="rounded-full border border-orange-500 bg-orange-500 px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition whitespace-nowrap">
                   DWP Levels
                 </button>
               </Link>
-              <Link href="/admin/users">
-                <button className="rounded-full border border-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition">
+              <Link href="/admin/users" className="contents">
+                <button className="rounded-full border border-[var(--wrife-blue)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition whitespace-nowrap">
                   Manage Users
                 </button>
               </Link>
-              <Link href="/admin/schools/new">
-                <button className="rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition">
+              <Link href="/admin/schools/new" className="col-span-2 sm:col-span-1 contents">
+                <button className="rounded-full bg-[var(--wrife-blue)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white shadow-soft hover:opacity-90 transition whitespace-nowrap">
                   + New School
                 </button>
               </Link>
