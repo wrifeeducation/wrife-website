@@ -27,7 +27,8 @@ export default function AdminUsersPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'unassigned' | 'teacher' | 'pupil'>('all');
+  const [filter, setFilter] = useState<'all' | 'unassigned' | 'admin' | 'school_admin' | 'teacher' | 'pupil'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
@@ -104,11 +105,30 @@ export default function AdminUsersPage() {
   }
 
   const filteredProfiles = profiles.filter(p => {
-    if (filter === 'unassigned') return !p.school_id;
-    if (filter === 'teacher') return p.role === 'teacher';
-    if (filter === 'pupil') return p.role === 'pupil';
-    return true;
+    const matchesFilter = (() => {
+      if (filter === 'unassigned') return !p.school_id;
+      if (filter === 'admin') return p.role === 'admin';
+      if (filter === 'school_admin') return p.role === 'school_admin';
+      if (filter === 'teacher') return p.role === 'teacher';
+      if (filter === 'pupil') return p.role === 'pupil';
+      return true;
+    })();
+    
+    const matchesSearch = !searchTerm || 
+      p.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesFilter && matchesSearch;
   });
+
+  const stats = {
+    total: profiles.length,
+    admins: profiles.filter(p => p.role === 'admin').length,
+    schoolAdmins: profiles.filter(p => p.role === 'school_admin').length,
+    teachers: profiles.filter(p => p.role === 'teacher').length,
+    pupils: profiles.filter(p => p.role === 'pupil').length,
+    unassigned: profiles.filter(p => !p.school_id).length,
+  };
 
   const getSchoolName = (schoolId: string | null) => {
     if (!schoolId) return 'Unassigned';
@@ -156,33 +176,76 @@ export default function AdminUsersPage() {
       <Navbar />
       <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <Link href="/admin" className="text-[var(--wrife-blue)] hover:underline text-sm">
-                  ← Back to Dashboard
-                </Link>
-              </div>
-              <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">User Management</h1>
-              <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
-                Assign users to schools and manage roles
-              </p>
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-1">
+              <Link href="/admin" className="text-[var(--wrife-blue)] hover:underline text-sm">
+                ← Back to Dashboard
+              </Link>
             </div>
+            <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">User Management</h1>
+            <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
+              Assign users to schools and manage roles
+            </p>
+          </div>
 
-            <div className="flex gap-2 flex-wrap">
-              {(['all', 'unassigned', 'teacher', 'pupil'] as const).map(f => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    filter === f
-                      ? 'bg-[var(--wrife-blue)] text-white'
-                      : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-gray-50'
-                  }`}
-                >
-                  {f === 'all' ? 'All Users' : f === 'unassigned' ? 'Unassigned' : f.charAt(0).toUpperCase() + f.slice(1) + 's'}
-                </button>
-              ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+            <div className="bg-white rounded-xl p-4 border border-[var(--wrife-border)] text-center">
+              <p className="text-2xl font-bold text-[var(--wrife-text-main)]">{stats.total}</p>
+              <p className="text-xs text-[var(--wrife-text-muted)]">Total Users</p>
+            </div>
+            <div className="bg-red-50 rounded-xl p-4 border border-red-200 text-center">
+              <p className="text-2xl font-bold text-red-600">{stats.admins}</p>
+              <p className="text-xs text-red-600">Admins</p>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-4 border border-purple-200 text-center">
+              <p className="text-2xl font-bold text-purple-600">{stats.schoolAdmins}</p>
+              <p className="text-xs text-purple-600">School Admins</p>
+            </div>
+            <div className="bg-blue-50 rounded-xl p-4 border border-blue-200 text-center">
+              <p className="text-2xl font-bold text-blue-600">{stats.teachers}</p>
+              <p className="text-xs text-blue-600">Teachers</p>
+            </div>
+            <div className="bg-green-50 rounded-xl p-4 border border-green-200 text-center">
+              <p className="text-2xl font-bold text-green-600">{stats.pupils}</p>
+              <p className="text-xs text-green-600">Pupils</p>
+            </div>
+            <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200 text-center">
+              <p className="text-2xl font-bold text-yellow-600">{stats.unassigned}</p>
+              <p className="text-xs text-yellow-600">Unassigned</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-[var(--wrife-border)] mb-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {(['all', 'admin', 'school_admin', 'teacher', 'pupil', 'unassigned'] as const).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`px-3 py-2 rounded-full text-xs font-medium transition ${
+                      filter === f
+                        ? f === 'admin' ? 'bg-red-500 text-white'
+                        : f === 'school_admin' ? 'bg-purple-500 text-white'
+                        : f === 'teacher' ? 'bg-blue-500 text-white'
+                        : f === 'pupil' ? 'bg-green-500 text-white'
+                        : f === 'unassigned' ? 'bg-yellow-500 text-white'
+                        : 'bg-[var(--wrife-blue)] text-white'
+                        : 'bg-gray-100 text-[var(--wrife-text-main)] hover:bg-gray-200'
+                    }`}
+                  >
+                    {f === 'all' ? 'All' : f === 'school_admin' ? 'School Admins' : f === 'unassigned' ? 'Unassigned' : f.charAt(0).toUpperCase() + f.slice(1) + 's'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
