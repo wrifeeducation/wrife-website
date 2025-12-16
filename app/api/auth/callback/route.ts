@@ -43,25 +43,35 @@ export async function POST(request: NextRequest) {
     
     console.log('[Auth Callback] Event:', event);
     
-    const cookieStore = await cookies();
-    const supabase = createSupabaseServerClient(cookieStore);
+    const response = NextResponse.json({ success: true });
 
     if (event === 'SIGNED_IN' && session) {
-      await supabase.auth.setSession({
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
+      response.cookies.set('sb-access-token', session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
       });
-      console.log('[Auth Callback] Session set successfully');
-      return NextResponse.json({ success: true });
+      response.cookies.set('sb-refresh-token', session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      });
+      console.log('[Auth Callback] Session cookies set successfully');
+      return response;
     }
 
     if (event === 'SIGNED_OUT') {
-      await supabase.auth.signOut();
-      console.log('[Auth Callback] Signed out successfully');
-      return NextResponse.json({ success: true });
+      response.cookies.delete('sb-access-token');
+      response.cookies.delete('sb-refresh-token');
+      console.log('[Auth Callback] Session cookies cleared');
+      return response;
     }
 
-    return NextResponse.json({ success: true });
+    return response;
   } catch (error) {
     console.error('[Auth Callback] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
