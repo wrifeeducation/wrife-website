@@ -48,11 +48,12 @@ export default function LoginPage() {
     console.log('[Login] Session from response:', data.session ? 'Present' : 'Missing');
     
     if (data.session && data.user) {
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', data.user.id);
       
+      console.log('[Login] Profile query result:', { profiles, error: profileError });
       const profile = profiles && profiles.length > 0 ? profiles[0] : null;
       console.log('[Login] Profile check:', profile);
       
