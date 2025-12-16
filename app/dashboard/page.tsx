@@ -78,6 +78,7 @@ function DashboardContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [authChecked, setAuthChecked] = useState(false);
   
   const tabParam = searchParams?.get('tab') ?? null;
   const initialTab = tabParam && ['overview', 'lessons', 'pwp', 'dwp', 'pupils', 'assignments', 'classes'].includes(tabParam) 
@@ -128,14 +129,28 @@ function DashboardContent() {
   const [globalSuccess, setGlobalSuccess] = useState('');
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login?redirectTo=/dashboard');
+    console.log('[Dashboard] Auth state:', { loading, user: user?.id, authChecked });
+    
+    if (!loading && !authChecked) {
+      setAuthChecked(true);
+      
+      if (!user) {
+        console.log('[Dashboard] No user after auth loaded, checking session directly...');
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          console.log('[Dashboard] Direct session check:', session ? `User: ${session.user.id}` : 'No session');
+          if (!session) {
+            console.log('[Dashboard] Confirmed no session, redirecting to login');
+            router.push('/login?redirectTo=/dashboard');
+          }
+        });
+      } else if (user.role === 'pupil') {
+        console.log('[Dashboard] User is pupil, redirecting to pupil dashboard');
+        router.push('/pupil/dashboard');
+      } else {
+        console.log('[Dashboard] User authenticated:', user.role);
+      }
     }
-    // Redirect pupils to their own dashboard
-    if (!loading && user && user.role === 'pupil') {
-      router.push('/pupil/dashboard');
-    }
-  }, [user, loading, router]);
+  }, [user, loading, router, authChecked]);
 
   useEffect(() => {
     if (user) {
