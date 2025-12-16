@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -33,6 +33,16 @@ export default function AdminPracticeFilesPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleChooseFiles = () => {
+    if (!selectedLesson) {
+      setErrorMessage('Please select a lesson first');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+    fileInputRef.current?.click();
+  };
 
   async function copyToClipboard(url: string) {
     try {
@@ -303,23 +313,25 @@ export default function AdminPracticeFilesPage() {
                   <p className="text-sm text-[var(--wrife-text-muted)] mb-4">
                     or click to browse
                   </p>
-                  <label className="inline-block">
-                    <input
-                      type="file"
-                      accept=".html,.htm,.css,.js"
-                      multiple
-                      onChange={handleFileInput}
-                      className="hidden"
-                      disabled={!selectedLesson}
-                    />
-                    <span className={`inline-block rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition ${
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".html,.htm,.css,.js"
+                    multiple
+                    onChange={handleFileInput}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleChooseFiles}
+                    className={`inline-block rounded-full px-6 py-2 text-sm font-semibold transition ${
                       selectedLesson
-                        ? 'bg-[var(--wrife-blue)] text-white hover:opacity-90'
+                        ? 'bg-[var(--wrife-blue)] text-white hover:opacity-90 cursor-pointer'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}>
-                      Choose Files
-                    </span>
-                  </label>
+                    }`}
+                  >
+                    Choose Files
+                  </button>
                 </>
               )}
             </div>
