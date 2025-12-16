@@ -18,7 +18,7 @@ interface PWPActivity {
 interface AssignPWPModalProps {
   isOpen: boolean;
   onClose: () => void;
-  classId: number;
+  classId: string;
   className: string;
   yearGroup: number;
   teacherId: string;

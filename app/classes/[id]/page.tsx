@@ -12,7 +12,7 @@ import { AssignPWPModal } from '@/components/AssignPWPModal';
 import { AssignDWPModal } from '@/components/AssignDWPModal';
 
 interface Class {
-  id: number;
+  id: string;
   name: string;
   year_group: number;
   class_code: string;
