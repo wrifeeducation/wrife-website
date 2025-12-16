@@ -128,3 +128,15 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Next.js build output
+.next
+out
+
+# Dependencies
+node_modules
