@@ -90,8 +90,9 @@ export default function AdminPWPActivitiesPage() {
       if (data.error) throw new Error(data.error);
       setActivities(data.activities || []);
     } catch (err: any) {
-      console.error('Error fetching activities:', err);
-      setFormError(err.message || 'Failed to fetch activities');
+      const errorMessage = err?.message || (typeof err === 'string' ? err : JSON.stringify(err)) || 'Failed to fetch activities';
+      console.error('Error fetching activities:', errorMessage);
+      setFormError(errorMessage);
     } finally {
       setLoading(false);
     }
