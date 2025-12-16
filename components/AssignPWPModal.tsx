@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface PWPActivity {
   id: number;
@@ -55,19 +54,14 @@ export function AssignPWPModal({ isOpen, onClose, classId, className, yearGroup,
   async function fetchActivities() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('progressive_activities')
-        .select('*')
-        .lte('year_group_min', yearGroup)
-        .gte('year_group_max', yearGroup)
-        .order('level', { ascending: true });
-
-      if (error?.code === 'PGRST205') {
-        setActivities([]);
-        return;
+      const response = await fetch(`/api/teacher/pwp-activities?yearGroup=${yearGroup}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch activities');
       }
-      if (error) throw error;
-      setActivities(data || []);
+      
+      setActivities(data.activities || []);
     } catch (err) {
       console.error('Error fetching PWP activities:', err);
       setActivities([]);
@@ -86,17 +80,22 @@ export function AssignPWPModal({ isOpen, onClose, classId, className, yearGroup,
     setError('');
 
     try {
-      const { error } = await supabase
-        .from('pwp_assignments')
-        .insert({
+      const response = await fetch('/api/teacher/pwp-assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           activity_id: selectedActivity.id,
           class_id: classId,
-          teacher_id: teacherId,
           instructions: instructions.trim() || null,
           due_date: dueDate || null,
-        });
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to assign activity');
+      }
 
       setSuccessMessage(`Level ${selectedActivity.level}: ${selectedActivity.level_name} assigned successfully!`);
       setTimeout(() => {

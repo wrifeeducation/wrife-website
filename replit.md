@@ -7,7 +7,12 @@ WriFe is a writing education platform designed for primary school teachers, offe
 I prefer that you focus on high-level architectural and feature discussions. Avoid getting bogged down in minor implementation details unless specifically asked. When suggesting changes, please outline the impact on existing structures, especially the database schema or core user flows. I appreciate clear, concise explanations and a collaborative approach.
 
 ## System Architecture
-The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS v4. Supabase (PostgreSQL) is used for the database.
+The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS v4.
+
+**Database Architecture (Critical):**
+- **Replit PostgreSQL** (via `pg` Pool): Stores ALL application data including lessons, activities, assignments, classes, profiles, etc. Accessed via `DATABASE_URL` environment variable.
+- **Supabase**: Provides authentication ONLY (sign-in, sign-up, session management). NOT used for data storage.
+- **Important**: All data queries must use server-side API endpoints that connect to Replit PostgreSQL. Client components should NOT query Supabase for application data.
 
 **UI/UX Decisions:**
 - **Theming:** Consistent theming is enforced using CSS custom properties (design tokens) for colors like `--wrife-blue`, `--wrife-yellow`, and `--wrife-bg`.
@@ -44,4 +49,6 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Next.js 15**: Web framework.
 - **TypeScript**: Programming language.
 - **Tailwind CSS v4**: Styling framework.
-- **Supabase**: Backend-as-a-Service providing PostgreSQL database, authentication, and storage ('practice-activities' bucket).
+- **Supabase**: Backend-as-a-Service providing authentication and storage ('practice-activities' bucket).
+- **Replit PostgreSQL**: Primary database for all application data (via `pg` Pool).
+- **OpenAI**: AI-powered writing assessment.
