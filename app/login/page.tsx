@@ -65,8 +65,7 @@ export default function LoginPage() {
       
       const targetPath = redirectTo || (profile?.role === 'teacher' ? '/dashboard' : '/pupil/dashboard');
       console.log('[Login] Redirecting to:', targetPath);
-      router.push(targetPath);
-      router.refresh();
+      window.location.href = targetPath;
     } else {
       console.log('[Login] No session in response, something went wrong');
       setError('Sign in was successful but session was not established. Please try again.');
