@@ -50,7 +50,9 @@ export default function AdminLoginPage() {
         return;
       }
 
-      window.location.href = '/admin';
+      // Small delay to ensure cookies are fully set before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      window.location.replace('/admin');
     } else {
       setError('Authentication failed. Please try again.');
       setLoading(false);
