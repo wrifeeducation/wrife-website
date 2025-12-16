@@ -23,7 +23,7 @@ interface WritingLevel {
 interface AssignDWPModalProps {
   isOpen: boolean;
   onClose: () => void;
-  classId: number;
+  classId: string;
   className: string;
   yearGroup: number;
   teacherId: string;
