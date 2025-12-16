@@ -48,15 +48,31 @@ export default function LoginPage() {
     console.log('[Login] Session from response:', data.session ? 'Present' : 'Missing');
     
     if (data.session && data.user) {
-      const profileResponse = await fetch(`/api/auth/profile?userId=${data.user.id}`);
-      const profileData = await profileResponse.json();
+      const sessionResponse = await fetch('/api/auth/set-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: data.user.id,
+          accessToken: data.session.access_token,
+        }),
+      });
       
-      console.log('[Login] Profile API response:', profileData);
-      const profile = profileData.profile;
-      console.log('[Login] Profile check:', profile);
+      const sessionData = await sessionResponse.json();
+      console.log('[Login] Session set response:', sessionData);
+      
+      if (!sessionResponse.ok) {
+        setError('Failed to establish session. Please try again.');
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+      
+      const profile = sessionData.profile;
+      console.log('[Login] Profile:', profile);
       
       if (profile?.role === 'admin') {
         setError('Admin accounts must use the Admin Portal.');
+        await fetch('/api/auth/set-session', { method: 'DELETE' });
         await supabase.auth.signOut();
         setLoading(false);
         router.push('/admin/login');
