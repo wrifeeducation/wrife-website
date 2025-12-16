@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await pool.query(
-      `SELECT pa.*, a.level, a.level_name, a.grammar_focus
+      `SELECT pa.*, a.level, a.level_name, a.grammar_focus, a.sentence_structure
        FROM pwp_assignments pa
        JOIN progressive_activities a ON pa.activity_id = a.id
        WHERE pa.class_id = $1
@@ -156,6 +156,48 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ assignments: result.rows });
   } catch (error: any) {
     console.error('Error fetching PWP assignments:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const authResult = await authenticateTeacher();
+    
+    if ('error' in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const assignmentId = searchParams.get('id');
+
+    if (!assignmentId) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    const checkResult = await pool.query(
+      'SELECT class_id FROM pwp_assignments WHERE id = $1',
+      [assignmentId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+    }
+
+    const classId = checkResult.rows[0].class_id;
+    const hasAccess = await verifyClassOwnership(authResult, classId);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Access denied - you do not have permission for this class' },
+        { status: 403 }
+      );
+    }
+
+    await pool.query('DELETE FROM pwp_assignments WHERE id = $1', [assignmentId]);
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error deleting PWP assignment:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

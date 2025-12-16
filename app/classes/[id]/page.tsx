@@ -287,21 +287,31 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
 
   async function fetchPWPAssignments() {
     try {
-      const { data, error } = await supabase
-        .from('pwp_assignments')
-        .select(`
-          id, activity_id, instructions, due_date, created_at,
-          progressive_activities (id, level, level_name, grammar_focus, sentence_structure)
-        `)
-        .eq('class_id', resolvedParams.id)
-        .order('created_at', { ascending: false });
-
-      if (error?.code === 'PGRST205') {
+      const response = await fetch(`/api/teacher/pwp-assignments?classId=${resolvedParams.id}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Error fetching PWP assignments:', data.error);
         setPwpAssignments([]);
         return;
       }
-      if (error) throw error;
-      setPwpAssignments((data as unknown as PWPAssignment[]) || []);
+      
+      const formattedAssignments = (data.assignments || []).map((a: any) => ({
+        id: a.id,
+        activity_id: a.activity_id,
+        instructions: a.instructions,
+        due_date: a.due_date,
+        created_at: a.created_at,
+        progressive_activities: {
+          id: a.activity_id,
+          level: a.level,
+          level_name: a.level_name,
+          grammar_focus: a.grammar_focus,
+          sentence_structure: a.sentence_structure || '',
+        }
+      }));
+      
+      setPwpAssignments(formattedAssignments);
     } catch (err) {
       console.error('Error fetching PWP assignments:', err);
       setPwpAssignments([]);
@@ -352,12 +362,15 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     if (!confirm('Are you sure you want to remove this PWP assignment?')) return;
 
     try {
-      const { error } = await supabase
-        .from('pwp_assignments')
-        .delete()
-        .eq('id', assignmentId);
+      const response = await fetch(`/api/teacher/pwp-assignments?id=${assignmentId}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete');
+      }
+
       fetchPWPAssignments();
       fetchPWPSubmissions();
     } catch (err) {
