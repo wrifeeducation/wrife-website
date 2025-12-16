@@ -23,6 +23,7 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Client Components:** Pages requiring interactivity are marked with the `"use client"` directive.
 - **Lesson Routing:** Lessons are accessed via their `lesson_number` in the URL (e.g., `/lesson/27`).
 - **Client-Side Authentication:** `LessonPageWrapper` provides client-side authentication checks for dashboard and lesson pages.
+- **Supabase SSR Pattern (Critical):** Browser client (`lib/supabase.ts`) must have `'use client'` directive to ensure cookies are written in browser context. Server code imports from `lib/supabase/server.ts`. This separation is essential for session persistence across page navigations.
 - **Practice File Management:** Interactive HTML practice files are stored in Supabase Storage (bucket: 'practice-activities').
 - **HTML Proxy:** A secure `/api/fetch-html` endpoint with domain whitelisting is used to proxy and serve practice activities, ensuring proper interactivity and security.
 - **Role-Based Access:** The `profiles` table implements a role-based access control system (admin, school_admin, teacher, pupil).
