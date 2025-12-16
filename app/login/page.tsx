@@ -32,34 +32,33 @@ export default function LoginPage() {
     setLoading(true);
 
     console.log('[Login] Attempting sign in for:', email);
-    const { error } = await signIn(email, password);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (error) {
-      console.log('[Login] Sign in error:', error.message);
-      setError(error.message);
+    if (signInError) {
+      console.log('[Login] Sign in error:', signInError.message);
+      setError(signInError.message);
       setLoading(false);
       return;
     }
 
-    console.log('[Login] Sign in successful, waiting for session...');
+    console.log('[Login] Sign in successful, user:', data.user?.id);
+    console.log('[Login] Session from response:', data.session ? 'Present' : 'Missing');
     
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[Login] Session after sign in:', session ? `User: ${session.user.id}` : 'No session');
-    
-    if (session?.user) {
+    if (data.session && data.user) {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', session.user.id);
+        .eq('id', data.user.id);
       
       const profile = profiles && profiles.length > 0 ? profiles[0] : null;
       console.log('[Login] Profile check:', profile);
       
       if (profile?.role === 'admin') {
         setError('Admin accounts must use the Admin Portal.');
-        await signOut();
+        await supabase.auth.signOut();
         setLoading(false);
         router.push('/admin/login');
         return;
@@ -69,7 +68,7 @@ export default function LoginPage() {
       console.log('[Login] Redirecting to:', targetPath);
       window.location.href = targetPath;
     } else {
-      console.log('[Login] No session after sign in, something went wrong');
+      console.log('[Login] No session in response, something went wrong');
       setError('Sign in was successful but session was not established. Please try again.');
       setLoading(false);
     }
