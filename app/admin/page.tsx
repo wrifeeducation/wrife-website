@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/admin-fetch';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -82,7 +83,7 @@ export default function AdminDashboard() {
 
   async function fetchSchools() {
     try {
-      const response = await fetch('/api/admin/school-stats');
+      const response = await adminFetch('/api/admin/school-stats');
       const data = await response.json();
       
       if (data.error) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/admin-fetch';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -84,7 +84,7 @@ export default function AdminPWPActivitiesPage() {
 
   async function fetchActivities() {
     try {
-      const response = await fetch('/api/admin/pwp-activities');
+      const response = await adminFetch('/api/admin/pwp-activities');
       const data = await response.json();
 
       if (data.error) throw new Error(data.error);
@@ -101,7 +101,7 @@ export default function AdminPWPActivitiesPage() {
     setSchemaReloading(true);
     setFormError('');
     try {
-      const response = await fetch('/api/admin/reload-schema', { method: 'POST' });
+      const response = await adminFetch('/api/admin/reload-schema', { method: 'POST' });
       const data = await response.json();
       if (data.error) {
         throw new Error(data.error);
@@ -143,9 +143,8 @@ export default function AdminPWPActivitiesPage() {
     setFormError('');
     
     try {
-      const response = await fetch('/api/admin/pwp-activities', {
+      const response = await adminFetch('/api/admin/pwp-activities', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           level: quickAddLevel,
           level_name: levelDescriptions[quickAddLevel] || `Level ${quickAddLevel}`,
@@ -202,9 +201,8 @@ export default function AdminPWPActivitiesPage() {
       const examplesArray = formData.examples.split('\n').filter(e => e.trim());
       const promptsArray = formData.practice_prompts.split('\n').filter(p => p.trim());
 
-      const response = await fetch('/api/admin/pwp-activities', {
+      const response = await adminFetch('/api/admin/pwp-activities', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           level: formData.level,
           level_name: formData.level_name.trim(),
@@ -244,9 +242,8 @@ export default function AdminPWPActivitiesPage() {
       const examplesArray = formData.examples.split('\n').filter(e => e.trim());
       const promptsArray = formData.practice_prompts.split('\n').filter(p => p.trim());
 
-      const response = await fetch('/api/admin/pwp-activities', {
+      const response = await adminFetch('/api/admin/pwp-activities', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: editingActivity.id,
           level: formData.level,
@@ -280,7 +277,7 @@ export default function AdminPWPActivitiesPage() {
     }
 
     try {
-      const response = await fetch(`/api/admin/pwp-activities?id=${activity.id}`, {
+      const response = await adminFetch(`/api/admin/pwp-activities?id=${activity.id}`, {
         method: 'DELETE',
       });
 

@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,20 +21,16 @@ export class AuthError extends Error {
 }
 
 export async function getAuthenticatedAdmin(): Promise<AuthResult> {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  const headersList = await headers();
+  const authHeader = headersList.get('authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new AuthError('Unauthorized: No token provided', 401);
+  }
 
-  const { data: userData, error: authError } = await supabase.auth.getUser();
+  const token = authHeader.replace('Bearer ', '');
+
+  const { data: userData, error: authError } = await supabaseAdmin.auth.getUser(token);
   
   if (authError || !userData.user) {
     throw new AuthError('Unauthorized', 401);
