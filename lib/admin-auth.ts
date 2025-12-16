@@ -1,10 +1,23 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function createAdminClient(): SupabaseClient {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      db: {
+        schema: 'public',
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  );
+}
+
+const supabaseAdmin = createAdminClient();
 
 export interface AuthResult {
   userId: string;
@@ -57,4 +70,4 @@ export async function getAuthenticatedAdmin(): Promise<AuthResult> {
   };
 }
 
-export { supabaseAdmin };
+export { supabaseAdmin, createAdminClient };

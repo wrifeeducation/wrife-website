@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedAdmin, supabaseAdmin, AuthError } from '@/lib/admin-auth';
+import { getAuthenticatedAdmin, createAdminClient, AuthError } from '@/lib/admin-auth';
 
 export async function GET(request: NextRequest) {
   try {
     const admin = await getAuthenticatedAdmin();
+    const supabase = createAdminClient();
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('progressive_activities')
       .select('*')
       .order('level', { ascending: true });
@@ -27,9 +28,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAuthenticatedAdmin();
+    const supabase = createAdminClient();
     const body = await request.json();
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('progressive_activities')
       .insert(body);
 
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const admin = await getAuthenticatedAdmin();
+    const supabase = createAdminClient();
     const body = await request.json();
     const { id, ...updates } = body;
 
@@ -57,7 +60,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Activity ID is required' }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('progressive_activities')
       .update(updates)
       .eq('id', id);
@@ -79,6 +82,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const admin = await getAuthenticatedAdmin();
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -86,7 +90,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Activity ID is required' }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('progressive_activities')
       .delete()
       .eq('id', parseInt(id));
