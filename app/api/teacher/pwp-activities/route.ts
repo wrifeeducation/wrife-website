@@ -15,6 +15,18 @@ const pool = new Pool({
 export async function GET(request: NextRequest) {
   try {
 
+    const cookieStore = cookies();
+
+    const supabase = createServerClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: () => {},
+        },
+      }
+    );
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
