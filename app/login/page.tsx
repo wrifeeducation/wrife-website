@@ -31,22 +31,31 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    console.log('[Login] Attempting sign in for:', email);
     const { error } = await signIn(email, password);
 
     if (error) {
+      console.log('[Login] Sign in error:', error.message);
       setError(error.message);
       setLoading(false);
       return;
     }
 
+    console.log('[Login] Sign in successful, waiting for session...');
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     const { data: { session } } = await supabase.auth.getSession();
+    console.log('[Login] Session after sign in:', session ? `User: ${session.user.id}` : 'No session');
     
     if (session?.user) {
-      const { data: profile } = await supabase
+      const { data: profiles } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', session.user.id)
-        .single();
+        .eq('id', session.user.id);
+      
+      const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+      console.log('[Login] Profile check:', profile);
       
       if (profile?.role === 'admin') {
         setError('Admin accounts must use the Admin Portal.');
@@ -55,10 +64,15 @@ export default function LoginPage() {
         router.push('/admin/login');
         return;
       }
+      
+      const targetPath = redirectTo || (profile?.role === 'teacher' ? '/dashboard' : '/pupil/dashboard');
+      console.log('[Login] Redirecting to:', targetPath);
+      window.location.href = targetPath;
+    } else {
+      console.log('[Login] No session after sign in, something went wrong');
+      setError('Sign in was successful but session was not established. Please try again.');
+      setLoading(false);
     }
-
-    const dashboardPath = getDashboardPath();
-    window.location.href = redirectTo || dashboardPath;
   }
 
   return (

@@ -68,13 +68,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchUserProfile(userId: string) {
     console.log('[AuthContext] Fetching profile for user:', userId);
-    const { data: profile, error } = await supabase
+    
+    const { data: profiles, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
-      .single();
+      .eq('id', userId);
 
-    console.log('[AuthContext] Profile fetch result:', profile ? `Role: ${profile.role}` : 'No profile', error ? `Error: ${error.message}` : '');
+    console.log('[AuthContext] Profile fetch result:', profiles, error ? `Error: ${error.message}` : '');
+    
+    const profile = profiles && profiles.length > 0 ? profiles[0] : null;
     
     if (profile) {
       setUser({
@@ -86,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       console.log('[AuthContext] User set successfully:', profile.role);
     } else {
-      console.log('[AuthContext] No profile found, user will be null');
+      console.log('[AuthContext] No profile found for user:', userId);
     }
     setLoading(false);
     console.log('[AuthContext] Loading set to false');
