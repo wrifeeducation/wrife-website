@@ -1,7 +1,11 @@
+import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { Pool } from 'pg';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from '../../../../lib/supabase/admin';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
