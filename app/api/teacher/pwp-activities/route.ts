@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { Pool } from 'pg';
 
@@ -9,6 +10,9 @@ const pool = new Pool({
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,12 +34,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const profileResult = await pool.query(
-      'SELECT role FROM profiles WHERE id = $1',
-      [user.id]
-    );
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-    if (profileResult.rows.length === 0 || !['teacher', 'admin', 'school_admin'].includes(profileResult.rows[0].role)) {
+    if (profileError || !profile || !['teacher', 'admin', 'school_admin'].includes(profile.role)) {
       return NextResponse.json(
         { error: 'Unauthorized - teacher access required' },
         { status: 403 }

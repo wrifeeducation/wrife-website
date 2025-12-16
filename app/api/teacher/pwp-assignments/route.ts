@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { Pool } from 'pg';
 
@@ -9,6 +10,9 @@ const pool = new Pool({
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 interface AuthResult {
   userId: string;
@@ -32,41 +36,46 @@ async function authenticateTeacher(): Promise<AuthResult | { error: string; stat
     return { error: 'Unauthorized - please log in', status: 401 };
   }
 
-  const profileResult = await pool.query(
-    'SELECT role, school_id FROM profiles WHERE id = $1',
-    [user.id]
-  );
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .select('role, school_id')
+    .eq('id', user.id)
+    .single();
 
-  if (profileResult.rows.length === 0 || !['teacher', 'admin', 'school_admin'].includes(profileResult.rows[0].role)) {
+  if (profileError || !profile || !['teacher', 'admin', 'school_admin'].includes(profile.role)) {
     return { error: 'Unauthorized - teacher access required', status: 403 };
   }
 
   return { 
     userId: user.id, 
-    role: profileResult.rows[0].role,
-    schoolId: profileResult.rows[0].school_id
+    role: profile.role,
+    schoolId: profile.school_id
   };
 }
 
-async function verifyClassOwnership(auth: AuthResult, classId: number): Promise<boolean> {
+async function verifyClassOwnership(auth: AuthResult, classId: string): Promise<boolean> {
   if (auth.role === 'admin') {
     return true;
   }
 
   if (auth.role === 'teacher') {
-    const result = await pool.query(
-      'SELECT id FROM classes WHERE id = $1 AND teacher_id = $2',
-      [classId, auth.userId]
-    );
-    return result.rows.length > 0;
+    const { data, error } = await supabaseAdmin
+      .from('classes')
+      .select('id')
+      .eq('id', classId)
+      .eq('teacher_id', auth.userId)
+      .single();
+    return !error && !!data;
   }
 
   if (auth.role === 'school_admin' && auth.schoolId) {
-    const result = await pool.query(
-      'SELECT id FROM classes WHERE id = $1 AND school_id = $2',
-      [classId, auth.schoolId]
-    );
-    return result.rows.length > 0;
+    const { data, error } = await supabaseAdmin
+      .from('classes')
+      .select('id')
+      .eq('id', classId)
+      .eq('school_id', auth.schoolId)
+      .single();
+    return !error && !!data;
   }
 
   return false;
@@ -127,7 +136,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'classId is required' }, { status: 400 });
     }
 
-    const hasAccess = await verifyClassOwnership(authResult, parseInt(classId));
+    const hasAccess = await verifyClassOwnership(authResult, classId);
     if (!hasAccess) {
       return NextResponse.json(
         { error: 'Access denied - you do not have permission for this class' },
