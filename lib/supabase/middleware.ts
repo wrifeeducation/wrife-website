@@ -1,43 +1,47 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-interface SessionData {
-  userId: string;
-  role: string;
-  displayName: string;
-  email: string;
-  schoolId: string | null;
-  accessToken: string;
-  expiresAt: number;
-}
-
 export async function updateSession(request: NextRequest) {
-  const sessionCookie = request.cookies.get('wrife-session');
-  let session: SessionData | null = null;
-  
-  if (sessionCookie?.value) {
-    try {
-      session = JSON.parse(sessionCookie.value);
-      if (session && session.expiresAt < Date.now()) {
-        session = null;
-      }
-    } catch {
-      session = null;
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
     }
-  }
+  )
+
+  const { data: { user }, error } = await supabase.auth.getUser()
   
-  console.log('[Middleware] Path:', request.nextUrl.pathname, 'Session:', session ? `User: ${session.userId}, Role: ${session.role}` : 'none')
+  console.log('[Middleware] Path:', request.nextUrl.pathname, 'User:', user?.id || 'none', 'Error:', error?.message || 'none')
 
   const protectedPaths = ['/lesson', '/dashboard']
   const isProtectedRoute = protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   )
 
-  if (isProtectedRoute && !session) {
-    console.log('[Middleware] No session for protected route, redirecting to login')
+  if (isProtectedRoute && !user) {
+    console.log('[Middleware] No user for protected route, redirecting to login')
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
-  return NextResponse.next({ request })
+  return supabaseResponse
 }

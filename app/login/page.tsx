@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { supabase, syncSessionToServer } from '@/lib/supabase';
 import Link from 'next/link';
 import BookLogo from '@/components/mascots/BookLogo';
 
@@ -48,32 +48,18 @@ export default function LoginPage() {
     console.log('[Login] Session from response:', data.session ? 'Present' : 'Missing');
     
     if (data.session && data.user) {
-      const sessionResponse = await fetch('/api/auth/set-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: data.user.id,
-          accessToken: data.session.access_token,
-        }),
-      });
+      await syncSessionToServer('SIGNED_IN', data.session);
+      console.log('[Login] Session synced to server');
       
-      const sessionData = await sessionResponse.json();
-      console.log('[Login] Session set response:', sessionData);
-      
-      if (!sessionResponse.ok) {
-        setError('Failed to establish session. Please try again.');
-        await supabase.auth.signOut();
-        setLoading(false);
-        return;
-      }
-      
-      const profile = sessionData.profile;
+      const profileResponse = await fetch(`/api/auth/profile?userId=${data.user.id}`);
+      const profileData = await profileResponse.json();
+      const profile = profileData.profile;
       console.log('[Login] Profile:', profile);
       
       if (profile?.role === 'admin') {
         setError('Admin accounts must use the Admin Portal.');
-        await fetch('/api/auth/set-session', { method: 'DELETE' });
         await supabase.auth.signOut();
+        await syncSessionToServer('SIGNED_OUT', null);
         setLoading(false);
         router.push('/admin/login');
         return;
