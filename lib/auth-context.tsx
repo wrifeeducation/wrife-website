@@ -34,7 +34,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('[AuthContext] Initializing, checking session...');
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[AuthContext] getSession result:', session ? `User: ${session.user.id}` : 'No session');
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('[AuthContext] onAuthStateChange:', _event, session ? `User: ${session.user.id}` : 'No session');
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
@@ -64,12 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   async function fetchUserProfile(userId: string) {
-    const { data: profile } = await supabase
+    console.log('[AuthContext] Fetching profile for user:', userId);
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
 
+    console.log('[AuthContext] Profile fetch result:', profile ? `Role: ${profile.role}` : 'No profile', error ? `Error: ${error.message}` : '');
+    
     if (profile) {
       setUser({
         id: profile.id,
@@ -78,8 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         display_name: profile.display_name,
         school_id: profile.school_id,
       });
+      console.log('[AuthContext] User set successfully:', profile.role);
+    } else {
+      console.log('[AuthContext] No profile found, user will be null');
     }
     setLoading(false);
+    console.log('[AuthContext] Loading set to false');
   }
 
   async function signIn(email: string, password: string) {

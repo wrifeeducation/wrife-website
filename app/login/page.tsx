@@ -13,16 +13,18 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { user, signIn, signOut, getDashboardPath } = useAuth();
+  const { user, loading: authLoading, signIn, signOut, getDashboardPath } = useAuth();
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const redirectTo = params?.get('redirectTo');
 
   useEffect(() => {
-    if (user) {
+    // Wait for auth to finish loading before redirecting
+    if (!authLoading && user) {
       const dashboardPath = getDashboardPath();
+      console.log('Login page: User authenticated, redirecting to:', redirectTo || dashboardPath);
       window.location.href = redirectTo || dashboardPath;
     }
-  }, [user, redirectTo, getDashboardPath]);
+  }, [user, authLoading, redirectTo, getDashboardPath]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
