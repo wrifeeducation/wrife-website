@@ -69,27 +69,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function fetchUserProfile(userId: string) {
     console.log('[AuthContext] Fetching profile for user:', userId);
     
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId);
-
-    console.log('[AuthContext] Profile fetch result:', profiles, error ? `Error: ${error.message}` : '');
-    
-    const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-    
-    if (profile) {
-      setUser({
-        id: profile.id,
-        email: profile.email,
-        role: profile.role,
-        display_name: profile.display_name,
-        school_id: profile.school_id,
-      });
-      console.log('[AuthContext] User set successfully:', profile.role);
-    } else {
-      console.log('[AuthContext] No profile found for user:', userId);
+    try {
+      const response = await fetch(`/api/auth/profile?userId=${userId}`);
+      const data = await response.json();
+      
+      console.log('[AuthContext] Profile API response:', data);
+      
+      if (data.profile) {
+        setUser({
+          id: data.profile.id,
+          email: data.profile.email,
+          role: data.profile.role,
+          display_name: data.profile.display_name,
+          school_id: data.profile.school_id,
+        });
+        console.log('[AuthContext] User set successfully:', data.profile.role);
+      } else {
+        console.log('[AuthContext] No profile found for user:', userId);
+      }
+    } catch (error) {
+      console.error('[AuthContext] Error fetching profile:', error);
     }
+    
     setLoading(false);
     console.log('[AuthContext] Loading set to false');
   }
