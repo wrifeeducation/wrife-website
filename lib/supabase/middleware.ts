@@ -31,14 +31,25 @@ export async function updateSession(request: NextRequest) {
   
   console.log('[Middleware] Path:', request.nextUrl.pathname, 'User:', user?.id || 'none', 'Error:', error?.message || 'none')
 
-  const protectedPaths = ['/lesson', '/dashboard']
+  const publicPaths = ['/admin/login', '/login', '/signup', '/reset-password']
+  const isPublicPath = publicPaths.some(path => 
+    request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+  )
+
+  if (isPublicPath) {
+    return supabaseResponse
+  }
+
+  const protectedPaths = ['/lesson', '/dashboard', '/admin']
   const isProtectedRoute = protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   )
 
   if (isProtectedRoute && !user) {
     console.log('[Middleware] No user for protected route, redirecting to login')
-    const redirectUrl = new URL('/login', request.url)
+    const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
+    const loginPath = isAdminRoute ? '/admin/login' : '/login'
+    const redirectUrl = new URL(loginPath, request.url)
     redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
     return NextResponse.redirect(redirectUrl)
   }

@@ -36,14 +36,12 @@ export default function AdminLoginPage() {
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
     
-    if (session?.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+    if (authUser) {
+      const profileResponse = await fetch(`/api/auth/profile?userId=${authUser.id}`);
+      const profileData = await profileResponse.json();
+      const profile = profileData.profile;
 
       if (profile?.role !== 'admin') {
         setError('Access denied. Administrator credentials required.');

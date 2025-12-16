@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, syncSessionToServer } from './supabase';
+import { supabase } from './supabase';
 
 interface User {
   id: string;
@@ -46,12 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('[AuthContext] onAuthStateChange:', _event, session ? `User: ${session.user.id}` : 'No session');
-      
-      if (_event === 'SIGNED_IN' && session) {
-        await syncSessionToServer('SIGNED_IN', session);
-      } else if (_event === 'SIGNED_OUT') {
-        await syncSessionToServer('SIGNED_OUT', null);
-      }
       
       if (session?.user) {
         fetchUserProfile(session.user.id);

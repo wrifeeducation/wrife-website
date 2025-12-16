@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { supabase, syncSessionToServer } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import BookLogo from '@/components/mascots/BookLogo';
 
@@ -48,8 +48,7 @@ export default function LoginPage() {
     console.log('[Login] Session from response:', data.session ? 'Present' : 'Missing');
     
     if (data.session && data.user) {
-      await syncSessionToServer('SIGNED_IN', data.session);
-      console.log('[Login] Session synced to server');
+      console.log('[Login] Session established');
       
       const profileResponse = await fetch(`/api/auth/profile?userId=${data.user.id}`);
       const profileData = await profileResponse.json();
@@ -59,7 +58,6 @@ export default function LoginPage() {
       if (profile?.role === 'admin') {
         setError('Admin accounts must use the Admin Portal.');
         await supabase.auth.signOut();
-        await syncSessionToServer('SIGNED_OUT', null);
         setLoading(false);
         router.push('/admin/login');
         return;
@@ -67,7 +65,8 @@ export default function LoginPage() {
       
       const targetPath = redirectTo || (profile?.role === 'teacher' ? '/dashboard' : '/pupil/dashboard');
       console.log('[Login] Redirecting to:', targetPath);
-      window.location.href = targetPath;
+      router.push(targetPath);
+      router.refresh();
     } else {
       console.log('[Login] No session in response, something went wrong');
       setError('Sign in was successful but session was not established. Please try again.');
