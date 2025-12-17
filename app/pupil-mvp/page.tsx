@@ -1,23 +1,33 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export default function PupilLogin() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const supabase = useMemo(() => createClient(), []);
+  const supabaseRef = useRef<SupabaseClient | null>(null);
+
+  useEffect(() => {
+    const initClient = async () => {
+      const { createClient } = await import('@/lib/supabase');
+      supabaseRef.current = createClient();
+    };
+    initClient();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabaseRef.current) return;
+    
     setLoading(true);
     setError('');
 
     try {
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await supabaseRef.current
         .from('profiles')
         .select('*')
         .eq('email', email.toLowerCase())

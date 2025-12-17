@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, Suspense, useMemo } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 function detectSubjectType(subject: string): 'person' | 'animal' | 'place' | 'thing' {
   const capitalizedSubject = subject.charAt(0).toUpperCase() + subject.slice(1).toLowerCase();
@@ -31,7 +31,7 @@ function PWPContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const lessonNumber = searchParams?.get('lesson') ?? null;
-  const supabase = useMemo(() => createClient(), []);
+  const supabaseRef = useRef<SupabaseClient | null>(null);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentFormula, setCurrentFormula] = useState<number>(1);
@@ -48,20 +48,24 @@ function PWPContent() {
       router.push('/pupil-mvp/lesson-select');
       return;
     }
-    fetchCurriculum();
-  }, [lessonNumber, router]);
-
-  const fetchCurriculum = async () => {
-    const { data } = await supabase
-      .from('curriculum_map')
-      .select('*')
-      .eq('lesson_number', parseInt(lessonNumber!))
-      .single();
     
-    if (data) {
-      setCurriculum(data);
-    }
-  };
+    const init = async () => {
+      const { createClient } = await import('@/lib/supabase');
+      supabaseRef.current = createClient();
+      
+      const { data } = await supabaseRef.current
+        .from('curriculum_map')
+        .select('*')
+        .eq('lesson_number', parseInt(lessonNumber!))
+        .single();
+      
+      if (data) {
+        setCurriculum(data);
+      }
+    };
+    
+    init();
+  }, [lessonNumber, router]);
 
   const startSession = async (e: React.FormEvent) => {
     e.preventDefault();

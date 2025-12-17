@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface Lesson {
   lesson_number: number;
@@ -18,34 +18,38 @@ export default function LessonSelect() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [pupilName, setPupilName] = useState('');
-  const supabase = useMemo(() => createClient(), []);
+  const supabaseRef = useRef<SupabaseClient | null>(null);
 
   useEffect(() => {
-    const pupilId = sessionStorage.getItem('pupilId');
-    const name = sessionStorage.getItem('pupilName');
+    const init = async () => {
+      const pupilId = sessionStorage.getItem('pupilId');
+      const name = sessionStorage.getItem('pupilName');
 
-    if (!pupilId) {
-      router.push('/pupil-mvp');
-      return;
-    }
+      if (!pupilId) {
+        router.push('/pupil-mvp');
+        return;
+      }
 
-    setPupilName(name || '');
-    fetchLessons();
+      setPupilName(name || '');
+      
+      const { createClient } = await import('@/lib/supabase');
+      supabaseRef.current = createClient();
+      
+      const { data, error } = await supabaseRef.current
+        .from('curriculum_map')
+        .select('*')
+        .gte('lesson_number', 10)
+        .lte('lesson_number', 15)
+        .order('lesson_number');
+
+      if (!error && data) {
+        setLessons(data);
+      }
+      setLoading(false);
+    };
+    
+    init();
   }, [router]);
-
-  const fetchLessons = async () => {
-    const { data, error } = await supabase
-      .from('curriculum_map')
-      .select('*')
-      .gte('lesson_number', 10)
-      .lte('lesson_number', 15)
-      .order('lesson_number');
-
-    if (!error && data) {
-      setLessons(data);
-    }
-    setLoading(false);
-  };
 
   const startLesson = (lessonNumber: number) => {
     router.push(`/pupil-mvp/pwp?lesson=${lessonNumber}`);
