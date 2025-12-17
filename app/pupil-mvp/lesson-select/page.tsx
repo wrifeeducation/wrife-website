@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 
 interface Lesson {
   lesson_number: number;
@@ -18,6 +18,7 @@ export default function LessonSelect() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [pupilName, setPupilName] = useState('');
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const pupilId = sessionStorage.getItem('pupilId');

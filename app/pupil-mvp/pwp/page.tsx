@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 
 function detectSubjectType(subject: string): 'person' | 'animal' | 'place' | 'thing' {
   const capitalizedSubject = subject.charAt(0).toUpperCase() + subject.slice(1).toLowerCase();
@@ -31,6 +31,7 @@ function PWPContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const lessonNumber = searchParams?.get('lesson') ?? null;
+  const supabase = useMemo(() => createClient(), []);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentFormula, setCurrentFormula] = useState<number>(1);

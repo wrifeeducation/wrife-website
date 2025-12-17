@@ -3,13 +3,18 @@
 import { createBrowserClient } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
 let _supabase: SupabaseClient | null = null
 
-function getSupabaseClient(): SupabaseClient {
+export function createClient(): SupabaseClient {
+  if (typeof window === 'undefined') {
+    throw new Error('createClient() can only be called on the client side')
+  }
+  
   if (!_supabase) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    _supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    _supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       cookieOptions: {
         sameSite: 'none',
         secure: true,
@@ -21,10 +26,9 @@ function getSupabaseClient(): SupabaseClient {
 
 export const supabase = new Proxy({} as SupabaseClient, {
   get(_, prop) {
-    return (getSupabaseClient() as any)[prop]
+    if (typeof window === 'undefined') {
+      return () => Promise.reject(new Error('Supabase client not available on server'))
+    }
+    return (createClient() as any)[prop]
   }
 })
-
-export function createClient() {
-  return getSupabaseClient()
-}

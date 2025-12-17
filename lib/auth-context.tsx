@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './supabase';
+import { createClient } from './supabase';
 
 interface User {
   id: string;
@@ -32,10 +32,14 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [supabaseClient, setSupabaseClient] = useState<any>(null);
 
   useEffect(() => {
+    const client = createClient();
+    setSupabaseClient(client);
+    
     console.log('[AuthContext] Initializing, checking session...');
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    client.auth.getSession().then(({ data: { session } }: any) => {
       console.log('[AuthContext] getSession result:', session ? `User: ${session.user.id}` : 'No session');
       if (session?.user) {
         fetchUserProfile(session.user.id);
@@ -44,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange(async (_event: any, session: any) => {
       console.log('[AuthContext] onAuthStateChange:', _event, session ? `User: ${session.user.id}` : 'No session');
       
       if (session?.user) {
@@ -97,8 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signIn(email: string, password: string) {
+    if (!supabaseClient) return { error: new Error('Client not initialized') };
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
         email,
         password,
       });
@@ -112,7 +117,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUp(email: string, password: string, displayName: string) {
-    const { data, error } = await supabase.auth.signUp({
+    if (!supabaseClient) return { error: new Error('Client not initialized') };
+    const { data, error } = await supabaseClient.auth.signUp({
       email,
       password,
       options: {
@@ -124,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // If signup successful, create a profile entry
     if (!error && data.user) {
-      const { error: profileError } = await supabase
+      const { error: profileError } = await supabaseClient
         .from('profiles')
         .insert({
           id: data.user.id,
@@ -143,7 +149,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
     setUser(null);
     window.location.href = '/';
   }
