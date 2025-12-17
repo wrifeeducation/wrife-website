@@ -1,18 +1,20 @@
-// app/api/pwp-mvp/submit-formula/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseAdmin();
+  
   try {
     const body = await request.json();
     const { sessionId, formulaNumber, pupilSentence } = body;
 
-    // Validate input
     if (!sessionId || !formulaNumber || !pupilSentence) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -20,7 +22,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get formula record
     const { data: formulaData, error: formulaError } = await supabase
       .from('pwp_formulas')
       .select('*')
@@ -35,11 +36,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Basic validation - check sentence is not empty and has content
     const trimmedSentence = pupilSentence.trim();
     const isCorrect = trimmedSentence.length > 0;
 
-    // Update formula record
     const { error: updateError } = await supabase
       .from('pwp_formulas')
       .update({
@@ -58,7 +57,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update session progress
     await supabase
       .from('pwp_sessions')
       .update({
@@ -66,7 +64,6 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', sessionId);
 
-    // Get next formula if exists
     const { data: nextFormula } = await supabase
       .from('pwp_formulas')
       .select('*')
@@ -74,7 +71,6 @@ export async function POST(request: NextRequest) {
       .eq('formula_number', formulaNumber + 1)
       .single();
 
-    // Return feedback
     return NextResponse.json({
       isCorrect,
       feedback: isCorrect

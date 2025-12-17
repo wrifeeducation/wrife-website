@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const curriculumData = [
   { lesson_number: 10, lesson_name: "Simple Sentences: Noun + Verb", concepts_introduced: ["noun", "verb"], concepts_cumulative: ["noun", "verb"], pwp_stage: "foundation", pwp_duration_minutes: 5, pwp_formula_count_min: 2, pwp_formula_count_max: 3, subject_ideas: ["dog", "cat", "bird", "fish", "rabbit", "lion", "elephant", "frog", "butterfly", "bear"] },
@@ -34,7 +38,7 @@ const curriculumData = [
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = getSupabaseAdmin();
 
     const { data: existingData, error: checkError } = await supabase
       .from('curriculum_map')

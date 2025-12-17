@@ -2,24 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing Supabase configuration:', { 
-    hasUrl: !!supabaseUrl, 
-    hasServiceKey: !!supabaseServiceKey 
-  });
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
 }
 
-const supabaseAdmin = supabaseUrl && supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey)
-  : null;
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
-});
+function getOpenAI() {
+  return new OpenAI({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
+  });
+}
 
 interface AssessmentRequest {
   attemptId?: string;
@@ -36,6 +31,7 @@ interface AssessmentRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const openai = getOpenAI();
     const body: AssessmentRequest = await request.json();
     const { attemptId, pupilId, levelId, pupilWriting, isDemo, levelNumber, activityName, promptTitle, promptInstructions, rubric } = body;
 
@@ -44,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (isDemo) {
-      return handleDemoAssessment(pupilWriting, {
+      return handleDemoAssessment(openai, pupilWriting, {
         levelNumber: levelNumber || 1,
         activityName: activityName || 'Simple Sentences',
         promptTitle: promptTitle || 'Level 1: Simple Sentences',
@@ -53,6 +49,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
       return NextResponse.json(
         { error: 'Server configuration error. Please contact your administrator.' },
@@ -241,7 +238,7 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
         }
       }
 
-      await updateProgress(pupilId, level, assessment);
+      await updateProgress(supabaseAdmin, pupilId, level, assessment);
     }
 
     return NextResponse.json({
@@ -256,7 +253,7 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
   }
 }
 
-async function handleDemoAssessment(pupilWriting: string, demoContext: {
+async function handleDemoAssessment(openai: OpenAI, pupilWriting: string, demoContext: {
   levelNumber: number;
   activityName: string;
   promptTitle: string;
@@ -355,9 +352,7 @@ Assess this pupil's work. Be encouraging and age-appropriate.`;
   }
 }
 
-async function updateProgress(pupilId: string, level: any, assessment: any) {
-  if (!supabaseAdmin) return;
-
+async function updateProgress(supabaseAdmin: any, pupilId: string, level: any, assessment: any) {
   const { data: progress } = await supabaseAdmin
     .from('writing_progress')
     .select('*')

@@ -4,15 +4,18 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+function getPool() {
+  return new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+}
 
 interface AuthResult {
   userId: string;
@@ -21,14 +24,19 @@ interface AuthResult {
 }
 
 async function authenticateTeacher(): Promise<AuthResult | { error: string; status: number }> {
+  const supabaseAdmin = getSupabaseAdmin();
   const cookieStore = await cookies();
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
       },
-    },
-  });
+    }
+  );
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
@@ -54,6 +62,8 @@ async function authenticateTeacher(): Promise<AuthResult | { error: string; stat
 }
 
 async function verifyClassOwnership(auth: AuthResult, classId: string): Promise<boolean> {
+  const supabaseAdmin = getSupabaseAdmin();
+  
   if (auth.role === 'admin') {
     return true;
   }
@@ -89,6 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
+    const pool = getPool();
     const body = await request.json();
     const { activity_id, class_id, instructions, due_date } = body;
 
@@ -113,6 +124,7 @@ export async function POST(request: NextRequest) {
        RETURNING id`,
       [activity_id, class_id, authResult.userId, instructions || null, due_date || null]
     );
+    await pool.end();
 
     return NextResponse.json({ success: true, id: result.rows[0]?.id });
   } catch (error: any) {
@@ -129,6 +141,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
+    const pool = getPool();
     const { searchParams } = new URL(request.url);
     const classId = searchParams.get('classId');
 
@@ -152,6 +165,7 @@ export async function GET(request: NextRequest) {
        ORDER BY pa.created_at DESC`,
       [classId]
     );
+    await pool.end();
 
     return NextResponse.json({ assignments: result.rows });
   } catch (error: any) {
@@ -168,6 +182,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
+    const pool = getPool();
     const { searchParams } = new URL(request.url);
     const assignmentId = searchParams.get('id');
 
@@ -181,12 +196,14 @@ export async function DELETE(request: NextRequest) {
     );
 
     if (checkResult.rows.length === 0) {
+      await pool.end();
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
     }
 
     const classId = checkResult.rows[0].class_id;
     const hasAccess = await verifyClassOwnership(authResult, classId);
     if (!hasAccess) {
+      await pool.end();
       return NextResponse.json(
         { error: 'Access denied - you do not have permission for this class' },
         { status: 403 }
@@ -194,6 +211,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await pool.query('DELETE FROM pwp_assignments WHERE id = $1', [assignmentId]);
+    await pool.end();
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

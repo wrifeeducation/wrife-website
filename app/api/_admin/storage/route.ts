@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const BUCKET_NAME = 'practice-activities';
 
 async function verifyAdmin(request: NextRequest): Promise<{ authorized: boolean; error?: string }> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const authHeader = request.headers.get('Authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -50,6 +50,9 @@ export async function POST(request: NextRequest) {
   if (!authCheck.authorized) {
     return NextResponse.json({ error: authCheck.error }, { status: 401 });
   }
+  
+  const supabaseAdmin = getSupabaseAdmin();
+  
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -161,6 +164,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: authCheck.error }, { status: 401 });
   }
 
+  const supabaseAdmin = getSupabaseAdmin();
+
   try {
     const { data: buckets } = await supabaseAdmin.storage.listBuckets();
     const bucketExists = buckets?.some(b => b.name === BUCKET_NAME);
@@ -219,6 +224,8 @@ export async function DELETE(request: NextRequest) {
   if (!authCheck.authorized) {
     return NextResponse.json({ error: authCheck.error }, { status: 401 });
   }
+
+  const supabaseAdmin = getSupabaseAdmin();
 
   try {
     const { filePath } = await request.json();

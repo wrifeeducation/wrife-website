@@ -1,19 +1,21 @@
-// app/api/pwp-mvp/start-session/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateFormulas } from '@/lib/formulaGenerator';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseAdmin();
+  
   try {
     const body = await request.json();
     const { pupilId, lessonNumber, subject, subjectType } = body;
 
-    // Validate input
     if (!pupilId || !lessonNumber || !subject || !subjectType) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -21,7 +23,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get curriculum data
     const { data: curriculumData, error: curriculumError } = await supabase
       .from('curriculum_map')
       .select('*')
@@ -35,7 +36,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate formulas
     const formulas = generateFormulas({
       lessonNumber,
       subject,
@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
       conceptsCumulative: curriculumData.concepts_cumulative,
     });
 
-    // Create session
     const { data: sessionData, error: sessionError } = await supabase
       .from('pwp_sessions')
       .insert({
@@ -65,7 +64,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create formula records
     const formulaRecords = formulas.map((formula) => ({
       session_id: sessionData.id,
       formula_number: formula.number,
@@ -86,7 +84,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return session with formulas
     return NextResponse.json({
       sessionId: sessionData.id,
       lessonNumber,

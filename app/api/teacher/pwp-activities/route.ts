@@ -1,25 +1,32 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { Pool } from 'pg';
-import { supabaseAdmin } from '../../../../lib/supabase/admin';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
+function getPool() {
+  return new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const pool = getPool();
 
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll: () => cookieStore.getAll(),
@@ -65,6 +72,7 @@ export async function GET(request: NextRequest) {
     query += ' ORDER BY level ASC';
 
     const result = await pool.query(query, params);
+    await pool.end();
 
     return NextResponse.json({ activities: result.rows });
   } catch (error: any) {
