@@ -1,0 +1,136 @@
+02:48:25.039 Running build in Washington, D.C., USA (East) – iad1
+02:48:25.039 Build machine configuration: 2 cores, 8 GB
+02:48:25.049 Cloning github.com/wrifeeducation/wrife-website (Branch: main, Commit: d336456)
+02:48:25.050 Skipping build cache, deployment was triggered without cache.
+02:48:26.177 Cloning completed: 1.128s
+02:48:26.679 Running "vercel build"
+02:48:27.115 Vercel CLI 50.0.1
+02:48:27.583 Installing dependencies...
+02:48:41.299 
+02:48:41.300 added 363 packages in 13s
+02:48:41.300 
+02:48:41.300 135 packages are looking for funding
+02:48:41.300   run `npm fund` for details
+02:48:41.364 Detected Next.js version: 15.2.3
+02:48:41.368 Running "npm run build"
+02:48:41.470 
+02:48:41.470 > my-app@0.1.0 build
+02:48:41.470 > next build
+02:48:41.470 
+02:48:42.036 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+02:48:42.036 This information is used to shape Next.js' roadmap and prioritize features.
+02:48:42.037 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+02:48:42.037 https://nextjs.org/telemetry
+02:48:42.037 
+02:48:42.102    ▲ Next.js 15.2.3
+02:48:42.102 
+02:48:42.122    Creating an optimized production build ...
+02:48:55.887 <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (129kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+02:48:56.095  ⚠ Compiled with warnings
+02:48:56.095 
+02:48:56.095 ./node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js
+02:48:56.096 A Node.js API is used (process.versions at line: 39) which is not supported in the Edge Runtime.
+02:48:56.096 Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+02:48:56.096 
+02:48:56.096 Import trace for requested module:
+02:48:56.097 ./node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js
+02:48:56.098 ./node_modules/@supabase/realtime-js/dist/module/index.js
+02:48:56.098 ./node_modules/@supabase/supabase-js/dist/main/index.js
+02:48:56.098 ./node_modules/@supabase/supabase-js/dist/esm/wrapper.mjs
+02:48:56.098 ./node_modules/@supabase/ssr/dist/module/createBrowserClient.js
+02:48:56.099 ./node_modules/@supabase/ssr/dist/module/index.js
+02:48:56.099 ./lib/supabase/middleware.ts
+02:48:56.099 
+02:48:56.099 ./node_modules/@supabase/supabase-js/dist/main/index.js
+02:48:56.099 A Node.js API is used (process.version at line: 60) which is not supported in the Edge Runtime.
+02:48:56.099 Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+02:48:56.099 
+02:48:56.100 Import trace for requested module:
+02:48:56.100 ./node_modules/@supabase/supabase-js/dist/main/index.js
+02:48:56.100 ./node_modules/@supabase/supabase-js/dist/esm/wrapper.mjs
+02:48:56.100 ./node_modules/@supabase/ssr/dist/module/createBrowserClient.js
+02:48:56.100 ./node_modules/@supabase/ssr/dist/module/index.js
+02:48:56.100 ./lib/supabase/middleware.ts
+02:48:56.100 
+02:48:59.491 Found 1 warning while optimizing generated CSS:
+02:48:59.491 
+02:48:59.492 [2m│   }[22m
+02:48:59.492 [2m│ }[22m
+02:48:59.492 [2m│[22m @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&display=swap');
+02:48:59.492 [2m┆[22m        [33m[2m^--[22m @import rules must precede all rules aside from @charset and @layer statements[39m
+02:48:59.492 [2m┆[22m
+02:48:59.492 [2m│ :root {[22m
+02:48:59.492 [2m│   --wrife-blue: #2E5AFF;[22m
+02:48:59.492 
+02:49:03.380  ✓ Compiled successfully
+02:49:03.387    Linting and checking validity of types ...
+02:49:10.914 
+02:49:10.915 ./app/admin/practice-files/page.tsx
+02:49:10.915 119:6  Warning: React Hook useCallback has a missing dependency: 'handleFiles'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.915 
+02:49:10.916 ./app/admin/schools/[id]/page.tsx
+02:49:10.916 66:6  Warning: React Hook useEffect has a missing dependency: 'fetchSchoolData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.921 
+02:49:10.921 ./app/admin/schools/[id]/users/page.tsx
+02:49:10.921 47:6  Warning: React Hook useEffect has a missing dependency: 'fetchUsers'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.921 
+02:49:10.921 ./app/assignments/[id]/review/page.tsx
+02:49:10.921 89:6  Warning: React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.921 
+02:49:10.922 ./app/classes/[id]/page.tsx
+02:49:10.922 171:6  Warning: React Hook useEffect has missing dependencies: 'fetchAssignments', 'fetchClassData', 'fetchDWPAssignments', 'fetchPWPAssignments', 'fetchPWPCurriculumAssignments', 'fetchPWPSubmissions', 'fetchProgressRecords', 'fetchPupils', 'fetchSubmissions', and 'fetchWritingAttempts'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.922 177:6  Warning: React Hook useEffect has a missing dependency: 'fetchPWPSessions'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.923 
+02:49:10.923 ./app/classes/page.tsx
+02:49:10.923 32:6  Warning: React Hook useEffect has a missing dependency: 'fetchClasses'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.923 
+02:49:10.923 ./app/dashboard/page.tsx
+02:49:10.923 159:6  Warning: React Hook useEffect has a missing dependency: 'fetchAllData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.923 
+02:49:10.923 ./app/pupil/assignment/[id]/page.tsx
+02:49:10.923 86:6  Warning: React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.923 
+02:49:10.923 ./app/pupil/dwp/[id]/page.tsx
+02:49:10.923 94:6  Warning: React Hook useEffect has a missing dependency: 'fetchAssignmentData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.924 
+02:49:10.924 ./app/pupil/pwp/[lesson]/page.tsx
+02:49:10.924 36:6  Warning: React Hook useEffect has a missing dependency: 'fetchCurriculum'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.924 
+02:49:10.924 ./app/pupil-mvp/pwp/page.tsx
+02:49:10.924 56:6  Warning: React Hook useEffect has a missing dependency: 'fetchCurriculum'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.924 
+02:49:10.924 ./components/AssignLessonModal.tsx
+02:49:10.924 38:6  Warning: React Hook useEffect has a missing dependency: 'fetchClasses'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.924 
+02:49:10.924 ./components/AssignPWPModal.tsx
+02:49:10.924 52:6  Warning: React Hook useEffect has a missing dependency: 'fetchActivities'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.924 
+02:49:10.924 ./components/HeroSection.tsx
+02:49:10.924 67:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+02:49:10.925 104:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+02:49:10.925 
+02:49:10.925 ./components/SubmissionReviewModal.tsx
+02:49:10.925 59:6  Warning: React Hook useEffect has a missing dependency: 'fetchAssessment'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.925 
+02:49:10.925 ./components/pwp/SentenceBuilder.tsx
+02:49:10.925 40:6  Warning: React Hook useEffect has a missing dependency: 'getFullSentence'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+02:49:10.925 
+02:49:10.934 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+02:49:16.207    Collecting page data ...
+02:49:16.671 Error: supabaseUrl is required.
+02:49:16.673     at t.validateSupabaseUrl (.next/server/chunks/1556.js:24:1504)
+02:49:16.674     at new c (.next/server/chunks/1556.js:1:1226)
+02:49:16.674     at t.createClient (.next/server/chunks/1556.js:24:49064)
+02:49:16.676     at 18092 (.next/server/app/api/admin/add-pupil/route.js:1:365)
+02:49:16.676     at t (.next/server/webpack-runtime.js:1:128)
+02:49:16.676     at 87885 (.next/server/app/api/admin/add-pupil/route.js:1:1751)
+02:49:16.676     at t (.next/server/webpack-runtime.js:1:128)
+02:49:16.676     at s (.next/server/app/api/admin/add-pupil/route.js:1:3635)
+02:49:16.676     at <unknown> (.next/server/app/api/admin/add-pupil/route.js:1:3677)
+02:49:16.676     at t.X (.next/server/webpack-runtime.js:1:2135)
+02:49:16.676 
+02:49:16.677 > Build error occurred
+02:49:16.677 [Error: Failed to collect page data for /api/admin/add-pupil] {
+02:49:16.677   type: 'Error'
+02:49:16.678 }
+02:49:16.703 Error: Command "npm run build" exited with 1
