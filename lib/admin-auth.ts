@@ -1,23 +1,31 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 
-function createAdminClient(): SupabaseClient {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      db: {
-        schema: 'public',
-      },
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
+let supabaseAdminInstance: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+  if (!supabaseAdminInstance) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!url || !key) {
+      throw new Error('Missing Supabase environment variables');
     }
-  );
+    
+    supabaseAdminInstance = createClient(url, key, {
+      db: { schema: 'public' },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return supabaseAdminInstance;
 }
 
-const supabaseAdmin = createAdminClient();
+// Legacy export for backward compatibility
+const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return getSupabaseAdmin()[prop as keyof SupabaseClient];
+  },
+});
 
 export interface AuthResult {
   userId: string;
@@ -70,4 +78,4 @@ export async function getAuthenticatedAdmin(): Promise<AuthResult> {
   };
 }
 
-export { supabaseAdmin, createAdminClient };
+export { supabaseAdmin, getSupabaseAdmin };
