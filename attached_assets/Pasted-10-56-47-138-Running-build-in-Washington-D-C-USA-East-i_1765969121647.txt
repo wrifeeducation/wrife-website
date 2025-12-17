@@ -1,0 +1,139 @@
+10:56:47.138 Running build in Washington, D.C., USA (East) – iad1
+10:56:47.139 Build machine configuration: 2 cores, 8 GB
+10:56:47.273 Retrieving list of deployment files...
+10:56:47.275 Previous build caches not available.
+10:56:47.849 Downloading 760 deployment files...
+10:56:51.609 Running "vercel build"
+10:56:52.016 Vercel CLI 50.0.1
+10:56:52.411 Installing dependencies...
+10:56:55.224 npm warn deprecated path-match@1.2.4: This package is archived and no longer maintained. For support, visit https://github.com/expressjs/express/discussions
+10:57:09.722 
+10:57:09.723 added 594 packages in 17s
+10:57:09.723 
+10:57:09.723 157 packages are looking for funding
+10:57:09.723   run `npm fund` for details
+10:57:09.943 Detected Next.js version: 15.2.3
+10:57:09.949 Running "npm run build"
+10:57:10.599 
+10:57:10.599 > my-app@0.1.0 build
+10:57:10.600 > next build
+10:57:10.600 
+10:57:11.391 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+10:57:11.391 This information is used to shape Next.js' roadmap and prioritize features.
+10:57:11.392 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+10:57:11.392 https://nextjs.org/telemetry
+10:57:11.392 
+10:57:11.455    ▲ Next.js 15.2.3
+10:57:11.456 
+10:57:11.473    Creating an optimized production build ...
+10:57:24.376 <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (129kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+10:57:24.582  ⚠ Compiled with warnings
+10:57:24.582 
+10:57:24.583 ./node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js
+10:57:24.583 A Node.js API is used (process.versions at line: 39) which is not supported in the Edge Runtime.
+10:57:24.583 Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+10:57:24.583 
+10:57:24.583 Import trace for requested module:
+10:57:24.583 ./node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js
+10:57:24.583 ./node_modules/@supabase/realtime-js/dist/module/index.js
+10:57:24.583 ./node_modules/@supabase/supabase-js/dist/main/index.js
+10:57:24.583 ./node_modules/@supabase/supabase-js/dist/esm/wrapper.mjs
+10:57:24.583 ./node_modules/@supabase/ssr/dist/module/createBrowserClient.js
+10:57:24.583 ./node_modules/@supabase/ssr/dist/module/index.js
+10:57:24.583 ./lib/supabase/middleware.ts
+10:57:24.584 
+10:57:24.584 ./node_modules/@supabase/supabase-js/dist/main/index.js
+10:57:24.584 A Node.js API is used (process.version at line: 60) which is not supported in the Edge Runtime.
+10:57:24.584 Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+10:57:24.584 
+10:57:24.584 Import trace for requested module:
+10:57:24.584 ./node_modules/@supabase/supabase-js/dist/main/index.js
+10:57:24.584 ./node_modules/@supabase/supabase-js/dist/esm/wrapper.mjs
+10:57:24.584 ./node_modules/@supabase/ssr/dist/module/createBrowserClient.js
+10:57:24.584 ./node_modules/@supabase/ssr/dist/module/index.js
+10:57:24.584 ./lib/supabase/middleware.ts
+10:57:24.584 
+10:57:28.014 Found 1 warning while optimizing generated CSS:
+10:57:28.014 
+10:57:28.015 [2m│   }[22m
+10:57:28.015 [2m│ }[22m
+10:57:28.015 [2m│[22m @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&display=swap');
+10:57:28.015 [2m┆[22m        [33m[2m^--[22m @import rules must precede all rules aside from @charset and @layer statements[39m
+10:57:28.015 [2m┆[22m
+10:57:28.015 [2m│ :root {[22m
+10:57:28.015 [2m│   --wrife-blue: #2E5AFF;[22m
+10:57:28.016 
+10:57:31.871  ✓ Compiled successfully
+10:57:31.873    Linting and checking validity of types ...
+10:57:38.903 
+10:57:38.905 ./app/admin/practice-files/page.tsx
+10:57:38.905 119:6  Warning: React Hook useCallback has a missing dependency: 'handleFiles'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.905 
+10:57:38.905 ./app/admin/schools/[id]/page.tsx
+10:57:38.905 66:6  Warning: React Hook useEffect has a missing dependency: 'fetchSchoolData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.905 
+10:57:38.906 ./app/admin/schools/[id]/users/page.tsx
+10:57:38.906 47:6  Warning: React Hook useEffect has a missing dependency: 'fetchUsers'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.906 
+10:57:38.906 ./app/assignments/[id]/review/page.tsx
+10:57:38.906 89:6  Warning: React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.906 
+10:57:38.906 ./app/classes/[id]/page.tsx
+10:57:38.906 171:6  Warning: React Hook useEffect has missing dependencies: 'fetchAssignments', 'fetchClassData', 'fetchDWPAssignments', 'fetchPWPAssignments', 'fetchPWPCurriculumAssignments', 'fetchPWPSubmissions', 'fetchProgressRecords', 'fetchPupils', 'fetchSubmissions', and 'fetchWritingAttempts'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.906 177:6  Warning: React Hook useEffect has a missing dependency: 'fetchPWPSessions'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.907 
+10:57:38.907 ./app/classes/page.tsx
+10:57:38.912 32:6  Warning: React Hook useEffect has a missing dependency: 'fetchClasses'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.912 
+10:57:38.912 ./app/dashboard/page.tsx
+10:57:38.912 159:6  Warning: React Hook useEffect has a missing dependency: 'fetchAllData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.912 
+10:57:38.913 ./app/pupil/assignment/[id]/page.tsx
+10:57:38.913 86:6  Warning: React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.913 
+10:57:38.913 ./app/pupil/dwp/[id]/page.tsx
+10:57:38.913 94:6  Warning: React Hook useEffect has a missing dependency: 'fetchAssignmentData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.913 
+10:57:38.913 ./app/pupil/pwp/[lesson]/page.tsx
+10:57:38.913 36:6  Warning: React Hook useEffect has a missing dependency: 'fetchCurriculum'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.913 
+10:57:38.913 ./app/pupil-mvp/pwp/page.tsx
+10:57:38.913 56:6  Warning: React Hook useEffect has a missing dependency: 'fetchCurriculum'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.914 
+10:57:38.914 ./components/AssignLessonModal.tsx
+10:57:38.914 38:6  Warning: React Hook useEffect has a missing dependency: 'fetchClasses'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.914 
+10:57:38.914 ./components/AssignPWPModal.tsx
+10:57:38.914 52:6  Warning: React Hook useEffect has a missing dependency: 'fetchActivities'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.914 
+10:57:38.914 ./components/HeroSection.tsx
+10:57:38.914 67:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+10:57:38.915 104:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+10:57:38.918 
+10:57:38.918 ./components/SubmissionReviewModal.tsx
+10:57:38.918 59:6  Warning: React Hook useEffect has a missing dependency: 'fetchAssessment'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.918 
+10:57:38.918 ./components/pwp/SentenceBuilder.tsx
+10:57:38.918 40:6  Warning: React Hook useEffect has a missing dependency: 'getFullSentence'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+10:57:38.918 
+10:57:38.919 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+10:57:44.305    Collecting page data ...
+10:57:46.860    Generating static pages (0/50) ...
+10:57:48.070    Generating static pages (12/50) 
+10:57:48.071    Generating static pages (24/50) 
+10:57:48.204    Generating static pages (37/50) 
+10:57:48.312 Error occurred prerendering page "/pupil-mvp/lesson-select". Read more: https://nextjs.org/docs/messages/prerender-error
+10:57:48.313 Error: supabaseUrl is required.
+10:57:48.313     at t.validateSupabaseUrl (/vercel/path0/.next/server/chunks/1941.js:26:3467)
+10:57:48.313     at new d (/vercel/path0/.next/server/chunks/1941.js:25:29491)
+10:57:48.314     at t.createClient (/vercel/path0/.next/server/chunks/1941.js:3:28066)
+10:57:48.314     at 22980 (/vercel/path0/.next/server/app/pupil-mvp/lesson-select/page.js:1:4205)
+10:57:48.314     at Object.t [as require] (/vercel/path0/.next/server/webpack-runtime.js:1:128)
+10:57:48.314     at require (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:133:10079)
+10:57:48.314     at u (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:92:646)
+10:57:48.314     at U (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:92:10492)
+10:57:48.315     at W (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:92:13199)
+10:57:48.315     at /vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:92:15489
+10:57:48.315 Export encountered an error on /pupil-mvp/lesson-select/page: /pupil-mvp/lesson-select, exiting the build.
+10:57:48.318  ⨯ Next.js build worker exited with code: 1 and signal: null
+10:57:48.356 Error: Command "npm run build" exited with 1
