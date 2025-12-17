@@ -2,12 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from '@/lib/supabase';
 
 function detectSubjectType(subject: string): 'person' | 'animal' | 'place' | 'thing' {
   const capitalizedSubject = subject.charAt(0).toUpperCase() + subject.slice(1).toLowerCase();
