@@ -9,8 +9,11 @@ WriFe is a writing education platform designed for primary school teachers, offe
 
 ### Deployment Workflow
 1. Development happens in Replit (this environment)
-2. Push to GitHub main branch triggers Vercel auto-deployment to wrife.co.uk
-3. Use `git add . && git commit -m "message" && git push origin main` to deploy
+2. **Primary method**: Run `npm run deploy` to trigger Vercel deployment via deploy hook
+3. Changes are automatically committed to GitHub, then deploy hook triggers Vercel build
+4. Deploy hook bypasses git author validation issues with Replit
+
+**Note**: Direct `vercel --prod` CLI fails due to git author mismatch. Always use `npm run deploy`.
 
 ### Database Architecture (CRITICAL)
 - **TWO separate databases exist**: Development (Replit) and Production (Vercel)
