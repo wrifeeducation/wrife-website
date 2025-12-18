@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/admin-fetch';
 
 export default function NewSchoolPage() {
   const router = useRouter();
@@ -51,11 +51,17 @@ export default function NewSchoolPage() {
     setError('');
 
     try {
-      const { error: insertError } = await supabase
-        .from('schools')
-        .insert([formData]);
+      const response = await adminFetch('/api/_admin/schools', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
 
-      if (insertError) throw insertError;
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
 
       router.push('/admin');
     } catch (err: any) {

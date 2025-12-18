@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { adminFetch } from '@/lib/admin-fetch';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
@@ -25,7 +26,7 @@ export default function InviteTeacherPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch('/api/admin/invite-teacher', {
+      const response = await adminFetch('/api/_admin/invite-teacher', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -38,7 +39,7 @@ export default function InviteTeacherPage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (data.error) {
         throw new Error(data.error || 'Failed to invite teacher');
       }
 

@@ -76,7 +76,7 @@ export default function AdminPracticeFilesPage() {
 
       const [lessonsRes, filesRes] = await Promise.all([
         supabase.from('lessons').select('id, lesson_number, title, part').order('lesson_number'),
-        fetch('/api/admin/storage', {
+        fetch('/api/_admin/storage', {
           headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         }),
       ]);
@@ -144,7 +144,7 @@ export default function AdminPracticeFilesPage() {
         formData.append('lessonId', selectedLesson.toString());
         formData.append('fileName', file.name);
 
-        const response = await fetch('/api/admin/storage', {
+        const response = await fetch('/api/_admin/storage', {
           method: 'POST',
           headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           body: formData,
@@ -202,7 +202,7 @@ export default function AdminPracticeFilesPage() {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      const response = await fetch('/api/admin/storage', {
+      const response = await fetch('/api/_admin/storage', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { adminFetch } from '@/lib/admin-fetch';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
@@ -48,7 +49,7 @@ export default function SchoolUsersPage() {
 
   async function fetchUsers() {
     try {
-      const response = await fetch(`/api/admin/school-stats?schoolId=${schoolId}`);
+      const response = await adminFetch(`/api/_admin/school-stats?schoolId=${schoolId}`);
       const data = await response.json();
       
       if (data.error) {
@@ -67,14 +68,15 @@ export default function SchoolUsersPage() {
     if (!confirm(`Are you sure you want to remove this ${role}?`)) return;
     
     try {
-      const response = await fetch('/api/admin/remove-user', {
+      const response = await adminFetch('/api/_admin/remove-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to remove user');
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
       }
       
       fetchUsers();

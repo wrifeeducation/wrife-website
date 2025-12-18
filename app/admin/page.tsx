@@ -83,7 +83,7 @@ export default function AdminDashboard() {
 
   async function fetchSchools() {
     try {
-      const response = await adminFetch('/api/admin/school-stats');
+      const response = await adminFetch('/api/_admin/school-stats');
       const data = await response.json();
       
       if (data.error) {
@@ -100,12 +100,13 @@ export default function AdminDashboard() {
 
   async function toggleSchoolActive(schoolId: string, currentStatus: boolean) {
     try {
-      const { error } = await supabase
-        .from('schools')
-        .update({ is_active: !currentStatus })
-        .eq('id', schoolId);
-
-      if (error) throw error;
+      const response = await adminFetch('/api/_admin/schools', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: schoolId, is_active: !currentStatus }),
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
       fetchSchools();
     } catch (err) {
       console.error('Error toggling school status:', err);

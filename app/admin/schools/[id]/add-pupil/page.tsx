@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { adminFetch } from '@/lib/admin-fetch';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
@@ -25,7 +26,7 @@ export default function AddPupilPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch('/api/admin/add-pupil', {
+      const response = await adminFetch('/api/_admin/add-pupil', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -38,7 +39,7 @@ export default function AddPupilPage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (data.error) {
         throw new Error(data.error || 'Failed to add pupil');
       }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/admin-fetch';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -47,16 +47,15 @@ export default function AdminUsersPage() {
 
   async function fetchData() {
     try {
-      const [profilesRes, schoolsRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('schools').select('id, name').order('name'),
-      ]);
+      const response = await adminFetch('/api/_admin/users');
+      const data = await response.json();
 
-      if (profilesRes.error) throw profilesRes.error;
-      if (schoolsRes.error) throw schoolsRes.error;
+      if (data.error) {
+        throw new Error(data.error);
+      }
 
-      setProfiles(profilesRes.data || []);
-      setSchools(schoolsRes.data || []);
+      setProfiles(data.profiles || []);
+      setSchools(data.schools || []);
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -67,12 +66,14 @@ export default function AdminUsersPage() {
   async function updateUserSchool(userId: string, schoolId: string | null) {
     setSaving(userId);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ school_id: schoolId, updated_at: new Date().toISOString() })
-        .eq('id', userId);
+      const response = await adminFetch('/api/_admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, updates: { school_id: schoolId } }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
       setProfiles(prev =>
         prev.map(p => (p.id === userId ? { ...p, school_id: schoolId } : p))
@@ -87,12 +88,14 @@ export default function AdminUsersPage() {
   async function updateUserRole(userId: string, role: string) {
     setSaving(userId);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role, updated_at: new Date().toISOString() })
-        .eq('id', userId);
+      const response = await adminFetch('/api/_admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, updates: { role } }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
       setProfiles(prev =>
         prev.map(p => (p.id === userId ? { ...p, role } : p))

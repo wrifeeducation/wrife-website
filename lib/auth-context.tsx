@@ -37,29 +37,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const client = createClient();
     setSupabaseClient(client);
+    let isMounted = true;
     
     console.log('[AuthContext] Initializing, checking session...');
-    client.auth.getSession().then(({ data: { session } }: any) => {
+    client.auth.getSession().then(({ data: { session }, error }: any) => {
+      if (!isMounted) return;
+      
+      if (error) {
+        console.error('[AuthContext] getSession error:', error);
+        if (error.code === 'refresh_token_not_found' || error.message?.includes('Refresh Token')) {
+          console.log('[AuthContext] Invalid refresh token, clearing session...');
+          client.auth.signOut();
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+      }
       console.log('[AuthContext] getSession result:', session ? `User: ${session.user.id}` : 'No session');
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
         setLoading(false);
       }
+    }).catch((err: any) => {
+      if (!isMounted) return;
+      console.error('[AuthContext] getSession exception:', err);
+      setLoading(false);
     });
 
     const { data: { subscription } } = client.auth.onAuthStateChange(async (_event: any, session: any) => {
+      if (!isMounted) return;
       console.log('[AuthContext] onAuthStateChange:', _event, session ? `User: ${session.user.id}` : 'No session');
+      
+      if (_event === 'SIGNED_OUT') {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
       
       if (session?.user) {
         fetchUserProfile(session.user.id);
-      } else {
+      } else if (_event !== 'INITIAL_SESSION') {
         setUser(null);
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const getDashboardPath = () => {
