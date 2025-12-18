@@ -46,3 +46,8 @@ outputType = "webview"
 task = "shell.exec"
 args = "set -a && source .env.local && set +a && npm run dev"
 waitForPort = 5000
+
+[userenv]
+
+[userenv.shared]
+VERCEL_DEPLOY_HOOK = "https://api.vercel.com/v1/integrations/deploy/prj_ngxX8cz1XOmVt1YX4yAbUKm62PAL/ZlD9Lwzbob"
