@@ -13,12 +13,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (schoolId) {
-      const [teachersResult, classesResult] = await Promise.all([
+      const [teachersResult, pupilProfilesResult, classesResult] = await Promise.all([
         supabaseAdmin
           .from('profiles')
           .select('id, email, display_name, first_name, last_name, created_at')
           .eq('school_id', schoolId)
           .eq('role', 'teacher'),
+        supabaseAdmin
+          .from('profiles')
+          .select('id, email, display_name, first_name, last_name, created_at')
+          .eq('school_id', schoolId)
+          .eq('role', 'pupil'),
         supabaseAdmin
           .from('classes')
           .select('id')
@@ -28,11 +33,31 @@ export async function GET(request: NextRequest) {
       if (teachersResult.error) {
         return NextResponse.json({ error: teachersResult.error.message }, { status: 500 });
       }
+      if (pupilProfilesResult.error) {
+        return NextResponse.json({ error: pupilProfilesResult.error.message }, { status: 500 });
+      }
       if (classesResult.error) {
         return NextResponse.json({ error: classesResult.error.message }, { status: 500 });
       }
 
-      let pupils: any[] = [];
+      const seenPupilIds = new Set<string>();
+      let allPupils: any[] = [];
+      
+      for (const p of (pupilProfilesResult.data || [])) {
+        if (!seenPupilIds.has(p.id)) {
+          seenPupilIds.add(p.id);
+          allPupils.push({
+            id: p.id,
+            email: p.email || null,
+            display_name: p.display_name || null,
+            first_name: p.first_name || null,
+            last_name: p.last_name || null,
+            created_at: p.created_at,
+            source: 'profile',
+          });
+        }
+      }
+      
       const classIds = (classesResult.data || []).map(c => c.id);
       
       if (classIds.length > 0) {
@@ -42,18 +67,11 @@ export async function GET(request: NextRequest) {
           .in('class_id', classIds);
         
         if (!membersError && membersData) {
-          const seenIds = new Set<string>();
-          const uniqueMembers: any[] = [];
           const pupilIds: string[] = [];
           
           for (const m of membersData) {
-            const id = m.pupil_id || String(m.id);
-            if (!seenIds.has(id)) {
-              seenIds.add(id);
-              uniqueMembers.push(m);
-              if (m.pupil_id) {
-                pupilIds.push(m.pupil_id);
-              }
+            if (m.pupil_id) {
+              pupilIds.push(m.pupil_id);
             }
           }
           
@@ -71,25 +89,30 @@ export async function GET(request: NextRequest) {
             }
           }
           
-          pupils = uniqueMembers.map(m => {
-            const pupilData = m.pupil_id ? pupilsLookup[m.pupil_id] : null;
-            return {
-              id: m.pupil_id || String(m.id),
-              email: m.pupil_email || null,
-              display_name: pupilData?.display_name || m.pupil_name || null,
-              first_name: pupilData?.first_name || null,
-              last_name: pupilData?.last_name || null,
-              created_at: m.created_at,
-            };
-          });
+          for (const m of membersData) {
+            const id = m.pupil_id || `member_${m.id}`;
+            if (!seenPupilIds.has(id)) {
+              seenPupilIds.add(id);
+              const pupilData = m.pupil_id ? pupilsLookup[m.pupil_id] : null;
+              allPupils.push({
+                id: id,
+                email: m.pupil_email || null,
+                display_name: pupilData?.display_name || m.pupil_name || null,
+                first_name: pupilData?.first_name || null,
+                last_name: pupilData?.last_name || null,
+                created_at: m.created_at,
+                source: 'class_member',
+              });
+            }
+          }
         }
       }
 
       return NextResponse.json({
         teachers: teachersResult.data || [],
         teacherCount: teachersResult.data?.length || 0,
-        pupils: pupils,
-        pupilCount: pupils.length,
+        pupils: allPupils,
+        pupilCount: allPupils.length,
       });
     }
 
@@ -108,12 +131,17 @@ export async function GET(request: NextRequest) {
 
     const schoolsWithCounts = await Promise.all(
       (schools || []).map(async (school) => {
-        const [teachersResult, classesResult] = await Promise.all([
+        const [teachersResult, pupilProfilesResult, classesResult] = await Promise.all([
           supabaseAdmin
             .from('profiles')
             .select('id')
             .eq('school_id', school.id)
             .eq('role', 'teacher'),
+          supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('school_id', school.id)
+            .eq('role', 'pupil'),
           supabaseAdmin
             .from('classes')
             .select('id')
@@ -123,13 +151,21 @@ export async function GET(request: NextRequest) {
         if (teachersResult.error) {
           throw new Error(`Failed to fetch teachers for school ${school.id}: ${teachersResult.error.message}`);
         }
+        if (pupilProfilesResult.error) {
+          throw new Error(`Failed to fetch pupil profiles for school ${school.id}: ${pupilProfilesResult.error.message}`);
+        }
         if (classesResult.error) {
           throw new Error(`Failed to fetch classes for school ${school.id}: ${classesResult.error.message}`);
         }
 
         const teacherCount = (teachersResult.data || []).length;
         
-        let pupilCount = 0;
+        const seenPupilIds = new Set<string>();
+        
+        for (const p of (pupilProfilesResult.data || [])) {
+          seenPupilIds.add(p.id);
+        }
+        
         const classIds = (classesResult.data || []).map(c => c.id);
         
         if (classIds.length > 0) {
@@ -139,18 +175,16 @@ export async function GET(request: NextRequest) {
             .in('class_id', classIds);
           
           if (!membersError && membersData) {
-            const uniquePupils = new Set<string>();
             for (const m of membersData) {
-              uniquePupils.add(m.pupil_id || String(m.id));
+              seenPupilIds.add(m.pupil_id || `member_${m.id}`);
             }
-            pupilCount = uniquePupils.size;
           }
         }
 
         return {
           ...school,
           teacherCount: teacherCount,
-          pupilCount: pupilCount,
+          pupilCount: seenPupilIds.size,
         };
       })
     );
