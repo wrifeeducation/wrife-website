@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -26,6 +25,7 @@ export default function LoginCardsPage({ params }: { params: Promise<{ id: strin
   const [classData, setClassData] = useState<Class | null>(null);
   const [pupils, setPupils] = useState<Pupil[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -34,45 +34,28 @@ export default function LoginCardsPage({ params }: { params: Promise<{ id: strin
       router.push('/login');
       return;
     }
-    fetchClassData();
-    fetchPupils();
+    fetchData();
   }, [user, resolvedParams.id, router]);
 
-  async function fetchClassData() {
+  async function fetchData() {
     try {
-      const { data, error } = await supabase
-        .from('classes')
-        .select('*')
-        .eq('id', resolvedParams.id)
-        .single();
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(`/api/teacher/class-login-cards?classId=${resolvedParams.id}`);
+      const data = await response.json();
 
-      if (error) throw error;
-      setClassData(data);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch class data');
+      }
+
+      setClassData(data.classData);
+      setPupils(data.pupils || []);
     } catch (err) {
-      console.error('Error fetching class:', err);
+      console.error('Error fetching class data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load class data');
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function fetchPupils() {
-    try {
-      const { data: members, error } = await supabase
-        .from('class_members')
-        .select('pupil_id, pupils(*)')
-        .eq('class_id', resolvedParams.id);
-
-      if (error) throw error;
-
-      const pupilsData = members?.map((m: any) => m.pupils).filter(Boolean) || [];
-      pupilsData.sort((a: Pupil, b: Pupil) => {
-        const nameA = `${a.first_name} ${a.last_name || ''}`.toLowerCase();
-        const nameB = `${b.first_name} ${b.last_name || ''}`.toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
-      setPupils(pupilsData);
-    } catch (err) {
-      console.error('Error fetching pupils:', err);
     }
   }
 
@@ -86,6 +69,19 @@ export default function LoginCardsPage({ params }: { params: Promise<{ id: strin
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"></div>
           <p className="mt-4 text-sm text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-2">{error}</p>
+          <Link href="/classes" className="text-sm text-blue-500 hover:underline">
+            Back to classes
+          </Link>
         </div>
       </div>
     );
@@ -105,7 +101,6 @@ export default function LoginCardsPage({ params }: { params: Promise<{ id: strin
   }
 
   const loginUrl = 'wrife.co.uk/pupil/login';
-  const fullLoginUrl = 'https://wrife.co.uk/pupil/login';
 
   return (
     <>

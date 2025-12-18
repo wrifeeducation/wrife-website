@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import WordBank from './WordBank';
 import SentenceBuilder, { SentenceToken } from './SentenceBuilder';
 import FormulaDisplay from './FormulaDisplay';
@@ -63,7 +63,11 @@ export default function PWPSession({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startTime] = useState(Date.now());
   const [overallRepetitionStats, setOverallRepetitionStats] = useState<Record<string, number>>({});
-  const [getFullSentence, setGetFullSentence] = useState<(() => string) | null>(null);
+  const sentenceGetterRef = useRef<(() => string) | null>(null);
+
+  const handleGetFullSentence = useCallback((getter: () => string) => {
+    sentenceGetterRef.current = getter;
+  }, []);
 
   const currentFormula = formulas[currentFormulaIndex];
   const isFirstFormula = currentFormulaIndex === 0;
@@ -87,8 +91,8 @@ export default function PWPSession({
   }, [currentFormula?.word_bank]);
 
   const getCurrentSentence = () => {
-    if (getFullSentence) {
-      return getFullSentence();
+    if (sentenceGetterRef.current) {
+      return sentenceGetterRef.current();
     }
     return tokens.map(t => t.text).join(' ');
   };
@@ -201,7 +205,7 @@ export default function PWPSession({
             : "Click words and type new words to build your sentence..."
           }
           disabled={feedback.type === 'success'}
-          onGetFullSentence={setGetFullSentence}
+          onGetFullSentence={handleGetFullSentence}
         />
 
         <FeedbackDisplay
