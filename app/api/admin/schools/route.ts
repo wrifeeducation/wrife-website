@@ -46,16 +46,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'School name is required' }, { status: 400 });
     }
 
+    const insertData: Record<string, any> = {
+      name,
+      domain: domain || null,
+      teacher_limit: teacher_limit || 10,
+      pupil_limit: pupil_limit || 300,
+      subscription_tier: subscription_tier || 'trial',
+    };
+
     const { data: school, error } = await supabase
       .from('schools')
-      .insert({
-        name,
-        domain: domain || null,
-        teacher_limit: teacher_limit || 10,
-        pupil_limit: pupil_limit || 300,
-        subscription_tier: subscription_tier || 'trial',
-        is_active: is_active !== false,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -94,8 +95,6 @@ export async function PUT(request: NextRequest) {
     if (subscription_tier !== undefined && ['trial', 'basic', 'pro', 'enterprise'].includes(subscription_tier)) {
       allowedUpdates.subscription_tier = subscription_tier;
     }
-    if (is_active !== undefined) allowedUpdates.is_active = Boolean(is_active);
-
     if (Object.keys(allowedUpdates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }

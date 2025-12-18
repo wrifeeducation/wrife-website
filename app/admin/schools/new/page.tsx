@@ -17,7 +17,6 @@ export default function NewSchoolPage() {
     teacher_limit: 10,
     pupil_limit: 300,
     subscription_tier: 'trial',
-    is_active: true,
   });
 
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -166,18 +165,6 @@ export default function NewSchoolPage() {
                 <option value="pro">Pro</option>
                 <option value="enterprise">Enterprise</option>
               </select>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="h-4 w-4"
-              />
-              <label className="text-sm font-semibold text-[var(--wrife-text-main)]">
-                Active
-              </label>
             </div>
 
             <div className="flex gap-3 pt-4">
