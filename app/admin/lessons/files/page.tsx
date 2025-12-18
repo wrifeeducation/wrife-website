@@ -424,12 +424,12 @@ export default function AdminLessonFilesPage() {
                       </div>
                       <div className="flex gap-2">
                         <a
-                          href={file.publicUrl}
+                          href={file.fileType === 'html' ? `/api/fetch-html?url=${encodeURIComponent(file.publicUrl)}` : file.publicUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-full border border-[var(--wrife-blue)] px-4 py-1.5 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
                         >
-                          View
+                          {file.fileType === 'html' ? 'Preview' : 'View'}
                         </a>
                         <button
                           onClick={() => deleteFile(file.name)}

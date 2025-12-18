@@ -132,21 +132,6 @@ export async function POST(request: NextRequest) {
     const mimeType = getMimeType(file.name);
     const fileType = getFileType(file.name);
 
-    const { data: existingFiles } = await supabaseAdmin.storage
-      .from(BUCKET_NAME)
-      .list(folderPath, { limit: 100 });
-
-    if (existingFiles) {
-      const sameTypeFiles = existingFiles.filter(f => 
-        f.id !== null && getFileType(f.name) === fileType && f.name !== sanitizedFileName
-      );
-      
-      if (sameTypeFiles.length > 0) {
-        const filesToDelete = sameTypeFiles.map(f => `${folderPath}/${f.name}`);
-        await supabaseAdmin.storage.from(BUCKET_NAME).remove(filesToDelete);
-      }
-    }
-
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .upload(filePath, buffer, {
@@ -167,7 +152,7 @@ export async function POST(request: NextRequest) {
       .from('lesson_files')
       .delete()
       .eq('lesson_id', parseInt(lessonId))
-      .eq('file_type', fileType);
+      .eq('file_name', sanitizedFileName);
 
     await supabaseAdmin
       .from('lesson_files')
