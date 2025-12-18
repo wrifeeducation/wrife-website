@@ -46,10 +46,37 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Admin Dashboards:** Separate dashboards for super administrators (user/school/curriculum management) and school administrators (school-specific help).
 - **PWP Admin Quick Add:** Simplified activity creation with one-click "Quick Add" that auto-populates level name, grammar focus, and default instructions for independent practice. Full form available via "Advanced Options".
 
+## Database Management
+
+**Environment Setup:**
+- **Development Database**: Used in Replit during development. CONNECTION: `DATABASE_URL` in `.env.local`
+- **Production Database**: Used by Vercel/wrife.co.uk. CONNECTION: `DATABASE_URL` in Vercel Environment Variables
+
+**Tools & Scripts:**
+- `npm run db:generate` - Generate Drizzle migrations from schema changes
+- `npm run db:push` - Push schema changes directly to database
+- `npm run db:seed` - Seed development database with curriculum data
+- `npm run db:seed:prod` - Seed production database (requires `PROD_DATABASE_URL` secret)
+- `npm run db:studio` - Open Drizzle Studio for database inspection
+
+**Schema Location:** `db/schema.ts` - Contains all table definitions using Drizzle ORM
+
+**Workflow for Database Changes:**
+1. Modify `db/schema.ts` with new tables/columns
+2. Run `npm run db:push` to apply to development
+3. Deploy to Vercel (auto-deploys on git push)
+4. If adding reference data, update seed scripts and run on production
+
+**Important:**
+- Never change primary key ID types (serial ↔ uuid)
+- Always test schema changes in development first
+- Seed scripts are idempotent (safe to run multiple times)
+
 ## External Dependencies
 - **Next.js 15**: Web framework.
 - **TypeScript**: Programming language.
 - **Tailwind CSS v4**: Styling framework.
 - **Supabase**: Backend-as-a-Service providing authentication and storage ('practice-activities' bucket).
-- **Replit PostgreSQL**: Primary database for all application data (via `pg` Pool).
+- **Replit PostgreSQL (Neon-backed)**: Primary database for all application data (via `pg` Pool).
+- **Drizzle ORM**: Database schema management and migrations.
 - **OpenAI**: AI-powered writing assessment.
