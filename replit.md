@@ -3,6 +3,56 @@
 ## Overview
 WriFe is a writing education platform designed for primary school teachers, offering a comprehensive 67-lesson system for teaching writing. The platform aims to provide a structured curriculum, interactive practice, and AI-powered assessment tools to enhance writing education.
 
+## Agent Instructions (READ FIRST)
+
+**Before making any changes, understand these critical patterns:**
+
+### Deployment Workflow
+1. Development happens in Replit (this environment)
+2. Push to GitHub main branch triggers Vercel auto-deployment to wrife.co.uk
+3. Use `git add . && git commit -m "message" && git push origin main` to deploy
+
+### Database Architecture (CRITICAL)
+- **TWO separate databases exist**: Development (Replit) and Production (Vercel)
+- Both are Neon-backed PostgreSQL accessed via `DATABASE_URL`
+- Development DATABASE_URL is in `.env.local`
+- Production DATABASE_URL is in Vercel Environment Variables
+- **Always seed both databases** when adding reference data
+
+### Database Changes Workflow
+1. Modify `db/schema.ts` with new tables/columns
+2. Run `npm run db:push` to apply to development database
+3. Test thoroughly in development
+4. Push to GitHub (triggers Vercel deployment)
+5. If adding reference data, run seed script on production:
+   ```bash
+   DATABASE_URL="<production_url>" npx tsx db/seed-curriculum.ts
+   ```
+
+### API Route Naming
+- **NEVER use underscore prefix** for API folders (e.g., `_admin`)
+- Next.js/Vercel treats underscore-prefixed folders as private and won't deploy them
+- Use `/api/admin/` not `/api/_admin/`
+
+### Authentication Patterns
+- **Supabase**: Authentication ONLY (sign-in, sign-up, sessions)
+- **Replit PostgreSQL**: ALL application data storage
+- Admin APIs use `requireAdmin()` from `lib/admin-auth.ts`
+- Pupil login uses email lookup in profiles table (no password)
+
+### Common Pitfalls to Avoid
+1. Don't query Supabase for application data - use Replit PostgreSQL
+2. Don't forget to seed production database after adding reference data
+3. Don't use `localhost` for API calls in frontend - use relative paths or environment domain
+4. Don't skip the `isMounted` pattern in auth context to prevent memory leaks
+
+### Key File Locations
+- Database schema: `db/schema.ts`
+- Seed scripts: `db/seed-curriculum.ts`
+- Auth context: `lib/auth-context.tsx`
+- Admin auth helper: `lib/admin-auth.ts`
+- Supabase clients: `lib/supabase.ts` (browser), `lib/supabase/server.ts` (server)
+
 ## User Preferences
 I prefer that you focus on high-level architectural and feature discussions. Avoid getting bogged down in minor implementation details unless specifically asked. When suggesting changes, please outline the impact on existing structures, especially the database schema or core user flows. I appreciate clear, concise explanations and a collaborative approach.
 
