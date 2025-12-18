@@ -26,7 +26,7 @@ export default function InviteTeacherPage() {
     setSubmitting(true);
 
     try {
-      const response = await adminFetch('/api/_admin/invite-teacher', {
+      const response = await adminFetch('/api/admin/invite-teacher', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

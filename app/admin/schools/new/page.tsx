@@ -51,7 +51,7 @@ export default function NewSchoolPage() {
     setError('');
 
     try {
-      const response = await adminFetch('/api/_admin/schools', {
+      const response = await adminFetch('/api/admin/schools', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

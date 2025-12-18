@@ -26,7 +26,7 @@ export default function AddPupilPage() {
     setSubmitting(true);
 
     try {
-      const response = await adminFetch('/api/_admin/add-pupil', {
+      const response = await adminFetch('/api/admin/add-pupil', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

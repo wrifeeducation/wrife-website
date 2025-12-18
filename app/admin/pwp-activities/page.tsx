@@ -84,7 +84,7 @@ export default function AdminPWPActivitiesPage() {
 
   async function fetchActivities() {
     try {
-      const response = await adminFetch('/api/_admin/pwp-activities');
+      const response = await adminFetch('/api/admin/pwp-activities');
       const data = await response.json();
 
       if (data.error) throw new Error(data.error);
@@ -102,7 +102,7 @@ export default function AdminPWPActivitiesPage() {
     setSchemaReloading(true);
     setFormError('');
     try {
-      const response = await adminFetch('/api/_admin/reload-schema', { method: 'POST' });
+      const response = await adminFetch('/api/admin/reload-schema', { method: 'POST' });
       const data = await response.json();
       if (data.error) {
         throw new Error(data.error);
@@ -144,7 +144,7 @@ export default function AdminPWPActivitiesPage() {
     setFormError('');
     
     try {
-      const response = await adminFetch('/api/_admin/pwp-activities', {
+      const response = await adminFetch('/api/admin/pwp-activities', {
         method: 'POST',
         body: JSON.stringify({
           level: quickAddLevel,
@@ -202,7 +202,7 @@ export default function AdminPWPActivitiesPage() {
       const examplesArray = formData.examples.split('\n').filter(e => e.trim());
       const promptsArray = formData.practice_prompts.split('\n').filter(p => p.trim());
 
-      const response = await adminFetch('/api/_admin/pwp-activities', {
+      const response = await adminFetch('/api/admin/pwp-activities', {
         method: 'POST',
         body: JSON.stringify({
           level: formData.level,
@@ -243,7 +243,7 @@ export default function AdminPWPActivitiesPage() {
       const examplesArray = formData.examples.split('\n').filter(e => e.trim());
       const promptsArray = formData.practice_prompts.split('\n').filter(p => p.trim());
 
-      const response = await adminFetch('/api/_admin/pwp-activities', {
+      const response = await adminFetch('/api/admin/pwp-activities', {
         method: 'PUT',
         body: JSON.stringify({
           id: editingActivity.id,
@@ -278,7 +278,7 @@ export default function AdminPWPActivitiesPage() {
     }
 
     try {
-      const response = await adminFetch(`/api/_admin/pwp-activities?id=${activity.id}`, {
+      const response = await adminFetch(`/api/admin/pwp-activities?id=${activity.id}`, {
         method: 'DELETE',
       });
 

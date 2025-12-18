@@ -49,7 +49,7 @@ export default function SchoolUsersPage() {
 
   async function fetchUsers() {
     try {
-      const response = await adminFetch(`/api/_admin/school-stats?schoolId=${schoolId}`);
+      const response = await adminFetch(`/api/admin/school-stats?schoolId=${schoolId}`);
       const data = await response.json();
       
       if (data.error) {
@@ -68,7 +68,7 @@ export default function SchoolUsersPage() {
     if (!confirm(`Are you sure you want to remove this ${role}?`)) return;
     
     try {
-      const response = await adminFetch('/api/_admin/remove-user', {
+      const response = await adminFetch('/api/admin/remove-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),

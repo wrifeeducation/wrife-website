@@ -47,7 +47,7 @@ export default function AdminUsersPage() {
 
   async function fetchData() {
     try {
-      const response = await adminFetch('/api/_admin/users');
+      const response = await adminFetch('/api/admin/users');
       const data = await response.json();
 
       if (data.error) {
@@ -66,7 +66,7 @@ export default function AdminUsersPage() {
   async function updateUserSchool(userId: string, schoolId: string | null) {
     setSaving(userId);
     try {
-      const response = await adminFetch('/api/_admin/users', {
+      const response = await adminFetch('/api/admin/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, updates: { school_id: schoolId } }),
@@ -88,7 +88,7 @@ export default function AdminUsersPage() {
   async function updateUserRole(userId: string, role: string) {
     setSaving(userId);
     try {
-      const response = await adminFetch('/api/_admin/users', {
+      const response = await adminFetch('/api/admin/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, updates: { role } }),

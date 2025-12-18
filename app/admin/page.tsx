@@ -83,7 +83,7 @@ export default function AdminDashboard() {
 
   async function fetchSchools() {
     try {
-      const response = await adminFetch('/api/_admin/school-stats');
+      const response = await adminFetch('/api/admin/school-stats');
       const data = await response.json();
       
       if (data.error) {
@@ -100,7 +100,7 @@ export default function AdminDashboard() {
 
   async function toggleSchoolActive(schoolId: string, currentStatus: boolean) {
     try {
-      const response = await adminFetch('/api/_admin/schools', {
+      const response = await adminFetch('/api/admin/schools', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: schoolId, is_active: !currentStatus }),
