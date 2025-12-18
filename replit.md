@@ -122,6 +122,47 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - Always test schema changes in development first
 - Seed scripts are idempotent (safe to run multiple times)
 
+## LLM Provider Configuration
+
+The platform supports multiple LLM providers for AI-powered assessments. Configuration is done via environment variables.
+
+**Supported Providers:**
+- **OpenAI** (default): GPT-4o, GPT-4o-mini
+- **Anthropic**: Claude Sonnet 4.5, Claude Haiku 4.5
+
+**Environment Variables:**
+```bash
+# Provider selection (optional, defaults to 'openai')
+LLM_PROVIDER=anthropic   # Options: 'openai' or 'anthropic'
+
+# OpenAI configuration (used when LLM_PROVIDER=openai or not set)
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o      # Optional, defaults to gpt-4o
+
+# Anthropic/Claude configuration (used when LLM_PROVIDER=anthropic)
+ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_MODEL=claude-sonnet-4-20250514  # Optional
+
+# Replit AI Integrations (alternative to direct API keys)
+AI_INTEGRATIONS_OPENAI_API_KEY=...
+AI_INTEGRATIONS_OPENAI_BASE_URL=...
+```
+
+**Usage:**
+- Set `LLM_PROVIDER=anthropic` for Claude's nuanced educational feedback
+- Set `LLM_PROVIDER=openai` for OpenAI's faster responses (default)
+- Claude is recommended for assessments due to more detailed, empathetic feedback
+
+**Cost Comparison (per 1M tokens):**
+| Model | Input | Output |
+|-------|-------|--------|
+| GPT-4o | $2.50 | $10.00 |
+| GPT-4o-mini | $0.15 | $0.60 |
+| Claude Sonnet 4.5 | $3.00 | $15.00 |
+| Claude Haiku 4.5 | $1.00 | $5.00 |
+
+**Key File:** `lib/llm-provider.ts` - Centralized LLM provider utility
+
 ## External Dependencies
 - **Next.js 15**: Web framework.
 - **TypeScript**: Programming language.
@@ -129,4 +170,4 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Supabase**: Backend-as-a-Service providing authentication and storage ('practice-activities' bucket).
 - **Replit PostgreSQL (Neon-backed)**: Primary database for all application data (via `pg` Pool).
 - **Drizzle ORM**: Database schema management and migrations.
-- **OpenAI**: AI-powered writing assessment.
+- **OpenAI/Anthropic**: AI-powered writing assessment (configurable via LLM_PROVIDER).

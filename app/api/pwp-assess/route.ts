@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
-import OpenAI from 'openai';
 import { cookies } from 'next/headers';
+import { generateCompletion, parseJSONResponse, getCurrentProviderInfo } from '@/lib/llm-provider';
 
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-}
-
-function getOpenAI() {
-  return new OpenAI({
-    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  });
 }
 
 interface PWPAssessmentResult {
@@ -29,7 +22,6 @@ interface PWPAssessmentResult {
 export async function POST(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    const openai = getOpenAI();
     
     const cookieStore = await cookies();
     const supabaseAuth = createServerClient(
@@ -130,15 +122,18 @@ Be encouraging and age-appropriate. Focus on the specific grammar skill being pr
 
 Return ONLY valid JSON, no other text.`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const { provider, model } = getCurrentProviderInfo();
+    console.log(`PWP Assessment using ${provider} (${model})`);
+
+    const llmResponse = await generateCompletion({
       messages: [
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
+      jsonMode: true,
     });
 
-    const responseText = response.choices[0]?.message?.content || '';
+    const responseText = llmResponse.content || '';
     
     let assessment: PWPAssessmentResult;
     try {
@@ -169,8 +164,9 @@ Return ONLY valid JSON, no other text.`;
         corrections: assessment.corrections,
         improved_example: assessment.improved_example,
         raw_response: {
-          model: response.model,
-          usage: response.usage,
+          provider: llmResponse.provider,
+          model: llmResponse.model,
+          usage: llmResponse.usage,
           content: responseText,
         },
       })

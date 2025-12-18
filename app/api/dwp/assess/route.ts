@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { generateCompletion, parseJSONResponse, getCurrentProviderInfo } from '@/lib/llm-provider';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key);
-}
-
-function getOpenAI() {
-  return new OpenAI({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
-  });
 }
 
 interface AssessmentRequest {
@@ -31,7 +24,6 @@ interface AssessmentRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const openai = getOpenAI();
     const body: AssessmentRequest = await request.json();
     const { attemptId, pupilId, levelId, pupilWriting, isDemo, levelNumber, activityName, promptTitle, promptInstructions, rubric } = body;
 
@@ -40,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (isDemo) {
-      return handleDemoAssessment(openai, pupilWriting, {
+      return handleDemoAssessment(pupilWriting, {
         levelNumber: levelNumber || 1,
         activityName: activityName || 'Simple Sentences',
         promptTitle: promptTitle || 'Level 1: Simple Sentences',
@@ -144,21 +136,23 @@ ${pupilWriting}
 
 Assess this pupil's work using the rubric provided. Be encouraging and age-appropriate.`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const llmResponse = await generateCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      response_format: { type: 'json_object' },
       temperature: 0.7,
-      max_tokens: 1500,
+      maxTokens: 1500,
+      jsonMode: true,
     });
 
-    const responseText = completion.choices[0].message.content;
+    const responseText = llmResponse.content;
     if (!responseText) {
       throw new Error('No response from AI');
     }
+
+    const { provider, model } = getCurrentProviderInfo();
+    console.log(`DWP Assessment using ${provider} (${model})`);
 
     let assessment;
     try {
@@ -253,7 +247,7 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
   }
 }
 
-async function handleDemoAssessment(openai: OpenAI, pupilWriting: string, demoContext: {
+async function handleDemoAssessment(pupilWriting: string, demoContext: {
   levelNumber: number;
   activityName: string;
   promptTitle: string;
@@ -308,18 +302,17 @@ ${pupilWriting}
 
 Assess this pupil's work. Be encouraging and age-appropriate.`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const llmResponse = await generateCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      response_format: { type: 'json_object' },
       temperature: 0.7,
-      max_tokens: 800,
+      maxTokens: 800,
+      jsonMode: true,
     });
 
-    const responseText = completion.choices[0].message.content;
+    const responseText = llmResponse.content;
     if (!responseText) {
       throw new Error('No response from AI');
     }
