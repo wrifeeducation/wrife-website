@@ -13,7 +13,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx db/seed-curriculum.ts",
-    "db:seed:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/seed-curriculum.ts"
+    "db:seed:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/seed-curriculum.ts",
+    "db:backfill-files": "npx tsx db/backfill-file-types.ts",
+    "db:backfill-files:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/backfill-file-types.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
