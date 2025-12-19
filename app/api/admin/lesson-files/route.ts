@@ -184,8 +184,10 @@ export async function POST(request: NextRequest) {
     const filePath = `${folderPath}/${sanitizedFileName}`;
     const mimeType = getMimeType(file.name);
     
-    // Auto-detect category from filename patterns (e.g., "L01_Worksheet_CHALLENGE.docx" -> worksheet_challenge)
-    const canonicalType = detectFileCategoryFromName(file.name);
+    // Use explicit category if provided and not default, otherwise auto-detect from filename
+    const canonicalType = (fileCategory && fileCategory !== 'teacher_guide') 
+      ? fileCategory 
+      : detectFileCategoryFromName(file.name);
 
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
