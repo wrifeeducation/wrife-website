@@ -75,13 +75,12 @@ export default function AdminLessonFilesPage() {
 
   async function fetchLessons() {
     try {
-      const { data, error } = await supabase
-        .from('lessons')
-        .select('id, lesson_number, title, part')
-        .order('lesson_number');
-      
-      if (!error && data) {
+      const response = await fetch('/api/lessons');
+      if (response.ok) {
+        const data = await response.json();
         setLessons(data);
+      } else {
+        console.error('Error fetching lessons: API returned', response.status);
       }
     } catch (err) {
       console.error('Error fetching lessons:', err);
