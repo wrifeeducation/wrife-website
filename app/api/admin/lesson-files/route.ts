@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 function getSupabaseAdmin() {
   return createClient(
@@ -148,29 +153,26 @@ export async function POST(request: NextRequest) {
       .from(BUCKET_NAME)
       .getPublicUrl(filePath);
 
-    const { error: deleteError } = await supabaseAdmin
-      .from('lesson_files')
-      .delete()
-      .eq('lesson_id', parseInt(lessonId))
-      .eq('file_name', sanitizedFileName);
-
-    if (deleteError) {
+    // Delete existing file record with same name (if re-uploading)
+    try {
+      await pool.query(
+        'DELETE FROM lesson_files WHERE lesson_id = $1 AND file_name = $2',
+        [parseInt(lessonId), sanitizedFileName]
+      );
+    } catch (deleteError) {
       console.error('Error deleting existing file record:', deleteError);
     }
 
-    const { error: insertError } = await supabaseAdmin
-      .from('lesson_files')
-      .insert({
-        lesson_id: parseInt(lessonId),
-        file_type: fileType,
-        file_name: sanitizedFileName,
-        file_url: urlData.publicUrl,
-      });
-
-    if (insertError) {
+    // Insert new file record into PostgreSQL
+    try {
+      await pool.query(
+        'INSERT INTO lesson_files (lesson_id, file_type, file_name, file_url) VALUES ($1, $2, $3, $4)',
+        [parseInt(lessonId), fileType, sanitizedFileName, urlData.publicUrl]
+      );
+    } catch (insertError: any) {
       console.error('Error inserting file record:', insertError);
       return NextResponse.json({ 
-        error: 'File uploaded to storage but failed to save record to database. Please check if lesson_files table exists.',
+        error: 'File uploaded to storage but failed to save record to database.',
         details: insertError.message
       }, { status: 500 });
     }
@@ -293,11 +295,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 });
     }
 
-    await supabaseAdmin
-      .from('lesson_files')
-      .delete()
-      .eq('lesson_id', parseInt(lessonId))
-      .eq('file_name', fileName);
+    // Delete record from PostgreSQL
+    try {
+      await pool.query(
+        'DELETE FROM lesson_files WHERE lesson_id = $1 AND file_name = $2',
+        [parseInt(lessonId), fileName]
+      );
+    } catch (dbError) {
+      console.error('Error deleting file record from database:', dbError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

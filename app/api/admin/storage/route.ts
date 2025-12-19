@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 function getSupabaseAdmin() {
   return createClient(
@@ -101,38 +106,35 @@ export async function POST(request: NextRequest) {
       .getPublicUrl(filePath);
 
     if (lessonId) {
-      const { data: lesson } = await supabaseAdmin
-        .from('lessons')
-        .select('lesson_number, part')
-        .eq('id', parseInt(lessonId))
-        .single();
+      // Query lesson info from PostgreSQL
+      const lessonResult = await pool.query(
+        'SELECT lesson_number, part FROM lessons WHERE id = $1',
+        [parseInt(lessonId)]
+      );
+      const lesson = lessonResult.rows[0];
 
       const lessonLabel = lesson 
         ? `Lesson ${lesson.lesson_number}${lesson.part || ''}`
         : `Lesson ${lessonId}`;
 
-      const { error: deleteError } = await supabaseAdmin
-        .from('lesson_files')
-        .delete()
-        .eq('lesson_id', parseInt(lessonId))
-        .eq('file_type', 'interactive_practice');
-
-      if (deleteError) {
+      // Delete existing interactive_practice file for this lesson
+      try {
+        await pool.query(
+          'DELETE FROM lesson_files WHERE lesson_id = $1 AND file_type = $2',
+          [parseInt(lessonId), 'interactive_practice']
+        );
+      } catch (deleteError) {
         console.error('Error deleting old lesson file:', deleteError);
       }
 
-      const { data: insertData, error: linkError } = await supabaseAdmin
-        .from('lesson_files')
-        .insert({
-          lesson_id: parseInt(lessonId),
-          file_type: 'interactive_practice',
-          file_name: `Interactive Practice - ${lessonLabel}`,
-          file_url: urlData.publicUrl,
-        })
-        .select()
-        .single();
-
-      if (linkError) {
+      // Insert new file record into PostgreSQL
+      try {
+        const insertResult = await pool.query(
+          'INSERT INTO lesson_files (lesson_id, file_type, file_name, file_url) VALUES ($1, $2, $3, $4) RETURNING *',
+          [parseInt(lessonId), 'interactive_practice', `Interactive Practice - ${lessonLabel}`, urlData.publicUrl]
+        );
+        console.log('Successfully linked file to lesson:', insertResult.rows[0]);
+      } catch (linkError: any) {
         console.error('Error linking file to lesson:', linkError);
         return NextResponse.json({
           success: true,
@@ -142,8 +144,6 @@ export async function POST(request: NextRequest) {
           linkError: linkError.message,
         });
       }
-
-      console.log('Successfully linked file to lesson:', insertData);
     }
 
     return NextResponse.json({

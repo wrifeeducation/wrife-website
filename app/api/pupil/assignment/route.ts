@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 function getSupabaseAdmin() {
   return createClient(
@@ -56,12 +61,12 @@ export async function POST(request: NextRequest) {
     let interactiveHtml: string | null = null;
     
     if (assignment.lesson_id) {
-      const { data: filesData } = await supabaseAdmin
-        .from('lesson_files')
-        .select('*')
-        .eq('lesson_id', assignment.lesson_id)
-        .like('file_type', '%interactive_practice%');
-      lessonFiles = filesData || [];
+      // Query lesson_files from PostgreSQL
+      const filesResult = await pool.query(
+        `SELECT * FROM lesson_files WHERE lesson_id = $1 AND file_type LIKE '%interactive_practice%'`,
+        [assignment.lesson_id]
+      );
+      lessonFiles = filesResult.rows || [];
       
       if (lessonFiles.length > 0) {
         const practiceFile = lessonFiles[0];
