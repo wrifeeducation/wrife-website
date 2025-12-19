@@ -148,13 +148,17 @@ export async function POST(request: NextRequest) {
       .from(BUCKET_NAME)
       .getPublicUrl(filePath);
 
-    await supabaseAdmin
+    const { error: deleteError } = await supabaseAdmin
       .from('lesson_files')
       .delete()
       .eq('lesson_id', parseInt(lessonId))
       .eq('file_name', sanitizedFileName);
 
-    await supabaseAdmin
+    if (deleteError) {
+      console.error('Error deleting existing file record:', deleteError);
+    }
+
+    const { error: insertError } = await supabaseAdmin
       .from('lesson_files')
       .insert({
         lesson_id: parseInt(lessonId),
@@ -162,6 +166,14 @@ export async function POST(request: NextRequest) {
         file_name: sanitizedFileName,
         file_url: urlData.publicUrl,
       });
+
+    if (insertError) {
+      console.error('Error inserting file record:', insertError);
+      return NextResponse.json({ 
+        error: 'File uploaded to storage but failed to save record to database. Please check if lesson_files table exists.',
+        details: insertError.message
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
