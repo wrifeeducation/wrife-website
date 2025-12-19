@@ -15,7 +15,9 @@
     "db:seed": "npx tsx db/seed-curriculum.ts",
     "db:seed:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/seed-curriculum.ts",
     "db:backfill-files": "npx tsx db/backfill-file-types.ts",
-    "db:backfill-files:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/backfill-file-types.ts"
+    "db:backfill-files:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/backfill-file-types.ts",
+    "db:update-titles": "npx tsx db/update-lesson-titles.ts",
+    "db:update-titles:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/update-lesson-titles.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

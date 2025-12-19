@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import LessonCard from "./LessonCard";
-import { supabase } from "../lib/supabase";
 
 interface Lesson {
   id: number;
@@ -102,16 +101,16 @@ export default function LessonLibrary() {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .from("lessons")
-        .select("*")
-        .order("lesson_number", { ascending: true });
-
-      if (error) {
-        console.error("Error fetching lessons:", error);
-        setError("Unable to load lessons. Please refresh the page.");
-      } else {
+      try {
+        const response = await fetch('/api/lessons');
+        if (!response.ok) {
+          throw new Error('Failed to fetch lessons');
+        }
+        const data = await response.json();
         setLessons(data || []);
+      } catch (err) {
+        console.error("Error fetching lessons:", err);
+        setError("Unable to load lessons. Please refresh the page.");
       }
       setLoading(false);
     }
