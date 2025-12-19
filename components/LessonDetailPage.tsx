@@ -30,7 +30,7 @@ const fileTypeLabels: Record<string, string> = {
   teacher_guide: 'Teacher Guide',
   presentation: 'Lesson Presentation',
   interactive_practice: 'Practice Activities',
-  worksheet_support: 'Worksheets',
+  worksheet: 'Worksheets',
   progress_tracker: 'Progress Tracker',
   assessment: 'Assessment',
 };
@@ -39,7 +39,7 @@ const fileTypeOrder = [
   'teacher_guide',
   'presentation',
   'interactive_practice',
-  'worksheet_support',
+  'worksheet',
   'progress_tracker',
   'assessment',
 ];
