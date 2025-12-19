@@ -269,6 +269,41 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  const authCheck = await verifyAdmin(request);
+  if (!authCheck.authorized) {
+    return NextResponse.json({ error: authCheck.error }, { status: 401 });
+  }
+
+  try {
+    const { lessonId, fileUrl, fileName, fileType } = await request.json();
+
+    if (!lessonId || !fileUrl) {
+      return NextResponse.json({ error: 'Lesson ID and file URL required' }, { status: 400 });
+    }
+
+    const parsedLessonId = parseInt(lessonId);
+    const resolvedFileType = fileType || 'interactive_practice';
+
+    // Delete any existing file with same lesson_id and file_type to prevent duplicates
+    await pool.query(
+      'DELETE FROM lesson_files WHERE lesson_id = $1 AND file_type = $2',
+      [parsedLessonId, resolvedFileType]
+    );
+
+    // Insert file record into PostgreSQL
+    await pool.query(
+      'INSERT INTO lesson_files (lesson_id, file_type, file_name, file_url) VALUES ($1, $2, $3, $4)',
+      [parsedLessonId, resolvedFileType, fileName || 'Linked File', fileUrl]
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error linking file to lesson:', error);
+    return NextResponse.json({ error: error.message || 'Failed to link file' }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   const authCheck = await verifyAdmin(request);
   if (!authCheck.authorized) {

@@ -178,14 +178,27 @@ export default function AdminPracticeFilesPage() {
 
       const fileName = `Interactive Practice - Lesson ${lesson.lesson_number}${lesson.part || ''}`;
 
-      const { error } = await supabase.from('lesson_files').insert({
-        lesson_id: lessonId,
-        file_type: 'interactive_practice',
-        file_name: fileName,
-        file_url: publicUrl,
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const response = await fetch('/api/admin/lesson-files', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          lessonId: lessonId,
+          fileUrl: publicUrl,
+          fileName: fileName,
+          fileType: 'interactive_practice',
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to link file');
+      }
 
       setSuccessMessage('File linked to lesson successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
