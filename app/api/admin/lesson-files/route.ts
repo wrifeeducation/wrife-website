@@ -95,6 +95,51 @@ function getMimeType(fileName: string): string {
   return mimeMap[ext] || 'application/octet-stream';
 }
 
+function detectFileCategoryFromName(filename: string): string {
+  const lowerFilename = filename.toLowerCase();
+  
+  if (lowerFilename.includes('worksheet') && lowerFilename.includes('challenge')) {
+    return 'worksheet_challenge';
+  }
+  if (lowerFilename.includes('worksheet') && lowerFilename.includes('support')) {
+    return 'worksheet_support';
+  }
+  if (lowerFilename.includes('worksheet') && lowerFilename.includes('core')) {
+    return 'worksheet_core';
+  }
+  if (lowerFilename.includes('worksheet')) {
+    return 'worksheet_core';
+  }
+  
+  if (lowerFilename.includes('presentation')) {
+    return 'presentation';
+  }
+  
+  if (lowerFilename.includes('assessment')) {
+    return 'assessment';
+  }
+  
+  if (lowerFilename.includes('progress') && lowerFilename.includes('tracker')) {
+    return 'progress_tracker';
+  }
+  if (lowerFilename.includes('progress_tracker')) {
+    return 'progress_tracker';
+  }
+  
+  if (lowerFilename.includes('teacher') && lowerFilename.includes('guide')) {
+    return 'teacher_guide';
+  }
+  if (lowerFilename.includes('teaching') && lowerFilename.includes('guide')) {
+    return 'teacher_guide';
+  }
+  
+  if (lowerFilename.endsWith('.html') || lowerFilename.endsWith('.htm')) {
+    return 'interactive_practice';
+  }
+  
+  return 'teacher_guide';
+}
+
 export async function POST(request: NextRequest) {
   const authCheck = await verifyAdmin(request);
   if (!authCheck.authorized) {
@@ -139,8 +184,8 @@ export async function POST(request: NextRequest) {
     const filePath = `${folderPath}/${sanitizedFileName}`;
     const mimeType = getMimeType(file.name);
     
-    // Use canonical file category if provided, otherwise fall back to extension-based type
-    const canonicalType = fileCategory || getFileType(file.name);
+    // Auto-detect category from filename patterns (e.g., "L01_Worksheet_CHALLENGE.docx" -> worksheet_challenge)
+    const canonicalType = detectFileCategoryFromName(file.name);
 
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)

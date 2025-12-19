@@ -18,7 +18,9 @@
     "db:backfill-files": "npx tsx db/backfill-file-types.ts",
     "db:backfill-files:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/backfill-file-types.ts",
     "db:update-titles": "npx tsx db/update-lesson-titles.ts",
-    "db:update-titles:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/update-lesson-titles.ts"
+    "db:update-titles:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/update-lesson-titles.ts",
+    "db:backfill-categories": "npx tsx db/backfill-file-categories.ts",
+    "db:backfill-categories:prod": "DATABASE_URL=$PROD_DATABASE_URL npx tsx db/backfill-file-categories.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
