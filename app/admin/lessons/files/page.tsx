@@ -29,7 +29,6 @@ interface UploadProgress {
 const FILE_CATEGORIES = [
   { value: 'teacher_guide', label: 'Teacher Guide' },
   { value: 'presentation', label: 'Lesson Presentation' },
-  { value: 'interactive_practice', label: 'Interactive Practice' },
   { value: 'worksheet_support', label: 'Worksheet (Support)' },
   { value: 'worksheet_core', label: 'Worksheet (Core)' },
   { value: 'worksheet_challenge', label: 'Worksheet (Challenge)' },
@@ -403,7 +402,7 @@ export default function AdminLessonFilesPage() {
                     Drag and drop all lesson files here
                   </p>
                   <p className="text-sm text-[var(--wrife-text-muted)] mb-1">
-                    Supports PDF, DOCX, XLSX, HTML (up to 8 files at once)
+                    Supports PDF, DOCX, XLSX, PPTX (up to 8 files at once)
                   </p>
                   <p className="text-xs text-[var(--wrife-text-muted)] mb-4">
                     New uploads automatically replace existing files with the same name
@@ -411,7 +410,7 @@ export default function AdminLessonFilesPage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf,.docx,.doc,.xlsx,.xls,.html,.htm,.pptx,.ppt"
+                    accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt"
                     multiple
                     onChange={handleFileInput}
                     className="hidden"
