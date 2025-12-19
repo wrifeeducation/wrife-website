@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start --port 5000 --hostname 0.0.0.0",
     "lint": "next lint",
-    "deploy": "curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_ngxX8cz1XOmVt1YX4yAbUKm62PAL/ZlD9Lwzbob && echo ' Deployment triggered!'",
+    "deploy": "curl -s -X POST 'https://api.vercel.com/v13/deployments' -H \"Authorization: Bearer $VERCEL_TOKEN\" -H 'Content-Type: application/json' -d '{\"name\":\"wrife-website-pmy7\",\"project\":\"prj_ngxX8cz1XOmVt1YX4yAbUKm62PAL\",\"target\":\"production\",\"gitSource\":{\"type\":\"github\",\"org\":\"wrifeeducation\",\"repo\":\"wrife-website\",\"ref\":\"main\"}}' && echo ' Deployment triggered!'",
     "deploy:cli": "vercel --prod",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
