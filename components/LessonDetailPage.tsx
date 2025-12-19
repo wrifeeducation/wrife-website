@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AssignLessonModal } from './AssignLessonModal';
 import { useAuth } from '@/lib/auth-context';
+import { isHtmlFile, getProxiedHtmlUrl } from '@/lib/fileUrlHelper';
 
 interface LessonFile {
   id: number;
@@ -154,9 +155,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
           {filesByType[activeTab] ? (
             <div className="space-y-3">
               {filesByType[activeTab].map((file) => {
-                // Check if HTML by file_url extension OR file_type is interactive_practice
-                const isHtml = file.file_url.toLowerCase().endsWith('.html') || 
-                               file.file_type === 'interactive_practice';
+                const fileIsHtml = isHtmlFile(file.file_url, file.file_type);
                 
                 return (
                   <div key={file.id}>
@@ -172,7 +171,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                       </div>
 
                       <div className="flex gap-2 ml-4">
-                        {isHtml ? (
+                        {fileIsHtml ? (
                           <button
                             onClick={() => loadHtmlFile(file.id, file.file_url)}
                             className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
@@ -189,17 +188,19 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                             View
                           </a>
                         )}
-                        <a
-                          href={file.file_url}
-                          download
-                          className="rounded-full border border-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
-                        >
-                          Download
-                        </a>
+                        {!fileIsHtml && (
+                          <a
+                            href={file.file_url}
+                            download
+                            className="rounded-full border border-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
+                          >
+                            Download
+                          </a>
+                        )}
                       </div>
                     </div>
 
-                    {isHtml && htmlContent[file.id] && (
+                    {fileIsHtml && htmlContent[file.id] && (
                       <div className="mt-3 p-6 rounded-lg border border-[var(--wrife-border)] bg-white">
                         <iframe
                           srcDoc={htmlContent[file.id]}
