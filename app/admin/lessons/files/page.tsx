@@ -34,6 +34,7 @@ const FILE_CATEGORIES = [
   { value: 'worksheet_challenge', label: 'Worksheet (Challenge)' },
   { value: 'progress_tracker', label: 'Progress Tracker' },
   { value: 'assessment', label: 'Assessment' },
+  { value: 'interactive_practice', label: 'Interactive Practice (HTML)' },
 ];
 
 export default function AdminLessonFilesPage() {
@@ -401,7 +402,7 @@ export default function AdminLessonFilesPage() {
                     Drag and drop all lesson files here
                   </p>
                   <p className="text-sm text-[var(--wrife-text-muted)] mb-1">
-                    Supports PDF, DOCX, XLSX, PPTX (up to 8 files at once)
+                    Supports PDF, DOCX, XLSX, PPTX, HTML (up to 8 files at once)
                   </p>
                   <p className="text-xs text-[var(--wrife-text-muted)] mb-4">
                     New uploads automatically replace existing files with the same name
@@ -409,7 +410,7 @@ export default function AdminLessonFilesPage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt"
+                    accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.html,.htm"
                     multiple
                     onChange={handleFileInput}
                     className="hidden"
@@ -454,12 +455,12 @@ export default function AdminLessonFilesPage() {
                       </div>
                       <div className="flex gap-2">
                         <a
-                          href={file.fileType === 'html' ? `/api/fetch-html?url=${encodeURIComponent(file.publicUrl)}` : file.publicUrl}
+                          href={file.fileType === 'html' || file.fileType === 'interactive_practice' || file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm') ? `/api/fetch-html?url=${encodeURIComponent(file.publicUrl)}` : file.publicUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-full border border-[var(--wrife-blue)] px-4 py-1.5 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
                         >
-                          {file.fileType === 'html' ? 'Preview' : 'View'}
+                          {file.fileType === 'html' || file.fileType === 'interactive_practice' || file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm') ? 'Preview' : 'View'}
                         </a>
                         <button
                           onClick={() => deleteFile(file.name)}
