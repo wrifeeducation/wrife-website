@@ -9,11 +9,24 @@ WriFe is a writing education platform designed for primary school teachers, offe
 
 ### Deployment Workflow
 1. Development happens in Replit (this environment)
-2. **Primary method**: Run `npm run deploy` to trigger Vercel deployment via deploy hook
-3. Changes are automatically committed to GitHub, then deploy hook triggers Vercel build
-4. Deploy hook bypasses git author validation issues with Replit
+2. **Primary method**: Run `npm run deploy` to push to GitHub and trigger Vercel deployment
+3. The deploy script (`scripts/deploy.sh`) handles both GitHub push and Vercel trigger
 
-**Note**: Direct `vercel --prod` CLI fails due to git author mismatch. Always use `npm run deploy`.
+**Required Setup (One-Time):**
+1. Create a GitHub Personal Access Token (PAT):
+   - Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+   - Generate new token with `repo` scope
+2. Add Replit secret `GIT_REMOTE_URL` with value:
+   ```
+   https://YOUR_GITHUB_USERNAME:YOUR_TOKEN@github.com/wrifeeducation/wrife-website.git
+   ```
+
+**Deployment Commands:**
+- `npm run deploy` - Full deploy: pushes to GitHub first, then triggers Vercel (recommended)
+- `npm run deploy:api-only` - Only triggers Vercel (use if GitHub already has latest code)
+- `npm run deploy:cli` - Uses Vercel CLI (may fail due to git author mismatch)
+
+**Note**: Direct `vercel --prod` CLI and manual GitHub sync are unreliable. Always use `npm run deploy`.
 
 ### Database Architecture (CRITICAL)
 - **TWO separate databases exist**: Development (Replit) and Production (Vercel)
