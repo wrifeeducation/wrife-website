@@ -430,7 +430,7 @@ export default function LessonLibrary() {
                                   <LessonCard
                                     key={`${lesson.id}-${lesson.part || ""}`}
                                     lessonNumber={getLessonNumber(lesson)}
-                                    linkNumber={lesson.lesson_number}
+                                    lessonId={lesson.id}
                                     title={lesson.title}
                                     summary={lesson.summary || ""}
                                     tags={getLessonTags(lesson)}

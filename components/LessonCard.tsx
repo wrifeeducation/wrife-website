@@ -2,7 +2,7 @@ import Link from "next/link";
 
 interface LessonCardProps {
   lessonNumber: string;
-  linkNumber: number;
+  lessonId: number;
   title: string;
   summary: string;
   tags?: string[];
@@ -10,13 +10,13 @@ interface LessonCardProps {
 
 export default function LessonCard({
   lessonNumber,
-  linkNumber,
+  lessonId,
   title,
   summary,
   tags = [],
 }: LessonCardProps) {
   return (
-    <Link href={`/lesson/${linkNumber}`}>
+    <Link href={`/lesson/${lessonId}`}>
       <div
         className="flex flex-col gap-4 p-4 rounded-2xl h-full hover:shadow-lg transition-shadow duration-200"
         style={{

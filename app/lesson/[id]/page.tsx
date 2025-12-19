@@ -16,12 +16,11 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     notFound();
   }
 
-  // Query lessons from PostgreSQL
+  // Query lesson by ID from PostgreSQL
   const lessonResult = await pool.query(
     `SELECT id, lesson_number, part, title, summary, duration_minutes, year_group_min, year_group_max 
      FROM lessons 
-     WHERE lesson_number = $1 
-     ORDER BY part ASC`,
+     WHERE id = $1`,
     [lessonId]
   );
 

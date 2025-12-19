@@ -74,7 +74,7 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 **Technical Implementations & Design Choices:**
 - **Dynamic Imports:** `LessonLibrary` and `AuthButtons` utilize `next/dynamic` with `ssr: false` to prevent hydration mismatches, especially concerning authentication states.
 - **Client Components:** Pages requiring interactivity are marked with the `"use client"` directive.
-- **Lesson Routing:** Lessons are accessed via their `lesson_number` in the URL (e.g., `/lesson/27`).
+- **Lesson Routing:** Lessons are accessed via their database `id` in the URL (e.g., `/lesson/30` for lesson ID 30). This ensures multi-part lessons (27a, 27b) each have unique URLs.
 - **Client-Side Authentication:** `LessonPageWrapper` provides client-side authentication checks for dashboard and lesson pages.
 - **Supabase SSR Pattern (Critical):** Browser client (`lib/supabase.ts`) must have `'use client'` directive to ensure cookies are written in browser context. Server code imports from `lib/supabase/server.ts`. This separation is essential for session persistence across page navigations.
 - **Practice File Management:** Interactive HTML practice files are stored in Supabase Storage (bucket: 'practice-activities').
