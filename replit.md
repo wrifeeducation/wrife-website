@@ -113,6 +113,8 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - `npm run db:studio` - Open Drizzle Studio for database inspection
 - `npm run db:backfill-files` - Backfill lesson_files file_type to canonical categories
 - `npm run db:backfill-files:prod` - Run backfill on production (requires `PROD_DATABASE_URL` secret)
+- `npm run db:update-titles` - Update lesson titles to match official curriculum (development)
+- `npm run db:update-titles:prod` - Update lesson titles on production (requires `PROD_DATABASE_URL` secret)
 
 **Schema Location:** `db/schema.ts` - Contains all table definitions using Drizzle ORM
 
