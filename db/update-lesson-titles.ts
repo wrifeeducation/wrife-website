@@ -2,19 +2,23 @@ import { Pool } from 'pg';
 import * as fs from 'fs';
 
 function loadEnvFile(path: string): Record<string, string> {
-  const content = fs.readFileSync(path, 'utf-8');
-  const vars: Record<string, string> = {};
-  for (const line of content.split('\n')) {
-    const match = line.match(/^([A-Z_]+)=(.*)$/);
-    if (match) {
-      vars[match[1]] = match[2];
+  try {
+    const content = fs.readFileSync(path, 'utf-8');
+    const vars: Record<string, string> = {};
+    for (const line of content.split('\n')) {
+      const match = line.match(/^([A-Z_]+)=(.*)$/);
+      if (match) {
+        vars[match[1]] = match[2];
+      }
     }
+    return vars;
+  } catch {
+    return {};
   }
-  return vars;
 }
 
 const envVars = loadEnvFile('.env.local');
-const databaseUrlFromEnv = envVars.DATABASE_URL;
+const databaseUrlFromEnv = process.env.DATABASE_URL || envVars.DATABASE_URL;
 
 const curriculumLessons = [
   { lesson_number: 1, part: null, title: 'Developing Awareness of Personal Stories' },
