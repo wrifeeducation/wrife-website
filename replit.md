@@ -22,11 +22,18 @@ WriFe is a writing education platform designed for primary school teachers, offe
    ```
 
 **Deployment Commands:**
-- `npm run deploy` - Full deploy: pushes to GitHub first, then triggers Vercel (recommended)
+- `npm run deploy` - Checks sync status and triggers Vercel deployment
 - `npm run deploy:api-only` - Only triggers Vercel (use if GitHub already has latest code)
 - `npm run deploy:cli` - Uses Vercel CLI (may fail due to git author mismatch)
 
-**Note**: Direct `vercel --prod` CLI and manual GitHub sync are unreliable. Always use `npm run deploy`.
+**If code is out of sync with GitHub:**
+The deploy script will detect this and show you the command to run. In the Shell, run:
+```bash
+git push $GIT_REMOTE_URL HEAD:main --force
+```
+Then run `npm run deploy` again.
+
+**Note**: The Agent cannot push to GitHub due to Replit safety restrictions, but you can run git commands directly in the Shell.
 
 ### Database Architecture (CRITICAL)
 - **TWO separate databases exist**: Development (Replit) and Production (Vercel)
