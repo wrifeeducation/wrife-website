@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const lessonId = formData.get('lessonId') as string;
+    const fileCategory = formData.get('fileCategory') as string; // canonical type from frontend
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -135,7 +136,9 @@ export async function POST(request: NextRequest) {
     const folderPath = `lesson-${lessonId}`;
     const filePath = `${folderPath}/${sanitizedFileName}`;
     const mimeType = getMimeType(file.name);
-    const fileType = getFileType(file.name);
+    
+    // Use canonical file category if provided, otherwise fall back to extension-based type
+    const canonicalType = fileCategory || getFileType(file.name);
 
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
@@ -163,11 +166,11 @@ export async function POST(request: NextRequest) {
       console.error('Error deleting existing file record:', deleteError);
     }
 
-    // Insert new file record into PostgreSQL
+    // Insert new file record into PostgreSQL with canonical file type
     try {
       await pool.query(
         'INSERT INTO lesson_files (lesson_id, file_type, file_name, file_url) VALUES ($1, $2, $3, $4)',
-        [parseInt(lessonId), fileType, sanitizedFileName, urlData.publicUrl]
+        [parseInt(lessonId), canonicalType, sanitizedFileName, urlData.publicUrl]
       );
     } catch (insertError: any) {
       console.error('Error inserting file record:', insertError);
@@ -181,7 +184,7 @@ export async function POST(request: NextRequest) {
       success: true,
       filePath: uploadData.path,
       publicUrl: urlData.publicUrl,
-      fileType: fileType,
+      fileType: canonicalType,
       fileName: sanitizedFileName,
     });
   } catch (error) {

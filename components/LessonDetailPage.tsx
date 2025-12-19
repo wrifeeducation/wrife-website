@@ -154,7 +154,9 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
           {filesByType[activeTab] ? (
             <div className="space-y-3">
               {filesByType[activeTab].map((file) => {
-                const isHtml = file.file_name.endsWith('.html');
+                // Check if HTML by file_url extension OR file_type is interactive_practice
+                const isHtml = file.file_url.toLowerCase().endsWith('.html') || 
+                               file.file_type === 'interactive_practice';
                 
                 return (
                   <div key={file.id}>

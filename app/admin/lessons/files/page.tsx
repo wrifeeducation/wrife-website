@@ -26,11 +26,23 @@ interface UploadProgress {
   error?: string;
 }
 
+const FILE_CATEGORIES = [
+  { value: 'teacher_guide', label: 'Teacher Guide' },
+  { value: 'presentation', label: 'Lesson Presentation' },
+  { value: 'interactive_practice', label: 'Interactive Practice' },
+  { value: 'worksheet_support', label: 'Worksheet (Support)' },
+  { value: 'worksheet_core', label: 'Worksheet (Core)' },
+  { value: 'worksheet_challenge', label: 'Worksheet (Challenge)' },
+  { value: 'progress_tracker', label: 'Progress Tracker' },
+  { value: 'assessment', label: 'Assessment' },
+];
+
 export default function AdminLessonFilesPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedLessonId, setSelectedLessonId] = useState<number | ''>('');
+  const [selectedFileCategory, setSelectedFileCategory] = useState<string>('teacher_guide');
   const [lessonFiles, setLessonFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -172,6 +184,7 @@ export default function AdminLessonFilesPage() {
           const formData = new FormData();
           formData.append('file', file);
           formData.append('lessonId', selectedLessonId.toString());
+          formData.append('fileCategory', selectedFileCategory);
 
           const response = await fetch('/api/admin/lesson-files', {
             method: 'POST',
@@ -312,22 +325,41 @@ export default function AdminLessonFilesPage() {
           <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6 mb-6">
             <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Upload Files</h2>
 
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
-                Select Lesson
-              </label>
-              <select
-                value={selectedLessonId}
-                onChange={(e) => setSelectedLessonId(e.target.value ? parseInt(e.target.value) : '')}
-                className="w-full max-w-md px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-              >
-                <option value="">Choose a lesson...</option>
-                {lessons.map((lesson) => (
-                  <option key={lesson.id} value={lesson.id}>
-                    Lesson {lesson.lesson_number}{lesson.part || ''}: {lesson.title}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                  Select Lesson
+                </label>
+                <select
+                  value={selectedLessonId}
+                  onChange={(e) => setSelectedLessonId(e.target.value ? parseInt(e.target.value) : '')}
+                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                >
+                  <option value="">Choose a lesson...</option>
+                  {lessons.map((lesson) => (
+                    <option key={lesson.id} value={lesson.id}>
+                      Lesson {lesson.lesson_number}{lesson.part || ''}: {lesson.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
+                  File Category
+                </label>
+                <select
+                  value={selectedFileCategory}
+                  onChange={(e) => setSelectedFileCategory(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                >
+                  {FILE_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div
