@@ -7,6 +7,7 @@ import { adminFetch } from '@/lib/admin-fetch';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import AnalyticsSection from '@/components/AnalyticsSection';
 
 interface School {
   id: string;
@@ -192,6 +193,8 @@ export default function AdminDashboard() {
               </Link>
             </div>
           </div>
+
+          <AnalyticsSection />
 
           {schools.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-12 text-center">
