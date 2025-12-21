@@ -52,6 +52,22 @@ Then run `npm run deploy` again.
    DATABASE_URL="<production_url>" npx tsx db/seed-curriculum.ts
    ```
 
+### Development Database Setup
+Since development and production have separate databases, you need to seed test accounts in development:
+
+```bash
+npm run db:seed-accounts
+```
+
+This creates/updates the following test accounts in the development database:
+- **Admin**: wrife.education@gmail.com (full tier, admin role)
+- **Test Teacher (Full)**: teacher@test.wrife.co.uk
+- **Test Teacher (Free)**: teacher.free@test.wrife.co.uk
+- **Test Teacher (Standard)**: teacher.standard@test.wrife.co.uk
+- **Test Pupil**: pupil@test.wrife.co.uk
+
+**Important**: These profiles must have matching Supabase auth accounts to log in. The admin account already exists in Supabase. For other test accounts, you would need to create Supabase users or test with the admin account.
+
 ### API Route Naming
 - **NEVER use underscore prefix** for API folders (e.g., `_admin`)
 - Next.js/Vercel treats underscore-prefixed folders as private and won't deploy them
