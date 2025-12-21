@@ -381,3 +381,16 @@ export const teacherInvites = pgTable('teacher_invites', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).default(sql`now() + interval '7 days'`),
   acceptedAt: timestamp('accepted_at', { withTimezone: true }),
 });
+
+export const userActivity = pgTable('user_activity', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid('user_id'),
+  userRole: varchar('user_role'),
+  eventType: varchar('event_type').notNull(),
+  eventData: jsonb('event_data').default({}),
+  pagePath: varchar('page_path'),
+  sessionId: varchar('session_id'),
+  ipAddress: varchar('ip_address'),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});
