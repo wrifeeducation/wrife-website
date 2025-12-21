@@ -134,6 +134,13 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **DWP (Differentiated Writing Programme):** A 40-level program with level-specific rubrics and AI assessment, leading to badges and certificates.
 - **Admin Dashboards:** Separate dashboards for super administrators (user/school/curriculum management) and school administrators (school-specific help).
 - **PWP Admin Quick Add:** Simplified activity creation with one-click "Quick Add" that auto-populates level name, grammar focus, and default instructions for independent practice. Full form available via "Advanced Options".
+- **Usage Analytics:** Platform-wide activity tracking and analytics for admins. Features:
+  - Tracks user logins, PWP/DWP activity, lesson views, and key actions
+  - Data stored in `user_activity` table with non-blocking async logging
+  - Admin dashboard shows active users (daily/weekly/monthly), event breakdown by type and role
+  - Recent activity feed with user details and timestamps
+  - API endpoint: `/api/admin/analytics` (admin-only access)
+  - Key files: `lib/activity-tracker.ts`, `components/AnalyticsSection.tsx`
 
 ## Database Management
 

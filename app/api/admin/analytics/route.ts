@@ -18,9 +18,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
     const [
       activeUsersResult,
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
           COUNT(DISTINCT CASE WHEN created_at >= $3 THEN user_id END) as month
         FROM user_activity
         WHERE user_id IS NOT NULL
-      `, [today, weekAgo, monthAgo]),
+      `, [todayStart, weekAgo, monthAgo]),
 
       pool.query(`
         SELECT 
@@ -59,7 +61,7 @@ export async function GET(request: NextRequest) {
         GROUP BY DATE(created_at)
         ORDER BY date DESC
         LIMIT 14
-      `, [new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()]),
+      `, [twoWeeksAgo]),
 
       pool.query(`
         SELECT 
