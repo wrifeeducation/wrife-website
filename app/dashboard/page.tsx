@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -8,6 +8,8 @@ import Link from 'next/link';
 import Navbar from "../../components/Navbar";
 import { supabase } from '@/lib/supabase';
 import dynamicImport from 'next/dynamic';
+import { getEntitlements } from '@/lib/entitlements';
+import UpgradeModal from '@/components/UpgradeModal';
 
 const LessonLibrary = dynamicImport(() => import('@/components/LessonLibrary'), {
   ssr: false,
@@ -127,6 +129,34 @@ function DashboardContent() {
   const [classModalError, setClassModalError] = useState('');
   const [pupilModalError, setPupilModalError] = useState('');
   const [globalSuccess, setGlobalSuccess] = useState('');
+  
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState('');
+  const [upgradeDescription, setUpgradeDescription] = useState('');
+
+  const entitlements = useMemo(() => {
+    return getEntitlements(user?.membership_tier, user?.school_tier);
+  }, [user?.membership_tier, user?.school_tier]);
+
+  function handleCreateClassClick() {
+    if (entitlements.canManageClasses) {
+      setShowCreateClassModal(true);
+    } else {
+      setUpgradeFeature('Create Class');
+      setUpgradeDescription('Organize your pupils into classes and track their progress together.');
+      setShowUpgradeModal(true);
+    }
+  }
+
+  function handleAddPupilClick() {
+    if (entitlements.canManageClasses) {
+      setShowAddPupilModal(true);
+    } else {
+      setUpgradeFeature('Add Pupil');
+      setUpgradeDescription('Add pupils to your classes and assign them writing activities.');
+      setShowUpgradeModal(true);
+    }
+  }
 
   useEffect(() => {
     console.log('[Dashboard] Auth state:', { loading, user: user?.id, authChecked });
@@ -448,13 +478,13 @@ function DashboardContent() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowCreateClassModal(true)}
+              onClick={handleCreateClassClick}
               className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
             >
               + New Class
             </button>
             <button
-              onClick={() => setShowAddPupilModal(true)}
+              onClick={handleAddPupilClick}
               className="rounded-full bg-[var(--wrife-yellow)] px-4 py-2 text-sm font-bold text-[var(--wrife-text-main)] hover:opacity-90 transition"
             >
               + Add Pupil
@@ -618,7 +648,7 @@ function DashboardContent() {
                     ) : (
                       <div className="sm:col-span-2 text-center py-6">
                         <p className="text-[var(--wrife-text-muted)] text-sm">Create a class first to assign PWP lessons</p>
-                        <button onClick={() => setShowCreateClassModal(true)} className="mt-2 text-green-600 font-semibold text-sm hover:underline">
+                        <button onClick={handleCreateClassClick} className="mt-2 text-green-600 font-semibold text-sm hover:underline">
                           + Create Class
                         </button>
                       </div>
@@ -652,7 +682,7 @@ function DashboardContent() {
                     ) : (
                       <div className="sm:col-span-2 text-center py-6">
                         <p className="text-[var(--wrife-text-muted)] text-sm">Create a class first to assign DWP levels</p>
-                        <button onClick={() => setShowCreateClassModal(true)} className="mt-2 text-purple-600 font-semibold text-sm hover:underline">
+                        <button onClick={handleCreateClassClick} className="mt-2 text-purple-600 font-semibold text-sm hover:underline">
                           + Create Class
                         </button>
                       </div>
@@ -669,11 +699,11 @@ function DashboardContent() {
                       <span className="text-2xl mb-2 block">📝</span>
                       <p className="font-semibold text-sm text-[var(--wrife-blue)]">Assign a Lesson</p>
                     </button>
-                    <button onClick={() => setShowCreateClassModal(true)} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
+                    <button onClick={handleCreateClassClick} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
                       <span className="text-2xl mb-2 block">➕</span>
                       <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Create Class</p>
                     </button>
-                    <button onClick={() => setShowAddPupilModal(true)} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
+                    <button onClick={handleAddPupilClick} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
                       <span className="text-2xl mb-2 block">👤</span>
                       <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Add Pupil</p>
                     </button>
@@ -736,7 +766,7 @@ function DashboardContent() {
                     <div className="text-center py-12">
                       <span className="text-5xl mb-4 block">📚</span>
                       <p className="text-[var(--wrife-text-muted)] mb-4">Create a class first to assign PWP lessons</p>
-                      <button onClick={() => setShowCreateClassModal(true)} className="rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+                      <button onClick={handleCreateClassClick} className="rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
                         + Create Class
                       </button>
                     </div>
@@ -783,7 +813,7 @@ function DashboardContent() {
                     <div className="text-center py-12">
                       <span className="text-5xl mb-4 block">📚</span>
                       <p className="text-[var(--wrife-text-muted)] mb-4">Create a class first to assign DWP levels</p>
-                      <button onClick={() => setShowCreateClassModal(true)} className="rounded-full bg-purple-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
+                      <button onClick={handleCreateClassClick} className="rounded-full bg-purple-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
                         + Create Class
                       </button>
                     </div>
@@ -797,7 +827,7 @@ function DashboardContent() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">All Pupils</h2>
                   <button
-                    onClick={() => setShowAddPupilModal(true)}
+                    onClick={handleAddPupilClick}
                     className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
                   >
                     + Add Pupil
@@ -911,7 +941,7 @@ function DashboardContent() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">My Classes</h2>
                   <button
-                    onClick={() => setShowCreateClassModal(true)}
+                    onClick={handleCreateClassClick}
                     className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
                   >
                     + Create Class
@@ -1099,6 +1129,13 @@ function DashboardContent() {
           </div>
         </div>
       )}
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature={upgradeFeature}
+        description={upgradeDescription}
+      />
     </div>
   );
 }
