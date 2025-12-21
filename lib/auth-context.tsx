@@ -9,6 +9,8 @@ interface User {
   role: string;
   display_name?: string;
   school_id?: string;
+  membership_tier?: string;
+  school_tier?: string;
 }
 
 interface AuthContextType {
@@ -114,6 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: data.profile.role,
           display_name: data.profile.display_name,
           school_id: data.profile.school_id,
+          membership_tier: data.profile.membership_tier || 'free',
+          school_tier: data.profile.school_tier || null,
         });
         console.log('[AuthContext] User set successfully:', data.profile.role);
       } else {

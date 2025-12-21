@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { getEntitlements, getUpgradeMessage } from '@/lib/entitlements';
 
 export default function NewClassPage() {
   const [name, setName] = useState('');
@@ -15,6 +16,10 @@ export default function NewClassPage() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+
+  const entitlements = useMemo(() => {
+    return getEntitlements(user?.membership_tier, user?.school_tier);
+  }, [user?.membership_tier, user?.school_tier]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -39,6 +44,41 @@ export default function NewClassPage() {
                   <div className="h-10 bg-gray-200 rounded"></div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (!entitlements.canManageClasses) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen py-8" style={{ backgroundColor: 'var(--wrife-bg)' }}>
+          <div className="mx-auto max-w-2xl px-4">
+            <div className="mb-6">
+              <Link href="/dashboard" className="text-sm hover:underline mb-2 inline-block" style={{ color: 'var(--wrife-blue)' }}>
+                ← Back to dashboard
+              </Link>
+              <h1 className="text-2xl font-extrabold" style={{ color: 'var(--wrife-text-main)' }}>Create New Class</h1>
+            </div>
+
+            <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: 'var(--wrife-surface)', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.06)', border: '1px solid var(--wrife-border)' }}>
+              <div className="text-5xl mb-4">🔒</div>
+              <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--wrife-text-main)' }}>
+                Upgrade Required
+              </h2>
+              <p className="mb-6" style={{ color: 'var(--wrife-text-muted)' }}>
+                {getUpgradeMessage(entitlements.tier)}
+              </p>
+              <Link
+                href="/pricing"
+                className="inline-block px-6 py-3 rounded-full text-white font-semibold transition hover:opacity-90"
+                style={{ backgroundColor: 'var(--wrife-blue)' }}
+              >
+                View Plans
+              </Link>
             </div>
           </div>
         </div>

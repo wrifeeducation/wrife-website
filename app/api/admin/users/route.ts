@@ -97,6 +97,16 @@ export async function PUT(request: NextRequest) {
     if (updates.last_name !== undefined) {
       allowedUpdates.last_name = updates.last_name;
     }
+    
+    if (updates.membership_tier !== undefined) {
+      const validTiers = ['free', 'standard', 'full'];
+      if (!validTiers.includes(updates.membership_tier)) {
+        return NextResponse.json({ 
+          error: `Invalid membership tier: ${updates.membership_tier}. Must be one of: ${validTiers.join(', ')}` 
+        }, { status: 400 });
+      }
+      allowedUpdates.membership_tier = updates.membership_tier;
+    }
 
     if (Object.keys(allowedUpdates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });

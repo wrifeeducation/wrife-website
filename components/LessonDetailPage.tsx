@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AssignLessonModal } from './AssignLessonModal';
 import { useAuth } from '@/lib/auth-context';
 import { isHtmlFile, getProxiedHtmlUrl } from '@/lib/fileUrlHelper';
+import { getEntitlements, isFileTypeAllowed, getUpgradeMessage, TIER_DISPLAY_NAMES, type MembershipTier } from '@/lib/entitlements';
 
 interface LessonFile {
   id: number;
@@ -51,12 +52,27 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const { user } = useAuth();
 
+  const entitlements = useMemo(() => {
+    return getEntitlements(user?.membership_tier, user?.school_tier);
+  }, [user?.membership_tier, user?.school_tier]);
+
   const filesByType = files.reduce((acc, file) => {
     const baseType = file.file_type.replace(/_core|_support|_challenge/g, '');
     if (!acc[baseType]) acc[baseType] = [];
     acc[baseType].push(file);
     return acc;
   }, {} as Record<string, LessonFile[]>);
+
+  const isTabLocked = (tabType: string): boolean => {
+    if (tabType === 'worksheet') {
+      return !entitlements.allowedFileTypes.includes('worksheet_core');
+    }
+    return !entitlements.allowedFileTypes.includes(tabType);
+  };
+
+  const isFileLocked = (file: LessonFile): boolean => {
+    return !isFileTypeAllowed(file.file_type, entitlements);
+  };
 
   const lessonNumber = lesson.part 
     ? `${lesson.lesson_number}${lesson.part}` 
@@ -107,13 +123,24 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
           
           {user && (user.role === 'teacher' || user.role === 'school_admin' || user.role === 'admin') && (
             <div className="mt-4 mb-2">
-              <button
-                onClick={() => setShowAssignModal(true)}
-                className="inline-flex items-center gap-2 px-6 py-2 bg-[var(--wrife-yellow)] hover:bg-[var(--wrife-yellow)]/90 text-[var(--wrife-text-main)] rounded-full font-semibold shadow-soft transition w-full sm:w-auto justify-center sm:justify-start"
-              >
-                <span>📋</span>
-                Assign to Class
-              </button>
+              {entitlements.canAssignWork ? (
+                <button
+                  onClick={() => setShowAssignModal(true)}
+                  className="inline-flex items-center gap-2 px-6 py-2 bg-[var(--wrife-yellow)] hover:bg-[var(--wrife-yellow)]/90 text-[var(--wrife-text-main)] rounded-full font-semibold shadow-soft transition w-full sm:w-auto justify-center sm:justify-start"
+                >
+                  <span>📋</span>
+                  Assign to Class
+                </button>
+              ) : (
+                <a
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 px-6 py-2 bg-gray-200 text-gray-500 rounded-full font-semibold w-full sm:w-auto justify-center sm:justify-start hover:bg-gray-300 transition"
+                >
+                  <span>🔒</span>
+                  Assign to Class
+                  <span className="text-xs ml-2">(Upgrade to Full)</span>
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -129,24 +156,52 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
       <div className="bg-white border-b border-[var(--wrife-border)] overflow-x-auto">
         <div className="mx-auto max-w-6xl px-4">
           <nav className="flex gap-6 whitespace-nowrap">
-            {fileTypeOrder.map((type) => (
-              <button
-                key={type}
-                onClick={() => setActiveTab(type)}
-                className={`py-4 text-sm font-semibold border-b-2 transition ${
-                  activeTab === type
-                    ? 'border-[var(--wrife-blue)] text-[var(--wrife-blue)]'
-                    : 'border-transparent text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)]'
-                }`}
-              >
-                {fileTypeLabels[type]}
-              </button>
-            ))}
+            {fileTypeOrder.map((type) => {
+              const locked = isTabLocked(type);
+              return (
+                <button
+                  key={type}
+                  onClick={() => setActiveTab(type)}
+                  className={`py-4 text-sm font-semibold border-b-2 transition flex items-center gap-1 ${
+                    activeTab === type
+                      ? 'border-[var(--wrife-blue)] text-[var(--wrife-blue)]'
+                      : locked
+                      ? 'border-transparent text-[var(--wrife-text-muted)]/50'
+                      : 'border-transparent text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)]'
+                  }`}
+                >
+                  {fileTypeLabels[type]}
+                  {locked && <span className="text-xs">🔒</span>}
+                </button>
+              );
+            })}
           </nav>
         </div>
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-6">
+        {isTabLocked(activeTab) && (
+          <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-[var(--wrife-yellow)]/20 to-[var(--wrife-blue-soft)] border border-[var(--wrife-yellow)]">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔒</span>
+              <div className="flex-1">
+                <p className="font-semibold text-[var(--wrife-text-main)]">
+                  Premium Content
+                </p>
+                <p className="text-sm text-[var(--wrife-text-muted)]">
+                  {getUpgradeMessage(entitlements.tier)}
+                </p>
+              </div>
+              <a
+                href="/pricing"
+                className="px-4 py-2 bg-[var(--wrife-blue)] text-white rounded-full text-sm font-semibold hover:opacity-90 transition"
+              >
+                Upgrade
+              </a>
+            </div>
+          </div>
+        )}
+
         <div className="rounded-2xl bg-white p-6 shadow-soft border border-[var(--wrife-border)]">
           <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">
             {fileTypeLabels[activeTab]}
@@ -156,22 +211,33 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
             <div className="space-y-3">
               {filesByType[activeTab].map((file) => {
                 const fileIsHtml = isHtmlFile(file.file_url, file.file_type);
+                const locked = isFileLocked(file);
                 
                 return (
                   <div key={file.id}>
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)] transition">
+                    <div className={`flex items-center justify-between p-4 rounded-lg border transition ${
+                      locked 
+                        ? 'border-[var(--wrife-border)] bg-gray-50 opacity-75' 
+                        : 'border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)]'
+                    }`}>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[var(--wrife-text-main)] truncate">
+                        <p className="text-sm font-semibold text-[var(--wrife-text-main)] truncate flex items-center gap-2">
                           {file.file_name}
+                          {locked && <span className="text-xs">🔒</span>}
                         </p>
                         <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
                           {file.file_type.includes('worksheet') && 
                             file.file_type.replace('worksheet_', '').toUpperCase()}
+                          {locked && ' - Upgrade to access'}
                         </p>
                       </div>
 
                       <div className="flex gap-2 ml-4">
-                        {fileIsHtml ? (
+                        {locked ? (
+                          <span className="rounded-full bg-gray-300 px-4 py-2 text-xs font-semibold text-gray-500 cursor-not-allowed">
+                            Locked
+                          </span>
+                        ) : fileIsHtml ? (
                           <button
                             onClick={() => loadHtmlFile(file.id, file.file_url)}
                             className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
@@ -188,7 +254,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                             View
                           </a>
                         )}
-                        {!fileIsHtml && (
+                        {!locked && !fileIsHtml && (
                           <a
                             href={file.file_url}
                             download
@@ -200,7 +266,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                       </div>
                     </div>
 
-                    {fileIsHtml && htmlContent[file.id] && (
+                    {!locked && fileIsHtml && htmlContent[file.id] && (
                       <div className="mt-3 p-6 rounded-lg border border-[var(--wrife-border)] bg-white">
                         <iframe
                           srcDoc={htmlContent[file.id]}

@@ -12,6 +12,7 @@ interface Profile {
   email: string;
   display_name: string;
   role: string;
+  membership_tier: string;
   school_id: string | null;
   created_at: string;
 }
@@ -106,6 +107,52 @@ export default function AdminUsersPage() {
       setSaving(null);
     }
   }
+
+  async function updateUserTier(userId: string, membership_tier: string) {
+    setSaving(userId);
+    try {
+      const response = await adminFetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, updates: { membership_tier } }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      setProfiles(prev =>
+        prev.map(p => (p.id === userId ? { ...p, membership_tier } : p))
+      );
+    } catch (err) {
+      console.error('Error updating user tier:', err);
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  const getTierBadgeStyle = (tier: string) => {
+    switch (tier) {
+      case 'full':
+        return 'bg-purple-100 text-purple-700';
+      case 'standard':
+        return 'bg-blue-100 text-blue-700';
+      case 'free':
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getTierLabel = (tier: string) => {
+    switch (tier) {
+      case 'full':
+        return 'Full Teacher';
+      case 'standard':
+        return 'Standard';
+      case 'free':
+      default:
+        return 'Free';
+    }
+  };
 
   const filteredProfiles = profiles.filter(p => {
     const matchesFilter = (() => {
@@ -277,6 +324,9 @@ export default function AdminUsersPage() {
                         Role
                       </th>
                       <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
+                        Tier
+                      </th>
+                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
                         School
                       </th>
                       <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
@@ -312,6 +362,24 @@ export default function AdminUsersPage() {
                             <option value="school_admin">School Admin</option>
                             {profile.role === 'admin' && <option value="admin">Admin</option>}
                           </select>
+                        </td>
+                        <td className="px-6 py-4">
+                          {profile.role === 'teacher' || profile.role === 'school_admin' ? (
+                            <select
+                              value={profile.membership_tier || 'free'}
+                              onChange={e => updateUserTier(profile.id, e.target.value)}
+                              disabled={saving === profile.id}
+                              className={`rounded-full px-3 py-1 text-xs font-semibold border-0 cursor-pointer ${getTierBadgeStyle(
+                                profile.membership_tier || 'free'
+                              )}`}
+                            >
+                              <option value="free">Free</option>
+                              <option value="standard">Standard</option>
+                              <option value="full">Full Teacher</option>
+                            </select>
+                          ) : (
+                            <span className="text-xs text-[var(--wrife-text-muted)]">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <select
