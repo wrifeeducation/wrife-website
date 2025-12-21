@@ -1,17 +1,17 @@
 import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 
-if (!process.env.DATABASE_URL) {
-  dotenv.config({ path: '.env.local' });
-}
+dotenv.config({ path: '.env.local', override: true });
 
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   console.error('DATABASE_URL environment variable is not set.');
-  console.error('Either set DATABASE_URL in your environment or ensure .env.local exists.');
+  console.error('Ensure .env.local exists with DATABASE_URL defined.');
   process.exit(1);
 }
+
+console.log('Using database:', databaseUrl.split('@')[1]?.split('/')[0] || 'unknown');
 
 const pool = new Pool({ connectionString: databaseUrl });
 
