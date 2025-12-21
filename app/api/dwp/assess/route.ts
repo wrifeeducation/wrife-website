@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateCompletion, parseJSONResponse, getCurrentProviderInfo } from '@/lib/llm-provider';
+import { trackActivityAsync, extractRequestInfo } from '@/lib/activity-tracker';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -234,6 +235,21 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
 
       await updateProgress(supabaseAdmin, pupilId, level, assessment);
     }
+
+    const reqInfo = extractRequestInfo(request);
+    trackActivityAsync({
+      userId: pupilId,
+      userRole: 'pupil',
+      eventType: 'dwp_complete',
+      eventData: { 
+        attemptId, 
+        levelId,
+        score: assessment.score,
+        percentage: assessment.percentage,
+        passed: assessment.passed,
+      },
+      ...reqInfo,
+    });
 
     return NextResponse.json({
       success: true,

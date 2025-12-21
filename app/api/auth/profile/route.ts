@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Pool } from 'pg';
+import { trackActivityAsync, extractRequestInfo } from '@/lib/activity-tracker';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -31,6 +32,17 @@ export async function GET(request: NextRequest) {
       if (schoolResult.rows[0]) {
         schoolTier = schoolResult.rows[0].subscription_tier;
       }
+    }
+
+    if (profile) {
+      const reqInfo = extractRequestInfo(request);
+      trackActivityAsync({
+        userId: profile.id,
+        userRole: profile.role,
+        eventType: 'login',
+        eventData: { email: profile.email },
+        ...reqInfo,
+      });
     }
 
     return NextResponse.json({ 

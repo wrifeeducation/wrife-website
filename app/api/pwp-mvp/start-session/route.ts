@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateFormulas } from '@/lib/formulaGenerator';
+import { trackActivityAsync, extractRequestInfo } from '@/lib/activity-tracker';
 
 function getSupabaseAdmin() {
   return createClient(
@@ -83,6 +84,15 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    const reqInfo = extractRequestInfo(request);
+    trackActivityAsync({
+      userId: pupilId,
+      userRole: 'pupil',
+      eventType: 'pwp_start',
+      eventData: { sessionId: sessionData.id, lessonNumber, subject },
+      ...reqInfo,
+    });
 
     return NextResponse.json({
       sessionId: sessionData.id,
