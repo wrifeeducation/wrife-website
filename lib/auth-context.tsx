@@ -159,20 +159,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
-    // If signup successful, create a profile entry
     if (!error && data.user) {
-      const { error: profileError } = await supabaseClient
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          email: email,
-          display_name: displayName,
-          role: 'teacher', // Default role for new signups
-          school_id: null, // Can be assigned later by admin
+      try {
+        const response = await fetch('/api/auth/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: data.user.id,
+            email: email,
+            display_name: displayName,
+            role: 'teacher',
+          }),
         });
-      
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('[AuthContext] Error creating profile:', errorData.error);
+        } else {
+          console.log('[AuthContext] Profile created successfully');
+        }
+      } catch (err) {
+        console.error('[AuthContext] Error calling profile API:', err);
       }
     }
 

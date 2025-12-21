@@ -55,7 +55,15 @@ export default function LoginPage() {
       const profile = profileData.profile;
       console.log('[Login] Profile:', profile);
       
-      if (profile?.role === 'admin') {
+      if (!profile) {
+        console.log('[Login] No profile found, signing out');
+        setError('Your account setup is incomplete. Please contact support or try signing up again.');
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+      
+      if (profile.role === 'admin') {
         setError('Admin accounts must use the Admin Portal.');
         await supabase.auth.signOut();
         setLoading(false);
@@ -63,7 +71,7 @@ export default function LoginPage() {
         return;
       }
       
-      const targetPath = redirectTo || (profile?.role === 'teacher' ? '/dashboard' : '/pupil/dashboard');
+      const targetPath = redirectTo || (profile.role === 'teacher' || profile.role === 'school_admin' ? '/dashboard' : '/pupil/dashboard');
       console.log('[Login] Redirecting to:', targetPath);
       window.location.href = targetPath;
     } else {
