@@ -190,6 +190,31 @@ AI_INTEGRATIONS_OPENAI_BASE_URL=...
 
 **Key File:** `lib/llm-provider.ts` - Centralized LLM provider utility
 
+## Freemium Membership System
+
+**Membership Tiers:**
+| Tier | Lesson Components | Features |
+|------|-------------------|----------|
+| Free | Teacher Guide, Presentation, Core Worksheets | View lessons only |
+| Standard | All components (including Support/Challenge worksheets, Practice Activities) | No class management |
+| Full | All components | Full access: classes, assignments, AI assessment |
+| School | All components | Full access for all school teachers |
+
+**Tier Resolution Logic:**
+- Users get the **highest tier** between their personal `membership_tier` and their school's `subscription_tier`
+- A teacher with "standard" personal tier at a "full" school gets Full access
+- A teacher with "full" personal tier at a "standard" school keeps Full access (no downgrade)
+
+**Key Files:**
+- `lib/entitlements.ts` - Maps tiers to allowed file types and features
+- `lib/auth-context.tsx` - Includes `school_tier` in user context
+- `app/api/auth/profile/route.ts` - Fetches school subscription tier
+
+**Access Controls:**
+- `LessonDetailPage` filters visible files and locks premium content
+- `app/classes/new/page.tsx` blocks free/standard users from class creation
+- Admin users page allows manual tier assignment
+
 ## External Dependencies
 - **Next.js 15**: Web framework.
 - **TypeScript**: Programming language.
