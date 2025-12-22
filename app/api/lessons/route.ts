@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
   });
 
   try {

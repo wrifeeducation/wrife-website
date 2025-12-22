@@ -8,7 +8,7 @@ declare global {
 function getPool(): Pool {
   if (!globalThis.pgPool) {
     globalThis.pgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
       max: 3,
     });
   }

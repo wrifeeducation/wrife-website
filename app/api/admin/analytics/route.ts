@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 import { getAuthenticatedAdmin, AuthError } from '@/lib/admin-auth';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
 });
 
 export async function GET(request: NextRequest) {

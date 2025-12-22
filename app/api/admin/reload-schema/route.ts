@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const admin = await getAuthenticatedAdmin();
 
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
     });
 
     try {

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUncachableStripeClient } from '@/lib/stripe-client';
 import { Pool } from 'pg';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL });
 
 export async function POST(request: NextRequest) {
   try {

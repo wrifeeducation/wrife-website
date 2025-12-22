@@ -57,11 +57,26 @@ export async function getAuthenticatedAdmin(): Promise<AuthResult> {
     throw new AuthError('Unauthorized', 401);
   }
 
-  const { data: profile, error: profileError } = await supabaseAdmin
+  // Try to find profile by Supabase user ID first
+  let { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
-    .select('role, school_id')
+    .select('id, role, school_id')
     .eq('id', userData.user.id)
     .single();
+
+  // If not found by ID, try by email (handles cross-environment accounts)
+  if (profileError?.code === 'PGRST116' && userData.user.email) {
+    const emailResult = await supabaseAdmin
+      .from('profiles')
+      .select('id, role, school_id')
+      .ilike('email', userData.user.email)
+      .single();
+    
+    if (!emailResult.error) {
+      profile = emailResult.data;
+      profileError = null;
+    }
+  }
 
   if (profileError && profileError.code !== 'PGRST116') {
     throw new AuthError(`Failed to fetch user profile: ${profileError.message}`, 500);
@@ -72,7 +87,7 @@ export async function getAuthenticatedAdmin(): Promise<AuthResult> {
   }
 
   return {
-    userId: userData.user.id,
+    userId: profile.id,
     role: profile.role,
     schoolId: profile.school_id,
   };

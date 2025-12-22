@@ -13,7 +13,7 @@ function getSupabaseAdmin() {
 
 function getPool() {
   return new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
   });
 }
 
@@ -44,11 +44,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // Try to find profile by user ID first
+    let { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('role')
+      .select('id, role')
       .eq('id', user.id)
       .single();
+
+    // If not found by ID, try by email (handles cross-environment accounts)
+    if (profileError?.code === 'PGRST116' && user.email) {
+      const emailResult = await supabaseAdmin
+        .from('profiles')
+        .select('id, role')
+        .ilike('email', user.email)
+        .single();
+      
+      if (!emailResult.error) {
+        profile = emailResult.data;
+        profileError = null;
+      }
+    }
 
     if (profileError || !profile || !['teacher', 'admin', 'school_admin'].includes(profile.role)) {
       return NextResponse.json(

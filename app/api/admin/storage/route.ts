@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Pool } from 'pg';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
 });
 
 function getSupabaseAdmin() {
@@ -33,11 +33,26 @@ async function verifyAdmin(request: NextRequest): Promise<{ authorized: boolean;
       return { authorized: false, error: 'Unauthorized - Please log in' };
     }
 
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // Try to find profile by user ID first
+    let { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
+
+    // If not found by ID, try by email (handles cross-environment accounts)
+    if (profileError?.code === 'PGRST116' && user.email) {
+      const emailResult = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .ilike('email', user.email)
+        .single();
+      
+      if (!emailResult.error) {
+        profile = emailResult.data;
+        profileError = null;
+      }
+    }
 
     if (profileError || !profile || profile.role !== 'admin') {
       return { authorized: false, error: 'Forbidden - Admin access required' };
