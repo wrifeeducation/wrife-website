@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       console.log('[AuthContext] getSession result:', session ? `User: ${session.user.id}` : 'No session');
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        fetchUserProfile(session.user.id, session.user.email);
       } else {
         setLoading(false);
       }
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        fetchUserProfile(session.user.id, session.user.email);
       } else if (_event !== 'INITIAL_SESSION') {
         setUser(null);
         setLoading(false);
@@ -100,11 +100,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return '/dashboard';
   };
 
-  async function fetchUserProfile(userId: string) {
+  async function fetchUserProfile(userId: string, email?: string) {
     console.log('[AuthContext] Fetching profile for user:', userId);
     
     try {
-      const response = await fetch(`/api/auth/profile?userId=${userId}`);
+      let url = `/api/auth/profile?userId=${userId}`;
+      if (email) {
+        url += `&email=${encodeURIComponent(email)}`;
+      }
+      const response = await fetch(url);
       const data = await response.json();
       
       console.log('[AuthContext] Profile API response:', data);

@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     
     if (authUser) {
-      const profileResponse = await fetch(`/api/auth/profile?userId=${authUser.id}`);
+      const profileResponse = await fetch(`/api/auth/profile?userId=${authUser.id}&email=${encodeURIComponent(email)}`);
       const profileData = await profileResponse.json();
       const profile = profileData.profile;
 

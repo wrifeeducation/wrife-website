@@ -304,6 +304,48 @@ export default function PupilDashboardPage() {
   const inProgressCount = submissions.filter(s => s.status === 'draft').length;
   const totalProgress = assignments.length > 0 ? Math.round((completedCount / assignments.length) * 100) : 0;
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const activeAssignments = assignments.filter((assignment) => {
+    const status = getSubmissionStatus(assignment.id);
+    if (status === 'submitted' || status === 'reviewed' || status === 'draft') {
+      return true;
+    }
+    if (!assignment.due_date) {
+      return true;
+    }
+    const dueDate = new Date(assignment.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate >= today;
+  });
+
+  const activePwpAssignments = pwpAssignments.filter((pwp) => {
+    const status = getPWPSubmissionStatus(pwp.id);
+    if (status === 'submitted' || status === 'reviewed' || status === 'draft') {
+      return true;
+    }
+    if (!pwp.due_date) {
+      return true;
+    }
+    const dueDate = new Date(pwp.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate >= today;
+  });
+
+  const activeDwpAssignments = dwpAssignments.filter((dwp) => {
+    const attempt = getDWPAttempt(dwp.id);
+    if (attempt) {
+      return true;
+    }
+    if (!dwp.due_date) {
+      return true;
+    }
+    const dueDate = new Date(dwp.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate >= today;
+  });
+
   return (
     <div className="min-h-screen bg-[var(--wrife-bg)]">
       <Navbar />
@@ -394,13 +436,13 @@ export default function PupilDashboardPage() {
                 Your Assignments
               </h2>
 
-              {assignments.length === 0 ? (
+              {activeAssignments.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--wrife-bg)] mb-4">
                     <span className="text-3xl">📚</span>
                   </div>
                   <h3 className="text-lg font-semibold text-[var(--wrife-text-main)] mb-2">
-                    No assignments yet
+                    No active assignments
                   </h3>
                   <p className="text-sm text-[var(--wrife-text-muted)]">
                     Your teacher will assign lessons soon!
@@ -408,7 +450,7 @@ export default function PupilDashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {assignments.map((assignment) => {
+                  {activeAssignments.map((assignment) => {
                     const status = getOverallStatus(assignment.id, assignment.lesson_id);
                     return (
                       <Link 
@@ -454,13 +496,13 @@ export default function PupilDashboardPage() {
             <h3 className="font-bold text-[var(--wrife-text-main)] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
               Sentence Practice
             </h3>
-            {pwpAssignments.length === 0 ? (
+            {activePwpAssignments.length === 0 ? (
               <div className="text-center py-4">
                 <p className="text-sm text-[var(--wrife-text-muted)]">No practice activities yet</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {pwpAssignments.map((pwp) => {
+                {activePwpAssignments.map((pwp) => {
                   const status = getPWPSubmissionStatus(pwp.id);
                   return (
                     <Link key={pwp.id} href={`/pupil/pwp/${pwp.id}`}>
@@ -502,13 +544,13 @@ export default function PupilDashboardPage() {
           </div>
         </div>
 
-        {dwpAssignments.length > 0 && (
+        {activeDwpAssignments.length > 0 && (
           <div className="mt-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border-2 border-purple-200">
             <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
               Daily Writing Practice
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {dwpAssignments.map((dwp) => {
+              {activeDwpAssignments.map((dwp) => {
                 const attempt = getDWPAttempt(dwp.id);
                 return (
                   <Link key={dwp.id} href={`/pupil/dwp/${dwp.id}`}>

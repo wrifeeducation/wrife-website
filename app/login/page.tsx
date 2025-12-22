@@ -50,7 +50,7 @@ export default function LoginPage() {
     if (data.session && data.user) {
       console.log('[Login] Session established');
       
-      const profileResponse = await fetch(`/api/auth/profile?userId=${data.user.id}`);
+      const profileResponse = await fetch(`/api/auth/profile?userId=${data.user.id}&email=${encodeURIComponent(email)}`);
       const profileData = await profileResponse.json();
       const profile = profileData.profile;
       console.log('[Login] Profile:', profile);

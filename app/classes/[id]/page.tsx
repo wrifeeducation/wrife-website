@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AddPupilModal } from '@/components/AddPupilModal';
 import { SubmissionReviewModal } from '@/components/SubmissionReviewModal';
+import { PWPReviewModal } from '@/components/PWPReviewModal';
 import { AssignPWPModal } from '@/components/AssignPWPModal';
 import { AssignDWPModal } from '@/components/AssignDWPModal';
 
@@ -149,6 +150,11 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     submission: Submission;
     pupilName: string;
     assignmentTitle: string;
+  } | null>(null);
+  const [selectedPWPSubmission, setSelectedPWPSubmission] = useState<{
+    submission: PWPSubmission;
+    pupilName: string;
+    activityName: string;
   } | null>(null);
   const { user } = useAuth();
   const router = useRouter();
@@ -976,6 +982,16 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
             />
           )}
 
+          {selectedPWPSubmission && (
+            <PWPReviewModal
+              submission={selectedPWPSubmission.submission}
+              pupilName={selectedPWPSubmission.pupilName}
+              activityName={selectedPWPSubmission.activityName}
+              onClose={() => setSelectedPWPSubmission(null)}
+              onStatusUpdate={() => fetchPWPSubmissions()}
+            />
+          )}
+
           {activeTab === 'pwp' && (
           <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
             <div className="flex items-center justify-between mb-4">
@@ -1084,15 +1100,23 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                             return (
                               <td key={assignment.id} className="text-center py-3 px-2">
                                 {pwpSubmission ? (
-                                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
-                                    pwpSubmission.status === 'reviewed' 
-                                      ? 'bg-blue-100 text-blue-600'
-                                      : pwpSubmission.status === 'submitted'
-                                      ? 'bg-green-100 text-green-600'
-                                      : 'bg-yellow-100 text-yellow-600'
-                                  }`} title={pwpSubmission.status}>
+                                  <button
+                                    onClick={() => setSelectedPWPSubmission({
+                                      submission: pwpSubmission,
+                                      pupilName: `${pupil.first_name} ${pupil.last_name || ''}`,
+                                      activityName: assignment.progressive_activities?.level_name || 'PWP Activity'
+                                    })}
+                                    className={`inline-flex items-center justify-center w-6 h-6 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 ${
+                                      pwpSubmission.status === 'reviewed' 
+                                        ? 'bg-blue-100 text-blue-600 hover:ring-blue-400'
+                                        : pwpSubmission.status === 'submitted'
+                                        ? 'bg-green-100 text-green-600 hover:ring-green-400'
+                                        : 'bg-yellow-100 text-yellow-600 hover:ring-yellow-400'
+                                    }`} 
+                                    title={`Click to review - ${pwpSubmission.status}`}
+                                  >
                                     {pwpSubmission.status === 'reviewed' ? '★' : pwpSubmission.status === 'submitted' ? '✓' : '◐'}
-                                  </span>
+                                  </button>
                                 ) : (
                                   <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400" title="Not Started">
                                     ○

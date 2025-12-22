@@ -8,20 +8,48 @@ const pool = new Pool({
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId');
+  const email = request.nextUrl.searchParams.get('email');
   
   if (!userId) {
     return NextResponse.json({ error: 'userId is required' }, { status: 400 });
   }
 
   try {
-    const result = await pool.query(
+    let result = await pool.query(
       `SELECT id, role, display_name, email, school_id, membership_tier
        FROM profiles
        WHERE id = $1`,
       [userId]
     );
 
-    const profile = result.rows[0] || null;
+    let profile = result.rows[0] || null;
+    
+    if (!profile && email) {
+      const emailResult = await pool.query(
+        `SELECT id, role, display_name, email, school_id, membership_tier
+         FROM profiles
+         WHERE LOWER(email) = LOWER($1)`,
+        [email]
+      );
+      
+      if (emailResult.rows[0]) {
+        const existingProfile = emailResult.rows[0];
+        console.log(`[Profile API] Found profile by email ${email}, syncing ID from ${existingProfile.id} to ${userId}`);
+        
+        await pool.query(
+          `UPDATE profiles SET id = $1, updated_at = NOW() WHERE id = $2`,
+          [userId, existingProfile.id]
+        );
+        
+        result = await pool.query(
+          `SELECT id, role, display_name, email, school_id, membership_tier
+           FROM profiles
+           WHERE id = $1`,
+          [userId]
+        );
+        profile = result.rows[0] || null;
+      }
+    }
 
     let schoolTier = null;
     if (profile?.school_id) {
