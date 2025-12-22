@@ -119,7 +119,7 @@ export default function PricingPage() {
 
   const handleCheckout = async (plan: Plan) => {
     if (plan.isFree) {
-      window.location.href = '/auth';
+      window.location.href = '/signup';
       return;
     }
 
@@ -129,7 +129,7 @@ export default function PricingPage() {
     }
 
     if (!user) {
-      window.location.href = '/auth?redirect=/pricing';
+      window.location.href = '/login?redirect=/pricing';
       return;
     }
 
@@ -299,11 +299,13 @@ export default function PricingPage() {
               <button
                 onClick={() => handleCheckout(plan)}
                 disabled={checkoutLoading === plan.name}
-                className={`block w-full text-center py-3 px-4 rounded-full font-semibold text-sm transition ${
+                className={`block w-full text-center py-3 px-4 rounded-full font-semibold text-sm transition disabled:opacity-50 ${
                   plan.highlighted
                     ? 'bg-[var(--wrife-blue)] text-white hover:opacity-90'
-                    : 'bg-[var(--wrife-bg)] text-[var(--wrife-text-main)] border border-[var(--wrife-border)] hover:bg-gray-100'
-                } disabled:opacity-50`}
+                    : plan.isFree
+                    ? 'bg-[var(--wrife-bg)] text-[var(--wrife-text-main)] border border-[var(--wrife-border)] hover:bg-gray-100'
+                    : 'bg-[var(--wrife-blue)] text-white hover:opacity-90'
+                }`}
               >
                 {checkoutLoading === plan.name ? 'Loading...' : plan.ctaText}
               </button>
