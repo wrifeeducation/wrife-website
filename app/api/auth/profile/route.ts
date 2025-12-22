@@ -6,8 +6,11 @@ let pool: Pool | null = null;
 
 function getPool(): Pool {
   if (!pool) {
+    // Use shared database: prefer PROD_DATABASE_URL for consistency across environments
+    const connectionString = process.env.PROD_DATABASE_URL || process.env.DATABASE_URL;
+    console.log(`[Profile API] Using database: ${connectionString ? 'configured' : 'missing'}`);
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString,
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
@@ -52,24 +55,35 @@ export async function GET(request: NextRequest) {
       console.log(`[Profile API] Email lookup result rows: ${emailResult.rows.length}`);
       
       if (emailResult.rows[0]) {
-        const existingProfile = emailResult.rows[0];
-        console.log(`[Profile API] Found profile by email ${email}, syncing ID from ${existingProfile.id} to ${userId}`);
-        
-        await db.query(
-          `UPDATE profiles SET id = $1, updated_at = NOW() WHERE id = $2`,
-          [userId, existingProfile.id]
-        );
-        
-        result = await db.query(
-          `SELECT id, role, display_name, email, school_id, membership_tier
-           FROM profiles
-           WHERE id = $1`,
-          [userId]
-        );
-        profile = result.rows[0] || null;
-        console.log(`[Profile API] After sync, profile found: ${!!profile}`);
+        // Return existing profile found by email - don't update ID to preserve relationships
+        profile = emailResult.rows[0];
+        console.log(`[Profile API] Found profile by email ${email}, using existing profile ID: ${profile.id}`);
       } else {
-        console.log(`[Profile API] No profile found by email either`);
+        console.log(`[Profile API] No profile found by email either - auto-creating profile`);
+        
+        // Auto-create profile for authenticated users who don't have one
+        // This handles the case where a user signed up in a different environment
+        const displayName = email.split('@')[0];
+        const insertResult = await db.query(
+          `INSERT INTO profiles (id, email, display_name, role, membership_tier, created_at, updated_at)
+           VALUES ($1, $2, $3, 'teacher', 'free', NOW(), NOW())
+           ON CONFLICT (id) DO NOTHING
+           RETURNING id, role, display_name, email, school_id, membership_tier`,
+          [userId, email, displayName]
+        );
+        
+        if (insertResult.rows[0]) {
+          profile = insertResult.rows[0];
+          console.log(`[Profile API] Auto-created profile for user: ${email}`);
+        } else {
+          // If insert failed due to conflict, try to fetch again
+          const retryResult = await db.query(
+            `SELECT id, role, display_name, email, school_id, membership_tier
+             FROM profiles WHERE id = $1`,
+            [userId]
+          );
+          profile = retryResult.rows[0] || null;
+        }
       }
     } else if (profile) {
       console.log(`[Profile API] Profile found by ID: ${profile.email}, role: ${profile.role}`);

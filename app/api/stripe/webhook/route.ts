@@ -3,7 +3,7 @@ import { getStripeSync, getUncachableStripeClient } from '@/lib/stripe-client';
 import { Pool } from 'pg';
 import { runMigrations } from 'stripe-replit-sync';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL });
 
 const tierMapping: Record<string, string> = {
   'standard': 'standard',
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     await runMigrations({ 
-      databaseUrl: process.env.DATABASE_URL!
+      databaseUrl: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL!
     });
 
     const stripeSync = await getStripeSync();

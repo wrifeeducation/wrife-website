@@ -15,9 +15,11 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 
 **Technical Implementations & Design Choices:**
 - **Database Architecture:**
-    - **Replit PostgreSQL (Neon-backed `pg` Pool):** Stores ALL application data (lessons, activities, assignments, classes, profiles). Accessed via `DATABASE_URL`.
+    - **Shared PostgreSQL (Neon-backed):** A single shared database stores ALL application data (lessons, activities, assignments, classes, profiles) across both development (Replit) and production (Vercel) environments.
+    - **Connection Priority:** APIs prefer `PROD_DATABASE_URL` when available, falling back to `DATABASE_URL`. This ensures environment consistency.
+    - **Auto-Provisioning:** The profile API automatically creates profiles for authenticated users who don't have one in the database, preventing login failures across environments.
     - **Supabase:** Used ONLY for authentication (sign-in, sign-up, session management); NOT for application data storage.
-    - All data queries must use server-side API endpoints connecting to Replit PostgreSQL.
+    - All data queries must use server-side API endpoints connecting to the shared PostgreSQL database.
 - **Authentication:** Supabase handles authentication. Admin APIs use `requireAdmin()`. Pupil login uses email lookup in the `profiles` table.
 - **Dynamic Imports:** `next/dynamic` with `ssr: false` is used for components like `LessonLibrary` and `AuthButtons` to prevent hydration mismatches.
 - **Supabase SSR Pattern:** Separate Supabase clients for browser (`lib/supabase.ts` with `'use client'`) and server (`lib/supabase/server.ts`) ensure session persistence.
