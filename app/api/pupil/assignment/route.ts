@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { Pool } from 'pg';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 function getGoogleDriveFileId(shareUrl: string): string | null {
   const patterns = [
@@ -30,6 +38,7 @@ function getGoogleDrivePreviewUrl(shareUrl: string): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin();
   try {
     const { assignmentId, pupilId } = await request.json();
     
@@ -37,21 +46,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Assignment ID is required' }, { status: 400 });
     }
 
-    const assignmentResult = await pool.query(
-      'SELECT * FROM assignments WHERE id = $1',
-      [assignmentId]
-    );
+    const { data: assignment, error: assignmentError } = await supabaseAdmin
+      .from('assignments')
+      .select('*')
+      .eq('id', assignmentId)
+      .single();
 
-    if (assignmentResult.rows.length === 0) {
+    if (assignmentError) {
+      console.error('Assignment error:', assignmentError);
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
     }
-
-    const assignment = assignmentResult.rows[0];
 
     let lessonFiles: any[] = [];
     let interactiveHtml: string | null = null;
     
     if (assignment.lesson_id) {
+      // Query lesson_files from PostgreSQL
       const filesResult = await pool.query(
         `SELECT * FROM lesson_files WHERE lesson_id = $1 AND file_type LIKE '%interactive_practice%'`,
         [assignment.lesson_id]
@@ -71,27 +81,30 @@ export async function POST(request: NextRequest) {
     
     if (pupilId) {
       try {
-        const submissionResult = await pool.query(
-          'SELECT * FROM submissions WHERE assignment_id = $1 AND pupil_id = $2',
-          [assignmentId, pupilId]
-        );
+        const { data: submissionData } = await supabaseAdmin
+          .from('submissions')
+          .select('*')
+          .eq('assignment_id', assignmentId)
+          .eq('pupil_id', pupilId)
+          .single();
 
-        if (submissionResult.rows.length > 0) {
-          submission = submissionResult.rows[0];
+        if (submissionData) {
+          submission = submissionData;
 
-          if (submission.status === 'reviewed') {
-            const assessmentResult = await pool.query(
-              'SELECT * FROM ai_assessments WHERE submission_id = $1',
-              [submission.id]
-            );
+          if (submissionData.status === 'reviewed') {
+            const { data: assessmentData } = await supabaseAdmin
+              .from('ai_assessments')
+              .select('*')
+              .eq('submission_id', submissionData.id)
+              .single();
             
-            if (assessmentResult.rows.length > 0) {
-              assessment = assessmentResult.rows[0];
+            if (assessmentData) {
+              assessment = assessmentData;
             }
           }
         }
       } catch (err) {
-        console.log('Error fetching submission:', err);
+        console.log('Submissions table may not exist');
       }
     }
 
@@ -109,6 +122,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin();
   try {
     const { assignmentId, pupilId, content, status } = await request.json();
     
@@ -116,37 +130,49 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Assignment ID and pupil ID required' }, { status: 400 });
     }
 
-    const existingResult = await pool.query(
-      'SELECT id FROM submissions WHERE assignment_id = $1 AND pupil_id = $2',
-      [assignmentId, pupilId]
-    );
+    const { data: existingSubmission } = await supabaseAdmin
+      .from('submissions')
+      .select('id')
+      .eq('assignment_id', assignmentId)
+      .eq('pupil_id', pupilId)
+      .single();
 
     let submission;
     
-    if (existingResult.rows.length > 0) {
-      const existingId = existingResult.rows[0].id;
-      const submittedAt = status === 'submitted' ? new Date().toISOString() : null;
+    if (existingSubmission) {
+      const updateData: any = { content, status };
+      if (status === 'submitted') {
+        updateData.submitted_at = new Date().toISOString();
+      }
       
-      const updateResult = await pool.query(
-        `UPDATE submissions 
-         SET content = $1, status = $2, submitted_at = COALESCE($3, submitted_at)
-         WHERE id = $4
-         RETURNING *`,
-        [content, status, submittedAt, existingId]
-      );
+      const { data, error } = await supabaseAdmin
+        .from('submissions')
+        .update(updateData)
+        .eq('id', existingSubmission.id)
+        .select()
+        .single();
       
-      submission = updateResult.rows[0];
+      if (error) throw error;
+      submission = data;
     } else {
-      const submittedAt = status === 'submitted' ? new Date().toISOString() : null;
+      const insertData: any = {
+        assignment_id: assignmentId,
+        pupil_id: pupilId,
+        content,
+        status
+      };
+      if (status === 'submitted') {
+        insertData.submitted_at = new Date().toISOString();
+      }
       
-      const insertResult = await pool.query(
-        `INSERT INTO submissions (assignment_id, pupil_id, content, status, submitted_at)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING *`,
-        [assignmentId, pupilId, content, status, submittedAt]
-      );
+      const { data, error } = await supabaseAdmin
+        .from('submissions')
+        .insert(insertData)
+        .select()
+        .single();
       
-      submission = insertResult.rows[0];
+      if (error) throw error;
+      submission = data;
     }
 
     return NextResponse.json({ submission });
