@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import { useAuth } from '@/lib/auth-context';
 
 interface PlanFeature {
   text: string;
@@ -11,21 +13,25 @@ interface PlanFeature {
 interface Plan {
   name: string;
   description: string;
-  price: string;
-  priceNote?: string;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  monthlyPriceId?: string;
+  yearlyPriceId?: string;
   features: PlanFeature[];
   ctaText: string;
-  ctaHref: string;
   highlighted?: boolean;
   badge?: string;
+  isContact?: boolean;
+  isFree?: boolean;
 }
 
 const plans: Plan[] = [
   {
     name: 'Free',
     description: 'Get started with core lesson materials',
-    price: 'Free',
-    priceNote: 'Forever',
+    monthlyPrice: 'Free',
+    yearlyPrice: 'Free',
+    isFree: true,
     features: [
       { text: 'Teacher Guide for all 67 lessons', included: true },
       { text: 'Lesson Presentations', included: true },
@@ -39,13 +45,14 @@ const plans: Plan[] = [
       { text: 'AI-Powered Assessment', included: false },
     ],
     ctaText: 'Get Started',
-    ctaHref: '/auth',
   },
   {
     name: 'Standard Teacher',
     description: 'Full access to all lesson materials',
-    price: '£4.99',
-    priceNote: 'per month',
+    monthlyPrice: '£4.99',
+    yearlyPrice: '£49',
+    monthlyPriceId: 'price_1Sh5szD9ASFBLfAZZ4xBjP0m',
+    yearlyPriceId: 'price_1Sh5szD9ASFBLfAZ3HcvIm5a',
     features: [
       { text: 'Teacher Guide for all 67 lessons', included: true },
       { text: 'Lesson Presentations', included: true },
@@ -59,13 +66,14 @@ const plans: Plan[] = [
       { text: 'AI-Powered Assessment', included: false },
     ],
     ctaText: 'Upgrade to Standard',
-    ctaHref: 'mailto:hello@wrife.co.uk?subject=Upgrade%20to%20Standard%20Teacher',
   },
   {
     name: 'Full Teacher',
     description: 'Complete platform access for your classroom',
-    price: '£9.99',
-    priceNote: 'per month',
+    monthlyPrice: '£9.99',
+    yearlyPrice: '£99',
+    monthlyPriceId: 'price_1Sh5szD9ASFBLfAZeAJd98xi',
+    yearlyPriceId: 'price_1Sh5t0D9ASFBLfAZke9HoQGf',
     highlighted: true,
     badge: 'Most Popular',
     features: [
@@ -81,13 +89,13 @@ const plans: Plan[] = [
       { text: 'AI-Powered Assessment', included: true },
     ],
     ctaText: 'Upgrade to Full',
-    ctaHref: 'mailto:hello@wrife.co.uk?subject=Upgrade%20to%20Full%20Teacher',
   },
   {
     name: 'School License',
     description: 'Full access for your entire school',
-    price: 'Custom',
-    priceNote: 'Contact us',
+    monthlyPrice: 'Custom',
+    yearlyPrice: 'Custom',
+    isContact: true,
     features: [
       { text: 'All Full Teacher features', included: true },
       { text: 'Unlimited teacher accounts', included: true },
@@ -101,23 +109,122 @@ const plans: Plan[] = [
       { text: 'Invoice billing', included: true },
     ],
     ctaText: 'Contact Sales',
-    ctaHref: 'mailto:hello@wrife.co.uk?subject=School%20License%20Enquiry',
   },
 ];
 
 export default function PricingPage() {
+  const { user, loading } = useAuth();
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (plan: Plan) => {
+    if (plan.isFree) {
+      window.location.href = '/auth';
+      return;
+    }
+
+    if (plan.isContact) {
+      window.location.href = 'mailto:hello@wrife.co.uk?subject=School%20License%20Enquiry';
+      return;
+    }
+
+    if (!user) {
+      window.location.href = '/auth?redirect=/pricing';
+      return;
+    }
+
+    const priceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
+    
+    if (!priceId) {
+      alert('This plan is not yet available for purchase. Please contact us.');
+      return;
+    }
+
+    setCheckoutLoading(plan.name);
+
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      alert('Failed to start checkout. Please try again.');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      const response = await fetch('/api/stripe/portal', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      console.error('Portal error:', error);
+      alert('Failed to open subscription management. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--wrife-bg)]">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-[var(--wrife-text-main)] mb-4">
             Choose the Right Plan for You
           </h1>
-          <p className="text-lg text-[var(--wrife-text-muted)] max-w-2xl mx-auto">
+          <p className="text-lg text-[var(--wrife-text-muted)] max-w-2xl mx-auto mb-8">
             Whether you are just getting started or managing a whole school, we have a plan that fits your needs.
           </p>
+
+          <div className="inline-flex items-center gap-4 bg-white rounded-full p-1 border border-[var(--wrife-border)]">
+            <button
+              onClick={() => setBillingPeriod('monthly')}
+              className={`px-6 py-2 rounded-full font-medium text-sm transition ${
+                billingPeriod === 'monthly'
+                  ? 'bg-[var(--wrife-blue)] text-white'
+                  : 'text-[var(--wrife-text-muted)] hover:text-[var(--wrife-text-main)]'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingPeriod('yearly')}
+              className={`px-6 py-2 rounded-full font-medium text-sm transition ${
+                billingPeriod === 'yearly'
+                  ? 'bg-[var(--wrife-blue)] text-white'
+                  : 'text-[var(--wrife-text-muted)] hover:text-[var(--wrife-text-main)]'
+              }`}
+            >
+              Yearly
+              <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                Save 17%
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -149,11 +256,21 @@ export default function PricingPage() {
 
               <div className="mb-6">
                 <span className="text-3xl font-bold text-[var(--wrife-text-main)]">
-                  {plan.price}
+                  {billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice}
                 </span>
-                {plan.priceNote && (
+                {!plan.isFree && !plan.isContact && (
                   <span className="text-sm text-[var(--wrife-text-muted)] ml-1">
-                    {plan.priceNote}
+                    /{billingPeriod === 'monthly' ? 'month' : 'year'}
+                  </span>
+                )}
+                {plan.isFree && (
+                  <span className="text-sm text-[var(--wrife-text-muted)] ml-1">
+                    Forever
+                  </span>
+                )}
+                {plan.isContact && (
+                  <span className="text-sm text-[var(--wrife-text-muted)] ml-1">
+                    Contact us
                   </span>
                 )}
               </div>
@@ -179,19 +296,31 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              <Link
-                href={plan.ctaHref}
+              <button
+                onClick={() => handleCheckout(plan)}
+                disabled={checkoutLoading === plan.name}
                 className={`block w-full text-center py-3 px-4 rounded-full font-semibold text-sm transition ${
                   plan.highlighted
                     ? 'bg-[var(--wrife-blue)] text-white hover:opacity-90'
                     : 'bg-[var(--wrife-bg)] text-[var(--wrife-text-main)] border border-[var(--wrife-border)] hover:bg-gray-100'
-                }`}
+                } disabled:opacity-50`}
               >
-                {plan.ctaText}
-              </Link>
+                {checkoutLoading === plan.name ? 'Loading...' : plan.ctaText}
+              </button>
             </div>
           ))}
         </div>
+
+        {user && user.membership_tier !== 'free' && (
+          <div className="mt-8 text-center">
+            <button
+              onClick={handleManageSubscription}
+              className="text-[var(--wrife-blue)] font-semibold hover:underline"
+            >
+              Manage Your Subscription
+            </button>
+          </div>
+        )}
 
         <div className="mt-16 bg-white rounded-2xl border border-[var(--wrife-border)] p-8">
           <div className="text-center max-w-2xl mx-auto">

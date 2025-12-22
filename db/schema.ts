@@ -22,6 +22,8 @@ export const profiles = pgTable('profiles', {
   role: text('role').notNull().default('teacher'),
   membershipTier: text('membership_tier').notNull().default('free'),
   schoolId: uuid('school_id'),
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
   updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`now()`),
 });

@@ -2,57 +2,55 @@ import Link from "next/link";
 
 const plans = [
   {
-    name: "Free Trial",
+    name: "Free",
     price: "£0",
-    period: "14 days",
-    description: "Try WriFe with your class",
+    period: "forever",
+    description: "Get started with core materials",
     features: [
-      "Access to first 10 lessons",
-      "1 class (up to 30 pupils)",
-      "Basic AI feedback",
-      "Teacher dashboard",
+      "Teacher Guide for all 67 lessons",
+      "Lesson Presentations",
+      "Core Worksheets",
       "Email support",
     ],
-    cta: "Start Free Trial",
-    href: "/signup",
+    cta: "Get Started Free",
+    href: "/auth",
     featured: false,
     bgColor: "bg-white",
     buttonColor: "bg-[var(--wrife-blue)] text-white",
   },
   {
-    name: "Basic",
-    price: "£49",
-    period: "per year",
-    description: "For individual teachers",
+    name: "Standard Teacher",
+    price: "£4.99",
+    period: "per month",
+    yearlyPrice: "£49/year",
+    description: "Full access to all materials",
     features: [
-      "All 67 lessons",
-      "Up to 3 classes",
-      "Full AI feedback",
-      "Progress tracking",
-      "Priority support",
-      "Printable worksheets",
+      "Everything in Free",
+      "Support & Challenge Worksheets",
+      "Progress Trackers",
+      "Assessment Materials",
+      "Interactive Practice Activities",
     ],
-    cta: "Get Started",
-    href: "/signup?plan=basic",
+    cta: "Start Standard",
+    href: "/pricing",
     featured: true,
     bgColor: "bg-[var(--wrife-blue)]",
     buttonColor: "bg-white text-[var(--wrife-blue)]",
   },
   {
-    name: "School",
+    name: "School License",
     price: "Custom",
     period: "per school",
     description: "For whole schools",
     features: [
-      "Unlimited teachers",
-      "Unlimited classes",
-      "School admin dashboard",
-      "Custom branding",
+      "Everything in Full Teacher",
+      "Unlimited teacher accounts",
+      "School-wide analytics",
       "Training & onboarding",
       "Dedicated support",
     ],
     cta: "Contact Us",
-    href: "/contact",
+    href: "mailto:hello@wrife.co.uk?subject=School%20License%20Enquiry",
     featured: false,
     bgColor: "bg-white",
     buttonColor: "bg-[var(--wrife-orange)] text-white",
@@ -101,6 +99,11 @@ export default function PricingSection() {
                 <span className={`text-sm ${plan.featured ? 'text-white/70' : 'text-[var(--wrife-text-muted)]'}`}>
                   {' '}{plan.period}
                 </span>
+                {'yearlyPrice' in plan && (
+                  <div className={`text-xs mt-1 ${plan.featured ? 'text-white/60' : 'text-[var(--wrife-text-muted)]'}`}>
+                    or {plan.yearlyPrice}
+                  </div>
+                )}
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -129,6 +132,15 @@ export default function PricingSection() {
               </Link>
             </div>
           ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <Link 
+            href="/pricing" 
+            className="text-[var(--wrife-blue)] font-semibold hover:underline"
+          >
+            View full plan comparison →
+          </Link>
         </div>
       </div>
     </section>
