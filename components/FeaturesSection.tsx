@@ -120,7 +120,8 @@ export default function FeaturesSection() {
             </p>
             <a
               href="/signup"
-              className="inline-block px-8 py-4 text-lg font-bold text-[var(--wrife-blue)] bg-white rounded-full shadow-soft hover:opacity-90 transition-opacity"
+              className="inline-block px-8 py-4 text-lg font-bold rounded-full shadow-soft hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: 'white', color: 'var(--wrife-blue)' }}
             >
               Start Your Free Trial
             </a>

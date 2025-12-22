@@ -13,10 +13,10 @@ const plans = [
       "Email support",
     ],
     cta: "Get Started Free",
-    href: "/auth",
+    href: "/signup",
     featured: false,
     bgColor: "bg-white",
-    buttonColor: "bg-[var(--wrife-blue)] text-white",
+    buttonStyle: { backgroundColor: 'var(--wrife-blue)', color: 'white' },
   },
   {
     name: "Standard Teacher",
@@ -35,7 +35,7 @@ const plans = [
     href: "/pricing",
     featured: true,
     bgColor: "bg-[var(--wrife-blue)]",
-    buttonColor: "bg-white text-[var(--wrife-blue)]",
+    buttonStyle: { backgroundColor: 'white', color: 'var(--wrife-blue)' },
   },
   {
     name: "School License",
@@ -53,7 +53,7 @@ const plans = [
     href: "mailto:hello@wrife.co.uk?subject=School%20License%20Enquiry",
     featured: false,
     bgColor: "bg-white",
-    buttonColor: "bg-[var(--wrife-orange)] text-white",
+    buttonStyle: { backgroundColor: 'var(--wrife-orange)', color: 'white' },
   },
 ];
 
@@ -126,7 +126,8 @@ export default function PricingSection() {
 
               <Link
                 href={plan.href}
-                className={`block w-full py-3 text-center font-bold rounded-full ${plan.buttonColor} hover:opacity-90 transition-opacity`}
+                className="block w-full py-3 text-center font-bold rounded-full hover:opacity-90 transition-opacity"
+                style={plan.buttonStyle}
               >
                 {plan.cta}
               </Link>
