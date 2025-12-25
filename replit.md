@@ -40,6 +40,7 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **DWP (Differentiated Writing Programme):** A 40-level program with level-specific rubrics, AI assessment, badges, and certificates.
 - **Admin Dashboards:** Separate dashboards for super administrators (user/school/curriculum management) and school administrators.
 - **PWP Admin Quick Add:** Streamlined activity creation for PWP with auto-populated fields.
+- **Promo Subdomain:** Marketing landing page at `promo.wrife.co.uk` (or `/promo` route) for pilot programme promotion. Uses host-based middleware routing to serve marketing content separately from the main app.
 
 ## External Dependencies
 - **Next.js 15**: Web framework.

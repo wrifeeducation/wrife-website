@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export const metadata = {
   title: "WriFe Pilot Programme | Systematic Writing Curriculum",
   description: "Free pilot programme for UK primary schools. Complete 67-lesson writing curriculum aligned with 2024 Curriculum Review. Apply now for Jan-June 2026.",
@@ -7,7 +9,7 @@ export const metadata = {
 export default function MarketingLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="bg-white text-gray-900">
