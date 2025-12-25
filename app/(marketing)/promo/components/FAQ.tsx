@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
@@ -41,31 +42,41 @@ export default function FAQ() {
   ]
 
   return (
-    <section className="bg-gray-50 py-16 md:py-24">
+    <section className="py-16 md:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: "'Baloo 2', cursive" }}>
+            <div className="flex justify-center mb-4">
+              <Image 
+                src="/mascots/pencil-thinking.png" 
+                alt="Thinking pencil"
+                width={100}
+                height={120}
+                className="drop-shadow-md"
+              />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: "'Baloo 2', cursive", color: 'var(--wrife-text-main)' }}>
               Frequently Asked Questions
             </h2>
-            <p className="text-xl text-gray-600 mt-4">
+            <p className="text-xl mt-4" style={{ color: 'var(--wrife-text-muted)' }}>
               Everything you need to know about the WriFe pilot programme
             </p>
           </div>
 
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div key={index} className="bg-white rounded-lg shadow-sm border-2 overflow-hidden" style={{ borderColor: 'var(--wrife-border)' }}>
                 <button
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
+                  className="w-full px-6 py-5 text-left flex justify-between items-center transition-colors"
+                  style={{ backgroundColor: openIndex === index ? 'var(--wrife-blue-soft)' : 'white' }}
                 >
-                  <span className="font-semibold text-gray-900 pr-4">{faq.question}</span>
+                  <span className="font-semibold pr-4" style={{ color: 'var(--wrife-text-main)' }}>{faq.question}</span>
                   <svg
                     className={`w-5 h-5 transition-transform flex-shrink-0 ${
                       openIndex === index ? 'transform rotate-180' : ''
                     }`}
-                    style={{ color: 'var(--wrife-green)' }}
+                    style={{ color: 'var(--wrife-blue)' }}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -75,25 +86,33 @@ export default function FAQ() {
                 </button>
                 {openIndex === index && (
                   <div className="px-6 pb-5">
-                    <p className="text-gray-700">{faq.answer}</p>
+                    <p style={{ color: 'var(--wrife-text-muted)' }}>{faq.answer}</p>
                   </div>
                 )}
               </div>
             ))}
           </div>
 
-          <div className="mt-12 text-center bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-            <h3 className="text-xl font-bold mb-4 text-gray-900" style={{ fontFamily: "'Baloo 2', cursive" }}>
+          <div className="mt-12 text-center rounded-xl shadow-lg p-8 border-2" style={{ backgroundColor: 'white', borderColor: 'var(--wrife-border)' }}>
+            <div className="flex justify-center mb-4">
+              <Image 
+                src="/mascots/face-thumbsup.png" 
+                alt="Thumbs up"
+                width={60}
+                height={60}
+              />
+            </div>
+            <h3 className="text-xl font-bold mb-4" style={{ fontFamily: "'Baloo 2', cursive", color: 'var(--wrife-text-main)' }}>
               Still Have Questions?
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="mb-6" style={{ color: 'var(--wrife-text-muted)' }}>
               We&apos;re happy to answer any questions about the pilot programme or WriFe in general.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="mailto:pilot@wrife.co.uk" className="inline-block text-white font-semibold py-3 px-8 rounded-lg transition-all" style={{ backgroundColor: 'var(--wrife-orange)' }}>
+              <a href="mailto:pilot@wrife.co.uk" className="inline-block text-white font-semibold py-3 px-8 rounded-full transition-all hover:opacity-90" style={{ backgroundColor: 'var(--wrife-orange)' }}>
                 Email Us
               </a>
-              <a href="tel:+447000000000" className="inline-block font-semibold py-3 px-8 rounded-lg transition-all border-2" style={{ color: 'var(--wrife-blue)', borderColor: 'var(--wrife-blue)' }}>
+              <a href="tel:+447000000000" className="inline-block font-semibold py-3 px-8 rounded-full transition-all border-2" style={{ color: 'var(--wrife-blue)', borderColor: 'var(--wrife-blue)' }}>
                 Call Us
               </a>
             </div>

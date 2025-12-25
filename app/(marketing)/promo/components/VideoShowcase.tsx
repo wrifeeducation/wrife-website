@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface Video {
   title: string;
@@ -46,20 +47,29 @@ export default function VideoShowcase() {
   }
 
   return (
-    <section id="video" className="bg-white py-16 md:py-24">
+    <section id="video" className="py-16 md:py-24" style={{ backgroundColor: 'var(--wrife-bg)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6" style={{ fontFamily: "'Baloo 2', cursive" }}>
+            <div className="flex justify-center mb-4">
+              <Image 
+                src="/mascots/book-mascot.png" 
+                alt="Book mascot"
+                width={80}
+                height={60}
+                className="drop-shadow-md"
+              />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ fontFamily: "'Baloo 2', cursive", color: 'var(--wrife-text-main)' }}>
               See WriFe in Action
             </h2>
-            <p className="text-xl text-gray-600 mt-4">
+            <p className="text-xl mt-4" style={{ color: 'var(--wrife-text-muted)' }}>
               Watch these short videos to understand how WriFe transforms writing instruction
             </p>
           </div>
 
           <div className="mb-8">
-            <div className="bg-black rounded-2xl overflow-hidden shadow-2xl">
+            <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: 'black' }}>
               <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                 <iframe
                   src={videos[activeVideo].embedUrl}
@@ -72,8 +82,8 @@ export default function VideoShowcase() {
             </div>
             
             <div className="mt-6">
-              <h3 className="text-2xl font-bold mb-2 text-gray-900">{videos[activeVideo].title}</h3>
-              <p className="text-gray-600">{videos[activeVideo].description}</p>
+              <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--wrife-text-main)' }}>{videos[activeVideo].title}</h3>
+              <p style={{ color: 'var(--wrife-text-muted)' }}>{videos[activeVideo].description}</p>
             </div>
           </div>
 
@@ -84,12 +94,16 @@ export default function VideoShowcase() {
                 onClick={() => setActiveVideo(key)}
                 className={`text-left p-4 rounded-lg border-2 transition-all ${
                   activeVideo === key
-                    ? 'border-[var(--wrife-green)] bg-[var(--wrife-green-soft)]'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? ''
+                    : 'hover:border-gray-300'
                 }`}
+                style={{
+                  borderColor: activeVideo === key ? 'var(--wrife-blue)' : 'var(--wrife-border)',
+                  backgroundColor: activeVideo === key ? 'var(--wrife-blue-soft)' : 'white'
+                }}
               >
-                <div className="font-semibold text-sm mb-1 text-gray-900">{video.title}</div>
-                <div className="text-xs text-gray-500">{video.duration}</div>
+                <div className="font-semibold text-sm mb-1" style={{ color: 'var(--wrife-text-main)' }}>{video.title}</div>
+                <div className="text-xs" style={{ color: 'var(--wrife-text-muted)' }}>{video.duration}</div>
               </button>
             ))}
           </div>

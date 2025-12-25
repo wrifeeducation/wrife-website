@@ -1,11 +1,31 @@
 'use client'
 
+import Image from 'next/image'
+
 export default function ApplicationForm() {
   return (
-    <section id="application" className="text-white py-16 md:py-24" style={{ background: 'linear-gradient(135deg, var(--wrife-green) 0%, #2C5F2D 100%)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="application" className="py-16 md:py-24 text-white relative overflow-hidden" style={{ backgroundColor: 'var(--wrife-blue)' }}>
+      <div className="absolute right-0 bottom-0 opacity-10">
+        <Image 
+          src="/mascots/pencil-celebrating.png" 
+          alt=""
+          width={300}
+          height={350}
+        />
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
+            <div className="flex justify-center mb-6">
+              <Image 
+                src="/mascots/pencil-celebrating.png" 
+                alt="Celebrating pencil mascot"
+                width={120}
+                height={140}
+                className="drop-shadow-lg"
+              />
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: "'Baloo 2', cursive" }}>
               Apply for Free Pilot Programme
             </h2>
@@ -14,18 +34,18 @@ export default function ApplicationForm() {
             </p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8">
+          <div className="backdrop-blur-sm rounded-2xl p-8 mb-8" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
             <div className="grid md:grid-cols-3 gap-6 text-center">
               <div>
-                <div className="text-3xl font-bold mb-2" style={{ color: '#90EE90' }}>10-20</div>
+                <div className="text-3xl font-bold mb-2" style={{ color: 'var(--wrife-yellow)' }}>10-20</div>
                 <div className="text-sm text-white/80">Schools Selected</div>
               </div>
               <div>
-                <div className="text-3xl font-bold mb-2" style={{ color: '#90EE90' }}>10 min</div>
+                <div className="text-3xl font-bold mb-2" style={{ color: 'var(--wrife-yellow)' }}>10 min</div>
                 <div className="text-sm text-white/80">Application Time</div>
               </div>
               <div>
-                <div className="text-3xl font-bold mb-2" style={{ color: '#90EE90' }}>5 days</div>
+                <div className="text-3xl font-bold mb-2" style={{ color: 'var(--wrife-yellow)' }}>5 days</div>
                 <div className="text-sm text-white/80">Response Time</div>
               </div>
             </div>
@@ -33,11 +53,11 @@ export default function ApplicationForm() {
 
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
             <div className="p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6" style={{ fontFamily: "'Baloo 2', cursive" }}>
+              <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: "'Baloo 2', cursive", color: 'var(--wrife-text-main)' }}>
                 Application Questions
               </h3>
               
-              <div className="space-y-6 text-gray-700">
+              <div className="space-y-6" style={{ color: 'var(--wrife-text-muted)' }}>
                 <p className="text-sm">
                   The application form will collect:
                 </p>
@@ -50,17 +70,17 @@ export default function ApplicationForm() {
                   <li>• Commitment confirmation</li>
                 </ul>
                 
-                <div className="pt-6 border-t">
+                <div className="pt-6 border-t" style={{ borderColor: 'var(--wrife-border)' }}>
                   <a 
                     href="https://forms.google.com/YOUR_FORM_ID" 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block text-white font-semibold py-3 px-8 rounded-lg transition-all transform hover:scale-105"
+                    className="inline-block text-white font-semibold py-3 px-8 rounded-full transition-all transform hover:scale-105"
                     style={{ backgroundColor: 'var(--wrife-orange)' }}
                   >
                     Open Application Form →
                   </a>
-                  <p className="text-xs text-gray-500 mt-3">
+                  <p className="text-xs mt-3" style={{ color: 'var(--wrife-text-muted)' }}>
                     Form opens in new window – Takes approximately 10 minutes
                   </p>
                 </div>
@@ -73,10 +93,10 @@ export default function ApplicationForm() {
               Questions before applying?
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="mailto:pilot@wrife.co.uk" className="text-white hover:text-[#90EE90] underline">
+              <a href="mailto:pilot@wrife.co.uk" className="text-white hover:text-[var(--wrife-yellow)] underline">
                 📧 pilot@wrife.co.uk
               </a>
-              <a href="tel:+447000000000" className="text-white hover:text-[#90EE90] underline">
+              <a href="tel:+447000000000" className="text-white hover:text-[var(--wrife-yellow)] underline">
                 📞 [Your Phone Number]
               </a>
             </div>
