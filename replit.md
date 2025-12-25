@@ -51,3 +51,4 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Drizzle ORM**: Database schema management.
 - **OpenAI/Anthropic**: AI-powered writing assessment (configurable via `LLM_PROVIDER`).
 - **Stripe**: Payment processing for subscriptions, integrated via Replit connector.
+- **Resend**: Email delivery for contact forms. Uses RESEND_API_KEY secret. Currently using onboarding@resend.dev as sender; for production, verify wrife.co.uk domain in Resend dashboard for branded sending.

@@ -1,3 +1,4 @@
+import TopBanner from './components/TopBanner'
 import Hero from './components/Hero'
 import Problem from './components/Problem'
 import VideoShowcase from './components/VideoShowcase'
@@ -10,6 +11,7 @@ import Footer from './components/Footer'
 export default function PromoPage() {
   return (
     <main className="min-h-screen">
+      <TopBanner />
       <Hero />
       <Problem />
       <VideoShowcase />

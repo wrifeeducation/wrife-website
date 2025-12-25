@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import ContactForm from './ContactForm'
 
 export default function ApplicationForm() {
   return (
@@ -15,7 +16,7 @@ export default function ApplicationForm() {
       </div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <div className="flex justify-center mb-6">
               <Image 
@@ -34,7 +35,7 @@ export default function ApplicationForm() {
             </p>
           </div>
 
-          <div className="backdrop-blur-sm rounded-2xl p-8 mb-8" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+          <div className="backdrop-blur-sm rounded-2xl p-8 mb-12" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
             <div className="grid md:grid-cols-3 gap-6 text-center">
               <div>
                 <div className="text-3xl font-bold mb-2" style={{ color: 'var(--wrife-yellow)' }}>10-20</div>
@@ -51,10 +52,10 @@ export default function ApplicationForm() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="p-8">
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden p-8">
               <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: "'Baloo 2', cursive", color: 'var(--wrife-text-main)' }}>
-                Application Questions
+                Apply via Google Form
               </h3>
               
               <div className="space-y-6" style={{ color: 'var(--wrife-text-muted)' }}>
@@ -86,18 +87,17 @@ export default function ApplicationForm() {
                 </div>
               </div>
             </div>
+
+            <ContactForm />
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-12 text-center">
             <p className="text-white/80 mb-4">
               Questions before applying?
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="mailto:pilot@wrife.co.uk" className="text-white hover:text-[var(--wrife-yellow)] underline">
-                📧 pilot@wrife.co.uk
-              </a>
-              <a href="tel:+447000000000" className="text-white hover:text-[var(--wrife-yellow)] underline">
-                📞 [Your Phone Number]
+              <a href="mailto:hello@wrife.co.uk" className="text-white hover:text-[var(--wrife-yellow)] underline">
+                📧 hello@wrife.co.uk
               </a>
             </div>
             <p className="text-sm text-white/60 mt-3">
