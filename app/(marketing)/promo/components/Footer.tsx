@@ -50,7 +50,7 @@ export default function Footer() {
               <h4 className="font-semibold mb-4">Contact</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>📧 pilot@wrife.co.uk</li>
-                <li>📞 [Your Phone]</li>
+                <li>📞 07359 196342</li>
                 <li>🌐 wrife.co.uk</li>
               </ul>
             </div>

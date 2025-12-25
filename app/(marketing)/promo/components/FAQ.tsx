@@ -112,7 +112,7 @@ export default function FAQ() {
               <a href="mailto:pilot@wrife.co.uk" className="inline-block text-white font-semibold py-3 px-8 rounded-full transition-all hover:opacity-90" style={{ backgroundColor: 'var(--wrife-orange)' }}>
                 Email Us
               </a>
-              <a href="tel:+447000000000" className="inline-block font-semibold py-3 px-8 rounded-full transition-all border-2" style={{ color: 'var(--wrife-blue)', borderColor: 'var(--wrife-blue)' }}>
+              <a href="tel:+447359196342" className="inline-block font-semibold py-3 px-8 rounded-full transition-all border-2" style={{ color: 'var(--wrife-blue)', borderColor: 'var(--wrife-blue)' }}>
                 Call Us
               </a>
             </div>

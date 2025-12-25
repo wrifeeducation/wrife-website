@@ -99,6 +99,9 @@ export default function ApplicationForm() {
               <a href="mailto:hello@wrife.co.uk" className="text-white hover:text-[var(--wrife-yellow)] underline">
                 📧 hello@wrife.co.uk
               </a>
+              <a href="tel:+447359196342" className="text-white hover:text-[var(--wrife-yellow)] underline">
+                📞 07359 196342
+              </a>
             </div>
             <p className="text-sm text-white/60 mt-3">
               We respond within 24 hours during term time
