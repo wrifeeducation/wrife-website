@@ -73,7 +73,7 @@ export default function ApplicationForm() {
                 
                 <div className="pt-6 border-t" style={{ borderColor: 'var(--wrife-border)' }}>
                   <a 
-                    href="https://forms.google.com/YOUR_FORM_ID" 
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSdwpkn0VeZBGnr6uxwJZBwBhvuDeXNYOYRKnVSSxsppmYNmOg/viewform" 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block text-white font-semibold py-3 px-8 rounded-full transition-all transform hover:scale-105"
