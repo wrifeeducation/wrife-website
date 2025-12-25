@@ -1,0 +1,99 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 export default function CurriculumAlignment() \{\
+  const alignments = [\
+    \{\
+      recommendation: "Grammar should be taught systematically",\
+      wrife: "67 structured lessons with explicit progression from 2-word sentences to multi-paragraph writing",\
+      icon: "\uc0\u55357 \u56534 "\
+    \},\
+    \{\
+      recommendation: "Reduce unnecessary teacher workload",\
+      wrife: "Complete lesson packages requiring zero planning time\'97save 200-400 hours annually",\
+      icon: "\uc0\u9201 \u65039 "\
+    \},\
+    \{\
+      recommendation: "Embed assessment in learning",\
+      wrife: "8 assessment forms across 3 layers with automatic progress tracking and intervention alerts",\
+      icon: "\uc0\u9989 "\
+    \},\
+    \{\
+      recommendation: "Evidence-based curriculum design",\
+      wrife: "20 years classroom refinement with proven results across diverse pupil populations",\
+      icon: "\uc0\u55357 \u56620 "\
+    \}\
+  ]\
+\
+  return (\
+    <section className="bg-gradient-to-br from-gray-50 to-white">\
+      <div className="section-container">\
+        <div className="max-w-6xl mx-auto">\
+          \{/* Section header */\}\
+          <div className="text-center mb-16">\
+            <div className="inline-block bg-wrife-light text-wrife-dark px-4 py-2 rounded-full text-sm font-semibold mb-4">\
+              Government Alignment\
+            </div>\
+            <h2>Addressing the 2024 Curriculum Review</h2>\
+            <p className="text-xl text-gray-600 mt-4 max-w-3xl mx-auto">\
+              The Department for Education's review identified critical gaps. \
+              WriFe addresses every recommendation.\
+            </p>\
+          </div>\
+\
+          \{/* Alignment cards */\}\
+          <div className="space-y-6 mb-12">\
+            \{alignments.map((item, index) => (\
+              <div key=\{index\} className="card">\
+                <div className="flex flex-col md:flex-row gap-6 items-start">\
+                  \{/* Icon */\}\
+                  <div className="text-5xl">\{item.icon\}</div>\
+                  \
+                  \{/* Content */\}\
+                  <div className="flex-1">\
+                    <div className="grid md:grid-cols-2 gap-6">\
+                      \{/* Review says */\}\
+                      <div>\
+                        <div className="text-sm font-semibold text-wrife-dark mb-2">\
+                          Curriculum Review Says:\
+                        </div>\
+                        <p className="text-gray-700 italic">\
+                          "\{item.recommendation\}"\
+                        </p>\
+                      </div>\
+                      \
+                      \{/* WriFe delivers */\}\
+                      <div>\
+                        <div className="text-sm font-semibold text-wrife-green mb-2">\
+                          WriFe Delivers:\
+                        </div>\
+                        <p className="text-gray-700">\
+                          \{item.wrife\}\
+                        </p>\
+                      </div>\
+                    </div>\
+                  </div>\
+                </div>\
+              </div>\
+            ))\}\
+          </div>\
+\
+          \{/* CTA */\}\
+          <div className="text-center">\
+            <a \
+              href="/WriFe_Curriculum_Review_Comparison.pdf" \
+              target="_blank"\
+              className="inline-block bg-wrife-green hover:bg-wrife-dark text-white font-semibold py-3 px-8 rounded-lg transition-colors"\
+            >\
+              Download Full Comparison Document (PDF)\
+            </a>\
+          </div>\
+        </div>\
+      </div>\
+    </section>\
+  )\
+\}}

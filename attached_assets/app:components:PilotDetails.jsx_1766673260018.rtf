@@ -1,0 +1,236 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 export default function PilotDetails() \{\
+  return (\
+    <section className="bg-white">\
+      <div className="section-container">\
+        <div className="max-w-6xl mx-auto">\
+          \{/* Section header */\}\
+          <div className="text-center mb-16">\
+            <h2>Free Pilot Programme</h2>\
+            <p className="text-xl text-gray-600 mt-4">\
+              January-June 2026 \'95 10-20 UK Primary Schools\
+            </p>\
+          </div>\
+\
+          <div className="grid lg:grid-cols-2 gap-12">\
+            \{/* What you receive */\}\
+            <div>\
+              <h3 className="flex items-center gap-3 mb-6">\
+                <span className="text-3xl">\uc0\u9989 </span>\
+                <span>What You Receive</span>\
+              </h3>\
+              \
+              <div className="space-y-4">\
+                \{[\
+                  "Complete platform access (all 67 lessons)",\
+                  "All lesson materials: presentations, worksheets, activities",\
+                  "2-hour teacher training session",\
+                  "Weekly check-ins and support (first term)",\
+                  "Dedicated support line (email + phone during school hours)",\
+                  "Progress tracking dashboard with automated alerts",\
+                  "Complete assessment package for each lesson",\
+                  "Access to resource library and video tutorials"\
+                ].map((item, index) => (\
+                  <div key=\{index\} className="flex items-start gap-3">\
+                    <div className="bg-wrife-light rounded-full p-1 mt-1">\
+                      <svg className="w-4 h-4 text-wrife-green" fill="currentColor" viewBox="0 0 20 20">\
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>\
+                      </svg>\
+                    </div>\
+                    <p className="text-gray-700">\{item\}</p>\
+                  </div>\
+                ))\}\
+              </div>\
+\
+              <div className="mt-8 p-6 bg-wrife-light rounded-xl">\
+                <p className="font-bold text-wrife-dark text-lg mb-2">\
+                  Total Value: \'a35,000-6,000\
+                </p>\
+                <p className="text-wrife-dark">\
+                  Your Cost: \'a30 (Completely Free)\
+                </p>\
+              </div>\
+            </div>\
+\
+            \{/* What we ask */\}\
+            <div>\
+              <h3 className="flex items-center gap-3 mb-6">\
+                <span className="text-3xl">\uc0\u55357 \u56522 </span>\
+                <span>What We're Asking</span>\
+              </h3>\
+              \
+              <div className="space-y-4">\
+                \{[\
+                  \{\
+                    title: "Pre/post writing assessments",\
+                    detail: "Validated instruments, approximately 45-60 minutes per pupil across term"\
+                  \},\
+                  \{\
+                    title: "Teacher feedback surveys",\
+                    detail: "Three surveys (10 minutes each) spaced across pilot period"\
+                  \},\
+                  \{\
+                    title: "Planning time logs",\
+                    detail: "5 minutes weekly to track time savings"\
+                  \},\
+                  \{\
+                    title: "End-of-pilot interview",\
+                    detail: "30-minute conversation with Michael or team member"\
+                  \},\
+                  \{\
+                    title: "Commitment to full pilot",\
+                    detail: "Minimum one full term of implementation"\
+                  \}\
+                ].map((item, index) => (\
+                  <div key=\{index\} className="border-l-4 border-wrife-green pl-4">\
+                    <p className="font-semibold text-gray-900 mb-1">\{item.title\}</p>\
+                    <p className="text-sm text-gray-600">\{item.detail\}</p>\
+                  </div>\
+                ))\}\
+              </div>\
+\
+              <div className="mt-6 space-y-3">\
+                <div className="flex items-start gap-3">\
+                  <div className="bg-yellow-100 rounded-full p-1 mt-1">\
+                    <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">\
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>\
+                    </svg>\
+                  </div>\
+                  <p className="text-sm text-gray-600">\
+                    <strong>Optional:</strong> Video testimonial if results are positive\
+                  </p>\
+                </div>\
+                \
+                <div className="p-4 bg-gray-50 rounded-lg">\
+                  <p className="text-sm font-semibold text-gray-900 mb-1">\
+                    Total Time Commitment:\
+                  </p>\
+                  <p className="text-sm text-gray-600">\
+                    ~3-4 hours across entire pilot period (minimal compared to 200+ hours saved in planning time)\
+                  </p>\
+                </div>\
+              </div>\
+            </div>\
+          </div>\
+\
+          \{/* Ideal schools */\}\
+          <div className="mt-16 card bg-gradient-to-br from-gray-50 to-white">\
+            <h3 className="mb-6">Ideal Pilot Schools</h3>\
+            \
+            <div className="grid md:grid-cols-2 gap-6">\
+              <div>\
+                <p className="font-semibold text-wrife-dark mb-3">We're Looking For:</p>\
+                <ul className="space-y-2">\
+                  \{[\
+                    "2+ form entry (200+ pupils for meaningful data)",\
+                    "Currently facing writing instruction challenges",\
+                    "Engaged leadership willing to provide feedback",\
+                    "Technology infrastructure (shared devices acceptable)",\
+                    "Commitment to full implementation"\
+                  ].map((item, index) => (\
+                    <li key=\{index\} className="flex items-start gap-2">\
+                      <span className="text-wrife-green">\uc0\u10003 </span>\
+                      <span className="text-gray-700">\{item\}</span>\
+                    </li>\
+                  ))\}\
+                </ul>\
+              </div>\
+              \
+              <div>\
+                <p className="font-semibold text-gray-600 mb-3">Not Required:</p>\
+                <ul className="space-y-2">\
+                  \{[\
+                    "Outstanding Ofsted rating",\
+                    "1:1 device ratio",\
+                    "Previous EdTech experience",\
+                    "Perfect conditions"\
+                  ].map((item, index) => (\
+                    <li key=\{index\} className="flex items-start gap-2">\
+                      <span className="text-gray-400">\uc0\u10007 </span>\
+                      <span className="text-gray-600">\{item\}</span>\
+                    </li>\
+                  ))\}\
+                </ul>\
+                <p className="text-sm text-gray-500 mt-3 italic">\
+                  Real schools with real challenges welcome!\
+                </p>\
+              </div>\
+            </div>\
+          </div>\
+\
+          \{/* Timeline */\}\
+          <div className="mt-12">\
+            <h3 className="mb-8 text-center">Pilot Timeline</h3>\
+            \
+            <div className="relative">\
+              \{/* Timeline line */\}\
+              <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-wrife-light"></div>\
+              \
+              \{/* Timeline items */\}\
+              <div className="space-y-8">\
+                \{[\
+                  \{\
+                    date: "December 2025",\
+                    title: "Applications & Selection",\
+                    items: ["Applications open", "School selection", "Confirmation"]\
+                  \},\
+                  \{\
+                    date: "January 2026",\
+                    title: "Launch",\
+                    items: ["Teacher training (2 hours)", "Pre-assessment", "Pilot begins: Lessons 1-10"]\
+                  \},\
+                  \{\
+                    date: "Feb-March 2026",\
+                    title: "Mid-Point",\
+                    items: ["Lessons 11-25", "Mid-point survey", "Ongoing support"]\
+                  \},\
+                  \{\
+                    date: "April-June 2026",\
+                    title: "Completion",\
+                    items: ["Lessons 26-40+", "Post-assessment", "Final surveys"]\
+                  \},\
+                  \{\
+                    date: "July 2026",\
+                    title: "Results & Next Steps",\
+                    items: ["Evidence report", "Subscription decisions", "Early adopter pricing"]\
+                  \}\
+                ].map((phase, index) => (\
+                  <div key=\{index\} className="relative">\
+                    <div className=\{`flex items-center $\{index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'\}`\}>\
+                      \{/* Content */\}\
+                      <div className=\{`w-full md:w-5/12 $\{index % 2 === 0 ? 'md:pr-8 md:text-right' : 'md:pl-8'\}`\}>\
+                        <div className="bg-white rounded-lg shadow-md p-6 border-2 border-wrife-light">\
+                          <div className="text-sm font-semibold text-wrife-green mb-2">\{phase.date\}</div>\
+                          <div className="font-bold text-lg mb-3">\{phase.title\}</div>\
+                          <ul className=\{`space-y-1 text-sm text-gray-600 $\{index % 2 === 0 ? 'md:text-right' : ''\}`\}>\
+                            \{phase.items.map((item, i) => (\
+                              <li key=\{i\}>\uc0\u8594  \{item\}</li>\
+                            ))\}\
+                          </ul>\
+                        </div>\
+                      </div>\
+                      \
+                      \{/* Center dot */\}\
+                      <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-wrife-green rounded-full border-4 border-white shadow-lg items-center justify-center">\
+                        <div className="w-3 h-3 bg-white rounded-full"></div>\
+                      </div>\
+                      \
+                      \{/* Spacer */\}\
+                      <div className="hidden md:block w-5/12"></div>\
+                    </div>\
+                  </div>\
+                ))\}\
+              </div>\
+            </div>\
+          </div>\
+        </div>\
+      </div>\
+    </section>\
+  )\
+\}}

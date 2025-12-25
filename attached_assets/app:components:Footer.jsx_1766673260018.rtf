@@ -1,0 +1,478 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 export default function Footer() \{\
+  const currentYear = new Date().getFullYear()\
+\
+  return (\
+    <footer className="bg-gray-900 text-white">\
+      <div className="section-container py-12">\
+        <div className="max-w-6xl mx-auto">\
+          <div className="grid md:grid-cols-4 gap-8 mb-8">\
+            \{/* About */\}\
+            <div className="md:col-span-2">\
+              <h3 className="text-xl font-bold mb-4 text-wrife-light">WriFe Education</h3>\
+              <p className="text-gray-400 mb-4">\
+                Systematic writing curriculum for UK primary schools. Built by teachers, \
+                tested for 20 years, aligned with 2024 Curriculum Review.\
+              </p>\
+              <div className="flex gap-4">\
+                <a href="https://www.linkedin.com/company/wrife" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-wrife-light">\
+                  LinkedIn\
+                </a>\
+                <a href="https://twitter.com/WriFe_Education" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-wrife-light">\
+                  Twitter\
+                </a>\
+              </div>\
+            </div>\
+\
+            \{/* Quick Links */\}\
+            <div>\
+              <h4 className="font-semibold mb-4">Quick Links</h4>\
+              <ul className="space-y-2">\
+                <li><a href="#video" className="text-gray-400 hover:text-wrife-light">Watch Videos</a></li>\
+                <li><a href="#application" className="text-gray-400 hover:text-wrife-light">Apply for Pilot</a></li>\
+                <li><a href="https://wrife.co.uk" className="text-gray-400 hover:text-wrife-light">Main Website</a></li>\
+                <li><a href="https://app.wrife.co.uk" className="text-gray-400 hover:text-wrife-light">Teacher Login</a></li>\
+              </ul>\
+            </div>\
+\
+            \{/* Contact */\}\
+            <div>\
+              <h4 className="font-semibold mb-4">Contact</h4>\
+              <ul className="space-y-2 text-gray-400">\
+                <li>\uc0\u55357 \u56551  pilot@wrife.co.uk</li>\
+                <li>\uc0\u55357 \u56561  [Your Phone]</li>\
+                <li>\uc0\u55356 \u57104  wrife.co.uk</li>\
+              </ul>\
+            </div>\
+          </div>\
+\
+          \{/* Bottom bar */\}\
+          <div className="border-t border-gray-800 pt-8">\
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">\
+              <p className="text-gray-400 text-sm">\
+                \'a9 \{currentYear\} WriFe Education Ltd. All rights reserved.\
+              </p>\
+              <div className="flex gap-6 text-sm">\
+                <a href="/privacy" className="text-gray-400 hover:text-wrife-light">Privacy Policy</a>\
+                <a href="/terms" className="text-gray-400 hover:text-wrife-light">Terms of Service</a>\
+              </div>\
+            </div>\
+          </div>\
+        </div>\
+      </div>\
+    </footer>\
+  )\
+\}\
+```\
+\
+---\
+\
+## **STEP 3: DEPLOYMENT TO CUSTOM DOMAIN**\
+\
+### **Deploy on Replit:**\
+\
+1. Click "Run" in Replit\
+2. Your site will be live at `[your-repl-name].[your-username].repl.co`\
+\
+### **Connect Custom Domain (promo.wrife.co.uk):**\
+\
+**Option A: Via Cloudflare (Recommended)**\
+\
+1. **In Cloudflare DNS:**\
+   - Add CNAME record: `promo` \uc0\u8594  `[your-repl-url].repl.co`\
+   - Set Proxy status: DNS only (gray cloud)\
+\
+2. **In Replit:**\
+   - Click Repl name \uc0\u8594  "Custom Domain"\
+   - Enter: `promo.wrife.co.uk`\
+   - Follow verification steps\
+\
+**Option B: Direct DNS**\
+\
+1. Go to your domain registrar (10Web or wherever wrife.co.uk is hosted)\
+2. Add CNAME record:\
+   - Name: `promo`\
+   - Target: `[your-repl-url].repl.co`\
+   - TTL: 3600\
+\
+3. Wait 1-24 hours for DNS propagation\
+\
+---\
+\
+## **STEP 4: POST-DEPLOYMENT CHECKLIST**\
+\
+### **Before Going Live:**\
+\
+- [ ] Replace all placeholder YouTube video IDs with actual IDs\
+- [ ] Replace Google Form URL with your actual form\
+- [ ] Add your phone number in multiple places\
+- [ ] Add email address (pilot@wrife.co.uk or your actual)\
+- [ ] Upload WriFe logo to `/public/wrife-logo.svg`\
+- [ ] Test on mobile devices\
+- [ ] Test all links\
+- [ ] Test video embeds\
+- [ ] Set up Google Analytics (optional)\
+\
+### **Content to Prepare:**\
+\
+- [ ] Record 5 videos and upload to YouTube\
+- [ ] Create Google Form for pilot applications\
+- [ ] Create PDF comparison document (Curriculum Review)\
+- [ ] Prepare video thumbnails\
+\
+---\
+\
+# **PART 2: HYBRID VIDEO PRODUCTION PLAN**\
+\
+## **The Strategy: Maximum Authenticity, Minimum Time**\
+\
+### **Recording Split:**\
+\
+**YOU Record (Authentic Voice Essential):**\
+- Video 1: "What is WriFe?" (2:30)\
+- Video 3: "Curriculum Review Alignment" (2:45) - Your voice over visuals\
+\
+**AI-Assisted (Technical Content):**\
+- Video 2: "Curriculum Layout" (3:15)\
+- Video 4: "WriFe Components" (4:30)\
+- Video 5: "Using Teacher Guide" (3:20)\
+\
+**Total:** 2 videos you record (5:15), 3 videos AI-assisted (11:05)\
+\
+---\
+\
+## **EQUIPMENT & SOFTWARE SETUP**\
+\
+### **What You Need:**\
+\
+**For Recording Yourself:**\
+\
+1. **Camera: Your Smartphone** (iPhone or Android with 1080p capability)\
+   - Use rear camera (better quality than selfie camera)\
+   - Film horizontally (landscape)\
+   - Cost: \'a30 (you already have it)\
+\
+2. **Microphone: Blue Yeti OR Budget Alternative**\
+   - **Premium:** Blue Yeti USB Microphone (\'a380-100)\
+   - **Budget:** Rode VideoMic GO on-camera mic (\'a350)\
+   - **Ultra-budget:** Wired iPhone earbuds (\'a315, surprisingly decent)\
+   - Recommendation: Invest in Blue Yeti - massive quality upgrade\
+\
+3. **Lighting: Natural or Budget Setup**\
+   - **Free:** Film near window, natural daylight\
+   - **Budget:** 2x LED desk lamps (\'a320 total) pointing at you from sides\
+   - **Premium:** Ring light (\'a330-50)\
+   - Recommendation: Natural light is free and looks great\
+\
+4. **Tripod/Phone Holder:**\
+   - Phone tripod mount (\'a310-15 on Amazon)\
+   - Or improvise: Stack books to prop phone\
+\
+**Software Stack:**\
+\
+1. **Descript Creator Plan** - \'a312/month (ESSENTIAL)\
+   - Records screen + webcam\
+   - Edit by editing text (game-changer)\
+   - Auto-removes filler words\
+   - Auto-generates captions\
+   - Stock music library\
+\
+2. **Pictory.ai Standard Plan** - \'a319/month (for AI videos)\
+   - Script-to-video\
+   - Stock footage library\
+   - AI voiceover\
+   - Educational templates\
+\
+3. **Alternative if budget-conscious:**\
+   - **CapCut** (FREE desktop app) - Good editing, no AI features\
+   - **Natural Reader** (FREE) - Text-to-speech for voiceovers\
+   - **Canva** (FREE tier) - Graphics and thumbnails\
+\
+**Total Investment:**\
+- **Minimum:** \'a312/month (Descript only)\
+- **Recommended:** \'a331/month (Descript + Pictory) + \'a380 one-time (Blue Yeti)\
+- **Total:** \'a3111 first month, then \'a331/month\
+\
+---\
+\
+## **DETAILED PRODUCTION PLAN: 14-DAY TIMELINE**\
+\
+### **Week 1: Preparation & Recording**\
+\
+**Monday (Day 1): Setup & Scripts Finalization**\
+- [ ] Purchase Blue Yeti (arrives in 1-2 days)\
+- [ ] Sign up for Descript Creator plan\
+- [ ] Sign up for Pictory.ai Standard plan\
+- [ ] Review all 5 video scripts (already written above)\
+- [ ] Make any personal adjustments to scripts\
+- [ ] Set up recording space (find window with good light)\
+\
+**Time:** 2 hours\
+\
+---\
+\
+**Tuesday (Day 2): Technical Setup**\
+- [ ] Blue Yeti arrives, connect to computer\
+- [ ] Test Descript: record 1-minute test video\
+- [ ] Adjust microphone levels (speak normally, check Descript meters)\
+- [ ] Test screen recording in Descript\
+- [ ] Practice reading script naturally (don't sound robotic)\
+\
+**Time:** 1-2 hours\
+\
+---\
+\
+**Wednesday (Day 3): Record Video 1 - "What is WriFe?"**\
+\
+**Morning: Preparation**\
+- [ ] Review script 3 times aloud\
+- [ ] Set up filming space:\
+  - Phone on tripod at eye level\
+  - Sit 3-4 feet from camera\
+  - Natural light from window (not behind you!)\
+  - Blue Yeti positioned 6-12 inches from mouth\
+- [ ] Test recording: 30 seconds to check framing, lighting, sound\
+- [ ] Adjust as needed\
+\
+**Afternoon: Recording**\
+- [ ] Record full video (aim for 2-3 takes)\
+- [ ] Don't worry about mistakes - Descript lets you fix everything\
+- [ ] Speak naturally, like explaining to a colleague\
+- [ ] **Pro tip:** Smile! It comes through in your voice\
+\
+**What you're recording:**\
+- **Segments with you on camera (30 seconds total):**\
+  - Intro: "If you're a primary teacher..." (0:00-0:15)\
+  - Transition: "So I created WriFe..." (0:45-1:00)\
+  - Outro: "We're running a free pilot..." (2:15-2:45)\
+\
+**Time:** 3-4 hours (including setup and multiple takes)\
+\
+---\
+\
+**Thursday (Day 4): Record Screen Recordings for Video 1**\
+\
+- [ ] Open WriFe platform on computer\
+- [ ] Use Descript to record screen as you:\
+  - Navigate through lesson library\
+  - Show lesson package components\
+  - Click through progress tracker\
+  - Display pupil work samples (have these ready as images)\
+- [ ] Record voice-over explaining what viewers are seeing\
+- [ ] Aim for 2-3 minutes of screen recording footage\
+\
+**Time:** 2-3 hours\
+\
+---\
+\
+**Friday (Day 5): Record Video 3 Voiceover - "Curriculum Review Alignment"**\
+\
+**This is hybrid: AI creates visuals, you provide voiceover**\
+\
+- [ ] Review script thoroughly\
+- [ ] Set up Blue Yeti\
+- [ ] Record voiceover in Descript (just audio, no camera)\
+- [ ] Read naturally, with emphasis on key points\
+- [ ] Record in segments (easier to fix mistakes):\
+  - Intro (0:00-0:20)\
+  - Gap 1: Systematic grammar (0:20-1:00)\
+  - Gap 2: Teacher workload (1:00-1:40)\
+  - Gap 3: Assessment (1:40-2:20)\
+  - Conclusion (2:20-2:50)\
+\
+**Time:** 2 hours\
+\
+---\
+\
+### **Weekend (Days 6-7): Rest / Buffer Time**\
+\
+Optional: Watch your raw footage, make notes for editing\
+\
+---\
+\
+### **Week 2: AI Production & Editing**\
+\
+**Monday (Day 8): Create Video 2 with Pictory.ai - "Curriculum Layout"**\
+\
+**Process:**\
+1. Open Pictory.ai\
+2. Choose "Script to Video"\
+3. Paste Video 2 script (from Part 1 above)\
+4. Select template: Educational/Clean style\
+5. Pictory auto-generates scenes based on script\
+6. Review and customize:\
+   - Replace stock footage with WriFe screenshots where relevant\
+   - Adjust scene timings\
+   - Select AI voice (British English, professional male or female)\
+   - Add background music (subtle, educational)\
+7. Add text overlays for key points\
+8. Export in 1080p\
+\
+**Time:** 3-4 hours\
+\
+---\
+\
+**Tuesday (Day 9): Create Video 3 Visuals in Pictory - "Curriculum Review"**\
+\
+**Process:**\
+1. Import your voiceover from Day 5 into Pictory\
+2. Pictory auto-syncs visuals to your voice\
+3. Customize visuals:\
+   - Side-by-side comparison charts\
+   - Government review document screenshots\
+   - Stock footage of classrooms/teachers\
+4. Add text overlays: "Review Says" / "WriFe Delivers"\
+5. Export\
+\
+**Time:** 3-4 hours\
+\
+---\
+\
+**Wednesday (Day 10): Create Video 4 with Pictory - "WriFe Components"**\
+\
+**Process:**\
+1. Use script from Part 1\
+2. Record screen recordings of:\
+   - Teacher Guide tabs\
+   - Presentation slides\
+   - Worksheets\
+   - Interactive activities\
+   - Progress tracker\
+3. Import screen recordings into Pictory\
+4. Let Pictory add AI voiceover\
+5. Customize transitions and graphics\
+6. Export\
+\
+**Time:** 4-5 hours (longest video)\
+\
+---\
+\
+**Thursday (Day 11): Create Video 5 with Pictory - "Using Teacher Guide"**\
+\
+**Process:**\
+1. This is pure screen recording tutorial\
+2. Record in Descript: Full walkthrough of teacher guide\
+3. Add voiceover explaining each step\
+4. OR use Pictory's AI voiceover over screen recordings\
+5. Keep it simple and clear\
+6. Export\
+\
+**Time:** 3 hours\
+\
+---\
+\
+**Friday (Day 12): Edit Video 1 in Descript - "What is WriFe?"**\
+\
+**Descript Editing Workflow:**\
+1. Import all footage (you on camera + screen recordings)\
+2. Transcription appears automatically\
+3. Edit video by editing text:\
+   - Delete filler words (um, uh, like)\
+   - Remove long pauses\
+   - Cut mistakes by deleting text\
+4. Arrange sequence:\
+   - You on camera segments\
+   - Screen recording segments\
+   - Pupil work samples\
+5. Add captions (auto-generated, just review for accuracy)\
+6. Add background music (subtle)\
+7. Add text overlays for key stats\
+8. Export in 1080p\
+\
+**Descript Tips:**\
+- Use "Remove Filler Words" feature (magic!)\
+- Use "Shorten Word Gaps" to tighten pacing\
+- Studio Sound feature improves audio quality\
+\
+**Time:** 4-5 hours\
+\
+---\
+\
+**Saturday (Day 13): Final Review & Refinements**\
+\
+- [ ] Watch all 5 videos start to finish\
+- [ ] Check for:\
+  - Audio levels consistent\
+  - Captions accurate\
+  - Transitions smooth\
+  - Branding consistent (WriFe colors/logo)\
+  - Calls-to-action clear\
+- [ ] Make any small adjustments\
+- [ ] Create video thumbnails in Canva:\
+  - Your face (from Video 1) for Videos 1 & 3\
+  - Graphic/icon for Videos 2, 4, 5\
+  - Add text: Video title + "WriFe"\
+  - Use green color scheme\
+\
+**Time:** 3-4 hours\
+\
+---\
+\
+**Sunday (Day 14): Upload & Launch**\
+\
+**YouTube Upload Process:**\
+\
+1. **Create YouTube Channel** (if you don't have one):\
+   - "WriFe Education"\
+   - Use WriFe branding\
+\
+2. **Upload Videos:**\
+   - Video 1: "What is WriFe? | Systematic Writing Curriculum for UK Primary Schools"\
+   - Video 2: "WriFe Curriculum Layout Explained | 67 Lesson Progression"\
+   - Video 3: "How WriFe Aligns with 2024 Curriculum Review | Government Recommendations"\
+   - Video 4: "WriFe Learning Components | Interactive Practice, PWP, Assessments"\
+   - Video 5: "How to Use WriFe Teacher Guide | Step-by-Step Tutorial"\
+\
+3. **For Each Video:**\
+   - Add description (see template below)\
+   - Add tags: writing curriculum, primary education, UK schools, grammar instruction, WriFe\
+   - Add thumbnail\
+   - Add to playlist: "WriFe Pilot Programme"\
+   - Set visibility: Public (or Unlisted if you prefer)\
+\
+4. **Get Embed URLs:**\
+   - Copy YouTube embed code for each video\
+   - Update Next.js site with correct video IDs\
+\
+**YouTube Description Template:**\
+```\
+[Video Title]\
+\
+WriFe is a systematic writing curriculum for UK primary schools (Years 2-6) \
+that teaches grammar through personal storytelling. \
+\
+In this video: [Brief description of video content]\
+\
+FREE PILOT PROGRAMME (January-June 2026):\
+We're offering 10-20 UK primary schools complete access to WriFe with full \
+training and support at zero cost. \
+\
+Apply: promo.wrife.co.uk\
+\
+---\
+\
+\uc0\u55356 \u57104  Website: wrife.co.uk\
+\uc0\u55357 \u56551  Email: pilot@wrife.co.uk\
+\uc0\u55357 \u56561  Phone: [Your number]\
+\
+Timestamps:\
+0:00 - [Section 1]\
+0:30 - [Section 2]\
+1:00 - [Section 3]\
+[etc.]\
+\
+---\
+\
+About WriFe:\
+Built by Michael Ankrah, a primary teacher with 20+ years experience including \
+roles as Deputy Head Teacher and Assessment Coordinator. WriFe has been \
+classroom-tested for two decades and aligns with 2024 Curriculum & Assessment \
+Review recommendations.\
+\
+#WritingCurriculum #PrimaryEducation #UKSchools #Teaching #WriFe}

@@ -1,0 +1,71 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 @tailwind base;\
+@tailwind components;\
+@tailwind utilities;\
+\
+@layer base \{\
+  body \{\
+    @apply text-gray-900 bg-white;\
+  \}\
+  \
+  h1 \{\
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight;\
+  \}\
+  \
+  h2 \{\
+    @apply text-3xl md:text-4xl font-bold text-gray-900 mb-6;\
+  \}\
+  \
+  h3 \{\
+    @apply text-2xl md:text-3xl font-semibold text-gray-900 mb-4;\
+  \}\
+  \
+  p \{\
+    @apply text-lg text-gray-700 leading-relaxed;\
+  \}\
+\}\
+\
+@layer components \{\
+  .btn-primary \{\
+    @apply bg-wrife-green hover:bg-wrife-dark text-white font-semibold py-4 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg;\
+  \}\
+  \
+  .btn-secondary \{\
+    @apply bg-white hover:bg-gray-50 text-wrife-green border-2 border-wrife-green font-semibold py-4 px-8 rounded-lg transition-all duration-300;\
+  \}\
+  \
+  .section-container \{\
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24;\
+  \}\
+  \
+  .card \{\
+    @apply bg-white rounded-xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300;\
+  \}\
+\}\
+\
+/* Smooth scroll behavior */\
+html \{\
+  scroll-behavior: smooth;\
+\}\
+\
+/* Video container responsive */\
+.video-responsive \{\
+  position: relative;\
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */\
+  height: 0;\
+  overflow: hidden;\
+\}\
+\
+.video-responsive iframe \{\
+  position: absolute;\
+  top: 0;\
+  left: 0;\
+  width: 100%;\
+  height: 100%;\
+\}}
