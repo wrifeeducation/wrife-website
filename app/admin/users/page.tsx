@@ -29,17 +29,23 @@ interface ClassInfo {
   class_code: string;
   school_name: string;
   created_at: string;
+  pupil_count: number;
 }
 
 interface PupilInfo {
-  id: number;
+  id: string;
   class_id: number;
-  pupil_name: string;
-  pupil_email: string;
-  pupil_id: string | null;
+  first_name: string;
+  last_name: string | null;
+  display_name: string;
+  username: string;
+  year_group: number;
+  is_active: boolean;
+  last_login_at: string | null;
   class_name: string;
-  profile_display_name: string | null;
-  membership_tier: string | null;
+  class_code: string;
+  activity_count: number;
+  submissions_count: number;
 }
 
 interface UserDetails {
@@ -484,14 +490,28 @@ export default function AdminUsersPage() {
                                       </div>
                                       
                                       {classPupils.length > 0 ? (
-                                        <div className="space-y-1 mt-2 pt-2 border-t border-gray-100">
+                                        <div className="space-y-2 mt-2 pt-2 border-t border-gray-100">
                                           {classPupils.map(pupil => (
-                                            <div key={pupil.id} className="flex items-center gap-2 text-xs">
-                                              <span className="w-5 h-5 bg-green-100 text-green-700 rounded-full flex items-center justify-center font-medium">
-                                                {pupil.pupil_name?.charAt(0)?.toUpperCase() || '?'}
-                                              </span>
-                                              <span className="text-[var(--wrife-text-main)]">{pupil.pupil_name}</span>
-                                              <span className="text-[var(--wrife-text-muted)]">({pupil.pupil_email})</span>
+                                            <div key={pupil.id} className="flex items-center justify-between text-xs bg-gray-50 rounded-lg px-2 py-1.5">
+                                              <div className="flex items-center gap-2">
+                                                <span className={`w-5 h-5 rounded-full flex items-center justify-center font-medium ${
+                                                  pupil.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                                                }`}>
+                                                  {pupil.first_name?.charAt(0)?.toUpperCase() || '?'}
+                                                </span>
+                                                <div>
+                                                  <span className="text-[var(--wrife-text-main)] font-medium">{pupil.display_name || `${pupil.first_name} ${pupil.last_name || ''}`}</span>
+                                                  <span className="text-[var(--wrife-text-muted)] ml-1">(@{pupil.username})</span>
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center gap-3 text-[var(--wrife-text-muted)]">
+                                                <span title="Submissions">{pupil.submissions_count || 0} done</span>
+                                                <span title="Last login" className={pupil.last_login_at ? 'text-green-600' : 'text-orange-500'}>
+                                                  {pupil.last_login_at 
+                                                    ? new Date(pupil.last_login_at).toLocaleDateString() 
+                                                    : 'Never logged in'}
+                                                </span>
+                                              </div>
                                             </div>
                                           ))}
                                         </div>

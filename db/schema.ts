@@ -51,11 +51,16 @@ export const classMembers = pgTable('class_members', {
 });
 
 export const pupils = pgTable('pupils', {
-  id: uuid('id').primaryKey(),
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  classId: integer('class_id').notNull(),
   firstName: varchar('first_name').notNull(),
   lastName: varchar('last_name'),
   displayName: varchar('display_name'),
+  username: varchar('username').notNull(),
+  passwordHash: varchar('password_hash').notNull(),
   yearGroup: integer('year_group').notNull(),
+  isActive: boolean('is_active').default(true),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
   updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`now()`),
 });
@@ -394,5 +399,26 @@ export const userActivity = pgTable('user_activity', {
   sessionId: varchar('session_id'),
   ipAddress: varchar('ip_address'),
   userAgent: text('user_agent'),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const pupilSessions = pgTable('pupil_sessions', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  pupilId: uuid('pupil_id').notNull(),
+  classId: integer('class_id').notNull(),
+  token: varchar('token').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const pupilActivityLog = pgTable('pupil_activity_log', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  pupilId: uuid('pupil_id').notNull(),
+  classId: integer('class_id').notNull(),
+  eventType: varchar('event_type').notNull(),
+  eventData: jsonb('event_data').default({}),
+  resourceType: varchar('resource_type'),
+  resourceId: varchar('resource_id'),
+  ipAddress: varchar('ip_address'),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
 });
