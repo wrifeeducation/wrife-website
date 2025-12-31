@@ -542,6 +542,53 @@ function DashboardContent() {
           ))}
         </nav>
 
+        {/* Membership Status Banner */}
+        {user && entitlements.tier === 'free' && (
+          <div className="mb-6 bg-gradient-to-r from-[var(--wrife-yellow)]/20 to-[var(--wrife-orange)]/20 border border-[var(--wrife-yellow)] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">✨</span>
+              <div>
+                <p className="font-bold text-[var(--wrife-text-main)]">
+                  You&apos;re on the Free Plan
+                </p>
+                <p className="text-sm text-[var(--wrife-text-muted)]">
+                  Upgrade to access all lesson materials, class management, and AI-powered assessment
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="shrink-0 px-6 py-2 bg-[var(--wrife-blue)] text-white font-semibold rounded-full hover:opacity-90 transition"
+            >
+              View Plans
+            </Link>
+          </div>
+        )}
+
+        {user && (entitlements.tier === 'standard' || entitlements.tier === 'full' || entitlements.tier === 'school') && (
+          <div className="mb-6 bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">{entitlements.tier === 'full' || entitlements.tier === 'school' ? '🌟' : '⭐'}</span>
+              <div>
+                <p className="font-bold text-[var(--wrife-text-main)]">
+                  {entitlements.tier === 'school' ? 'School License' : entitlements.tier === 'full' ? 'Full Teacher' : 'Standard Teacher'} Plan
+                </p>
+                <p className="text-sm text-[var(--wrife-text-muted)]">
+                  {entitlements.tier === 'full' || entitlements.tier === 'school'
+                    ? 'You have full access to all features' 
+                    : 'You have access to all lesson materials'}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="shrink-0 px-6 py-2 border border-[var(--wrife-border)] text-[var(--wrife-text-muted)] font-semibold rounded-full hover:bg-white transition"
+            >
+              Manage Plan
+            </Link>
+          </div>
+        )}
+
         {dataLoading ? (
           <div className="flex justify-center py-12">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--wrife-blue)] border-r-transparent"></div>

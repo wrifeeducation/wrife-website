@@ -1,37 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin, AuthError } from '@/lib/admin-auth';
-import { createClient } from '@supabase/supabase-js';
+import { Pool } from 'pg';
 
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+let pool: Pool | null = null;
+
+function getPool(): Pool {
+  if (!pool) {
+    const connectionString = process.env.PROD_DATABASE_URL || process.env.DATABASE_URL;
+    pool = new Pool({
+      connectionString,
+      max: 5,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+  }
+  return pool;
 }
 
 export async function GET(request: NextRequest) {
   try {
     const admin = await getAuthenticatedAdmin();
-    const supabase = getSupabaseAdmin();
+    const db = getPool();
 
     const [profilesResult, schoolsResult] = await Promise.all([
-      supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-      supabase.from('schools').select('id, name').order('name'),
+      db.query(`SELECT * FROM profiles ORDER BY created_at DESC`),
+      db.query(`SELECT id, name FROM schools ORDER BY name`),
     ]);
 
-    if (profilesResult.error) {
-      console.error('Error fetching profiles:', profilesResult.error);
-      return NextResponse.json({ error: profilesResult.error.message }, { status: 500 });
-    }
-
-    if (schoolsResult.error) {
-      console.error('Error fetching schools:', schoolsResult.error);
-      return NextResponse.json({ error: schoolsResult.error.message }, { status: 500 });
-    }
-
     return NextResponse.json({
-      profiles: profilesResult.data || [],
-      schools: schoolsResult.data || [],
+      profiles: profilesResult.rows || [],
+      schools: schoolsResult.rows || [],
     });
   } catch (error: any) {
     console.error('Error in users GET:', error);
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const admin = await getAuthenticatedAdmin();
-    const supabase = getSupabaseAdmin();
+    const db = getPool();
     
     const body = await request.json();
     const { userId, updates } = body;
@@ -58,11 +56,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Updates must be a valid object' }, { status: 400 });
     }
 
-    const { data: currentProfile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
+    const currentProfileResult = await db.query(
+      `SELECT role FROM profiles WHERE id = $1`,
+      [userId]
+    );
+    const currentProfile = currentProfileResult.rows[0];
 
     if (currentProfile?.role === 'admin' && admin.role !== 'admin') {
       return NextResponse.json({ error: 'Cannot modify admin users' }, { status: 403 });
@@ -73,29 +71,36 @@ export async function PUT(request: NextRequest) {
       allowedRoles.push('admin');
     }
 
-    const allowedUpdates: Record<string, any> = {};
+    const setClauses: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
     
     if (updates.school_id !== undefined) {
-      allowedUpdates.school_id = updates.school_id || null;
+      setClauses.push(`school_id = $${paramIndex++}`);
+      values.push(updates.school_id || null);
     }
     
     if (updates.role !== undefined && allowedRoles.includes(updates.role)) {
       if (updates.role === 'admin' && admin.role !== 'admin') {
         return NextResponse.json({ error: 'Cannot assign admin role' }, { status: 403 });
       }
-      allowedUpdates.role = updates.role;
+      setClauses.push(`role = $${paramIndex++}`);
+      values.push(updates.role);
     }
     
     if (updates.display_name !== undefined) {
-      allowedUpdates.display_name = updates.display_name;
+      setClauses.push(`display_name = $${paramIndex++}`);
+      values.push(updates.display_name);
     }
     
     if (updates.first_name !== undefined) {
-      allowedUpdates.first_name = updates.first_name;
+      setClauses.push(`first_name = $${paramIndex++}`);
+      values.push(updates.first_name);
     }
     
     if (updates.last_name !== undefined) {
-      allowedUpdates.last_name = updates.last_name;
+      setClauses.push(`last_name = $${paramIndex++}`);
+      values.push(updates.last_name);
     }
     
     if (updates.membership_tier !== undefined) {
@@ -105,25 +110,31 @@ export async function PUT(request: NextRequest) {
           error: `Invalid membership tier: ${updates.membership_tier}. Must be one of: ${validTiers.join(', ')}` 
         }, { status: 400 });
       }
-      allowedUpdates.membership_tier = updates.membership_tier;
+      setClauses.push(`membership_tier = $${paramIndex++}`);
+      values.push(updates.membership_tier);
     }
 
-    if (Object.keys(allowedUpdates).length === 0) {
+    if (setClauses.length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
-    allowedUpdates.updated_at = new Date().toISOString();
+    setClauses.push(`updated_at = $${paramIndex++}`);
+    values.push(new Date().toISOString());
+    
+    values.push(userId);
+    
+    const query = `
+      UPDATE profiles 
+      SET ${setClauses.join(', ')}
+      WHERE id = $${paramIndex}
+      RETURNING *
+    `;
 
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .update(allowedUpdates)
-      .eq('id', userId)
-      .select()
-      .single();
+    const result = await db.query(query, values);
+    const profile = result.rows[0];
 
-    if (error) {
-      console.error('Error updating user:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!profile) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, profile });
