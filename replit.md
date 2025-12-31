@@ -30,6 +30,11 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Curriculum Management:** Supports managing lessons, PWP (Progressive Writing Practice), and DWP (Differentiated Writing Programme) levels, including seeding 40 DWP levels with rubrics.
 - **Pupil Workflow:** Includes distinct login, dashboard, assignment submission, and practice (PWP/DWP) pages.
 - **Freemium Membership:** Supports Free, Standard, Full, and School tiers. Tier resolution provides users with the highest applicable tier (personal or school).
+- **Subscription Management:** 
+    - Admin can change user tiers via `/admin/users` page, which updates PostgreSQL directly.
+    - Users can upgrade via Stripe checkout from `/pricing` page.
+    - Stripe webhook (`/api/stripe/webhook`) updates `membership_tier` in PostgreSQL on successful payment.
+    - Teacher dashboard displays current tier with upgrade CTA for free users.
 - **Usage Analytics:** Tracks user activity (logins, PWP/DWP, lesson views) in the `user_activity` table for admin dashboards.
 
 **Feature Specifications:**
