@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import LessonPageWrapper from '@/components/LessonPageWrapper';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
 });
 
 export default async function LessonPage({ params }: { params: Promise<{ id: string }> }) {
