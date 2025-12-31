@@ -14,17 +14,72 @@ export default function UpdatePasswordPage() {
   const [error, setError] = useState('');
   const [sessionChecked, setSessionChecked] = useState(false);
   const [hasValidSession, setHasValidSession] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const checkSession = async () => {
+    const handlePasswordRecovery = async () => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('[UpdatePassword] Auth event:', event);
+        
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('[UpdatePassword] PASSWORD_RECOVERY event received');
+          setIsRecoveryMode(true);
+          setHasValidSession(true);
+          setSessionChecked(true);
+        } else if (event === 'SIGNED_IN' && session) {
+          console.log('[UpdatePassword] SIGNED_IN event with session');
+          setHasValidSession(true);
+          setSessionChecked(true);
+        }
+      });
+
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
+
+      console.log('[UpdatePassword] Hash params - type:', type, 'hasAccessToken:', !!accessToken);
+
+      if (type === 'recovery' && accessToken && refreshToken) {
+        console.log('[UpdatePassword] Recovery tokens found in URL, setting session...');
+        
+        const { data, error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (sessionError) {
+          console.error('[UpdatePassword] Error setting session:', sessionError);
+          setError('Invalid or expired reset link. Please request a new one.');
+          setSessionChecked(true);
+          return;
+        }
+
+        if (data.session) {
+          console.log('[UpdatePassword] Session established from recovery tokens');
+          setIsRecoveryMode(true);
+          setHasValidSession(true);
+          setSessionChecked(true);
+          
+          window.history.replaceState(null, '', window.location.pathname);
+          return;
+        }
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        console.log('[UpdatePassword] Existing session found');
         setHasValidSession(true);
       }
       setSessionChecked(true);
+
+      return () => {
+        subscription.unsubscribe();
+      };
     };
-    checkSession();
+
+    handlePasswordRecovery();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -48,11 +103,16 @@ export default function UpdatePasswordPage() {
     });
 
     if (error) {
+      console.error('[UpdatePassword] Error updating password:', error);
       setError(error.message);
       setLoading(false);
       return;
     }
 
+    console.log('[UpdatePassword] Password updated successfully');
+    
+    await supabase.auth.signOut();
+    
     setSuccess(true);
     setLoading(false);
 
@@ -140,7 +200,7 @@ export default function UpdatePasswordPage() {
                   required
                   minLength={6}
                   className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
-                  placeholder="••••••••"
+                  placeholder="Enter new password"
                 />
                 <p className="text-xs text-[var(--wrife-text-muted)] mt-1">Must be at least 6 characters</p>
               </div>
@@ -157,7 +217,7 @@ export default function UpdatePasswordPage() {
                   required
                   minLength={6}
                   className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent"
-                  placeholder="••••••••"
+                  placeholder="Confirm new password"
                 />
               </div>
 
