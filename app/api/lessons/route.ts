@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { getPool } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const pool = new Pool({
-    connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-  });
+  const pool = getPool();
 
   try {
     const result = await pool.query(`
@@ -33,7 +31,5 @@ export async function GET() {
       { error: 'Failed to fetch lessons' },
       { status: 500 }
     );
-  } finally {
-    await pool.end();
   }
 }

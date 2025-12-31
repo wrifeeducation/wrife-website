@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { adminFetch } from '@/lib/admin-fetch';
 import { useRouter } from 'next/navigation';
@@ -66,21 +66,7 @@ export default function AdminUsersPage() {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      if (user.role !== 'admin') {
-        router.push('/dashboard');
-        return;
-      }
-      fetchData();
-    }
-  }, [user, authLoading, router]);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     try {
       const response = await adminFetch('/api/admin/users');
       const data = await response.json();
@@ -96,7 +82,22 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    if (user.role !== 'admin') {
+      router.push('/dashboard');
+      return;
+    }
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, fetchData]);
 
   async function fetchUserDetails(userId: string) {
     if (expandedUser === userId) {

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getUncachableStripeClient } from '@/lib/stripe-client';
-import { Pool } from 'pg';
-
-const pool = new Pool({ connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL });
+import { getPool } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const stripe = await getUncachableStripeClient();
+    const pool = getPool();
 
     const profileResult = await pool.query(
       'SELECT id, email, stripe_customer_id, display_name FROM profiles WHERE id = $1',

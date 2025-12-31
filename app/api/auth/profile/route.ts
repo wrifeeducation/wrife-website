@@ -1,23 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { getPool } from '@/lib/db';
 import { trackActivityAsync, extractRequestInfo } from '@/lib/activity-tracker';
-
-let pool: Pool | null = null;
-
-function getPool(): Pool {
-  if (!pool) {
-    // Use shared database: prefer PROD_DATABASE_URL for consistency across environments
-    const connectionString = process.env.PROD_DATABASE_URL || process.env.DATABASE_URL;
-    console.log(`[Profile API] Using database: ${connectionString ? 'configured' : 'missing'}`);
-    pool = new Pool({
-      connectionString,
-      max: 5,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-    });
-  }
-  return pool;
-}
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId');

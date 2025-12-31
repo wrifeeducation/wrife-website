@@ -1,21 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin, AuthError } from '@/lib/admin-auth';
-import { Pool } from 'pg';
-
-let pool: Pool | null = null;
-
-function getPool(): Pool {
-  if (!pool) {
-    const connectionString = process.env.PROD_DATABASE_URL || process.env.DATABASE_URL;
-    pool = new Pool({
-      connectionString,
-      max: 5,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-    });
-  }
-  return pool;
-}
+import { getPool } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
