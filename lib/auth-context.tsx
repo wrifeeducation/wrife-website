@@ -20,6 +20,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   getDashboardPath: () => string;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   signUp: async () => ({ error: null }),
   signOut: async () => {},
   getDashboardPath: () => '/login',
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -197,8 +199,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/';
   }
 
+  async function refreshProfile(): Promise<void> {
+    if (!user) {
+      console.log('[AuthContext] refreshProfile called but no user');
+      return;
+    }
+    
+    console.log('[AuthContext] Refreshing profile for user:', user.id);
+    await fetchUserProfile(user.id, user.email);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, getDashboardPath }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, getDashboardPath, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

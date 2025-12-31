@@ -48,9 +48,9 @@ export function getEntitlements(
       return {
         tier: 'standard',
         allowedFileTypes: STANDARD_FILE_TYPES,
-        canManageClasses: false,
-        canAssignWork: false,
-        canViewProgress: false,
+        canManageClasses: true,
+        canAssignWork: true,
+        canViewProgress: true,
         canAccessAllComponents: true,
       };
 
@@ -122,9 +122,7 @@ export function isFileTypeAllowed(
 export function getUpgradeMessage(tier: MembershipTier): string {
   switch (tier) {
     case 'free':
-      return 'Upgrade to Standard to access all lesson materials, or Full to manage classes and track progress.';
-    case 'standard':
-      return 'Upgrade to Full Teacher to create classes, assign work, and monitor pupil progress.';
+      return 'Upgrade to Standard or Full to access all lesson materials, manage classes, and track pupil progress.';
     default:
       return '';
   }

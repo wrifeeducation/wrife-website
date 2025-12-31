@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      success_url: `${baseUrl}/dashboard?subscription=success`,
+      success_url: `${baseUrl}/pricing/success`,
       cancel_url: `${baseUrl}/pricing?subscription=cancelled`,
       metadata: { userId: user.id }
     });

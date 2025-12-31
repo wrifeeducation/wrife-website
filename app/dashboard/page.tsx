@@ -77,7 +77,7 @@ function BandBadge({ score }: { score: number }) {
 }
 
 function DashboardContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshProfile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [authChecked, setAuthChecked] = useState(false);
@@ -133,6 +133,7 @@ function DashboardContent() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
   const [upgradeDescription, setUpgradeDescription] = useState('');
+  const [hasRefreshedProfile, setHasRefreshedProfile] = useState(false);
 
   const entitlements = useMemo(() => {
     return getEntitlements(user?.membership_tier, user?.school_tier);
@@ -183,10 +184,17 @@ function DashboardContent() {
   }, [user, loading, router, authChecked]);
 
   useEffect(() => {
+    if (user && !hasRefreshedProfile) {
+      setHasRefreshedProfile(true);
+      refreshProfile();
+    }
+  }, [user, hasRefreshedProfile, refreshProfile]);
+
+  useEffect(() => {
     if (user) {
       fetchAllData();
     }
-  }, [user]);
+  }, [user?.id]);
 
   async function fetchAllData() {
     if (!user) return;

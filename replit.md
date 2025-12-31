@@ -35,6 +35,9 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
     - Users can upgrade via Stripe checkout from `/pricing` page.
     - Stripe webhook (`/api/stripe/webhook`) updates `membership_tier` in PostgreSQL on successful payment.
     - Teacher dashboard displays current tier with upgrade CTA for free users.
+    - Dashboard calls `refreshProfile()` on mount to pick up tier changes from admin or Stripe.
+    - Stripe checkout redirects to `/pricing/success` page which refreshes profile before dashboard redirect.
+    - Standard tier now includes class management, pupil assignments, and progress tracking (same as Full except AI assessment).
 - **Usage Analytics:** Tracks user activity (logins, PWP/DWP, lesson views) in the `user_activity` table for admin dashboards.
 
 **Feature Specifications:**
