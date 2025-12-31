@@ -22,6 +22,37 @@ interface School {
   name: string;
 }
 
+interface ClassInfo {
+  id: number;
+  name: string;
+  year_group: number;
+  class_code: string;
+  school_name: string;
+  created_at: string;
+}
+
+interface PupilInfo {
+  id: number;
+  class_id: number;
+  pupil_name: string;
+  pupil_email: string;
+  pupil_id: string | null;
+  class_name: string;
+  profile_display_name: string | null;
+  membership_tier: string | null;
+}
+
+interface UserDetails {
+  profile: Profile;
+  classes: ClassInfo[];
+  pupils: PupilInfo[];
+  stats: {
+    classCount: number;
+    pupilCount: number;
+    totalActivities: number;
+  };
+}
+
 export default function AdminUsersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -31,6 +62,9 @@ export default function AdminUsersPage() {
   const [filter, setFilter] = useState<'all' | 'unassigned' | 'admin' | 'school_admin' | 'teacher' | 'pupil'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [saving, setSaving] = useState<string | null>(null);
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -61,6 +95,33 @@ export default function AdminUsersPage() {
       console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchUserDetails(userId: string) {
+    if (expandedUser === userId) {
+      setExpandedUser(null);
+      setUserDetails(null);
+      return;
+    }
+
+    setLoadingDetails(true);
+    setExpandedUser(userId);
+
+    try {
+      const response = await adminFetch(`/api/admin/users/${userId}`);
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setUserDetails(data);
+    } catch (err) {
+      console.error('Error fetching user details:', err);
+      setUserDetails(null);
+    } finally {
+      setLoadingDetails(false);
     }
   }
 
@@ -142,18 +203,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  const getTierLabel = (tier: string) => {
-    switch (tier) {
-      case 'full':
-        return 'Full Teacher';
-      case 'standard':
-        return 'Standard';
-      case 'free':
-      default:
-        return 'Free';
-    }
-  };
-
   const filteredProfiles = profiles.filter(p => {
     const matchesFilter = (() => {
       if (filter === 'unassigned') return !p.school_id;
@@ -180,12 +229,6 @@ export default function AdminUsersPage() {
     unassigned: profiles.filter(p => !p.school_id).length,
   };
 
-  const getSchoolName = (schoolId: string | null) => {
-    if (!schoolId) return 'Unassigned';
-    const school = schools.find(s => s.id === schoolId);
-    return school?.name || 'Unknown';
-  };
-
   const getRoleBadgeStyle = (role: string) => {
     switch (role) {
       case 'admin':
@@ -199,6 +242,10 @@ export default function AdminUsersPage() {
       default:
         return 'bg-gray-100 text-gray-700';
     }
+  };
+
+  const canExpand = (profile: Profile) => {
+    return profile.role === 'teacher' || profile.role === 'school_admin';
   };
 
   if (authLoading || loading) {
@@ -234,7 +281,7 @@ export default function AdminUsersPage() {
             </div>
             <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">User Management</h1>
             <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
-              Assign users to schools and manage roles
+              Assign users to schools, manage roles, and view teacher classes
             </p>
           </div>
 
@@ -312,103 +359,170 @@ export default function AdminUsersPage() {
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[var(--wrife-border)] bg-gray-50">
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
-                        User
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
-                        Role
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
-                        Tier
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
-                        School
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
-                        Joined
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProfiles.map(profile => (
-                      <tr
-                        key={profile.id}
-                        className="border-b border-[var(--wrife-border)] last:border-0 hover:bg-gray-50 transition"
+            <div className="space-y-3">
+              {filteredProfiles.map(profile => (
+                <div key={profile.id} className="bg-white rounded-xl border border-[var(--wrife-border)] overflow-hidden">
+                  <div 
+                    className={`flex flex-wrap items-center gap-4 px-6 py-4 ${
+                      canExpand(profile) ? 'cursor-pointer hover:bg-gray-50' : ''
+                    } transition`}
+                    onClick={() => canExpand(profile) && fetchUserDetails(profile.id)}
+                  >
+                    <div className="flex-1 min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-[var(--wrife-text-main)]">
+                          {profile.display_name || 'No name'}
+                        </p>
+                        {canExpand(profile) && (
+                          <span className={`transform transition-transform ${expandedUser === profile.id ? 'rotate-180' : ''}`}>
+                            ▼
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-[var(--wrife-text-muted)]">{profile.email}</p>
+                    </div>
+
+                    <div onClick={e => e.stopPropagation()}>
+                      <select
+                        value={profile.role}
+                        onChange={e => updateUserRole(profile.id, e.target.value)}
+                        disabled={saving === profile.id || profile.role === 'admin'}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold border-0 cursor-pointer ${getRoleBadgeStyle(
+                          profile.role
+                        )} ${profile.role === 'admin' ? 'cursor-not-allowed opacity-70' : ''}`}
                       >
-                        <td className="px-6 py-4">
-                          <div>
-                            <p className="font-semibold text-[var(--wrife-text-main)]">
-                              {profile.display_name || 'No name'}
-                            </p>
-                            <p className="text-sm text-[var(--wrife-text-muted)]">{profile.email}</p>
+                        <option value="teacher">Teacher</option>
+                        <option value="pupil">Pupil</option>
+                        <option value="school_admin">School Admin</option>
+                        {profile.role === 'admin' && <option value="admin">Admin</option>}
+                      </select>
+                    </div>
+
+                    <div onClick={e => e.stopPropagation()}>
+                      {profile.role === 'teacher' || profile.role === 'school_admin' ? (
+                        <select
+                          value={profile.membership_tier || 'free'}
+                          onChange={e => updateUserTier(profile.id, e.target.value)}
+                          disabled={saving === profile.id}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold border-0 cursor-pointer ${getTierBadgeStyle(
+                            profile.membership_tier || 'free'
+                          )}`}
+                        >
+                          <option value="free">Free</option>
+                          <option value="standard">Standard</option>
+                          <option value="full">Full Teacher</option>
+                        </select>
+                      ) : (
+                        <span className="text-xs text-[var(--wrife-text-muted)]">-</span>
+                      )}
+                    </div>
+
+                    <div onClick={e => e.stopPropagation()}>
+                      <select
+                        value={profile.school_id || ''}
+                        onChange={e => updateUserSchool(profile.id, e.target.value || null)}
+                        disabled={saving === profile.id}
+                        className="rounded-lg border border-[var(--wrife-border)] px-3 py-2 text-sm text-[var(--wrife-text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent min-w-[160px]"
+                      >
+                        <option value="">-- Unassigned --</option>
+                        {schools.map(school => (
+                          <option key={school.id} value={school.id}>
+                            {school.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="text-sm text-[var(--wrife-text-muted)] min-w-[100px]">
+                      {new Date(profile.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  {expandedUser === profile.id && (
+                    <div className="border-t border-[var(--wrife-border)] bg-gray-50 px-6 py-4">
+                      {loadingDetails ? (
+                        <div className="flex items-center gap-2 text-sm text-[var(--wrife-text-muted)]">
+                          <div className="animate-spin h-4 w-4 border-2 border-[var(--wrife-blue)] border-t-transparent rounded-full"></div>
+                          Loading details...
+                        </div>
+                      ) : userDetails ? (
+                        <div className="space-y-4">
+                          <div className="flex gap-6">
+                            <div className="text-center">
+                              <p className="text-xl font-bold text-[var(--wrife-blue)]">{userDetails.stats.classCount}</p>
+                              <p className="text-xs text-[var(--wrife-text-muted)]">Classes</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xl font-bold text-green-600">{userDetails.stats.pupilCount}</p>
+                              <p className="text-xs text-[var(--wrife-text-muted)]">Pupils</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xl font-bold text-purple-600">{userDetails.stats.totalActivities}</p>
+                              <p className="text-xs text-[var(--wrife-text-muted)]">Activities</p>
+                            </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <select
-                            value={profile.role}
-                            onChange={e => updateUserRole(profile.id, e.target.value)}
-                            disabled={saving === profile.id || profile.role === 'admin'}
-                            className={`rounded-full px-3 py-1 text-xs font-semibold border-0 cursor-pointer ${getRoleBadgeStyle(
-                              profile.role
-                            )} ${profile.role === 'admin' ? 'cursor-not-allowed opacity-70' : ''}`}
-                          >
-                            <option value="teacher">Teacher</option>
-                            <option value="pupil">Pupil</option>
-                            <option value="school_admin">School Admin</option>
-                            {profile.role === 'admin' && <option value="admin">Admin</option>}
-                          </select>
-                        </td>
-                        <td className="px-6 py-4">
-                          {profile.role === 'teacher' || profile.role === 'school_admin' ? (
-                            <select
-                              value={profile.membership_tier || 'free'}
-                              onChange={e => updateUserTier(profile.id, e.target.value)}
-                              disabled={saving === profile.id}
-                              className={`rounded-full px-3 py-1 text-xs font-semibold border-0 cursor-pointer ${getTierBadgeStyle(
-                                profile.membership_tier || 'free'
-                              )}`}
-                            >
-                              <option value="free">Free</option>
-                              <option value="standard">Standard</option>
-                              <option value="full">Full Teacher</option>
-                            </select>
+
+                          {userDetails.classes.length > 0 ? (
+                            <div>
+                              <h4 className="text-sm font-semibold text-[var(--wrife-text-main)] mb-2">Classes</h4>
+                              <div className="grid gap-3 md:grid-cols-2">
+                                {userDetails.classes.map(cls => {
+                                  const classPupils = userDetails.pupils.filter(p => p.class_id === cls.id);
+                                  return (
+                                    <div key={cls.id} className="bg-white rounded-lg border border-[var(--wrife-border)] p-3">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                          <p className="font-medium text-[var(--wrife-text-main)]">{cls.name}</p>
+                                          <p className="text-xs text-[var(--wrife-text-muted)]">
+                                            Year {cls.year_group} • Code: {cls.class_code}
+                                          </p>
+                                        </div>
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                          {classPupils.length} pupils
+                                        </span>
+                                      </div>
+                                      
+                                      {classPupils.length > 0 ? (
+                                        <div className="space-y-1 mt-2 pt-2 border-t border-gray-100">
+                                          {classPupils.map(pupil => (
+                                            <div key={pupil.id} className="flex items-center gap-2 text-xs">
+                                              <span className="w-5 h-5 bg-green-100 text-green-700 rounded-full flex items-center justify-center font-medium">
+                                                {pupil.pupil_name?.charAt(0)?.toUpperCase() || '?'}
+                                              </span>
+                                              <span className="text-[var(--wrife-text-main)]">{pupil.pupil_name}</span>
+                                              <span className="text-[var(--wrife-text-muted)]">({pupil.pupil_email})</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <p className="text-xs text-[var(--wrife-text-muted)] mt-2 pt-2 border-t border-gray-100">
+                                          No pupils enrolled yet
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           ) : (
-                            <span className="text-xs text-[var(--wrife-text-muted)]">-</span>
+                            <div className="text-sm text-[var(--wrife-text-muted)] bg-white rounded-lg border border-[var(--wrife-border)] p-4 text-center">
+                              No classes created yet
+                            </div>
                           )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <select
-                            value={profile.school_id || ''}
-                            onChange={e => updateUserSchool(profile.id, e.target.value || null)}
-                            disabled={saving === profile.id}
-                            className="rounded-lg border border-[var(--wrife-border)] px-3 py-2 text-sm text-[var(--wrife-text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] focus:border-transparent min-w-[180px]"
-                          >
-                            <option value="">-- Unassigned --</option>
-                            {schools.map(school => (
-                              <option key={school.id} value={school.id}>
-                                {school.name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--wrife-text-muted)]">
-                          {new Date(profile.created_at).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-red-600">Failed to load user details</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
           <div className="mt-4 text-sm text-[var(--wrife-text-muted)]">
             Showing {filteredProfiles.length} of {profiles.length} users
+            {filter === 'teacher' && ' (click to expand and view classes)'}
           </div>
         </div>
       </div>

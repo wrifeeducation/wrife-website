@@ -15,11 +15,12 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 
 **Technical Implementations & Design Choices:**
 - **Database Architecture:**
-    - **Shared PostgreSQL (Neon-backed):** A single shared database stores ALL application data (lessons, activities, assignments, classes, profiles) across both development (Replit) and production (Vercel) environments.
-    - **Connection Priority:** APIs prefer `PROD_DATABASE_URL` when available, falling back to `DATABASE_URL`. This ensures environment consistency.
+    - **Single Supabase PostgreSQL Database:** ALL application data (lessons, activities, assignments, classes, profiles, 414 lesson files) is stored in the Supabase PostgreSQL database, accessed via `PROD_DATABASE_URL`.
+    - **Connection Pattern:** All API routes use `process.env.PROD_DATABASE_URL || process.env.DATABASE_URL` to ensure consistent connection to the production Supabase database in both development (Replit) and production (Vercel) environments.
+    - **IMPORTANT:** The Replit-provisioned Neon database (`DATABASE_URL` fallback) is NOT used for application data - it exists as a backup only. The Supabase database is the single source of truth.
     - **Auto-Provisioning:** The profile API automatically creates profiles for authenticated users who don't have one in the database, preventing login failures across environments.
-    - **Supabase:** Used ONLY for authentication (sign-in, sign-up, session management); NOT for application data storage.
-    - All data queries must use server-side API endpoints connecting to the shared PostgreSQL database.
+    - **Supabase Dual Role:** Supabase handles both (1) authentication (sign-in, sign-up, sessions) AND (2) PostgreSQL database for all application data.
+    - All data queries must use server-side API endpoints connecting to the Supabase PostgreSQL database via `PROD_DATABASE_URL`.
 - **Authentication:** Supabase handles authentication. Admin APIs use `requireAdmin()`. Pupil login uses email lookup in the `profiles` table.
 - **Dynamic Imports:** `next/dynamic` with `ssr: false` is used for components like `LessonLibrary` and `AuthButtons` to prevent hydration mismatches.
 - **Supabase SSR Pattern:** Separate Supabase clients for browser (`lib/supabase.ts` with `'use client'`) and server (`lib/supabase/server.ts`) ensure session persistence.
