@@ -55,8 +55,7 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Next.js 15**: Web framework.
 - **TypeScript**: Programming language.
 - **Tailwind CSS v4**: Styling framework.
-- **Supabase**: Authentication and storage for practice activities ('practice-activities' bucket).
-- **Replit PostgreSQL (Neon-backed)**: Primary application database.
+- **Supabase**: Authentication, PostgreSQL database (primary), and storage for practice activities ('practice-activities' bucket).
 - **Drizzle ORM**: Database schema management.
 - **OpenAI/Anthropic**: AI-powered writing assessment (configurable via `LLM_PROVIDER`).
 - **Stripe**: Payment processing for subscriptions, integrated via Replit connector.
