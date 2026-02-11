@@ -162,7 +162,7 @@ export async function PUT(
     }
 
     const classData = classResult.rows[0];
-    const createdPupils = [];
+    const createdPupils: any[] = [];
 
     for (const pupil of pupils) {
       const { firstName, lastName } = pupil;
