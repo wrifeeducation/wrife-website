@@ -19,8 +19,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
   
-  // Allow password reset routes to pass through without auth checks
-  if (pathname.startsWith('/update-password') || pathname.startsWith('/reset-password')) {
+  // Allow public routes to pass through without auth checks
+  const publicPaths = ['/update-password', '/reset-password', '/admin/login', '/admin/setup', '/api/admin/setup'];
+  if (publicPaths.some(path => pathname.startsWith(path))) {
     return NextResponse.next();
   }
   
