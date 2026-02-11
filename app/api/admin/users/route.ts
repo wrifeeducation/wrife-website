@@ -1,6 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedAdmin, AuthError } from '@/lib/admin-auth';
+import { getAuthenticatedAdmin, getSupabaseAdmin, AuthError } from '@/lib/admin-auth';
 import { getPool } from '@/lib/db';
+
+export async function POST(request: NextRequest) {
+  try {
+    const admin = await getAuthenticatedAdmin();
+
+    if (admin.role !== 'admin') {
+      return NextResponse.json({ error: 'Only super admins can create admin accounts' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { email, password, firstName, lastName, role } = body;
+
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+    }
+
+    const targetRole = role === 'school_admin' ? 'school_admin' : 'admin';
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+
+    if (authError) {
+      console.error('Error creating auth user:', authError);
+      if (authError.message?.includes('already been registered')) {
+        return NextResponse.json({ error: 'A user with this email already exists' }, { status: 409 });
+      }
+      return NextResponse.json({ error: authError.message }, { status: 500 });
+    }
+
+    if (!authData.user) {
+      return NextResponse.json({ error: 'Failed to create auth user' }, { status: 500 });
+    }
+
+    const db = getPool();
+    const displayName = [firstName, lastName].filter(Boolean).join(' ') || 'Admin';
+
+    await db.query(
+      `INSERT INTO profiles (id, email, first_name, last_name, display_name, role, membership_tier, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'full', NOW(), NOW())
+       ON CONFLICT (id) DO UPDATE SET role = $6, email = $2, updated_at = NOW()`,
+      [authData.user.id, email, firstName || '', lastName || '', displayName, targetRole]
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: `${targetRole === 'admin' ? 'Admin' : 'School admin'} account created successfully`,
+      profile: {
+        id: authData.user.id,
+        email,
+        display_name: displayName,
+        role: targetRole,
+        membership_tier: 'full',
+        created_at: new Date().toISOString(),
+      },
+    });
+  } catch (error: any) {
+    console.error('Error creating admin user:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    return NextResponse.json({ error: error.message || 'Failed to create admin account' }, { status: 500 });
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {

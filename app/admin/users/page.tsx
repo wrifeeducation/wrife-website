@@ -72,6 +72,12 @@ export default function AdminUsersPage() {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
+  const [createAdminForm, setCreateAdminForm] = useState({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin' });
+  const [createAdminLoading, setCreateAdminLoading] = useState(false);
+  const [createAdminError, setCreateAdminError] = useState('');
+  const [createAdminSuccess, setCreateAdminSuccess] = useState('');
+
   const fetchData = useCallback(async () => {
     try {
       const response = await adminFetch('/api/admin/users');
@@ -198,6 +204,62 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleCreateAdmin(e: React.FormEvent) {
+    e.preventDefault();
+    setCreateAdminError('');
+    setCreateAdminSuccess('');
+
+    if (createAdminForm.password !== createAdminForm.confirmPassword) {
+      setCreateAdminError('Passwords do not match');
+      return;
+    }
+
+    if (createAdminForm.password.length < 8) {
+      setCreateAdminError('Password must be at least 8 characters');
+      return;
+    }
+
+    setCreateAdminLoading(true);
+
+    try {
+      const response = await adminFetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: createAdminForm.email,
+          password: createAdminForm.password,
+          firstName: createAdminForm.firstName,
+          lastName: createAdminForm.lastName,
+          role: createAdminForm.role,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setCreateAdminError(data.error || 'Failed to create account');
+        setCreateAdminLoading(false);
+        return;
+      }
+
+      setCreateAdminSuccess(data.message || 'Account created successfully');
+      setCreateAdminForm({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin' });
+
+      if (data.profile) {
+        setProfiles(prev => [data.profile, ...prev]);
+      }
+
+      setTimeout(() => {
+        setShowCreateAdmin(false);
+        setCreateAdminSuccess('');
+      }, 3000);
+    } catch {
+      setCreateAdminError('An unexpected error occurred');
+    } finally {
+      setCreateAdminLoading(false);
+    }
+  }
+
   const getTierBadgeStyle = (tier: string) => {
     switch (tier) {
       case 'full':
@@ -317,6 +379,126 @@ export default function AdminUsersPage() {
               <p className="text-2xl font-bold text-yellow-600">{stats.unassigned}</p>
               <p className="text-xs text-yellow-600">Unassigned</p>
             </div>
+          </div>
+
+          <div className="mb-6">
+            <button
+              onClick={() => { setShowCreateAdmin(!showCreateAdmin); setCreateAdminError(''); setCreateAdminSuccess(''); }}
+              className="rounded-full bg-[var(--wrife-blue)] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition flex items-center gap-2"
+            >
+              <span className="text-lg leading-none">+</span> Create Admin Account
+            </button>
+
+            {showCreateAdmin && (
+              <div className="mt-4 bg-white rounded-2xl border border-[var(--wrife-border)] p-6">
+                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Create New Admin Account</h3>
+
+                {createAdminSuccess && (
+                  <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">
+                    {createAdminSuccess}
+                  </div>
+                )}
+
+                {createAdminError && (
+                  <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+                    {createAdminError}
+                  </div>
+                )}
+
+                <form onSubmit={handleCreateAdmin} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">First name</label>
+                      <input
+                        type="text"
+                        value={createAdminForm.firstName}
+                        onChange={e => setCreateAdminForm(prev => ({ ...prev, firstName: e.target.value }))}
+                        className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                        placeholder="Jane"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Last name</label>
+                      <input
+                        type="text"
+                        value={createAdminForm.lastName}
+                        onChange={e => setCreateAdminForm(prev => ({ ...prev, lastName: e.target.value }))}
+                        className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                        placeholder="Smith"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={createAdminForm.email}
+                      onChange={e => setCreateAdminForm(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                      className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                      placeholder="admin@wrife.co.uk"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Role</label>
+                    <select
+                      value={createAdminForm.role}
+                      onChange={e => setCreateAdminForm(prev => ({ ...prev, role: e.target.value }))}
+                      className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                    >
+                      <option value="admin">Super Admin</option>
+                      <option value="school_admin">School Admin</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Password</label>
+                      <input
+                        type="password"
+                        value={createAdminForm.password}
+                        onChange={e => setCreateAdminForm(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                        minLength={8}
+                        className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                        placeholder="Min 8 characters"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Confirm password</label>
+                      <input
+                        type="password"
+                        value={createAdminForm.confirmPassword}
+                        onChange={e => setCreateAdminForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        required
+                        minLength={8}
+                        className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                        placeholder="Repeat password"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={createAdminLoading}
+                      className="rounded-full bg-[var(--wrife-blue)] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
+                    >
+                      {createAdminLoading ? 'Creating...' : 'Create Account'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateAdmin(false)}
+                      className="rounded-full border border-[var(--wrife-border)] px-6 py-2.5 text-sm font-semibold text-[var(--wrife-text-main)] hover:bg-gray-50 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl p-4 border border-[var(--wrife-border)] mb-6">

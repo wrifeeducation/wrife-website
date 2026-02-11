@@ -60,44 +60,37 @@ export async function POST(request: NextRequest) {
     if (existingAdmin.rows.length > 0 && action === 'recover') {
       const adminProfile = existingAdmin.rows[0];
 
-      let authUser = null;
+      let authUserExists = false;
       try {
         const { data } = await supabaseAdmin.auth.admin.getUserById(adminProfile.id);
-        authUser = data?.user;
+        authUserExists = !!data?.user;
       } catch {
-        authUser = null;
+        authUserExists = false;
       }
 
-      if (authUser) {
-        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-          adminProfile.id,
-          { password, email }
+      if (authUserExists) {
+        return NextResponse.json(
+          { error: 'Admin auth account exists. Use the password reset option on the login page instead.' },
+          { status: 403 }
         );
+      }
 
-        if (updateError) {
-          console.error('Error updating auth user:', updateError);
-          return NextResponse.json({ error: updateError.message }, { status: 500 });
-        }
-      } else {
-        await supabaseAdmin.auth.admin.deleteUser(adminProfile.id).catch(() => {});
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
 
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-        });
+      if (authError) {
+        console.error('Error creating auth user:', authError);
+        return NextResponse.json({ error: authError.message }, { status: 500 });
+      }
 
-        if (authError) {
-          console.error('Error creating auth user:', authError);
-          return NextResponse.json({ error: authError.message }, { status: 500 });
-        }
-
-        if (authData.user) {
-          await pool.query(
-            `UPDATE profiles SET id = $1, email = $2, updated_at = NOW() WHERE id = $3`,
-            [authData.user.id, email, adminProfile.id]
-          );
-        }
+      if (authData.user) {
+        await pool.query(
+          `UPDATE profiles SET id = $1, email = $2, updated_at = NOW() WHERE id = $3`,
+          [authData.user.id, email, adminProfile.id]
+        );
       }
 
       return NextResponse.json({
