@@ -1,12 +1,12 @@
 import { supabase } from './supabase';
 
-async function getFreshAccessToken(): Promise<string> {
+async function getFreshAccessToken(): Promise<string | null> {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {
     const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
     if (refreshError || !refreshData.session?.access_token) {
-      throw new Error('Not authenticated - please log in again');
+      return null;
     }
     return refreshData.session.access_token;
   }
@@ -18,13 +18,20 @@ async function getFreshAccessToken(): Promise<string> {
 
   const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
   if (refreshError || !refreshData.session?.access_token) {
-    throw new Error('Not authenticated - please log in again');
+    return null;
   }
   return refreshData.session.access_token;
 }
 
 export async function adminFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = await getFreshAccessToken();
+
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   const headers = new Headers(options.headers);
   headers.set('Authorization', `Bearer ${token}`);
