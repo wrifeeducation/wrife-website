@@ -1,0 +1,28 @@
+{
+  "name": "WriFe Writer's Journey",
+  "short_name": "WriFe",
+  "description": "Interactive grammar practice and progressive writing for primary school pupils",
+  "start_url": "/journey",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#27AE60",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "kids"],
+  "lang": "en-GB",
+  "scope": "/",
+  "prefer_related_applications": false
+}

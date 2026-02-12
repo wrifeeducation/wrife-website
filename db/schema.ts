@@ -422,3 +422,127 @@ export const pupilActivityLog = pgTable('pupil_activity_log', {
   ipAddress: varchar('ip_address'),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
 });
+
+// ===== Writer's Journey Tables =====
+
+export const pupilProfiles = pgTable('pupil_profiles', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  pupilId: uuid('pupil_id').notNull(),
+  currentLesson: integer('current_lesson').notNull().default(1),
+  currentFormula: varchar('current_formula'),
+  adaptationLevel: varchar('adaptation_level').notNull().default('core'),
+  personalWordBank: jsonb('personal_word_bank').default({ people: [], places: [], things: [] }),
+  storyType: varchar('story_type').default('happy'),
+  dailyLoginStreak: integer('daily_login_streak').notNull().default(0),
+  longestStreak: integer('longest_streak').notNull().default(0),
+  lastStreakDate: date('last_streak_date'),
+  totalWordsWritten: integer('total_words_written').notNull().default(0),
+  badgesEarned: jsonb('badges_earned').default([]),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const activityProgress = pgTable('activity_progress', {
+  id: serial('id').primaryKey(),
+  pupilId: uuid('pupil_id').notNull(),
+  lessonNumber: integer('lesson_number').notNull(),
+  activityNumber: integer('activity_number').notNull(),
+  activityType: varchar('activity_type').notNull(),
+  wLevel: varchar('w_level').notNull(),
+  score: integer('score').notNull().default(0),
+  totalPossible: integer('total_possible').notNull(),
+  percentage: integer('percentage').notNull().default(0),
+  masteryAchieved: boolean('mastery_achieved').default(false),
+  attempts: integer('attempts').notNull().default(1),
+  timeSpentSeconds: integer('time_spent_seconds'),
+  responses: jsonb('responses').default([]),
+  completedAt: timestamp('completed_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const dailyActivities = pgTable('daily_activities', {
+  id: serial('id').primaryKey(),
+  lessonNumber: integer('lesson_number').notNull(),
+  activityNumber: integer('activity_number').notNull(),
+  wLevel: varchar('w_level').notNull(),
+  activityType: varchar('activity_type').notNull(),
+  title: varchar('title').notNull(),
+  instructions: text('instructions').notNull(),
+  content: jsonb('content').notNull(),
+  correctAnswers: jsonb('correct_answers').notNull(),
+  hints: jsonb('hints').default([]),
+  yearGroupMin: integer('year_group_min').default(2),
+  yearGroupMax: integer('year_group_max').default(5),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const pwpSentences = pgTable('pwp_sentences', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  pupilId: uuid('pupil_id').notNull(),
+  lessonNumber: integer('lesson_number').notNull(),
+  dateWritten: timestamp('date_written', { withTimezone: true }).default(sql`now()`),
+  formulaUsed: varchar('formula_used').notNull(),
+  subjectChosen: varchar('subject_chosen').notNull(),
+  sentenceText: text('sentence_text').notNull(),
+  wordClasses: jsonb('word_classes').default([]),
+  storyPart: varchar('story_part').notNull().default('beginning'),
+  aiAnalysisScore: integer('ai_analysis_score'),
+  formulaCorrect: boolean('formula_correct'),
+  teacherFeedback: text('teacher_feedback'),
+  revisionCount: integer('revision_count').notNull().default(0),
+  isFavorite: boolean('is_favorite').default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const pwpRevisions = pgTable('pwp_revisions', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  sentenceId: uuid('sentence_id').notNull(),
+  originalText: text('original_text').notNull(),
+  revisedText: text('revised_text').notNull(),
+  revisionReason: varchar('revision_reason'),
+  revisedAt: timestamp('revised_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const formalAssessments = pgTable('formal_assessments', {
+  id: serial('id').primaryKey(),
+  pupilId: uuid('pupil_id').notNull(),
+  lessonNumber: integer('lesson_number').notNull(),
+  assessmentDate: timestamp('assessment_date', { withTimezone: true }).default(sql`now()`),
+  partAScore: integer('part_a_score'),
+  partBScore: integer('part_b_score'),
+  partCScore: integer('part_c_score'),
+  partDScore: integer('part_d_score'),
+  totalScore: integer('total_score'),
+  percentage: integer('percentage'),
+  masteryStatus: varchar('mastery_status').default('needs_intervention'),
+  partAResponses: jsonb('part_a_responses').default([]),
+  partBResponses: jsonb('part_b_responses').default([]),
+  partCResponse: text('part_c_response'),
+  partDResponse: text('part_d_response'),
+  teacherNotes: text('teacher_notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const teacherNotes = pgTable('teacher_notes', {
+  id: serial('id').primaryKey(),
+  pupilId: uuid('pupil_id').notNull(),
+  teacherId: uuid('teacher_id').notNull(),
+  lessonContext: integer('lesson_context'),
+  noteText: text('note_text').notNull(),
+  priority: varchar('priority').notNull().default('medium'),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});
+
+export const weeklyAssessments = pgTable('weekly_assessments', {
+  id: serial('id').primaryKey(),
+  pupilId: uuid('pupil_id').notNull(),
+  weekStartDate: date('week_start_date').notNull(),
+  formulaConsistencyScore: integer('formula_consistency_score').default(0),
+  subjectVariationScore: integer('subject_variation_score').default(0),
+  storyDevelopmentScore: integer('story_development_score').default(0),
+  independenceScore: integer('independence_score').default(0),
+  totalScore: integer('total_score').default(0),
+  sentencesAnalyzed: integer('sentences_analyzed').default(0),
+  aiSummaryPupil: text('ai_summary_pupil'),
+  aiSummaryTeacher: text('ai_summary_teacher'),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});
