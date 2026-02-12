@@ -71,7 +71,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        router.push('/login');
+        router.push('/admin/login?redirectTo=/admin');
         return;
       }
       if (user.role !== 'admin') {

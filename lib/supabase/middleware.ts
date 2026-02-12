@@ -32,8 +32,6 @@ export async function updateSession(request: NextRequest) {
   )
 
   const { data: { user }, error } = await supabase.auth.getUser()
-  
-  console.log('[Middleware] Path:', request.nextUrl.pathname, 'User:', user?.id || 'none', 'Error:', error?.message || 'none')
 
   const publicPaths = ['/admin/login', '/login', '/signup', '/reset-password']
   const isPublicPath = publicPaths.some(path => 
@@ -50,12 +48,12 @@ export async function updateSession(request: NextRequest) {
   )
 
   if (isProtectedRoute && !user) {
-    console.log('[Middleware] No user for protected route, redirecting to login')
     const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-    const loginPath = isAdminRoute ? '/admin/login' : '/login'
-    const redirectUrl = new URL(loginPath, request.url)
-    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
+    if (!isAdminRoute) {
+      const redirectUrl = new URL('/login', request.url)
+      redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
   }
 
   return supabaseResponse
