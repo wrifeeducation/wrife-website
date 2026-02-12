@@ -1,9 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
+
+const planDetails: Record<string, { name: string; monthlyPrice: string; yearlyPrice: string }> = {
+  standard: { name: 'Standard Teacher', monthlyPrice: '£4.99/month', yearlyPrice: '£49/year' },
+  full: { name: 'Full Teacher', monthlyPrice: '£9.99/month', yearlyPrice: '£99/year' },
+};
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -16,12 +21,35 @@ export default function SignupPage() {
   const router = useRouter();
   const { signUp } = useAuth();
 
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedBilling, setSelectedBilling] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get('plan');
+    const billing = params.get('billing');
+    if (plan) setSelectedPlan(plan);
+    if (billing) setSelectedBilling(billing);
+  }, []);
+
+  const planInfo = selectedPlan ? planDetails[selectedPlan] : null;
+  const displayPrice = planInfo
+    ? (selectedBilling === 'monthly' ? planInfo.monthlyPrice : planInfo.yearlyPrice)
+    : null;
+
+  const loginUrl = selectedPlan
+    ? `/login?plan=${selectedPlan}&billing=${selectedBilling || 'yearly'}`
+    : '/login';
+
+  const redirectAfterVerify = selectedPlan
+    ? `/pricing?plan=${selectedPlan}&billing=${selectedBilling || 'yearly'}`
+    : '/dashboard';
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -34,7 +62,12 @@ export default function SignupPage() {
       return;
     }
 
-    const { error } = await signUp(email, password, displayName);
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const redirectUrl = selectedPlan
+      ? `${origin}/pricing?plan=${selectedPlan}&billing=${selectedBilling || 'yearly'}`
+      : undefined;
+
+    const { error } = await signUp(email, password, displayName, redirectUrl);
 
     if (error) {
       setError(error.message);
@@ -60,8 +93,13 @@ export default function SignupPage() {
               We&apos;ve sent you a confirmation link to <strong>{email}</strong>. 
               Please check your inbox and click the link to verify your account.
             </p>
+            {planInfo && (
+              <p className="text-sm text-[var(--wrife-text-muted)] mb-6">
+                Once verified, you&apos;ll be taken straight to checkout for the <strong>{planInfo.name}</strong> plan.
+              </p>
+            )}
             <Link
-              href="/login"
+              href={loginUrl}
               className="inline-block rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition"
             >
               Go to login
@@ -75,7 +113,6 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="h-12 w-12 rounded-2xl bg-[var(--wrife-blue-soft)] flex items-center justify-center">
@@ -87,20 +124,30 @@ export default function SignupPage() {
             </div>
           </div>
           <h1 className="text-2xl font-bold text-[var(--wrife-text-main)] mb-2">Create your account</h1>
-          <p className="text-sm text-[var(--wrife-text-muted)]">Join WriFe as a teacher</p>
+          <p className="text-sm text-[var(--wrife-text-muted)]">
+            {planInfo ? 'Sign up to get started with your plan' : 'Join WriFe as a teacher'}
+          </p>
         </div>
 
-        {/* Signup Form */}
+        {planInfo && (
+          <div className="bg-[var(--wrife-blue)]/5 border border-[var(--wrife-blue)]/20 rounded-xl p-4 mb-6 text-center">
+            <p className="text-sm text-[var(--wrife-text-muted)] mb-1">Selected plan</p>
+            <p className="text-lg font-bold text-[var(--wrife-text-main)]">{planInfo.name}</p>
+            <p className="text-sm font-semibold text-[var(--wrife-blue)]">{displayPrice}</p>
+            <p className="text-xs text-[var(--wrife-text-muted)] mt-2">
+              You&apos;ll be taken to checkout after creating your account
+            </p>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Error Message */}
             {error && (
               <div className="p-3 rounded-lg bg-[var(--wrife-coral)]/10 border border-[var(--wrife-coral)] text-sm text-[var(--wrife-danger)]">
                 {error}
               </div>
             )}
 
-            {/* Display Name */}
             <div>
               <label htmlFor="displayName" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
                 Full Name
@@ -116,7 +163,6 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
                 Email
@@ -132,7 +178,6 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
                 Password
@@ -151,7 +196,6 @@ export default function SignupPage() {
               </p>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-2">
                 Confirm Password
@@ -167,28 +211,25 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition disabled:opacity-50"
             >
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? 'Creating account...' : (planInfo ? 'Create account & continue to checkout' : 'Create account')}
             </button>
           </form>
 
-          {/* Sign In Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-[var(--wrife-text-muted)]">
               Already have an account?{' '}
-              <Link href="/login" className="text-[var(--wrife-blue)] font-semibold hover:underline">
+              <Link href={loginUrl} className="text-[var(--wrife-blue)] font-semibold hover:underline">
                 Sign in
               </Link>
             </p>
           </div>
         </div>
 
-        {/* Back to Home */}
         <div className="mt-4 text-center">
           <Link href="/" className="text-sm text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)]">
             ← Back to homepage

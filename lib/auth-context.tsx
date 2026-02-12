@@ -17,7 +17,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, displayName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, displayName: string, emailRedirectTo?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   getDashboardPath: () => string;
   refreshProfile: () => Promise<void>;
@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string, displayName: string) {
+  async function signUp(email: string, password: string, displayName: string, emailRedirectTo?: string) {
     if (!supabaseClient) return { error: new Error('Client not initialized') };
     const { data, error } = await supabaseClient.auth.signUp({
       email,
@@ -162,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           display_name: displayName,
         },
+        ...(emailRedirectTo ? { emailRedirectTo } : {}),
       },
     });
 

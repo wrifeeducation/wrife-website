@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/lib/auth-context';
@@ -112,36 +112,20 @@ const plans: Plan[] = [
   },
 ];
 
+function getPlanTier(plan: Plan): string | null {
+  if (plan.name.toLowerCase().includes('standard')) return 'standard';
+  if (plan.name.toLowerCase().includes('full')) return 'full';
+  return null;
+}
+
 export default function PricingPage() {
   const { user, loading } = useAuth();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [autoCheckoutTriggered, setAutoCheckoutTriggered] = useState(false);
 
-  const handleCheckout = async (plan: Plan) => {
-    if (plan.isFree) {
-      window.location.href = '/signup';
-      return;
-    }
-
-    if (plan.isContact) {
-      window.location.href = 'mailto:hello@wrife.co.uk?subject=School%20License%20Enquiry';
-      return;
-    }
-
-    if (!user) {
-      window.location.href = '/login?redirect=/pricing';
-      return;
-    }
-
-    const priceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
-    
-    if (!priceId) {
-      alert('This plan is not yet available for purchase. Please contact us.');
-      return;
-    }
-
-    setCheckoutLoading(plan.name);
-
+  const triggerCheckout = async (priceId: string, planName: string) => {
+    setCheckoutLoading(planName);
     try {
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -164,6 +148,59 @@ export default function PricingPage() {
     } finally {
       setCheckoutLoading(null);
     }
+  };
+
+  useEffect(() => {
+    if (autoCheckoutTriggered || !user || loading) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const planParam = params.get('plan');
+    const billingParam = params.get('billing') as 'monthly' | 'yearly' | null;
+
+    if (!planParam) return;
+
+    const matchedPlan = plans.find(p => getPlanTier(p) === planParam);
+    if (!matchedPlan) return;
+
+    const period = billingParam || 'yearly';
+    const priceId = period === 'monthly' ? matchedPlan.monthlyPriceId : matchedPlan.yearlyPriceId;
+
+    if (!priceId) return;
+
+    setAutoCheckoutTriggered(true);
+    triggerCheckout(priceId, matchedPlan.name);
+  }, [user, loading, autoCheckoutTriggered]);
+
+  const handleCheckout = async (plan: Plan) => {
+    if (plan.isFree) {
+      window.location.href = '/signup';
+      return;
+    }
+
+    if (plan.isContact) {
+      window.location.href = 'mailto:hello@wrife.co.uk?subject=School%20License%20Enquiry';
+      return;
+    }
+
+    if (!user) {
+      const tier = getPlanTier(plan);
+      if (tier) {
+        const params = new URLSearchParams({ plan: tier, billing: billingPeriod });
+        window.location.href = `/signup?${params.toString()}`;
+      } else {
+        window.location.href = '/signup';
+      }
+      return;
+    }
+
+    const priceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
+    
+    if (!priceId) {
+      alert('This plan is not yet available for purchase. Please contact us.');
+      return;
+    }
+
+    await triggerCheckout(priceId, plan.name);
   };
 
   const handleManageSubscription = async () => {

@@ -16,15 +16,23 @@ export default function LoginPage() {
   const { user, loading: authLoading, signIn, signOut, getDashboardPath } = useAuth();
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const redirectTo = params?.get('redirectTo');
+  const planParam = params?.get('plan');
+  const billingParam = params?.get('billing');
+
+  const getRedirectUrl = () => {
+    if (planParam) {
+      return `/pricing?plan=${planParam}&billing=${billingParam || 'yearly'}`;
+    }
+    return redirectTo || getDashboardPath();
+  };
 
   useEffect(() => {
-    // Wait for auth to finish loading before redirecting
     if (!authLoading && user) {
-      const dashboardPath = getDashboardPath();
-      console.log('Login page: User authenticated, redirecting to:', redirectTo || dashboardPath);
-      window.location.href = redirectTo || dashboardPath;
+      const target = getRedirectUrl();
+      console.log('Login page: User authenticated, redirecting to:', target);
+      window.location.href = target;
     }
-  }, [user, authLoading, redirectTo, getDashboardPath]);
+  }, [user, authLoading, redirectTo, planParam, billingParam, getDashboardPath]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,7 +79,7 @@ export default function LoginPage() {
         return;
       }
       
-      const targetPath = redirectTo || (profile.role === 'teacher' || profile.role === 'school_admin' ? '/dashboard' : '/pupil/dashboard');
+      const targetPath = getRedirectUrl();
       console.log('[Login] Redirecting to:', targetPath);
       window.location.href = targetPath;
     } else {
@@ -152,7 +160,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-[var(--wrife-text-muted)]">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-[var(--wrife-blue)] font-semibold hover:underline">
+              <Link href={planParam ? `/signup?plan=${planParam}&billing=${billingParam || 'yearly'}` : '/signup'} className="text-[var(--wrife-blue)] font-semibold hover:underline">
                 Sign up
               </Link>
             </p>
