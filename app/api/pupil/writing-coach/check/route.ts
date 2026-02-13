@@ -178,11 +178,11 @@ Return ONLY valid JSON.`;
       ]
     );
 
-    const session = saveResult.rows[0];
+    const savedSession = saveResult.rows[0];
 
     return NextResponse.json({
       success: true,
-      sessionId: session.id,
+      sessionId: savedSession.id,
       analysis: {
         wordClassAnalysis: analysis.wordClassAnalysis,
         formulaAdherence: analysis.formulaAdherence,
