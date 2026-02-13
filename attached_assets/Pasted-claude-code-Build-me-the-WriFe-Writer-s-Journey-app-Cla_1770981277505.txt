@@ -1,0 +1,456 @@
+claude code "Build me the WriFe Writer's Journey app"
+```
+
+**Claude Code then:**
+1. Chooses the best technology stack
+2. Sets up the entire database
+3. Writes all the code
+4. Handles deployment
+5. Configures security
+6. Sets up hosting
+7. Connects AI features
+8. Makes it work on mobile/tablet/desktop
+
+**You don't write ANY code. Claude Code does everything.**
+
+### Your Technical Requirements: Almost Zero
+
+**What you need to do:**
+1. Install Claude Code on your computer (5-minute one-time setup)
+2. Type commands in English describing what you want
+3. Review what Claude builds
+4. Test the app
+5. Request changes in plain English
+
+**What you DON'T need:**
+- Coding knowledge
+- Understanding of databases
+- Server management skills
+- Technical debugging abilities
+
+**Claude Code is like having a senior developer working for you 24/7.**
+
+---
+
+## Cost Comparison: Claude Code vs My Suggestions
+
+### Claude Code Option:
+- **Claude Code subscription:** £18/month (Professional plan)
+- **Hosting:** £5-10/month (Claude Code can set up cheapest option)
+- **Claude API (for AI features):** £15-25/month
+- **Total: £40-55/month**
+
+### My Bubble.io Suggestion:
+- **Bubble subscription:** £115/month
+- **Claude API:** £20/month
+- **Initial build by agency:** £3,000-6,000
+- **Total Year 1: £6,620**
+- **Total ongoing: £135/month**
+
+**Claude Code saves you £80-95/month (60-70% cheaper!)**
+
+---
+
+## Revised Complete Prompt for Claude Code
+
+Here's the comprehensive prompt to give Claude Code:
+
+---
+
+## CLAUDE CODE: Build WriFe Writer's Journey App
+
+### Project Overview
+
+Build a Progressive Web App (PWA) for primary school pupils (ages 6-10) that combines two educational components into one unified system:
+
+1. **Daily Practice Activities** - Interactive grammar practice with W1-W6 scaffolding
+2. **Progressive Writing Practice (PWP)** - A cumulative writing project that grows from Lesson 10-67
+
+### Technical Requirements for Claude Code
+
+**Please set up the complete application with:**
+
+1. **Technology Stack** (choose the most cost-effective, easiest to maintain)
+2. **Database** (structured for personalized learning and progress tracking)
+3. **Authentication** (simple name-based login for pupils, secure for teachers)
+4. **Responsive Design** (works on tablets, phones, smartboards, laptops)
+5. **AI Integration** (Claude API for sentence analysis and feedback)
+6. **Hosting** (cheapest reliable option under £10/month)
+7. **PWA Features** (installable, works offline, fast loading)
+
+### Database Requirements
+
+**Essential Data to Track:**
+
+**Pupils Table:**
+- pupil_id (primary key)
+- name (string)
+- year_group (2, 3, 4, or 5)
+- current_lesson (1-67)
+- current_formula (string)
+- adaptation_level ('support', 'core', or 'challenge')
+- personal_word_bank (JSON: {people: [], places: [], things: []})
+- story_type ('happy', 'sad', or 'funny')
+- daily_login_streak (integer)
+- created_at (timestamp)
+- last_active (timestamp)
+
+**Activity_Progress Table:**
+- progress_id (primary key)
+- pupil_id (foreign key)
+- lesson_number (1-67)
+- activity_number (1-20)
+- w_level ('W1', 'W2', 'W3', 'W4', 'W5', or 'W6')
+- score (integer)
+- total_possible (integer)
+- percentage (calculated: score/total_possible * 100)
+- mastery_achieved (boolean: percentage >= 80)
+- attempts (integer, starts at 1)
+- time_spent_seconds (integer)
+- completed_at (timestamp)
+
+**PWP_Sentences Table:**
+- sentence_id (primary key)
+- pupil_id (foreign key)
+- lesson_number (10-67)
+- date_written (timestamp)
+- formula_used (string, e.g., "Subject + Verb + Object")
+- subject_chosen (string, e.g., "My dog")
+- sentence_text (string)
+- word_classes (JSON: [{word: "My", class: "determiner", position: 0}, ...])
+- story_part ('beginning', 'middle', or 'end')
+- ai_analysis_score (0-100, calculated by AI)
+- formula_correct (boolean)
+- teacher_feedback (text, nullable)
+- revision_count (integer, default 0)
+
+**PWP_Revisions Table:**
+- revision_id (primary key)
+- sentence_id (foreign key)
+- original_text (string)
+- revised_text (string)
+- revision_reason (string, e.g., "Added adjective")
+- revised_at (timestamp)
+
+**Assessments Table:**
+- assessment_id (primary key)
+- pupil_id (foreign key)
+- lesson_number (1-67)
+- assessment_date (timestamp)
+- part_a_score (0-10, recognition)
+- part_b_score (0-10, application)
+- part_c_score (0-5, creation)
+- part_d_score (0-5, explanation)
+- total_score (calculated, out of 30)
+- percentage (calculated)
+- mastery_status ('mastered', 'nearly_there', or 'needs_intervention')
+- teacher_notes (text, nullable)
+
+**Teacher_Notes Table:**
+- note_id (primary key)
+- pupil_id (foreign key)
+- teacher_id (foreign key)
+- lesson_context (integer, nullable)
+- note_text (text)
+- created_at (timestamp)
+- priority ('low', 'medium', or 'high')
+
+**Teachers Table:**
+- teacher_id (primary key)
+- name (string)
+- email (string, unique)
+- password_hash (string)
+- school_name (string)
+- created_at (timestamp)
+
+### Marking Rubric Logic (Built Into Database)
+
+**Automated Scoring for W1-W5 Activities:**
+```
+Rules stored in database:
+- Multiple choice: 1 point per correct answer
+- Drag-drop: 1 point per correct placement
+- Fill-in-blank: 1 point per correct word (exact match or synonym)
+- Sorting: 1 point per correctly sorted item
+- Matching: 1 point per correct pair
+
+Mastery threshold: 80% or higher
+Status indicators:
+- Green (✓): 80-100%
+- Yellow (⚠): 70-79%
+- Red (✗): 0-69%
+```
+
+**AI Scoring for W6 Creation Activities:**
+```
+Claude API analyzes pupil's sentence and returns JSON:
+{
+  "formula_adherence": 0-3,
+  "grammar_accuracy": 0-2,
+  "meaning_clarity": 0-2,
+  "personal_connection": 0-1,
+  "total_score": 0-8,
+  "percentage": calculated,
+  "mastery": boolean (>= 75%),
+  "feedback": "Well done! Your sentence follows the formula perfectly...",
+  "suggestions": ["Try adding an adjective before 'dog'", "Consider using a more specific place"],
+  "word_class_analysis": [
+    {"word": "My", "class": "determiner", "correct": true},
+    {"word": "dog", "class": "noun", "correct": true},
+    {"word": "runs", "class": "verb", "correct": true}
+  ]
+}
+```
+
+**PWP Weekly Assessment:**
+```
+Every Monday, system analyzes pupil's 5 sentences from previous week:
+
+1. Formula Consistency Check (0-25 points):
+   - Count: How many sentences used formula correctly?
+   - Award: 5 points per correct sentence
+
+2. Subject Variation Check (0-25 points):
+   - Count unique subjects used
+   - Penalty: -5 points for each repeated subject beyond 2nd use
+   - Award: 25 points if 5 different subjects
+
+3. Story Development Check (0-25 points):
+   - Count story parts: beginning, middle, end
+   - Ideal distribution: 2-2-1 or 2-1-2
+   - Award based on balance
+
+4. Independence Check (0-25 points):
+   - AI hint requests: fewer = higher score
+   - Time per sentence: faster = more confident
+   - Revision count: some is good, too many may indicate struggle
+
+Weekly Score: 0-100 points
+Green = 80-100 (Excellent)
+Yellow = 60-79 (On track)
+Red = 0-59 (Needs support)
+```
+
+**Formal Assessment Rubric (4-Part):**
+```
+Stored in database as assessment_rubric table:
+
+Part A (Recognition - 10 points):
+- 10 multiple choice questions
+- 1 point each
+- Auto-scored by system
+- Mastery: 8/10 (80%)
+
+Part B (Application - 10 points):
+- 5 sentences to analyze
+- Each sentence scored 0-2 by AI:
+  * 2 = Formula perfect, grammar perfect
+  * 1 = Formula mostly right OR grammar mostly right
+  * 0 = Neither correct
+- Mastery: 8/10 (80%)
+
+Part C (Creation - 5 points):
+- Write 1 original sentence
+- AI scores on 5-point rubric:
+  * Formula correct (2 points)
+  * Grammar accurate (1 point)
+  * Personal/creative (1 point)
+  * Complete sentence (1 point)
+- Mastery: 4/5 (80%)
+
+Part D (Explanation - 5 points):
+- Pupil explains concept (recorded or written)
+- AI or teacher scores:
+  * Understands concept (2 points)
+  * Can teach it (2 points)
+  * Clear communication (1 point)
+- Mastery: 4/5 (80%)
+
+Overall Mastery:
+- 3+ parts mastered = MASTERY (advance to next lesson)
+- 2 parts mastered = NEARLY THERE (continue practice 1 week)
+- 0-1 parts mastered = INTERVENTION (5-day support protocol)
+```
+
+### User Interface Requirements
+
+**Pupil Home Screen:**
+- Large welcome with pupil's name
+- Today's date and lesson number
+- Two big buttons:
+  * "Practice Skills" (Daily Activities)
+  * "My Growing Story" (PWP)
+- Progress dashboard showing:
+  * Daily streak counter with flame icon
+  * Current lesson number with progress bar
+  * Story word count (from Lesson 10 onwards)
+  * Recent badges/achievements
+- Color scheme: WriFe green (#27AE60) as primary
+- Font: Child-friendly, highly legible (Comic Sans MS or similar)
+- Large touch targets (min 44x44px for young fingers)
+
+**Daily Activities Screen:**
+- Progress bar: "Activity 3 of 20"
+- Activity type clearly labeled
+- Instructions in large, simple text
+- Interactive elements (drag-drop, click, type)
+- Immediate feedback after each answer:
+  * Green ✓ for correct with encouraging message
+  * Red ✗ for incorrect with hint, not answer
+- "Need Help?" button (gives hint via AI)
+- Score display: "15/18 correct (83%) ✓"
+- Next/Previous navigation
+- "Save and Exit" option
+
+**My Growing Story Screen:**
+- Formula reference card at top (collapsible):
+  * Shows current formula with color-coded word classes
+  * Example sentence
+  * "Need help? Click for hints"
+- Writing area:
+  * Large text input box
+  * Formula scaffolding boxes below (heavy L10-12, light L13+)
+  * Word class labels (Subject, Verb, Object, etc.)
+- "Choose Your Subject Today" section:
+  * Dropdown with pupil's personal word bank
+  * "Suggest a new subject" button (AI-powered)
+  * Subject variation tracker: "You've used 'dog' twice this week"
+- Story part selector: Beginning / Middle / End (radio buttons)
+- "Check My Sentence" button:
+  * AI analyzes before submission
+  * Shows word class highlighting
+  * Provides feedback
+  * "Looks good! Submit" or "Try again with hints"
+- "View My Story So Far" button → opens history modal
+
+**Story History Viewer:**
+- Timeline visualization with dates
+- Each sentence shown with:
+  * Date written
+  * Formula used
+  * Story part (B/M/E indicator)
+  * AI score
+- Click any sentence to see details
+- "My Favorite Sentences" option (star to mark)
+- "Export as PDF" button
+- Growth visualization: word count chart over time
+
+**Teacher Dashboard:**
+- **Class Overview Tab:**
+  * List of all pupils with quick stats
+  * Color-coded status: Green (on track), Yellow (needs watch), Red (intervention)
+  * Filters: All / On Track / Needs Support / Excelling
+  * Sort by: Name, Progress, Last Active, Mastery Rate
+  * Quick actions per pupil: View Details, Add Note, Contact Parent
+
+- **Individual Pupil Tab:**
+  * Header: Pupil name, year, current lesson, photo (optional)
+  * Activity completion chart (last 4 weeks)
+  * Mastery percentages by W-level (bar chart)
+  * PWP story viewer (read all sentences)
+  * Assessment history with scores
+  * AI-generated insights: "Emma struggles with verb tenses"
+  * Intervention recommendations
+  * Communication log (notes, parent messages)
+  * "Print Progress Report" button
+
+- **Lesson Management Tab:**
+  * View all 67 lessons
+  * See which pupils are on each lesson
+  * Download/preview lesson materials
+  * Activity library for each lesson
+  * Formula reference sheets
+
+- **Reports Tab:**
+  * Class-wide statistics
+  * Export data (CSV, PDF)
+  * Parent-friendly reports
+  * Ofsted-ready progress tracking
+
+### AI Integration Specifications
+
+**Claude API Use Cases:**
+
+**1. Sentence Analysis (PWP Mode):**
+```
+API Call when pupil clicks "Check My Sentence":
+
+Prompt to Claude:
+"Analyze this sentence written by a Year [X] pupil for Lesson [X]:
+
+Sentence: '[pupil's sentence]'
+Required Formula: [formula from database]
+Pupil's Word Bank: [from personal_word_bank]
+
+Please respond in JSON format with:
+1. Formula adherence score (0-3)
+2. Identification of each word's class
+3. Grammar accuracy score (0-2)
+4. Meaning clarity score (0-2)
+5. Personal connection score (0-1, based on word bank)
+6. Encouraging feedback (2 sentences max)
+7. One specific suggestion for improvement (if needed)
+8. Overall mastery (boolean)"
+
+Response stored in database for tracking.
+```
+
+**2. Subject Suggestion (PWP Mode):**
+```
+API Call when pupil clicks "Suggest a new subject":
+
+Prompt to Claude:
+"This Year [X] pupil is on Lesson [X], writing about [story_type].
+
+Their personal word bank:
+- People: [list]
+- Places: [list]
+- Things: [list]
+
+Previously used subjects this week: [list from database]
+
+Suggest 3 new subjects they could write about today that:
+1. Come from their word bank or are similar
+2. Haven't been used this week
+3. Fit their story type
+4. Are age-appropriate
+
+Return JSON: {subjects: ['subject1', 'subject2', 'subject3']}"
+```
+
+**3. Activity Hint System (Daily Activities):**
+```
+API Call when pupil clicks "Need Help?":
+
+Prompt to Claude:
+"A Year [X] pupil is stuck on this activity:
+
+Question: [activity question]
+Type: [multiple choice / drag-drop / etc.]
+Options: [if applicable]
+
+The pupil has attempted [X] times.
+
+Provide a helpful hint (not the answer) that:
+1. Guides their thinking
+2. Uses simple language
+3. Is encouraging
+4. Is 1-2 sentences only
+
+Return: {hint: 'Try thinking about...'}"
+```
+
+**4. Weekly Progress Summary:**
+```
+Automated API Call every Monday:
+
+Prompt to Claude:
+"Summarize this pupil's progress last week:
+
+Pupil: [name], Year [X], Lesson [X]
+Activities completed: [count]/20
+Average score: [X]%
+PWP sentences written: [count]
+Mastery status: [X]/4 parts
+
+Generate a 3-sentence encouraging summary for the pupil and a 2-sentence note for the teacher about any concerns."
