@@ -33,6 +33,12 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Role-Based Access:** The `profiles` table implements role-based access control (admin, school_admin, teacher, pupil).
 - **AI Assessment:** Dedicated API endpoints (`/api/assess`, `/api/pwp-assess`, `/api/dwp/assess`) handle AI-powered writing assessments.
 - **Curriculum Management:** Supports managing lessons, PWP (Progressive Writing Practice), and DWP (Differentiated Writing Programme) levels, including seeding 40 DWP levels with rubrics.
+- **Pupil Session Validation:** All pupil API endpoints use `lib/pupil-auth.ts` `validatePupilSession()` to verify the pupil has an active, non-expired session in `pupil_sessions` before allowing data access.
+- **AI Writing Coach:** Contextual AI assessment with word-class analysis, formula-based sentence checking, adaptive hints, and check-before-submit workflow. APIs at `/api/pupil/writing-coach/check`, `/submit`, `/hint`.
+- **Personal Word Banks:** Pupils manage people/places/things word collections with AI suggestions. APIs at `/api/pupil/word-bank` and `/api/pupil/word-bank/suggest`.
+- **Gamification:** Login streaks (tracked in `pupil_streaks` with `last_login_date`), mastery badges (First Sentence, Five Star Writer, Streak Master 7, Word Explorer, Story Starter), and comprehensive stats via `/api/pupil/stats`.
+- **Weekly AI Reports:** Auto-generated per-pupil weekly summaries for teachers with strengths/weaknesses and intervention recommendations. API at `/api/teacher/weekly-reports`.
+- **AI Intervention Alerts:** Auto-flags struggling pupils for teacher attention with severity levels. API at `/api/teacher/intervention-alerts`.
 - **Pupil Workflow:** Includes distinct login, dashboard, assignment submission, and practice (PWP/DWP) pages.
 - **Freemium Membership:** Supports Free, Standard, Full, and School tiers. Tier resolution provides users with the highest applicable tier (personal or school).
 - **Subscription Management:** 

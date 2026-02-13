@@ -81,6 +81,49 @@ export async function POST(request: NextRequest) {
       [pupil.id, pupil.class_id, JSON.stringify({ success: true }), request.headers.get('x-forwarded-for') || 'unknown']
     );
 
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const streakResult = await pool.query(
+        'SELECT * FROM pupil_streaks WHERE pupil_id = $1',
+        [pupil.id]
+      );
+
+      if (streakResult.rows.length === 0) {
+        await pool.query(
+          `INSERT INTO pupil_streaks (pupil_id, current_streak, longest_streak, total_logins, last_login_date)
+           VALUES ($1, 1, 1, 1, $2)`,
+          [pupil.id, today]
+        );
+      } else {
+        const streak = streakResult.rows[0];
+        const lastLoginDate = streak.last_login_date ? new Date(streak.last_login_date).toISOString().split('T')[0] : null;
+
+        if (lastLoginDate !== today) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+          let newStreak: number;
+          if (lastLoginDate === yesterdayStr) {
+            newStreak = (streak.current_streak || 0) + 1;
+          } else {
+            newStreak = 1;
+          }
+
+          const newLongest = Math.max(newStreak, streak.longest_streak || 0);
+
+          await pool.query(
+            `UPDATE pupil_streaks 
+             SET current_streak = $1, longest_streak = $2, total_logins = total_logins + 1, last_login_date = $3, updated_at = NOW()
+             WHERE pupil_id = $4`,
+            [newStreak, newLongest, today, pupil.id]
+          );
+        }
+      }
+    } catch (streakError) {
+      console.error('Streak tracking error (non-fatal):', streakError);
+    }
+
     const response = NextResponse.json({
       success: true,
       pupil: {
