@@ -66,8 +66,11 @@ export default function AdminUsersPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
-  const initialFilter = (searchParams.get('filter') as 'all' | 'unassigned' | 'admin' | 'school_admin' | 'teacher' | 'pupil') || 'all';
-  const [filter, setFilter] = useState<'all' | 'unassigned' | 'admin' | 'school_admin' | 'teacher' | 'pupil'>(initialFilter);
+  const validFilters = ['all', 'unassigned', 'admin', 'school_admin', 'teacher', 'pupil'] as const;
+  type FilterType = typeof validFilters[number];
+  const rawFilter = searchParams.get('filter') ?? 'all';
+  const initialFilter: FilterType = (validFilters as readonly string[]).includes(rawFilter) ? rawFilter as FilterType : 'all';
+  const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [searchTerm, setSearchTerm] = useState('');
   const [saving, setSaving] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);

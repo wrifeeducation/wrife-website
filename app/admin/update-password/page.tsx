@@ -16,17 +16,17 @@ export default function AdminUpdatePasswordPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const handlePasswordRecovery = async () => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setHasValidSession(true);
-          setSessionChecked(true);
-        } else if (event === 'SIGNED_IN' && session) {
-          setHasValidSession(true);
-          setSessionChecked(true);
-        }
-      });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setHasValidSession(true);
+        setSessionChecked(true);
+      } else if (event === 'SIGNED_IN' && session) {
+        setHasValidSession(true);
+        setSessionChecked(true);
+      }
+    });
 
+    const handleRecoveryTokens = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
@@ -57,13 +57,13 @@ export default function AdminUpdatePasswordPage() {
         setHasValidSession(true);
       }
       setSessionChecked(true);
-
-      return () => {
-        subscription.unsubscribe();
-      };
     };
 
-    handlePasswordRecovery();
+    handleRecoveryTokens();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
