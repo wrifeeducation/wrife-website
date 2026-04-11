@@ -62,11 +62,17 @@ function SchoolCardSkeleton() {
   );
 }
 
+interface AdminUser {
+  email: string;
+  display_name: string;
+}
+
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -79,6 +85,7 @@ export default function AdminDashboard() {
         return;
       }
       fetchSchools();
+      fetchAdminUsers();
     }
   }, [user, authLoading, router]);
 
@@ -96,6 +103,19 @@ export default function AdminDashboard() {
       console.error('Error fetching schools:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchAdminUsers() {
+    try {
+      const response = await adminFetch('/api/admin/users');
+      const data = await response.json();
+      if (!data.error) {
+        const admins = (data.profiles || []).filter((p: { role: string; email: string; display_name: string }) => p.role === 'admin');
+        setAdminUsers(admins);
+      }
+    } catch (err) {
+      console.error('Error fetching admin users:', err);
     }
   }
 
@@ -202,23 +222,43 @@ export default function AdminDashboard() {
           <AnalyticsSection />
 
           <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-lg flex-shrink-0">
-                  🛡️
+            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-lg flex-shrink-0">
+                    🛡️
+                  </div>
+                  <div>
+                    <p className="font-bold text-[var(--wrife-text-main)] text-sm">Admin Accounts</p>
+                    <p className="text-xs text-[var(--wrife-text-muted)]">
+                      {adminUsers.length > 0
+                        ? `${adminUsers.length} administrator${adminUsers.length !== 1 ? 's' : ''}`
+                        : 'Grant or revoke administrator access'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-[var(--wrife-text-main)] text-sm">Admin Accounts</p>
-                  <p className="text-xs text-[var(--wrife-text-muted)]">Grant or revoke administrator access</p>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
                 <Link href="/admin/users?filter=admin">
-                  <button className="rounded-full border border-[var(--wrife-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition whitespace-nowrap">
+                  <button className="rounded-full border border-[var(--wrife-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition whitespace-nowrap flex-shrink-0">
                     Manage Admins
                   </button>
                 </Link>
               </div>
+              {adminUsers.length > 0 && (
+                <ul className="space-y-1">
+                  {adminUsers.slice(0, 3).map((a) => (
+                    <li key={a.email} className="flex items-center gap-2 text-xs text-[var(--wrife-text-muted)]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                      <span className="truncate">{a.display_name || a.email}</span>
+                      <span className="text-slate-400 truncate hidden sm:inline">({a.email})</span>
+                    </li>
+                  ))}
+                  {adminUsers.length > 3 && (
+                    <li className="text-xs text-[var(--wrife-text-muted)] pl-3.5">
+                      +{adminUsers.length - 3} more
+                    </li>
+                  )}
+                </ul>
+              )}
             </div>
 
             <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5 flex items-center justify-between">
