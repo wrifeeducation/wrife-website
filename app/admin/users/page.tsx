@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { adminFetch } from '@/lib/admin-fetch';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
@@ -62,10 +62,12 @@ interface UserDetails {
 export default function AdminUsersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'unassigned' | 'admin' | 'school_admin' | 'teacher' | 'pupil'>('all');
+  const initialFilter = (searchParams.get('filter') as 'all' | 'unassigned' | 'admin' | 'school_admin' | 'teacher' | 'pupil') || 'all';
+  const [filter, setFilter] = useState<'all' | 'unassigned' | 'admin' | 'school_admin' | 'teacher' | 'pupil'>(initialFilter);
   const [searchTerm, setSearchTerm] = useState('');
   const [saving, setSaving] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);

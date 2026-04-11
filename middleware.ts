@@ -20,7 +20,7 @@ export async function middleware(req: NextRequest) {
   }
   
   // Allow public routes to pass through without auth checks
-  const publicPaths = ['/update-password', '/reset-password', '/admin/login', '/admin/setup', '/api/admin/setup'];
+  const publicPaths = ['/update-password', '/reset-password', '/admin/login', '/admin/reset-password', '/admin/update-password', '/admin/setup', '/api/admin/setup'];
   if (publicPaths.some(path => pathname.startsWith(path))) {
     return NextResponse.next();
   }

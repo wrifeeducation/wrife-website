@@ -186,6 +186,11 @@ export default function AdminDashboard() {
                   Manage Users
                 </button>
               </Link>
+              <Link href="/admin/account" className="contents">
+                <button className="rounded-full border border-slate-400 px-3 py-2 lg:px-4 lg:py-3 text-xs lg:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                  🔑 My Account
+                </button>
+              </Link>
               <Link href="/admin/schools/new" className="col-span-2 sm:col-span-1 contents">
                 <button className="rounded-full bg-[var(--wrife-blue)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white shadow-soft hover:opacity-90 transition whitespace-nowrap">
                   + New School
@@ -195,6 +200,44 @@ export default function AdminDashboard() {
           </div>
 
           <AnalyticsSection />
+
+          <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-lg flex-shrink-0">
+                  🛡️
+                </div>
+                <div>
+                  <p className="font-bold text-[var(--wrife-text-main)] text-sm">Admin Accounts</p>
+                  <p className="text-xs text-[var(--wrife-text-muted)]">Grant or revoke administrator access</p>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Link href="/admin/users?filter=admin">
+                  <button className="rounded-full border border-[var(--wrife-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition whitespace-nowrap">
+                    Manage Admins
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-lg flex-shrink-0">
+                  🔑
+                </div>
+                <div>
+                  <p className="font-bold text-[var(--wrife-text-main)] text-sm">My Account</p>
+                  <p className="text-xs text-[var(--wrife-text-muted)]">Change your admin password</p>
+                </div>
+              </div>
+              <Link href="/admin/account">
+                <button className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition whitespace-nowrap flex-shrink-0">
+                  Security settings
+                </button>
+              </Link>
+            </div>
+          </div>
 
           {schools.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-12 text-center">

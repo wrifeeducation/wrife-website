@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
             </div>
 
             <div className="text-right">
-              <Link href="/reset-password" className="text-sm text-slate-400 hover:text-[var(--wrife-blue)] transition">
+              <Link href="/admin/reset-password" className="text-sm font-medium text-slate-300 hover:text-[var(--wrife-blue)] transition">
                 Forgot password?
               </Link>
             </div>
