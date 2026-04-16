@@ -77,6 +77,9 @@ export default function AdminUsersPage() {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  const [sendingReset, setSendingReset] = useState<string | null>(null);
+  const [resetFeedback, setResetFeedback] = useState<Record<string, { ok: boolean; msg: string }>>({});
+
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
   const [createAdminForm, setCreateAdminForm] = useState({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin' });
   const [createAdminLoading, setCreateAdminLoading] = useState(false);
@@ -206,6 +209,29 @@ export default function AdminUsersPage() {
       console.error('Error updating user tier:', err);
     } finally {
       setSaving(null);
+    }
+  }
+
+  async function handleSendReset(userId: string) {
+    setSendingReset(userId);
+    setResetFeedback(prev => ({ ...prev, [userId]: { ok: false, msg: '' } }));
+    try {
+      const response = await adminFetch('/api/admin/send-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setResetFeedback(prev => ({ ...prev, [userId]: { ok: false, msg: data.error || 'Failed to send' } }));
+      } else {
+        setResetFeedback(prev => ({ ...prev, [userId]: { ok: true, msg: 'Reset email sent!' } }));
+        setTimeout(() => setResetFeedback(prev => { const next = { ...prev }; delete next[userId]; return next; }), 5000);
+      }
+    } catch {
+      setResetFeedback(prev => ({ ...prev, [userId]: { ok: false, msg: 'Network error' } }));
+    } finally {
+      setSendingReset(null);
     }
   }
 
@@ -626,6 +652,23 @@ export default function AdminUsersPage() {
                         ))}
                       </select>
                     </div>
+
+                    {profile.email && profile.role !== 'pupil' && (
+                      <div onClick={e => e.stopPropagation()} className="flex flex-col items-start gap-1">
+                        <button
+                          onClick={() => handleSendReset(profile.id)}
+                          disabled={sendingReset === profile.id}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {sendingReset === profile.id ? 'Sending…' : '✉ Reset Email'}
+                        </button>
+                        {resetFeedback[profile.id]?.msg && (
+                          <span className={`text-xs ${resetFeedback[profile.id].ok ? 'text-green-600' : 'text-red-500'}`}>
+                            {resetFeedback[profile.id].msg}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     <div className="text-sm text-[var(--wrife-text-muted)] min-w-[100px]">
                       {new Date(profile.created_at).toLocaleDateString()}
