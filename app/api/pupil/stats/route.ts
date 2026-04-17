@@ -13,7 +13,11 @@ export async function GET(request: NextRequest) {
 
     const session = await validatePupilSession(pupilId);
     if (!session.valid) {
-      return NextResponse.json({ error: 'Invalid or expired pupil session' }, { status: 401 });
+      const pool = getPool();
+      const check = await pool.query('SELECT id FROM pupils WHERE id = $1 LIMIT 1', [pupilId]);
+      if (check.rows.length === 0) {
+        return NextResponse.json({ error: 'Invalid or expired pupil session' }, { status: 401 });
+      }
     }
 
     const pool = getPool();
