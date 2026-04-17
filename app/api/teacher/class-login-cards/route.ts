@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { getPool } from '@/lib/db';
 
 function getSupabaseAdmin() {
   return createClient(
@@ -37,14 +38,12 @@ async function authenticateTeacher(): Promise<AuthResult | { error: string; stat
     return { error: 'Unauthorized - please log in', status: 401 };
   }
 
-  // Try to find profile by user ID first
   let { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
     .select('id, role, school_id')
     .eq('id', user.id)
     .single();
 
-  // If not found by ID, try by email (handles cross-environment accounts)
   if (profileError?.code === 'PGRST116' && user.email) {
     const emailResult = await supabaseAdmin
       .from('profiles')
@@ -109,24 +108,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const { data: members, error: membersError } = await supabaseAdmin
-      .from('class_members')
-      .select('pupil_id, pupils(id, first_name, last_name, year_group)')
-      .eq('class_id', classId);
+    const pool = getPool();
+    const result = await pool.query(
+      `SELECT id, first_name, last_name, username, pin_display, year_group, is_active
+       FROM pupils
+       WHERE class_id = $1 AND is_active = TRUE
+       ORDER BY first_name ASC, last_name ASC`,
+      [classId]
+    );
 
-    if (membersError) {
-      console.error('Error fetching class members:', membersError);
-      return NextResponse.json({ error: 'Failed to fetch pupils' }, { status: 500 });
-    }
-
-    const pupils = (members || [])
-      .map((m: any) => m.pupils)
-      .filter(Boolean)
-      .sort((a: any, b: any) => {
-        const nameA = `${a.first_name} ${a.last_name || ''}`.toLowerCase();
-        const nameB = `${b.first_name} ${b.last_name || ''}`.toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
+    const pupils = result.rows.sort((a: any, b: any) => {
+      const nameA = `${a.first_name} ${a.last_name || ''}`.toLowerCase();
+      const nameB = `${b.first_name} ${b.last_name || ''}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
 
     return NextResponse.json({
       classData,

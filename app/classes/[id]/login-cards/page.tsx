@@ -17,6 +17,8 @@ interface Pupil {
   id: string;
   first_name: string;
   last_name: string | null;
+  username: string | null;
+  pin_display: string | null;
   year_group: number;
 }
 
@@ -162,23 +164,31 @@ export default function LoginCardsPage({ params }: { params: Promise<{ id: strin
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-3 border border-gray-200 mb-3">
-                  <p className="text-xs text-gray-500 mb-1">Your Class Code:</p>
-                  <p className="text-2xl font-mono font-bold text-blue-600 tracking-wider">
-                    {classData.class_code}
-                  </p>
+                <div className="grid grid-cols-3 gap-1.5 mb-3">
+                  <div className="bg-white rounded-lg p-2 border border-gray-200">
+                    <p className="text-[10px] text-gray-500 mb-0.5">Class Code</p>
+                    <p className="text-base font-mono font-bold text-blue-600 tracking-wide leading-tight">
+                      {classData.class_code}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-lg p-2 border border-gray-200">
+                    <p className="text-[10px] text-gray-500 mb-0.5">Username</p>
+                    <p className="text-base font-mono font-bold text-gray-800 leading-tight break-all">
+                      {pupil.username || '—'}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-lg p-2 border border-gray-200">
+                    <p className="text-[10px] text-gray-500 mb-0.5">PIN</p>
+                    <p className="text-xl font-mono font-bold text-gray-800 tracking-widest leading-tight">
+                      {pupil.pin_display || '••••'}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-1">Go to:</p>
-                  <p className="text-sm font-semibold text-blue-600">{loginUrl}</p>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <ol className="text-xs text-gray-600 space-y-1">
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <ol className="text-[10px] text-gray-600 space-y-0.5">
                     <li>1. Go to <span className="font-semibold">{loginUrl}</span></li>
-                    <li>2. Enter class code: <span className="font-mono font-bold">{classData.class_code}</span></li>
-                    <li>3. Find and click your name</li>
+                    <li>2. Enter class code, username &amp; PIN above</li>
                   </ol>
                 </div>
               </div>

@@ -24,7 +24,10 @@ interface Pupil {
   id: string;
   first_name: string;
   last_name: string | null;
+  username: string | null;
+  pin_display: string | null;
   year_group: number;
+  is_active: boolean;
 }
 
 interface Assignment {
@@ -207,17 +210,17 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
 
   async function fetchPupils() {
     try {
-      const { data: members, error } = await supabase
-        .from('class_members')
-        .select('pupil_id, pupils(*)')
-        .eq('class_id', resolvedParams.id);
-
-      if (error) throw error;
-
-      const pupilsData = members?.map((m: any) => m.pupils).filter(Boolean) || [];
-      setPupils(pupilsData);
+      const response = await fetch(`/api/classes/${resolvedParams.id}/pupils`);
+      const data = await response.json();
+      if (!response.ok) {
+        console.error('Error fetching pupils:', data.error);
+        setPupils([]);
+        return;
+      }
+      setPupils(data.pupils || []);
     } catch (err) {
       console.error('Error fetching pupils:', err);
+      setPupils([]);
     }
   }
 
@@ -568,16 +571,16 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   async function handleRemovePupil(pupilId: string) {
-    if (!confirm('Are you sure you want to remove this pupil from the class?')) return;
+    if (!confirm('Are you sure you want to remove this pupil from the class? This cannot be undone.')) return;
 
     try {
-      const { error } = await supabase
-        .from('class_members')
-        .delete()
-        .eq('class_id', resolvedParams.id)
-        .eq('pupil_id', pupilId);
-
-      if (error) throw error;
+      const response = await fetch(`/api/classes/${resolvedParams.id}/pupils/${pupilId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to remove pupil');
+      }
       fetchPupils();
       fetchSubmissions();
     } catch (err) {
@@ -783,9 +786,11 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                         <p className="text-sm font-semibold text-[var(--wrife-text-main)]">
                           {pupil.first_name} {pupil.last_name || ''}
                         </p>
-                        <p className="text-xs text-[var(--wrife-text-muted)]">
-                          Year {pupil.year_group}
-                        </p>
+                        {pupil.username && (
+                          <p className="text-xs text-[var(--wrife-text-muted)] font-mono">
+                            {pupil.username}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <button
@@ -962,12 +967,12 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
           {showAddPupil && (
             <AddPupilModal
               classId={resolvedParams.id}
-              classYearGroup={classData.year_group}
+              classCode={classData.class_code}
+              className={classData.name}
               onClose={() => setShowAddPupil(false)}
               onSuccess={() => {
                 fetchPupils();
                 fetchSubmissions();
-                setShowAddPupil(false);
               }}
             />
           )}

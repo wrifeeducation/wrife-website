@@ -54,7 +54,7 @@ export async function GET(
     }
 
     const result = await pool.query(
-      `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username, 
+      `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username, p.pin_display,
               p.year_group, p.is_active, p.last_login_at, p.created_at,
               (SELECT COUNT(*) FROM pupil_activity_log pal WHERE pal.pupil_id = p.id) as activity_count,
               (SELECT COUNT(*) FROM submissions s WHERE s.pupil_id = p.id AND s.status = 'submitted') as submissions_count
@@ -110,10 +110,10 @@ export async function POST(
     const displayName = lastName ? `${firstName} ${lastName}` : firstName;
 
     const result = await pool.query(
-      `INSERT INTO pupils (class_id, first_name, last_name, display_name, username, password_hash, year_group)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO pupils (class_id, first_name, last_name, display_name, username, password_hash, pin_display, year_group)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, first_name, last_name, display_name, username, year_group, is_active, created_at`,
-      [classId, firstName, lastName || null, displayName, username, passwordHash, pupilYearGroup]
+      [classId, firstName, lastName || null, displayName, username, passwordHash, pin, pupilYearGroup]
     );
 
     return NextResponse.json({ 
@@ -175,10 +175,10 @@ export async function PUT(
       const displayName = lastName ? `${firstName} ${lastName}` : firstName;
 
       const result = await pool.query(
-        `INSERT INTO pupils (class_id, first_name, last_name, display_name, username, password_hash, year_group)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO pupils (class_id, first_name, last_name, display_name, username, password_hash, pin_display, year_group)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id, first_name, last_name, display_name, username, year_group`,
-        [classId, firstName, lastName || null, displayName, username, passwordHash, pupilYearGroup]
+        [classId, firstName, lastName || null, displayName, username, passwordHash, pin, pupilYearGroup]
       );
 
       createdPupils.push({

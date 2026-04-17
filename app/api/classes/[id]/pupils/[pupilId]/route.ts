@@ -184,10 +184,10 @@ export async function POST(
 
     const result = await pool.query(
       `UPDATE pupils 
-       SET password_hash = $1, updated_at = NOW()
-       WHERE id = $2 AND class_id = $3
+       SET password_hash = $1, pin_display = $2, updated_at = NOW()
+       WHERE id = $3 AND class_id = $4
        RETURNING id, first_name, last_name, display_name, username`,
-      [passwordHash, pupilId, classId]
+      [passwordHash, newPin, pupilId, classId]
     );
 
     if (result.rows.length === 0) {
