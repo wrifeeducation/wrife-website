@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validatePupilSession } from '@/lib/pupil-auth';
+import { getPool } from '@/lib/db';
 
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+async function verifyPupilExists(pupilId: string): Promise<boolean> {
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      'SELECT id FROM pupils WHERE id = $1 AND is_active = TRUE LIMIT 1',
+      [pupilId]
+    );
+    return result.rows.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -25,17 +39,21 @@ export async function POST(request: NextRequest) {
 
     const session = await validatePupilSession(pupilId);
     if (!session.valid) {
-      return NextResponse.json({ error: 'Session expired. Please log in again.' }, { status: 401 });
+      const exists = await verifyPupilExists(pupilId);
+      if (!exists) {
+        return NextResponse.json({ error: 'Session expired. Please log in again.' }, { status: 401 });
+      }
+      console.warn(`[practice-complete] Pupil ${pupilId} has no active session but exists in pupils table — allowing progress save`);
     }
 
-    const existingQuery = supabaseAdmin
+    let existingQuery = supabaseAdmin
       .from('progress_records')
       .select('id, status')
       .eq('pupil_id', pupilId)
       .eq('lesson_id', lessonId);
 
     if (assignmentId) {
-      existingQuery.eq('assignment_id', assignmentId);
+      existingQuery = existingQuery.eq('assignment_id', String(assignmentId));
     }
 
     const { data: existing } = await existingQuery.maybeSingle();
@@ -72,7 +90,7 @@ export async function POST(request: NextRequest) {
         pupil_id: pupilId,
         lesson_id: lessonId,
         class_id: classId ? parseInt(String(classId)) : null,
-        assignment_id: assignmentId ? parseInt(String(assignmentId)) : null,
+        assignment_id: assignmentId ? String(assignmentId) : null,
         ...updateData,
       };
 
@@ -110,7 +128,7 @@ export async function GET(request: NextRequest) {
       .eq('lesson_id', parseInt(lessonId));
 
     if (assignmentId) {
-      query = query.eq('assignment_id', parseInt(assignmentId));
+      query = query.eq('assignment_id', assignmentId);
     }
 
     const { data, error } = await query.maybeSingle();

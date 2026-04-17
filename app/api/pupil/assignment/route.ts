@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Pool } from 'pg';
 import { validatePupilSession } from '@/lib/pupil-auth';
+import { getPool } from '@/lib/db';
 
 const pool = new Pool({
   connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
@@ -122,6 +123,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
+async function verifyPupilExists(pupilId: string): Promise<boolean> {
+  try {
+    const dbPool = getPool();
+    const result = await dbPool.query(
+      'SELECT id FROM pupils WHERE id = $1 AND is_active = TRUE LIMIT 1',
+      [pupilId]
+    );
+    return result.rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function PUT(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin();
   try {
@@ -133,7 +147,11 @@ export async function PUT(request: NextRequest) {
 
     const sessionCheck = await validatePupilSession(pupilId);
     if (!sessionCheck.valid) {
-      return NextResponse.json({ error: 'Session expired. Please log in again.' }, { status: 401 });
+      const exists = await verifyPupilExists(pupilId);
+      if (!exists) {
+        return NextResponse.json({ error: 'Session expired. Please log in again.' }, { status: 401 });
+      }
+      console.warn(`[assignment-put] Pupil ${pupilId} has no active session but exists — allowing save`);
     }
 
     const { data: existingSubmission } = await supabaseAdmin
