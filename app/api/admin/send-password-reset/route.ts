@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     const db = getPool();
     const result = await db.query(
-      `SELECT id, email, display_name, first_name FROM profiles WHERE id = $1`,
+      `SELECT id, email, display_name, first_name, role FROM profiles WHERE id = $1`,
       [userId]
     );
 
@@ -122,7 +122,9 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-    const redirectTo = `${getBaseUrl()}/update-password`;
+    const isAdminRole = user.role === 'admin' || user.role === 'school_admin';
+    const resetPath = isAdminRole ? '/admin/update-password' : '/update-password';
+    const redirectTo = `${getBaseUrl()}${resetPath}`;
 
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',

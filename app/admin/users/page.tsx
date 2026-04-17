@@ -78,7 +78,7 @@ export default function AdminUsersPage() {
   const [loadingDetails, setLoadingDetails] = useState(false);
 
   const [sendingReset, setSendingReset] = useState<string | null>(null);
-  const [resetFeedback, setResetFeedback] = useState<Record<string, { ok: boolean; msg: string }>>({});
+  const [resetFeedback, setResetFeedback] = useState<Record<string, { ok: boolean; msg: string; fallbackLink?: string }>>({});
 
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
   const [createAdminForm, setCreateAdminForm] = useState({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin' });
@@ -223,7 +223,14 @@ export default function AdminUsersPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setResetFeedback(prev => ({ ...prev, [userId]: { ok: false, msg: data.error || 'Failed to send' } }));
+        setResetFeedback(prev => ({
+          ...prev,
+          [userId]: {
+            ok: false,
+            msg: data.fallbackLink ? 'Email delivery failed — copy this link to share manually:' : (data.error || 'Failed to send'),
+            fallbackLink: data.fallbackLink,
+          },
+        }));
       } else {
         setResetFeedback(prev => ({ ...prev, [userId]: { ok: true, msg: 'Reset email sent!' } }));
         setTimeout(() => setResetFeedback(prev => { const next = { ...prev }; delete next[userId]; return next; }), 5000);
@@ -663,9 +670,25 @@ export default function AdminUsersPage() {
                           {sendingReset === profile.id ? 'Sending…' : '✉ Reset Email'}
                         </button>
                         {resetFeedback[profile.id]?.msg && (
-                          <span className={`text-xs ${resetFeedback[profile.id].ok ? 'text-green-600' : 'text-red-500'}`}>
-                            {resetFeedback[profile.id].msg}
-                          </span>
+                          <div className="flex flex-col gap-1 mt-1 max-w-xs">
+                            <span className={`text-xs ${resetFeedback[profile.id].ok ? 'text-green-600' : 'text-red-500'}`}>
+                              {resetFeedback[profile.id].msg}
+                            </span>
+                            {resetFeedback[profile.id]?.fallbackLink && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-gray-500 truncate font-mono max-w-[160px]" title={resetFeedback[profile.id].fallbackLink}>
+                                  {resetFeedback[profile.id].fallbackLink}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(resetFeedback[profile.id].fallbackLink!); }}
+                                  className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300 hover:bg-amber-200 whitespace-nowrap"
+                                >
+                                  Copy
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     )}
