@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import OwlMascot from '@/components/mascots/OwlMascot';
@@ -134,6 +134,7 @@ function getBadgeIcon(badgeType: string) {
 
 export default function PupilDashboardPage() {
   const [session, setSession] = useState<PupilSession | null>(null);
+  const sessionRef = useRef<PupilSession | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
@@ -155,6 +156,7 @@ export default function PupilDashboardPage() {
     try {
       const parsed = JSON.parse(stored) as PupilSession;
       setSession(parsed);
+      sessionRef.current = parsed;
       fetchAssignments(parsed.classId, parsed.pupilId);
       fetch(`/api/pupil/stats?pupilId=${parsed.pupilId}`)
         .then(res => res.ok ? res.json() : null)
@@ -165,6 +167,16 @@ export default function PupilDashboardPage() {
       localStorage.removeItem('pupilSession');
       router.push('/pupil/login');
     }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible' && sessionRef.current) {
+        const s = sessionRef.current;
+        fetchAssignments(s.classId, s.pupilId);
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [router]);
 
   async function fetchAssignments(classId: string, pupilId: string) {

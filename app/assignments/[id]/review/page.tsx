@@ -18,7 +18,7 @@ interface Assignment {
 
 interface Submission {
   id: number;
-  pupil_id: number;
+  pupil_id: string;
   content: string;
   status: string;
   submitted_at: string | null;
@@ -69,10 +69,11 @@ export default function AssignmentReviewPage() {
   const assignmentId = params?.id as string;
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [assessments, setAssessments] = useState<Map<number, AIAssessment>>(new Map());
+  const [activityProgress, setActivityProgress] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [assessing, setAssessing] = useState<number | null>(null);
@@ -149,6 +150,26 @@ export default function AssignmentReviewPage() {
           assessmentMap.set(a.submission_id, a);
         });
         setAssessments(assessmentMap);
+      }
+
+      if (assignmentData.lesson_id) {
+        try {
+          const { data: progressData } = await supabase
+            .from('progress_records')
+            .select('pupil_id, status')
+            .eq('lesson_id', assignmentData.lesson_id);
+
+          const progressMap = new Map<string, string>();
+          (progressData || []).forEach(p => {
+            const existing = progressMap.get(p.pupil_id);
+            if (!existing || existing !== 'completed') {
+              progressMap.set(p.pupil_id, p.status);
+            }
+          });
+          setActivityProgress(progressMap);
+        } catch {
+          // progress_records may not be accessible; non-critical
+        }
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -230,6 +251,17 @@ export default function AssignmentReviewPage() {
   const pendingCount = submissions.filter(s => s.status === 'submitted').length;
   const reviewedCount = submissions.filter(s => s.status === 'reviewed').length;
 
+  const activityCompletedCount = Array.from(activityProgress.values()).filter(s => s === 'completed').length;
+  const activityStartedCount = Array.from(activityProgress.values()).filter(s => s === 'in_progress').length;
+  const hasActivityData = activityProgress.size > 0;
+
+  function getActivityIcon(pupilId: string) {
+    const status = activityProgress.get(pupilId);
+    if (status === 'completed') return <span title="Activity completed" className="text-green-600 text-sm">✅</span>;
+    if (status === 'in_progress') return <span title="Activity in progress" className="text-amber-500 text-sm">◐</span>;
+    return <span title="Activity not started" className="text-gray-300 text-sm">—</span>;
+  }
+
   return (
     <>
       <Navbar />
@@ -275,6 +307,23 @@ export default function AssignmentReviewPage() {
             )}
           </div>
 
+          {hasActivityData && (
+            <div className="mb-4 p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-wrap items-center gap-4">
+              <span className="text-2xl">🎮</span>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-blue-800">Interactive Activity</p>
+                <p className="text-xs text-blue-600 mt-0.5">
+                  {activityCompletedCount} {activityCompletedCount === 1 ? 'pupil' : 'pupils'} completed
+                  {activityStartedCount > 0 && ` · ${activityStartedCount} in progress`}
+                </p>
+              </div>
+              <div className="flex gap-3 text-xs text-blue-700">
+                <span className="flex items-center gap-1">✅ Completed: <strong>{activityCompletedCount}</strong></span>
+                {activityStartedCount > 0 && <span className="flex items-center gap-1">◐ In progress: <strong>{activityStartedCount}</strong></span>}
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200">
               <p className="text-sm text-red-600">{error}</p>
@@ -313,7 +362,14 @@ export default function AssignmentReviewPage() {
                         <span className="font-semibold text-[var(--wrife-text-main)]">
                           {sub.pupil_name}
                         </span>
-                        <StatusBadge status={sub.status} />
+                        <div className="flex items-center gap-2">
+                          {hasActivityData && (
+                            <span title="Interactive activity status">
+                              {getActivityIcon(sub.pupil_id)}
+                            </span>
+                          )}
+                          <StatusBadge status={sub.status} />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between text-xs text-[var(--wrife-text-muted)]">
                         <span>

@@ -147,6 +147,7 @@ export const progressRecords = pgTable('progress_records', {
   id: serial('id').primaryKey(),
   pupilId: uuid('pupil_id').notNull(),
   lessonId: integer('lesson_id'),
+  assignmentId: integer('assignment_id'),
   classId: integer('class_id'),
   status: varchar('status').default('not_started'),
   score: numeric('score'),

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validatePupilSession } from '@/lib/pupil-auth';
 
 function getSupabaseAdmin() {
   return createClient(
@@ -11,8 +12,8 @@ function getSupabaseAdmin() {
 export async function POST(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin();
   try {
-    const { pupilId, lessonId, classId, status = 'completed', progressPayload } = await request.json();
-    
+    const { pupilId, lessonId, classId, assignmentId, status = 'completed', progressPayload } = await request.json();
+
     if (!pupilId || !lessonId) {
       return NextResponse.json({ error: 'Pupil ID and Lesson ID are required' }, { status: 400 });
     }
@@ -22,12 +23,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid status. Must be: not_started, in_progress, or completed' }, { status: 400 });
     }
 
-    const { data: existing } = await supabaseAdmin
+    const session = await validatePupilSession(pupilId);
+    if (!session.valid) {
+      return NextResponse.json({ error: 'Session expired. Please log in again.' }, { status: 401 });
+    }
+
+    const existingQuery = supabaseAdmin
       .from('progress_records')
       .select('id, status')
       .eq('pupil_id', pupilId)
-      .eq('lesson_id', lessonId)
-      .single();
+      .eq('lesson_id', lessonId);
+
+    if (assignmentId) {
+      existingQuery.eq('assignment_id', assignmentId);
+    }
+
+    const { data: existing } = await existingQuery.maybeSingle();
 
     const updateData: Record<string, unknown> = {
       status,
@@ -43,6 +54,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (existing) {
+      if (existing.status === 'completed' && status === 'in_progress') {
+        return NextResponse.json({ progress: existing });
+      }
+
       const { data, error } = await supabaseAdmin
         .from('progress_records')
         .update(updateData)
@@ -53,10 +68,11 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
       return NextResponse.json({ progress: data });
     } else {
-      const insertData = {
+      const insertData: Record<string, unknown> = {
         pupil_id: pupilId,
         lesson_id: lessonId,
-        class_id: classId ? parseInt(classId) : null,
+        class_id: classId ? parseInt(String(classId)) : null,
+        assignment_id: assignmentId ? parseInt(String(assignmentId)) : null,
         ...updateData,
       };
 
@@ -81,19 +97,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const pupilId = searchParams.get('pupilId');
     const lessonId = searchParams.get('lessonId');
+    const assignmentId = searchParams.get('assignmentId');
 
     if (!pupilId || !lessonId) {
       return NextResponse.json({ error: 'Pupil ID and Lesson ID are required' }, { status: 400 });
     }
 
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('progress_records')
       .select('*')
       .eq('pupil_id', pupilId)
-      .eq('lesson_id', parseInt(lessonId))
-      .single();
+      .eq('lesson_id', parseInt(lessonId));
 
-    if (error && error.code !== 'PGRST116') {
+    if (assignmentId) {
+      query = query.eq('assignment_id', parseInt(assignmentId));
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
       throw error;
     }
 

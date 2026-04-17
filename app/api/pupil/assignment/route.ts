@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Pool } from 'pg';
+import { validatePupilSession } from '@/lib/pupil-auth';
 
 const pool = new Pool({
   connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
@@ -125,9 +126,14 @@ export async function PUT(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin();
   try {
     const { assignmentId, pupilId, content, status } = await request.json();
-    
+
     if (!assignmentId || !pupilId) {
       return NextResponse.json({ error: 'Assignment ID and pupil ID required' }, { status: 400 });
+    }
+
+    const sessionCheck = await validatePupilSession(pupilId);
+    if (!sessionCheck.valid) {
+      return NextResponse.json({ error: 'Session expired. Please log in again.' }, { status: 401 });
     }
 
     const { data: existingSubmission } = await supabaseAdmin
