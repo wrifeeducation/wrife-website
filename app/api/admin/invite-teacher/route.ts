@@ -8,7 +8,7 @@ function getBaseUrl(): string {
   return 'https://wrife.co.uk';
 }
 
-function buildWelcomeEmailHtml(name: string, email: string, setupLink: string): string {
+function buildWelcomeEmailHtml(name: string, email: string, setupLink: string, loginUrl: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -67,6 +67,12 @@ function buildWelcomeEmailHtml(name: string, email: string, setupLink: string): 
               <a href="${setupLink}" style="color:#2E5AFF;">${setupLink}</a>
             </p>
 
+            <hr style="border:none;border-top:1px solid #eaeaea;margin:0 0 24px;">
+            <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#333333;">Signing in after setup</p>
+            <p style="margin:0 0 16px;font-size:13px;color:#888888;line-height:1.6;">
+              Once you've set your password, you can sign in at any time from:<br>
+              <a href="${loginUrl}" style="color:#2E5AFF;">${loginUrl}</a>
+            </p>
             <hr style="border:none;border-top:1px solid #eaeaea;margin:0 0 24px;">
             <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#333333;">What is WriFe?</p>
             <p style="margin:0;font-size:13px;color:#888888;line-height:1.6;">
@@ -143,15 +149,19 @@ export async function POST(request: NextRequest) {
         options: { redirectTo },
       });
 
+      const loginUrl = `${getBaseUrl()}/login`;
       let emailSent = false;
+      let fallbackLink: string | null = null;
+
       if (!linkError && linkData?.properties?.action_link) {
+        fallbackLink = linkData.properties.action_link;
         const resend = new Resend(process.env.RESEND_API_KEY);
         const userName = firstName || existingUser.display_name || existingUser.first_name || 'there';
         const { error: emailError } = await resend.emails.send({
           from: 'WriFe <onboarding@resend.dev>',
           to: email,
           subject: "You've been added to a school on WriFe",
-          html: buildWelcomeEmailHtml(userName, email, linkData.properties.action_link),
+          html: buildWelcomeEmailHtml(userName, email, linkData.properties.action_link, loginUrl),
         });
         emailSent = !emailError;
         if (emailError) console.error('[invite-teacher] Resend error (existing user):', emailError);
@@ -163,6 +173,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Teacher added to school',
         emailSent,
+        ...(!emailSent && fallbackLink ? { fallbackLink } : {}),
       });
     }
 
@@ -196,6 +207,7 @@ export async function POST(request: NextRequest) {
 
     const supabaseAdminClient = getSupabaseAdmin();
     const redirectTo = `${getBaseUrl()}/update-password`;
+    const loginUrl = `${getBaseUrl()}/login`;
 
     const { data: linkData, error: linkError } = await supabaseAdminClient.auth.admin.generateLink({
       type: 'recovery',
@@ -204,14 +216,17 @@ export async function POST(request: NextRequest) {
     });
 
     let emailSent = false;
+    let fallbackLink: string | null = null;
+
     if (!linkError && linkData?.properties?.action_link) {
+      fallbackLink = linkData.properties.action_link;
       const resend = new Resend(process.env.RESEND_API_KEY);
       const userName = firstName || 'there';
       const { error: emailError } = await resend.emails.send({
         from: 'WriFe <onboarding@resend.dev>',
         to: email,
         subject: "You've been invited to WriFe",
-        html: buildWelcomeEmailHtml(userName, email, linkData.properties.action_link),
+        html: buildWelcomeEmailHtml(userName, email, linkData.properties.action_link, loginUrl),
       });
       emailSent = !emailError;
       if (emailError) console.error('[invite-teacher] Resend error (new user):', emailError);
@@ -225,6 +240,7 @@ export async function POST(request: NextRequest) {
         ? 'Teacher invited successfully — a welcome email has been sent'
         : 'Teacher account created. Note: the welcome email could not be sent.',
       emailSent,
+      ...(!emailSent && fallbackLink ? { fallbackLink } : {}),
     });
   } catch (error: unknown) {
     console.error('[invite-teacher] Error:', error);
