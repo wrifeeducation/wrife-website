@@ -127,11 +127,12 @@ async function verifyPupilExists(pupilId: string): Promise<boolean> {
   try {
     const dbPool = getPool();
     const result = await dbPool.query(
-      'SELECT id FROM pupils WHERE id = $1 AND is_active = TRUE LIMIT 1',
+      'SELECT id FROM pupils WHERE id = $1 LIMIT 1',
       [pupilId]
     );
     return result.rows.length > 0;
-  } catch {
+  } catch (err) {
+    console.error('[verifyPupilExists-assignment] DB error:', err);
     return false;
   }
 }

@@ -14,11 +14,12 @@ async function verifyPupilExists(pupilId: string): Promise<boolean> {
   try {
     const pool = getPool();
     const result = await pool.query(
-      'SELECT id FROM pupils WHERE id = $1 AND is_active = TRUE LIMIT 1',
+      'SELECT id FROM pupils WHERE id = $1 LIMIT 1',
       [pupilId]
     );
     return result.rows.length > 0;
-  } catch {
+  } catch (err) {
+    console.error('[verifyPupilExists] DB error:', err);
     return false;
   }
 }
