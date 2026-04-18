@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import dynamicImport from 'next/dynamic';
 import { getEntitlements } from '@/lib/entitlements';
 import UpgradeModal from '@/components/UpgradeModal';
+import { AddPupilModal } from '@/components/AddPupilModal';
 
 const LessonLibrary = dynamicImport(() => import('@/components/LessonLibrary'), {
   ssr: false,
@@ -25,6 +26,7 @@ interface ClassData {
   name: string;
   year_group: number;
   class_code: string;
+  pupil_count?: number;
 }
 
 interface PupilData {
@@ -119,15 +121,13 @@ function DashboardContent() {
   
   const [showAddPupilModal, setShowAddPupilModal] = useState(false);
   const [showCreateClassModal, setShowCreateClassModal] = useState(false);
-  const [selectedClassForPupil, setSelectedClassForPupil] = useState<string | null>(null);
+  const [showClassSelectorModal, setShowClassSelectorModal] = useState(false);
+  const [selectedClassForPupil, setSelectedClassForPupil] = useState<ClassData | null>(null);
   
-  const [newPupilFirstName, setNewPupilFirstName] = useState('');
-  const [newPupilLastName, setNewPupilLastName] = useState('');
   const [newClassName, setNewClassName] = useState('');
   const [newClassYearGroup, setNewClassYearGroup] = useState(4);
   
   const [classModalError, setClassModalError] = useState('');
-  const [pupilModalError, setPupilModalError] = useState('');
   const [globalSuccess, setGlobalSuccess] = useState('');
   
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -149,12 +149,24 @@ function DashboardContent() {
     }
   }
 
-  function handleAddPupilClick() {
-    if (entitlements.canManageClasses) {
-      setShowAddPupilModal(true);
-    } else {
+  function handleAddPupilClick(preselectedClass?: ClassData) {
+    if (!entitlements.canManageClasses) {
       setUpgradeFeature('Add Pupil');
       setUpgradeDescription('Add pupils to your classes and assign them writing activities.');
+      setShowUpgradeModal(true);
+      return;
+    }
+    if (preselectedClass) {
+      setSelectedClassForPupil(preselectedClass);
+      setShowAddPupilModal(true);
+    } else if (classes.length === 1) {
+      setSelectedClassForPupil(classes[0]);
+      setShowAddPupilModal(true);
+    } else if (classes.length > 1) {
+      setShowClassSelectorModal(true);
+    } else {
+      setUpgradeFeature('Add Pupil');
+      setUpgradeDescription('Create a class first before adding pupils.');
       setShowUpgradeModal(true);
     }
   }
@@ -201,43 +213,34 @@ function DashboardContent() {
     setDataLoading(true);
 
     try {
-      console.log('Fetching classes for user:', user.id);
-      const { data: classesData, error: classesError } = await supabase
-        .from('classes')
-        .select('*')
-        .eq('teacher_id', user.id)
-        .order('name');
-
-      console.log('Classes query result:', { classesData, classesError });
-      if (classesError) {
-        console.error('Error fetching classes:', classesError);
+      const classesRes = await fetch('/api/classes');
+      if (!classesRes.ok) {
+        console.error('Error fetching classes:', classesRes.status);
+        setClasses([]);
+        setDataLoading(false);
+        return;
       }
+      const classesJson = await classesRes.json();
+      const fetchedClasses: ClassData[] = classesJson.classes || [];
+      setClasses(fetchedClasses);
 
-      setClasses(classesData || []);
-      const classIds = classesData?.map(c => c.id) || [];
+      const classIds = fetchedClasses.map(c => c.id);
+      const classMap = new Map(fetchedClasses.map(c => [c.id, c]));
 
       let allPupils: PupilData[] = [];
-      if (classIds.length > 0) {
-        const { data: membersData, error: membersError } = await supabase
-          .from('class_members')
-          .select('class_id, pupil_id, pupils(id, first_name, last_name, year_group)')
-          .in('class_id', classIds);
-        
-        console.log('Members query result:', { membersData, membersError });
-
-        if (membersData) {
-          const classMap = new Map(classesData?.map(c => [c.id, c.name]) || []);
-          allPupils = membersData.map((m: any) => {
-            const pupilData = Array.isArray(m.pupils) ? m.pupils[0] : m.pupils;
-            return {
-              id: pupilData?.id || m.pupil_id,
-              first_name: pupilData?.first_name || 'Unknown',
-              last_name: pupilData?.last_name || null,
-              year_group: pupilData?.year_group || 4,
-              class_id: m.class_id,
-              class_name: classMap.get(m.class_id) || 'Unknown Class',
-            };
-          });
+      for (const cls of fetchedClasses) {
+        const pupilsRes = await fetch(`/api/classes/${cls.id}/pupils`);
+        if (pupilsRes.ok) {
+          const pupilsJson = await pupilsRes.json();
+          const classPupils: PupilData[] = (pupilsJson.pupils || []).map((p: any) => ({
+            id: p.id,
+            first_name: p.first_name,
+            last_name: p.last_name,
+            year_group: p.year_group,
+            class_id: cls.id,
+            class_name: cls.name,
+          }));
+          allPupils = [...allPupils, ...classPupils];
         }
       }
       setPupils(allPupils);
@@ -254,27 +257,13 @@ function DashboardContent() {
           .order('due_date', { ascending: true });
 
         if (assignments && assignments.length > 0) {
-          const classMap = new Map(classesData?.map(c => [c.id, { name: c.name, pupils: 0 }]) || []);
-          
-          const { data: memberCounts } = await supabase
-            .from('class_members')
-            .select('class_id')
-            .in('class_id', classIds);
-          
-          if (memberCounts) {
-            memberCounts.forEach((m: any) => {
-              const classInfo = classMap.get(m.class_id);
-              if (classInfo) classInfo.pupils++;
-            });
-          }
-
           for (const assignment of assignments) {
+            const cls = classMap.get(assignment.class_id);
             const { data: submissions } = await supabase
               .from('submissions')
               .select('id, pupil_id, status, submitted_at')
               .eq('assignment_id', assignment.id);
 
-            const classInfo = classMap.get(assignment.class_id);
             const submittedSubs = submissions?.filter(s => s.status === 'submitted') || [];
             const reviewedSubs = submissions?.filter(s => s.status === 'reviewed') || [];
             reviewedCount += reviewedSubs.length;
@@ -282,9 +271,9 @@ function DashboardContent() {
             active.push({
               id: assignment.id,
               title: assignment.title,
-              class_name: classInfo?.name || 'Unknown',
+              class_name: cls?.name || 'Unknown',
               due_date: assignment.due_date,
-              total_pupils: classInfo?.pupils || 0,
+              total_pupils: Number(cls?.pupil_count || 0),
               submitted_count: submittedSubs.length + reviewedSubs.length,
               reviewed_count: reviewedSubs.length,
             });
@@ -316,7 +305,7 @@ function DashboardContent() {
       setActiveAssignments(active);
       setStats({
         totalPupils: allPupils.length,
-        totalClasses: classIds.length,
+        totalClasses: fetchedClasses.length,
         pendingReviews: pending.length,
         completedAssignments: reviewedCount,
       });
@@ -329,24 +318,19 @@ function DashboardContent() {
 
   async function handleCreateClass(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !newClassName.trim()) return;
+    if (!newClassName.trim()) return;
     setClassModalError('');
 
     try {
-      const classCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      
-      const { error } = await supabase
-        .from('classes')
-        .insert({
-          teacher_id: user.id,
-          name: newClassName.trim(),
-          year_group: newClassYearGroup,
-          class_code: classCode,
-        });
+      const res = await fetch('/api/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newClassName.trim(), yearGroup: newClassYearGroup }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create class');
 
-      if (error) throw error;
-
-      setGlobalSuccess(`Class "${newClassName}" created with code: ${classCode}`);
+      setGlobalSuccess(`Class "${newClassName}" created with code: ${data.class?.class_code}`);
       setNewClassName('');
       setNewClassYearGroup(4);
       setShowCreateClassModal(false);
@@ -356,57 +340,7 @@ function DashboardContent() {
     }
   }
 
-  async function handleAddPupil(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user || !newPupilFirstName.trim() || !selectedClassForPupil) return;
-    setPupilModalError('');
-
-    const selectedClass = classes.find(c => c.id === selectedClassForPupil);
-    if (!selectedClass) {
-      setPupilModalError('Invalid class selected');
-      return;
-    }
-
-    try {
-      const firstName = newPupilFirstName.trim();
-      const lastName = newPupilLastName.trim();
-      const randomId = Math.random().toString(36).substring(2, 8);
-      const pupilId = crypto.randomUUID();
-
-      const { error: pupilError } = await supabase
-        .from('pupils')
-        .insert({
-          id: pupilId,
-          first_name: firstName,
-          last_name: lastName || null,
-          display_name: `${firstName} ${lastName}`.trim(),
-          year_group: selectedClass.year_group,
-        });
-
-      if (pupilError) throw pupilError;
-
-      const { error: memberError } = await supabase
-        .from('class_members')
-        .insert({
-          class_id: selectedClassForPupil,
-          pupil_id: pupilId,
-        });
-
-      if (memberError) throw memberError;
-
-      setGlobalSuccess(`${newPupilFirstName} added to ${selectedClass.name}`);
-      setNewPupilFirstName('');
-      setNewPupilLastName('');
-      setShowAddPupilModal(false);
-      setSelectedClassForPupil(null);
-      fetchAllData();
-    } catch (err: any) {
-      setPupilModalError(err.message || 'Failed to add pupil');
-    }
-  }
-
   async function handleRemovePupil(pupilId: string, classId: string) {
-    if (!user) return;
     if (!confirm('Are you sure you want to remove this pupil from the class?')) return;
 
     const ownsClass = classes.some(c => c.id === classId);
@@ -416,13 +350,11 @@ function DashboardContent() {
     }
 
     try {
-      const { error } = await supabase
-        .from('class_members')
-        .delete()
-        .eq('class_id', classId)
-        .eq('pupil_id', pupilId);
-
-      if (error) throw error;
+      const res = await fetch(`/api/classes/${classId}/pupils/${pupilId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to remove pupil');
+      }
       fetchAllData();
     } catch (err) {
       console.error('Error removing pupil:', err);
@@ -1114,75 +1046,45 @@ function DashboardContent() {
         </div>
       )}
 
-      {showAddPupilModal && (
+      {showClassSelectorModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold text-[var(--wrife-text-main)] mb-4">Add New Pupil</h2>
-            <form onSubmit={handleAddPupil}>
-              {pupilModalError && (
-                <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-                  {pupilModalError}
-                </div>
-              )}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-1">
-                  Select Class
-                </label>
-                <select
-                  value={selectedClassForPupil || ''}
-                  onChange={(e) => setSelectedClassForPupil(e.target.value || null)}
-                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-                  required
-                >
-                  <option value="">Choose a class...</option>
-                  {classes.map((cls) => (
-                    <option key={cls.id} value={cls.id}>{cls.name} (Year {cls.year_group})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-1">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  value={newPupilFirstName}
-                  onChange={(e) => setNewPupilFirstName(e.target.value)}
-                  placeholder="First name"
-                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-1">
-                  Last Name (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={newPupilLastName}
-                  onChange={(e) => setNewPupilLastName(e.target.value)}
-                  placeholder="Last name"
-                  className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-                />
-              </div>
-              <div className="flex gap-3">
+            <h2 className="text-xl font-bold text-[var(--wrife-text-main)] mb-4">Select a Class</h2>
+            <p className="text-sm text-[var(--wrife-text-muted)] mb-4">Choose which class to add a pupil to:</p>
+            <div className="space-y-2">
+              {classes.map((cls) => (
                 <button
-                  type="button"
-                  onClick={() => { setShowAddPupilModal(false); setPupilModalError(''); setSelectedClassForPupil(null); }}
-                  className="flex-1 px-4 py-2 rounded-full border border-[var(--wrife-border)] text-[var(--wrife-text-muted)] font-semibold hover:bg-gray-50"
+                  key={cls.id}
+                  onClick={() => {
+                    setSelectedClassForPupil(cls);
+                    setShowClassSelectorModal(false);
+                    setShowAddPupilModal(true);
+                  }}
+                  className="w-full text-left px-4 py-3 rounded-xl border border-[var(--wrife-border)] hover:bg-[var(--wrife-blue-soft)] hover:border-[var(--wrife-blue)] transition"
                 >
-                  Cancel
+                  <p className="font-semibold text-[var(--wrife-text-main)]">{cls.name}</p>
+                  <p className="text-xs text-[var(--wrife-text-muted)]">Year {cls.year_group} · Code: {cls.class_code}</p>
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 rounded-full bg-[var(--wrife-blue)] text-white font-semibold hover:opacity-90"
-                >
-                  Add Pupil
-                </button>
-              </div>
-            </form>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowClassSelectorModal(false)}
+              className="mt-4 w-full px-4 py-2 rounded-full border border-[var(--wrife-border)] text-[var(--wrife-text-muted)] font-semibold hover:bg-gray-50"
+            >
+              Cancel
+            </button>
           </div>
         </div>
+      )}
+
+      {showAddPupilModal && selectedClassForPupil && (
+        <AddPupilModal
+          classId={String(selectedClassForPupil.id)}
+          classCode={selectedClassForPupil.class_code}
+          className={selectedClassForPupil.name}
+          onClose={() => { setShowAddPupilModal(false); setSelectedClassForPupil(null); }}
+          onSuccess={() => { fetchAllData(); setGlobalSuccess(`Pupil added to ${selectedClassForPupil.name}`); }}
+        />
       )}
 
       <UpgradeModal
