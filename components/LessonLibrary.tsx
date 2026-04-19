@@ -108,6 +108,11 @@ export default function LessonLibrary() {
         }
         const data = await response.json();
         setLessons(data || []);
+
+        if (data && data.length > 0) {
+          const firstChapter = Math.min(...data.map((l: Lesson) => l.chapter));
+          setExpandedChapters(new Set([firstChapter]));
+        }
       } catch (err) {
         console.error("Error fetching lessons:", err);
         setError("Unable to load lessons. Please refresh the page.");
@@ -149,6 +154,23 @@ export default function LessonLibrary() {
 
     return grouped;
   }, [filteredLessons]);
+
+  useEffect(() => {
+    if (searchQuery.trim() !== "" || selectedYearGroup !== "All Year Groups") {
+      const allChapters = new Set(Object.keys(groupedLessons).map(Number));
+      const allUnits = new Set<string>();
+      Object.entries(groupedLessons).forEach(([chapter, units]) => {
+        Object.keys(units).forEach((unit) => {
+          allUnits.add(`${chapter}-${unit}`);
+        });
+      });
+      setExpandedChapters(allChapters);
+      setExpandedUnits(allUnits);
+    } else {
+      setExpandedChapters(new Set());
+      setExpandedUnits(new Set());
+    }
+  }, [searchQuery, selectedYearGroup, groupedLessons]);
 
   const toggleChapter = (chapter: number) => {
     setExpandedChapters((prev) => {

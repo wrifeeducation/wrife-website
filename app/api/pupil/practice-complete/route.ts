@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { validatePupilSession } from '@/lib/pupil-auth';
 import { getPool } from '@/lib/db';
-
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 async function verifyPupilExists(pupilId: string): Promise<boolean> {
   try {
@@ -25,7 +17,6 @@ async function verifyPupilExists(pupilId: string): Promise<boolean> {
 }
 
 export async function POST(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   try {
     const { pupilId, lessonId, classId, assignmentId, status = 'completed', progressPayload } = await request.json();
 
@@ -47,62 +38,72 @@ export async function POST(request: NextRequest) {
       console.warn(`[practice-complete] Pupil ${pupilId} has no active session but exists in pupils table — allowing progress save`);
     }
 
-    let existingQuery = supabaseAdmin
-      .from('progress_records')
-      .select('id, status')
-      .eq('pupil_id', pupilId)
-      .eq('lesson_id', lessonId);
+    const pool = getPool();
+
+    const existingParams: any[] = [pupilId, parseInt(String(lessonId))];
+    let existingSQL = `SELECT id, status FROM progress_records WHERE pupil_id = $1 AND lesson_id = $2`;
 
     if (assignmentId) {
-      existingQuery = existingQuery.eq('assignment_id', String(assignmentId));
+      existingParams.push(String(assignmentId));
+      existingSQL += ` AND assignment_id = $${existingParams.length}`;
     }
 
-    const { data: existing } = await existingQuery.maybeSingle();
+    existingSQL += ' LIMIT 1';
 
-    const updateData: Record<string, unknown> = {
-      status,
-      updated_at: new Date().toISOString(),
-    };
+    const existingResult = await pool.query(existingSQL, existingParams);
+    const existing = existingResult.rows[0] || null;
 
-    if (progressPayload !== undefined) {
-      updateData.progress_payload = progressPayload;
+    if (existing && existing.status === 'completed' && status === 'in_progress') {
+      return NextResponse.json({ progress: existing });
     }
 
-    if (status === 'completed') {
-      updateData.completed_at = new Date().toISOString();
-    }
+    const now = new Date().toISOString();
 
     if (existing) {
-      if (existing.status === 'completed' && status === 'in_progress') {
-        return NextResponse.json({ progress: existing });
+      const setClauses: string[] = ['status = $1', 'updated_at = $2'];
+      const updateParams: any[] = [status, now];
+
+      if (progressPayload !== undefined) {
+        updateParams.push(progressPayload);
+        setClauses.push(`progress_payload = $${updateParams.length}`);
       }
 
-      const { data, error } = await supabaseAdmin
-        .from('progress_records')
-        .update(updateData)
-        .eq('id', existing.id)
-        .select()
-        .single();
+      if (status === 'completed') {
+        updateParams.push(now);
+        setClauses.push(`completed_at = $${updateParams.length}`);
+      }
 
-      if (error) throw error;
-      return NextResponse.json({ progress: data });
+      updateParams.push(existing.id);
+      const updateSQL = `UPDATE progress_records SET ${setClauses.join(', ')} WHERE id = $${updateParams.length} RETURNING *`;
+
+      const updateResult = await pool.query(updateSQL, updateParams);
+      return NextResponse.json({ progress: updateResult.rows[0] });
     } else {
-      const insertData: Record<string, unknown> = {
-        pupil_id: pupilId,
-        lesson_id: lessonId,
-        class_id: classId ? parseInt(String(classId)) : null,
-        assignment_id: assignmentId ? String(assignmentId) : null,
-        ...updateData,
-      };
+      const insertCols = ['pupil_id', 'lesson_id', 'class_id', 'assignment_id', 'status', 'updated_at'];
+      const insertVals: any[] = [
+        pupilId,
+        parseInt(String(lessonId)),
+        classId ? parseInt(String(classId)) : null,
+        assignmentId ? String(assignmentId) : null,
+        status,
+        now,
+      ];
 
-      const { data, error } = await supabaseAdmin
-        .from('progress_records')
-        .insert(insertData)
-        .select()
-        .single();
+      if (progressPayload !== undefined) {
+        insertCols.push('progress_payload');
+        insertVals.push(progressPayload);
+      }
 
-      if (error) throw error;
-      return NextResponse.json({ progress: data });
+      if (status === 'completed') {
+        insertCols.push('completed_at');
+        insertVals.push(now);
+      }
+
+      const placeholders = insertVals.map((_, i) => `$${i + 1}`).join(', ');
+      const insertSQL = `INSERT INTO progress_records (${insertCols.join(', ')}) VALUES (${placeholders}) RETURNING *`;
+
+      const insertResult = await pool.query(insertSQL, insertVals);
+      return NextResponse.json({ progress: insertResult.rows[0] });
     }
   } catch (error) {
     console.error('Practice complete error:', error);
@@ -111,7 +112,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   try {
     const { searchParams } = new URL(request.url);
     const pupilId = searchParams.get('pupilId');
@@ -122,23 +122,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Pupil ID and Lesson ID are required' }, { status: 400 });
     }
 
-    let query = supabaseAdmin
-      .from('progress_records')
-      .select('*')
-      .eq('pupil_id', pupilId)
-      .eq('lesson_id', parseInt(lessonId));
+    const pool = getPool();
+
+    const params: any[] = [pupilId, parseInt(lessonId)];
+    let sql = `SELECT * FROM progress_records WHERE pupil_id = $1 AND lesson_id = $2`;
 
     if (assignmentId) {
-      query = query.eq('assignment_id', assignmentId);
+      params.push(assignmentId);
+      sql += ` AND assignment_id = $${params.length}`;
     }
 
-    const { data, error } = await query.maybeSingle();
+    sql += ' LIMIT 1';
 
-    if (error) {
-      throw error;
-    }
-
-    return NextResponse.json({ progress: data || null });
+    const result = await pool.query(sql, params);
+    return NextResponse.json({ progress: result.rows[0] || null });
   } catch (error) {
     console.error('Get progress error:', error);
     return NextResponse.json({ error: 'Could not fetch progress' }, { status: 500 });
