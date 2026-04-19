@@ -424,7 +424,7 @@ function DashboardContent() {
               + New Class
             </button>
             <button
-              onClick={handleAddPupilClick}
+              onClick={() => handleAddPupilClick()}
               className="rounded-full bg-[var(--wrife-yellow)] px-4 py-2 text-sm font-bold text-[var(--wrife-text-main)] hover:opacity-90 transition"
             >
               + Add Pupil
@@ -690,7 +690,7 @@ function DashboardContent() {
                       <span className="text-2xl mb-2 block">➕</span>
                       <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Create Class</p>
                     </button>
-                    <button onClick={handleAddPupilClick} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
+                    <button onClick={() => handleAddPupilClick()} className="p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-gray-50 transition text-center">
                       <span className="text-2xl mb-2 block">👤</span>
                       <p className="font-semibold text-sm text-[var(--wrife-text-main)]">Add Pupil</p>
                     </button>
@@ -814,7 +814,7 @@ function DashboardContent() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">All Pupils</h2>
                   <button
-                    onClick={handleAddPupilClick}
+                    onClick={() => handleAddPupilClick()}
                     className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
                   >
                     + Add Pupil
