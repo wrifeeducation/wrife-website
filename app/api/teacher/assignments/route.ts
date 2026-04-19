@@ -60,17 +60,30 @@ export async function GET(request: NextRequest) {
     const pool = getPool();
 
     const result = await pool.query(
-      `SELECT a.id, a.lesson_id, a.class_id, a.title, a.instructions, a.due_date, a.created_at,
-              c.name AS class_name,
-              l.title AS lesson_title,
-              COUNT(DISTINCT p.id) AS total_pupils,
-              COUNT(DISTINCT s.id) FILTER (WHERE s.status = 'submitted') AS submitted_count,
-              COUNT(DISTINCT s.id) FILTER (WHERE s.status = 'reviewed') AS reviewed_count
+      `SELECT
+         a.id, a.lesson_id, a.class_id, a.title, a.instructions, a.due_date, a.created_at,
+         c.name AS class_name,
+         l.title AS lesson_title,
+         (SELECT COUNT(*) FROM pupils WHERE class_id = a.class_id AND is_active = true) AS total_pupils,
+         COUNT(DISTINCT s.id) FILTER (WHERE s.status IN ('submitted', 'reviewed')) AS submitted_count,
+         COUNT(DISTINCT s.id) FILTER (WHERE s.status = 'reviewed') AS reviewed_count,
+         COALESCE(
+           json_agg(
+             json_build_object(
+               'id', s.id,
+               'pupil_name', concat(p.first_name, ' ', COALESCE(p.last_name, '')),
+               'submitted_at', s.submitted_at,
+               'assignment_id', a.id,
+               'assignment_title', a.title
+             )
+           ) FILTER (WHERE s.status = 'submitted'),
+           '[]'
+         ) AS pending_submissions
        FROM assignments a
        JOIN classes c ON c.id = a.class_id
        LEFT JOIN lessons l ON l.id = a.lesson_id
-       LEFT JOIN pupils p ON p.class_id = a.class_id
        LEFT JOIN submissions s ON s.assignment_id = a.id
+       LEFT JOIN pupils p ON p.id = s.pupil_id
        WHERE a.teacher_id = $1
        GROUP BY a.id, c.name, l.title
        ORDER BY a.created_at DESC`,

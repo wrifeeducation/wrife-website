@@ -30,6 +30,7 @@ interface Submission {
   assignment_id: number;
   status: string;
   submitted_at: string | null;
+  teacher_feedback: string | null;
 }
 
 interface ProgressRecord {
@@ -582,31 +583,62 @@ export default function PupilDashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {activeAssignments.map((assignment) => {
-                    const status = getOverallStatus(assignment.id, assignment.lesson_id);
+                    const subStatus = getSubmissionStatus(assignment.id);
+                    const overallStatus = getOverallStatus(assignment.id, assignment.lesson_id);
+                    const submission = submissions.find(s => s.assignment_id === assignment.id);
+                    const hasTeacherFeedback = submission?.teacher_feedback;
+                    const isReviewed = subStatus === 'reviewed';
+                    const isSubmitted = subStatus === 'submitted';
+                    const isDraft = subStatus === 'draft';
+                    const isOverdue = assignment.due_date && new Date(assignment.due_date) < new Date();
+
+                    const ctaConfig = isReviewed
+                      ? { label: 'See Feedback', className: 'bg-green-500 hover:bg-green-600 text-white' }
+                      : isSubmitted
+                      ? { label: 'Awaiting Review', className: 'bg-gray-200 text-gray-500 cursor-default' }
+                      : isDraft || overallStatus === 'practice_complete'
+                      ? { label: 'Continue', className: 'bg-amber-400 hover:bg-amber-500 text-white' }
+                      : { label: 'Start', className: 'bg-[var(--wrife-blue)] hover:opacity-90 text-white' };
+
+                    const cardBorder = isReviewed
+                      ? 'border-green-300 bg-green-50'
+                      : isSubmitted
+                      ? 'border-blue-200 bg-blue-50'
+                      : isDraft
+                      ? 'border-amber-200 bg-amber-50'
+                      : 'border-[var(--wrife-border)] bg-[var(--wrife-bg)]';
+
                     return (
-                      <Link 
-                        key={assignment.id} 
-                        href={`/pupil/assignment/${assignment.id}`}
-                      >
-                        <div className="p-4 rounded-xl bg-[var(--wrife-bg)] border border-[var(--wrife-border)] hover:shadow-soft transition cursor-pointer">
-                          <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-semibold text-[var(--wrife-text-main)]">
-                              {assignment.title}
-                            </h3>
-                            {getStatusBadge(status)}
+                      <Link key={assignment.id} href={`/pupil/assignment/${assignment.id}`}>
+                        <div className={`p-4 rounded-xl border hover:shadow-soft transition cursor-pointer ${cardBorder}`}>
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <h3 className="font-bold text-[var(--wrife-text-main)] leading-tight">
+                                  {assignment.title}
+                                </h3>
+                                {isReviewed && hasTeacherFeedback && (
+                                  <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-white">
+                                    New Feedback!
+                                  </span>
+                                )}
+                              </div>
+                              {assignment.instructions && (
+                                <p className="text-xs text-[var(--wrife-text-muted)] line-clamp-1">{assignment.instructions}</p>
+                              )}
+                            </div>
+                            <span className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition ${ctaConfig.className} ${isSubmitted ? '' : ''}`}>
+                              {ctaConfig.label}
+                            </span>
                           </div>
-                          {assignment.instructions && (
-                            <p className="text-sm text-[var(--wrife-text-muted)] mb-2 line-clamp-1">
-                              {assignment.instructions}
-                            </p>
-                          )}
+
                           <div className="flex items-center justify-between text-xs text-[var(--wrife-text-muted)]">
-                            <span>
+                            <span className={isOverdue && !isSubmitted && !isReviewed ? 'text-red-500 font-semibold' : ''}>
                               {assignment.due_date
-                                ? `Due: ${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+                                ? `${isOverdue && !isSubmitted && !isReviewed ? 'Overdue: ' : 'Due: '}${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
                                 : 'No due date'}
                             </span>
-                            {status === 'reviewed' && <StarRating count={4} />}
+                            {isReviewed && <StarRating count={4} />}
                           </div>
                         </div>
                       </Link>

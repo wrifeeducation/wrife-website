@@ -28,6 +28,7 @@ interface Submission {
   content: string;
   status: string;
   submitted_at: string | null;
+  teacher_feedback: string | null;
 }
 
 interface AIAssessment {
@@ -518,6 +519,18 @@ export default function PupilAssignmentPage() {
                 ✓ Submitted on {new Date(submission!.submitted_at!).toLocaleDateString('en-GB', {
                   day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
                 })}
+              </p>
+            </div>
+          )}
+
+          {submission?.status === 'reviewed' && submission?.teacher_feedback && (
+            <div className="mt-6 rounded-xl border-2 border-amber-300 bg-amber-50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">💬</span>
+                <h3 className="text-base font-bold text-amber-800">Your Teacher's Feedback</h3>
+              </div>
+              <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-wrap">
+                {submission.teacher_feedback}
               </p>
             </div>
           )}

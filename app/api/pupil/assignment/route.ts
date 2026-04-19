@@ -1,123 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { Pool } from 'pg';
 import { validatePupilSession } from '@/lib/pupil-auth';
 import { getPool } from '@/lib/db';
-
-const pool = new Pool({
-  connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-});
-
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 function getGoogleDriveFileId(shareUrl: string): string | null {
   const patterns = [
     /\/file\/d\/([a-zA-Z0-9_-]+)/,
     /id=([a-zA-Z0-9_-]+)/,
-    /\/d\/([a-zA-Z0-9_-]+)/
+    /\/d\/([a-zA-Z0-9_-]+)/,
   ];
-  
   for (const pattern of patterns) {
     const match = shareUrl.match(pattern);
-    if (match && match[1]) {
-      return match[1];
-    }
+    if (match && match[1]) return match[1];
   }
   return null;
 }
 
 function getGoogleDrivePreviewUrl(shareUrl: string): string | null {
   const fileId = getGoogleDriveFileId(shareUrl);
-  if (fileId) {
-    return `https://drive.google.com/file/d/${fileId}/preview`;
-  }
-  return null;
+  return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
 }
 
 export async function POST(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   try {
     const { assignmentId, pupilId } = await request.json();
-    
+
     if (!assignmentId) {
       return NextResponse.json({ error: 'Assignment ID is required' }, { status: 400 });
     }
 
-    const { data: assignment, error: assignmentError } = await supabaseAdmin
-      .from('assignments')
-      .select('*')
-      .eq('id', assignmentId)
-      .single();
+    const pool = getPool();
 
-    if (assignmentError) {
-      console.error('Assignment error:', assignmentError);
+    const assignmentResult = await pool.query(
+      `SELECT a.id, a.lesson_id, a.class_id, a.teacher_id, a.title, a.instructions, a.due_date, a.created_at
+       FROM assignments a WHERE a.id = $1`,
+      [assignmentId]
+    );
+
+    if (assignmentResult.rows.length === 0) {
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
     }
 
+    const assignment = assignmentResult.rows[0];
+
     let lessonFiles: any[] = [];
     let interactiveHtml: string | null = null;
-    
+
     if (assignment.lesson_id) {
-      // Query lesson_files from PostgreSQL
       const filesResult = await pool.query(
         `SELECT * FROM lesson_files WHERE lesson_id = $1 AND file_type LIKE '%interactive_practice%'`,
         [assignment.lesson_id]
       );
       lessonFiles = filesResult.rows || [];
-      
-      if (lessonFiles.length > 0) {
-        const practiceFile = lessonFiles[0];
-        if (practiceFile?.file_url) {
-          interactiveHtml = practiceFile.file_url;
-        }
+      if (lessonFiles.length > 0 && lessonFiles[0].file_url) {
+        interactiveHtml = lessonFiles[0].file_url;
       }
     }
 
     let submission = null;
     let assessment = null;
-    
+
     if (pupilId) {
       try {
-        const { data: submissionData } = await supabaseAdmin
-          .from('submissions')
-          .select('*')
-          .eq('assignment_id', assignmentId)
-          .eq('pupil_id', pupilId)
-          .single();
+        const subResult = await pool.query(
+          `SELECT id, assignment_id, pupil_id, content, status, submitted_at, teacher_feedback, created_at, updated_at
+           FROM submissions WHERE assignment_id = $1 AND pupil_id = $2`,
+          [assignmentId, pupilId]
+        );
 
-        if (submissionData) {
-          submission = submissionData;
+        if (subResult.rows.length > 0) {
+          submission = subResult.rows[0];
 
-          if (submissionData.status === 'reviewed') {
-            const { data: assessmentData } = await supabaseAdmin
-              .from('ai_assessments')
-              .select('*')
-              .eq('submission_id', submissionData.id)
-              .single();
-            
-            if (assessmentData) {
-              assessment = assessmentData;
+          if (submission.status === 'reviewed') {
+            const assessResult = await pool.query(
+              `SELECT * FROM ai_assessments WHERE submission_id = $1 LIMIT 1`,
+              [submission.id]
+            );
+            if (assessResult.rows.length > 0) {
+              assessment = assessResult.rows[0];
             }
           }
         }
       } catch (err) {
-        console.log('Submissions table may not exist');
+        console.log('Could not load submission:', err);
       }
     }
 
-    return NextResponse.json({
-      assignment,
-      lessonFiles,
-      interactiveHtml,
-      submission,
-      assessment
-    });
-  } catch (error) {
+    return NextResponse.json({ assignment, lessonFiles, interactiveHtml, submission, assessment });
+  } catch (error: any) {
     console.error('Fetch assignment error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
@@ -125,20 +94,15 @@ export async function POST(request: NextRequest) {
 
 async function verifyPupilExists(pupilId: string): Promise<boolean> {
   try {
-    const dbPool = getPool();
-    const result = await dbPool.query(
-      'SELECT id FROM pupils WHERE id = $1 LIMIT 1',
-      [pupilId]
-    );
+    const pool = getPool();
+    const result = await pool.query('SELECT id FROM pupils WHERE id = $1 LIMIT 1', [pupilId]);
     return result.rows.length > 0;
-  } catch (err) {
-    console.error('[verifyPupilExists-assignment] DB error:', err);
+  } catch {
     return false;
   }
 }
 
 export async function PUT(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   try {
     const { assignmentId, pupilId, content, status } = await request.json();
 
@@ -155,53 +119,41 @@ export async function PUT(request: NextRequest) {
       console.warn(`[assignment-put] Pupil ${pupilId} has no active session but exists — allowing save`);
     }
 
-    const { data: existingSubmission } = await supabaseAdmin
-      .from('submissions')
-      .select('id')
-      .eq('assignment_id', assignmentId)
-      .eq('pupil_id', pupilId)
-      .single();
+    const pool = getPool();
+
+    const existingResult = await pool.query(
+      `SELECT id FROM submissions WHERE assignment_id = $1 AND pupil_id = $2`,
+      [assignmentId, pupilId]
+    );
 
     let submission;
-    
-    if (existingSubmission) {
-      const updateData: any = { content, status };
+
+    if (existingResult.rows.length > 0) {
+      const existingId = existingResult.rows[0].id;
+      const updateFields: string[] = ['content = $1', 'status = $2', 'updated_at = now()'];
+      const updateValues: any[] = [content, status];
+
       if (status === 'submitted') {
-        updateData.submitted_at = new Date().toISOString();
+        updateFields.push('submitted_at = now()');
       }
-      
-      const { data, error } = await supabaseAdmin
-        .from('submissions')
-        .update(updateData)
-        .eq('id', existingSubmission.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      submission = data;
+
+      const updateResult = await pool.query(
+        `UPDATE submissions SET ${updateFields.join(', ')} WHERE id = $${updateValues.length + 1} RETURNING *`,
+        [...updateValues, existingId]
+      );
+      submission = updateResult.rows[0];
     } else {
-      const insertData: any = {
-        assignment_id: assignmentId,
-        pupil_id: pupilId,
-        content,
-        status
-      };
-      if (status === 'submitted') {
-        insertData.submitted_at = new Date().toISOString();
-      }
-      
-      const { data, error } = await supabaseAdmin
-        .from('submissions')
-        .insert(insertData)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      submission = data;
+      const insertResult = await pool.query(
+        `INSERT INTO submissions (assignment_id, pupil_id, content, status, submitted_at)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [assignmentId, pupilId, content, status, status === 'submitted' ? new Date() : null]
+      );
+      submission = insertResult.rows[0];
     }
 
     return NextResponse.json({ submission });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Save submission error:', error);
     return NextResponse.json({ error: 'Could not save submission' }, { status: 500 });
   }

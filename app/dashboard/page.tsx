@@ -262,6 +262,18 @@ function DashboardContent() {
             submitted_count: Number(assignment.submitted_count || 0),
             reviewed_count: Number(assignment.reviewed_count || 0),
           });
+          const pendingSubs: any[] = Array.isArray(assignment.pending_submissions)
+            ? assignment.pending_submissions
+            : [];
+          for (const sub of pendingSubs) {
+            pending.push({
+              id: sub.id,
+              assignment_id: assignment.id,
+              assignment_title: assignment.title,
+              pupil_name: (sub.pupil_name || 'Unknown').trim(),
+              submitted_at: sub.submitted_at || '',
+            });
+          }
         }
       }
 
@@ -833,55 +845,80 @@ function DashboardContent() {
             )}
 
             {activeTab === 'assignments' && (
-              <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
-                <div className="flex items-center justify-between mb-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Active Assignments</h2>
-                  <button onClick={() => handleTabChange('lessons')} className="text-sm text-[var(--wrife-blue)] font-semibold hover:underline">
-                    Assign New Lesson
+                  <button onClick={() => handleTabChange('lessons')} className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition">
+                    + Assign Lesson
                   </button>
                 </div>
                 {activeAssignments.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="bg-white rounded-2xl p-12 border border-[var(--wrife-border)] shadow-sm text-center">
                     <span className="text-5xl mb-4 block">📝</span>
-                    <p className="text-[var(--wrife-text-muted)]">No assignments yet. Assign lessons from the library.</p>
+                    <p className="text-[var(--wrife-text-muted)] mb-3">No assignments yet.</p>
+                    <button onClick={() => handleTabChange('lessons')} className="rounded-full bg-[var(--wrife-blue)] px-6 py-2 text-sm font-semibold text-white hover:opacity-90 transition">
+                      Assign your first lesson
+                    </button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {activeAssignments.map((assignment) => (
-                      <Link
-                        key={assignment.id}
-                        href={`/assignments/${assignment.id}/review`}
-                        className="block p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)] transition"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-semibold text-[var(--wrife-text-main)]">{assignment.title}</h3>
-                            <p className="text-xs text-[var(--wrife-text-muted)]">{assignment.class_name}</p>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {activeAssignments.map((assignment) => {
+                      const toReview = assignment.submitted_count - assignment.reviewed_count;
+                      const pct = assignment.total_pupils > 0
+                        ? Math.round((assignment.submitted_count / assignment.total_pupils) * 100)
+                        : 0;
+                      const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
+                      const isOverdue = dueDate && dueDate < new Date();
+                      return (
+                        <div key={assignment.id} className="bg-white rounded-2xl border border-[var(--wrife-border)] shadow-sm p-5 flex flex-col">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0 mr-3">
+                              <h3 className="font-bold text-[var(--wrife-text-main)] leading-tight">{assignment.title}</h3>
+                              <p className="text-xs text-[var(--wrife-text-muted)] mt-0.5">{assignment.class_name}</p>
+                            </div>
+                            {dueDate && (
+                              <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-lg ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-[var(--wrife-bg)] text-[var(--wrife-text-muted)]'}`}>
+                                {isOverdue ? 'Overdue ' : 'Due '}
+                                {dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                              </span>
+                            )}
                           </div>
-                          {assignment.due_date && (
-                            <span className="text-xs text-[var(--wrife-text-muted)]">
-                              Due: {new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-[var(--wrife-blue)] h-2 rounded-full transition-all"
-                              style={{ width: `${assignment.total_pupils > 0 ? (assignment.submitted_count / assignment.total_pupils) * 100 : 0}%` }}
-                            />
+
+                          <div className="mb-3">
+                            <div className="flex justify-between text-xs text-[var(--wrife-text-muted)] mb-1">
+                              <span>{assignment.submitted_count} of {assignment.total_pupils} submitted</span>
+                              <span>{assignment.reviewed_count} reviewed</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-2">
+                              <div
+                                className="bg-[var(--wrife-blue)] h-2 rounded-full transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
                           </div>
-                          <span className="text-xs text-[var(--wrife-text-muted)]">
-                            {assignment.submitted_count}/{assignment.total_pupils} submitted
-                          </span>
-                          {assignment.submitted_count - assignment.reviewed_count > 0 && (
-                            <span className="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
-                              {assignment.submitted_count - assignment.reviewed_count} to review
-                            </span>
-                          )}
+
+                          <div className="flex items-center justify-between mt-auto">
+                            {toReview > 0 ? (
+                              <span className="px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold">
+                                {toReview} to review
+                              </span>
+                            ) : assignment.reviewed_count > 0 ? (
+                              <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                                All reviewed ✓
+                              </span>
+                            ) : (
+                              <span className="text-xs text-[var(--wrife-text-muted)]">Awaiting submissions</span>
+                            )}
+                            <Link
+                              href={`/assignments/${assignment.id}/review`}
+                              className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition"
+                            >
+                              Review Submissions →
+                            </Link>
+                          </div>
                         </div>
-                      </Link>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

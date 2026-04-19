@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -14,6 +13,14 @@ interface Assignment {
   due_date: string | null;
   lesson_id: number;
   class_id: number;
+  class_name: string;
+  lesson_title: string | null;
+}
+
+interface Pupil {
+  id: string;
+  first_name: string;
+  last_name: string | null;
 }
 
 interface Submission {
@@ -22,7 +29,8 @@ interface Submission {
   content: string;
   status: string;
   submitted_at: string | null;
-  pupil_name?: string;
+  teacher_feedback: string | null;
+  pupil_name: string;
 }
 
 interface AIAssessment {
@@ -51,15 +59,18 @@ function BandBadge({ score }: { score: number }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-700',
-    submitted: 'bg-yellow-100 text-yellow-700',
-    reviewed: 'bg-green-100 text-green-700',
-  };
+const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  not_started: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Not Started' },
+  draft: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'In Progress' },
+  submitted: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Submitted' },
+  reviewed: { bg: 'bg-green-100', text: 'text-green-700', label: 'Reviewed' },
+};
+
+function StatusChip({ status }: { status: string }) {
+  const s = STATUS_STYLES[status] || STATUS_STYLES.not_started;
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${styles[status] || styles.draft}`}>
-      {status}
+    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${s.bg} ${s.text}`}>
+      {s.label}
     </span>
   );
 }
@@ -71,106 +82,60 @@ export default function AssignmentReviewPage() {
   const router = useRouter();
 
   const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [pupils, setPupils] = useState<Pupil[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [assessments, setAssessments] = useState<Map<number, AIAssessment>>(new Map());
   const [activityProgress, setActivityProgress] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [assessing, setAssessing] = useState<number | null>(null);
+  const [teacherFeedback, setTeacherFeedback] = useState('');
+  const [savingFeedback, setSavingFeedback] = useState(false);
+  const [feedbackSaved, setFeedbackSaved] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!authLoading) {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+      if (!user) { router.push('/login'); return; }
       fetchData();
     }
-  }, [user, authLoading, router, assignmentId]);
+  }, [user, authLoading, assignmentId]);
+
+  useEffect(() => {
+    if (selectedSubmission) {
+      setTeacherFeedback(selectedSubmission.teacher_feedback || '');
+      setFeedbackSaved(false);
+    }
+  }, [selectedSubmission?.id]);
 
   async function fetchData() {
     try {
-      // Only fetch assignment if teacher owns it
-      const { data: assignmentData, error: assignmentError } = await supabase
-        .from('assignments')
-        .select('*')
-        .eq('id', assignmentId)
-        .eq('teacher_id', user?.id)
-        .single();
-
-      if (assignmentError || !assignmentData) {
-        setError('Assignment not found or you do not have permission to view it');
+      const res = await fetch(`/api/teacher/assignments/${assignmentId}/review`);
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Assignment not found');
         setLoading(false);
         return;
       }
-      
-      setAssignment(assignmentData);
+      const data = await res.json();
+      setAssignment(data.assignment);
+      setPupils(data.pupils || []);
+      setSubmissions(data.submissions || []);
 
-      const { data: submissionsData, error: submissionsError } = await supabase
-        .from('submissions')
-        .select('*')
-        .eq('assignment_id', assignmentId)
-        .order('submitted_at', { ascending: false });
+      const assessmentMap = new Map<number, AIAssessment>();
+      (data.assessments || []).forEach((a: AIAssessment) => {
+        assessmentMap.set(a.submission_id, a);
+      });
+      setAssessments(assessmentMap);
 
-      if (submissionsError) throw submissionsError;
-
-      const enrichedSubmissions = await Promise.all(
-        (submissionsData || []).map(async (sub) => {
-          const { data: member } = await supabase
-            .from('class_members')
-            .select('pupil_name, pupils(first_name, last_name)')
-            .eq('id', sub.pupil_id)
-            .single();
-
-          const pupilsData = member?.pupils as { first_name: string; last_name?: string }[] | { first_name: string; last_name?: string } | null;
-          const pupilData = Array.isArray(pupilsData) ? pupilsData[0] : pupilsData;
-          const pupilName = pupilData
-            ? `${pupilData.first_name} ${pupilData.last_name || ''}`.trim()
-            : member?.pupil_name || 'Unknown';
-
-          return {
-            ...sub,
-            pupil_name: pupilName,
-          };
-        })
-      );
-
-      setSubmissions(enrichedSubmissions);
-
-      const submissionIds = (submissionsData || []).map(s => s.id);
-      if (submissionIds.length > 0) {
-        const { data: assessmentsData } = await supabase
-          .from('ai_assessments')
-          .select('*')
-          .in('submission_id', submissionIds);
-
-        const assessmentMap = new Map<number, AIAssessment>();
-        (assessmentsData || []).forEach(a => {
-          assessmentMap.set(a.submission_id, a);
-        });
-        setAssessments(assessmentMap);
-      }
-
-      if (assignmentData.lesson_id) {
-        try {
-          const { data: progressData } = await supabase
-            .from('progress_records')
-            .select('pupil_id, status')
-            .eq('lesson_id', assignmentData.lesson_id);
-
-          const progressMap = new Map<string, string>();
-          (progressData || []).forEach(p => {
-            const existing = progressMap.get(p.pupil_id);
-            if (!existing || existing !== 'completed') {
-              progressMap.set(p.pupil_id, p.status);
-            }
-          });
-          setActivityProgress(progressMap);
-        } catch {
-          // progress_records may not be accessible; non-critical
+      const progressMap = new Map<string, string>();
+      (data.progressRecords || []).forEach((p: any) => {
+        const existing = progressMap.get(p.pupil_id);
+        if (!existing || existing !== 'completed') {
+          progressMap.set(p.pupil_id, p.status);
         }
-      }
+      });
+      setActivityProgress(progressMap);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load assignment data');
@@ -183,38 +148,56 @@ export default function AssignmentReviewPage() {
     if (!user) return;
     setAssessing(submissionId);
     setError('');
-
     try {
       const response = await fetch('/api/assess', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          submission_id: submissionId,
-        }),
+        body: JSON.stringify({ submission_id: submissionId }),
       });
-
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Assessment failed');
-      }
-
+      if (!response.ok) throw new Error(result.error || 'Assessment failed');
       setAssessments(prev => {
         const newMap = new Map(prev);
         newMap.set(submissionId, result.assessment);
         return newMap;
       });
-
       setSubmissions(prev =>
-        prev.map(s =>
-          s.id === submissionId ? { ...s, status: 'reviewed' } : s
-        )
+        prev.map(s => s.id === submissionId ? { ...s, status: 'reviewed' } : s)
       );
+      if (selectedSubmission?.id === submissionId) {
+        setSelectedSubmission(prev => prev ? { ...prev, status: 'reviewed' } : prev);
+      }
     } catch (err: any) {
-      console.error('Assessment error:', err);
       setError(err.message || 'Failed to run assessment');
     } finally {
       setAssessing(null);
+    }
+  }
+
+  async function handleSaveFeedback() {
+    if (!selectedSubmission) return;
+    setSavingFeedback(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/teacher/assignments/${assignmentId}/review`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submissionId: selectedSubmission.id,
+          teacherFeedback: teacherFeedback.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save feedback');
+
+      const updatedSub = { ...selectedSubmission, status: 'reviewed', teacher_feedback: teacherFeedback.trim() };
+      setSubmissions(prev => prev.map(s => s.id === selectedSubmission.id ? updatedSub : s));
+      setSelectedSubmission(updatedSub);
+      setFeedbackSaved(true);
+    } catch (err: any) {
+      setError(err.message || 'Could not save feedback');
+    } finally {
+      setSavingFeedback(false);
     }
   }
 
@@ -239,6 +222,7 @@ export default function AssignmentReviewPage() {
         <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
           <div className="mx-auto max-w-4xl px-4 text-center">
             <h1 className="text-2xl font-bold text-[var(--wrife-text-main)]">Assignment not found</h1>
+            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
             <Link href="/dashboard" className="text-[var(--wrife-blue)] hover:underline mt-4 inline-block">
               ← Back to Dashboard
             </Link>
@@ -248,54 +232,57 @@ export default function AssignmentReviewPage() {
     );
   }
 
-  const pendingCount = submissions.filter(s => s.status === 'submitted').length;
-  const reviewedCount = submissions.filter(s => s.status === 'reviewed').length;
-
-  const activityCompletedCount = Array.from(activityProgress.values()).filter(s => s === 'completed').length;
-  const activityStartedCount = Array.from(activityProgress.values()).filter(s => s === 'in_progress').length;
+  const submissionMap = new Map(submissions.map(s => [s.pupil_id, s]));
+  const submittedPupils = submissions.filter(s => s.status === 'submitted');
+  const reviewedPupils = submissions.filter(s => s.status === 'reviewed');
+  const draftPupils = submissions.filter(s => s.status === 'draft');
+  const notStartedPupils = pupils.filter(p => !submissionMap.has(p.id));
   const hasActivityData = activityProgress.size > 0;
 
-  function getActivityIcon(pupilId: string) {
-    const status = activityProgress.get(pupilId);
-    if (status === 'completed') return <span title="Activity completed" className="text-green-600 text-sm">✅</span>;
-    if (status === 'in_progress') return <span title="Activity in progress" className="text-amber-500 text-sm">◐</span>;
-    return <span title="Activity not started" className="text-gray-300 text-sm">—</span>;
-  }
+  const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
+  const isOverdue = dueDate && dueDate < new Date();
+
+  const currentAssessment = selectedSubmission ? assessments.get(selectedSubmission.id) : null;
+  const canRunAI = selectedSubmission?.status === 'submitted' && !currentAssessment;
+  const canSaveFeedback = selectedSubmission && selectedSubmission.status !== 'not_started';
 
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-6">
-            <Link href="/dashboard" className="text-[var(--wrife-blue)] hover:underline text-sm">
-              ← Back to Dashboard
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="mb-4">
+            <Link href="/dashboard?tab=assignments" className="text-[var(--wrife-blue)] hover:underline text-sm">
+              ← Back to Assignments
             </Link>
           </div>
 
           <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6 mb-6">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between flex-wrap gap-4">
               <div>
                 <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">{assignment.title}</h1>
-                {assignment.due_date && (
-                  <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
-                    Due: {new Date(assignment.due_date).toLocaleDateString('en-GB', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long'
-                    })}
+                <p className="text-sm text-[var(--wrife-text-muted)] mt-1">{assignment.class_name}</p>
+                {assignment.lesson_title && (
+                  <p className="text-xs text-[var(--wrife-text-muted)] mt-0.5">{assignment.lesson_title}</p>
+                )}
+                {dueDate && (
+                  <p className={`text-xs font-semibold mt-1 ${isOverdue ? 'text-red-600' : 'text-[var(--wrife-text-muted)]'}`}>
+                    {isOverdue ? 'Overdue: ' : 'Due: '}
+                    {dueDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
                   </p>
                 )}
               </div>
-              <div className="flex gap-3">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
-                  <p className="text-xs text-[var(--wrife-text-muted)]">Pending</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{reviewedCount}</p>
-                  <p className="text-xs text-[var(--wrife-text-muted)]">Reviewed</p>
-                </div>
+              <div className="flex gap-6">
+                {[
+                  { count: pupils.length, label: 'Total', color: 'text-[var(--wrife-text-main)]' },
+                  { count: submittedPupils.length, label: 'To Review', color: 'text-yellow-600' },
+                  { count: reviewedPupils.length, label: 'Reviewed', color: 'text-green-600' },
+                ].map(({ count, label, color }) => (
+                  <div key={label} className="text-center">
+                    <p className={`text-2xl font-bold ${color}`}>{count}</p>
+                    <p className="text-xs text-[var(--wrife-text-muted)]">{label}</p>
+                  </div>
+                ))}
               </div>
             </div>
             {assignment.instructions && (
@@ -307,22 +294,48 @@ export default function AssignmentReviewPage() {
             )}
           </div>
 
-          {hasActivityData && (
-            <div className="mb-4 p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-wrap items-center gap-4">
-              <span className="text-2xl">🎮</span>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-blue-800">Interactive Activity</p>
-                <p className="text-xs text-blue-600 mt-0.5">
-                  {activityCompletedCount} {activityCompletedCount === 1 ? 'pupil' : 'pupils'} completed
-                  {activityStartedCount > 0 && ` · ${activityStartedCount} in progress`}
-                </p>
-              </div>
-              <div className="flex gap-3 text-xs text-blue-700">
-                <span className="flex items-center gap-1">✅ Completed: <strong>{activityCompletedCount}</strong></span>
-                {activityStartedCount > 0 && <span className="flex items-center gap-1">◐ In progress: <strong>{activityStartedCount}</strong></span>}
-              </div>
+          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5 mb-6">
+            <h2 className="text-sm font-bold text-[var(--wrife-text-muted)] uppercase tracking-wider mb-4">
+              Class Progress
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: 'Not Started', pupils: notStartedPupils.map(p => ({ id: p.id, name: `${p.first_name} ${p.last_name || ''}`.trim(), status: 'not_started' })), style: STATUS_STYLES.not_started },
+                { label: 'In Progress', pupils: draftPupils.map(s => ({ id: s.pupil_id, name: s.pupil_name, status: 'draft' })), style: STATUS_STYLES.draft },
+                { label: 'Submitted', pupils: submittedPupils.map(s => ({ id: s.pupil_id, name: s.pupil_name, status: 'submitted' })), style: STATUS_STYLES.submitted },
+                { label: 'Reviewed', pupils: reviewedPupils.map(s => ({ id: s.pupil_id, name: s.pupil_name, status: 'reviewed' })), style: STATUS_STYLES.reviewed },
+              ].map(({ label, pupils: groupPupils, style }) => (
+                <div key={label} className={`rounded-xl border p-3 ${style.bg} border-opacity-50`} style={{ borderColor: 'rgba(0,0,0,0.08)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-bold uppercase tracking-wide ${style.text}`}>{label}</span>
+                    <span className={`text-lg font-bold ${style.text}`}>{groupPupils.length}</span>
+                  </div>
+                  <div className="space-y-1">
+                    {groupPupils.slice(0, 6).map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          const sub = submissions.find(s => s.pupil_id === p.id);
+                          if (sub) setSelectedSubmission(sub);
+                        }}
+                        disabled={label === 'Not Started'}
+                        className={`w-full text-left text-xs rounded-lg px-2 py-1 truncate transition ${
+                          label === 'Not Started'
+                            ? 'text-gray-500 cursor-default'
+                            : `${style.text} hover:bg-white/60 cursor-pointer font-medium`
+                        } ${selectedSubmission && submissions.find(s => s.pupil_id === p.id)?.id === selectedSubmission.id ? 'bg-white/80 font-bold' : ''}`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                    {groupPupils.length > 6 && (
+                      <p className={`text-xs ${style.text} opacity-70 px-2`}>+{groupPupils.length - 6} more</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
           {error && (
             <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200">
@@ -330,160 +343,180 @@ export default function AssignmentReviewPage() {
             </div>
           )}
 
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] overflow-hidden">
-              <div className="p-4 border-b border-[var(--wrife-border)]">
-                <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
+          <div className="grid lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-2 bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] overflow-hidden">
+              <div className="p-4 border-b border-[var(--wrife-border)] flex items-center justify-between">
+                <h2 className="text-base font-bold text-[var(--wrife-text-main)]">
                   Submissions ({submissions.length})
                 </h2>
+                {submittedPupils.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+                    {submittedPupils.length} need review
+                  </span>
+                )}
               </div>
 
               {submissions.length === 0 ? (
                 <div className="p-8 text-center">
-                  <div className="mb-4">
-                    <span className="text-5xl">📝</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No submissions yet</h3>
-                  <p className="text-sm text-[var(--wrife-text-muted)]">
-                    Pupils haven't submitted their work yet
-                  </p>
+                  <span className="text-5xl block mb-4">📝</span>
+                  <h3 className="text-base font-bold text-[var(--wrife-text-main)] mb-1">No submissions yet</h3>
+                  <p className="text-sm text-[var(--wrife-text-muted)]">Pupils haven't submitted their work</p>
                 </div>
               ) : (
-                <div className="divide-y divide-[var(--wrife-border)] max-h-[500px] overflow-y-auto">
+                <div className="divide-y divide-[var(--wrife-border)] max-h-[520px] overflow-y-auto">
                   {submissions.map((sub) => (
                     <button
                       key={sub.id}
                       onClick={() => setSelectedSubmission(sub)}
                       className={`w-full p-4 text-left hover:bg-[var(--wrife-bg)] transition ${
-                        selectedSubmission?.id === sub.id ? 'bg-[var(--wrife-blue-soft)]' : ''
+                        selectedSubmission?.id === sub.id ? 'bg-[var(--wrife-blue-soft)] border-l-4 border-[var(--wrife-blue)]' : ''
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-[var(--wrife-text-main)]">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-sm text-[var(--wrife-text-main)]">
                           {sub.pupil_name}
                         </span>
                         <div className="flex items-center gap-2">
                           {hasActivityData && (
-                            <span title="Interactive activity status">
-                              {getActivityIcon(sub.pupil_id)}
+                            <span title="Practice activity status">
+                              {activityProgress.get(sub.pupil_id) === 'completed' ? '✅' :
+                               activityProgress.get(sub.pupil_id) === 'in_progress' ? '◐' : '—'}
                             </span>
                           )}
-                          <StatusBadge status={sub.status} />
+                          <StatusChip status={sub.status} />
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-[var(--wrife-text-muted)]">
-                        <span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-[var(--wrife-text-muted)]">
                           {sub.submitted_at
-                            ? new Date(sub.submitted_at).toLocaleDateString('en-GB', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : 'Not submitted'}
+                            ? new Date(sub.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                            : 'Draft'}
                         </span>
                         {assessments.has(sub.id) && (
                           <BandBadge score={assessments.get(sub.id)!.banding_score} />
                         )}
                       </div>
+                      {sub.teacher_feedback && (
+                        <p className="text-xs text-amber-600 mt-1 truncate">✏️ Feedback added</p>
+                      )}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] overflow-hidden">
+            <div className="lg:col-span-3 bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] overflow-hidden">
               {selectedSubmission ? (
                 <>
-                  <div className="p-4 border-b border-[var(--wrife-border)] flex items-center justify-between">
+                  <div className="p-4 border-b border-[var(--wrife-border)] flex items-center justify-between flex-wrap gap-2">
                     <div>
-                      <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
+                      <h2 className="text-base font-bold text-[var(--wrife-text-main)]">
                         {selectedSubmission.pupil_name}
                       </h2>
                       <p className="text-xs text-[var(--wrife-text-muted)]">
                         {selectedSubmission.content?.split(/\s+/).filter(w => w).length || 0} words
+                        {selectedSubmission.submitted_at && ` · Submitted ${new Date(selectedSubmission.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
                       </p>
                     </div>
-                    {selectedSubmission.status === 'submitted' && !assessments.has(selectedSubmission.id) && (
-                      <button
-                        onClick={() => handleRunAssessment(selectedSubmission.id)}
-                        disabled={assessing === selectedSubmission.id}
-                        className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-                      >
-                        {assessing === selectedSubmission.id ? (
-                          <span className="flex items-center gap-2">
-                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></span>
-                            Assessing...
-                          </span>
-                        ) : (
-                          'Run AI Assessment'
-                        )}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <StatusChip status={selectedSubmission.status} />
+                      {canRunAI && (
+                        <button
+                          onClick={() => handleRunAssessment(selectedSubmission.id)}
+                          disabled={assessing === selectedSubmission.id}
+                          className="rounded-full bg-[var(--wrife-blue)] px-4 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
+                        >
+                          {assessing === selectedSubmission.id ? (
+                            <span className="flex items-center gap-1">
+                              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-r-transparent"></span>
+                              Assessing...
+                            </span>
+                          ) : 'Run AI Assessment'}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="p-4 max-h-[400px] overflow-y-auto">
-                    <div className="bg-[var(--wrife-bg)] rounded-lg p-4 mb-4">
-                      <h3 className="text-sm font-semibold text-[var(--wrife-text-main)] mb-2">Pupil's Writing</h3>
-                      <p className="text-sm text-[var(--wrife-text-main)] whitespace-pre-wrap">
-                        {selectedSubmission.content || 'No content'}
+                  <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
+                    <div className="bg-[var(--wrife-bg)] rounded-xl p-4">
+                      <h3 className="text-xs font-bold text-[var(--wrife-text-muted)] uppercase tracking-wider mb-2">
+                        Pupil's Writing
+                      </h3>
+                      <p className="text-sm text-[var(--wrife-text-main)] whitespace-pre-wrap leading-relaxed">
+                        {selectedSubmission.content || <em className="text-gray-400">No content yet</em>}
                       </p>
                     </div>
 
-                    {assessments.has(selectedSubmission.id) && (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-sm font-semibold text-[var(--wrife-text-main)]">AI Assessment</span>
-                          <BandBadge score={assessments.get(selectedSubmission.id)!.banding_score} />
+                    {currentAssessment && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[var(--wrife-text-muted)] uppercase tracking-wider">AI Assessment</span>
+                          <BandBadge score={currentAssessment.banding_score} />
                         </div>
-
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                          <h4 className="text-sm font-semibold text-green-700 mb-2">Strengths</h4>
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                          <h4 className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Strengths</h4>
                           <ul className="list-disc list-inside space-y-1">
-                            {assessments.get(selectedSubmission.id)!.strengths.map((s, i) => (
-                              <li key={i} className="text-sm text-green-700">{s}</li>
-                            ))}
+                            {currentAssessment.strengths.map((s, i) => <li key={i} className="text-sm text-green-700">{s}</li>)}
                           </ul>
                         </div>
-
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                          <h4 className="text-sm font-semibold text-yellow-700 mb-2">Areas for Improvement</h4>
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                          <h4 className="text-xs font-bold text-yellow-700 uppercase tracking-wider mb-2">Areas for Improvement</h4>
                           <ul className="list-disc list-inside space-y-1">
-                            {assessments.get(selectedSubmission.id)!.improvements.map((s, i) => (
-                              <li key={i} className="text-sm text-yellow-700">{s}</li>
-                            ))}
+                            {currentAssessment.improvements.map((s, i) => <li key={i} className="text-sm text-yellow-700">{s}</li>)}
                           </ul>
                         </div>
-
-                        {assessments.get(selectedSubmission.id)!.mechanical_edits.length > 0 && (
-                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <h4 className="text-sm font-semibold text-red-700 mb-2">Spelling & Grammar</h4>
+                        {currentAssessment.mechanical_edits.length > 0 && (
+                          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                            <h4 className="text-xs font-bold text-red-700 uppercase tracking-wider mb-2">Spelling & Grammar</h4>
                             <ul className="list-disc list-inside space-y-1">
-                              {assessments.get(selectedSubmission.id)!.mechanical_edits.map((s, i) => (
-                                <li key={i} className="text-sm text-red-700">{s}</li>
-                              ))}
+                              {currentAssessment.mechanical_edits.map((s, i) => <li key={i} className="text-sm text-red-700">{s}</li>)}
                             </ul>
                           </div>
                         )}
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                          <h4 className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Improved Example</h4>
+                          <p className="text-sm text-blue-700 italic">"{currentAssessment.improved_example}"</p>
+                        </div>
+                      </div>
+                    )}
 
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <h4 className="text-sm font-semibold text-blue-700 mb-2">Improved Example</h4>
-                          <p className="text-sm text-blue-700 italic">
-                            "{assessments.get(selectedSubmission.id)!.improved_example}"
-                          </p>
+                    {canSaveFeedback && (
+                      <div className="border-t border-[var(--wrife-border)] pt-4">
+                        <h3 className="text-xs font-bold text-[var(--wrife-text-muted)] uppercase tracking-wider mb-2">
+                          Your Feedback to {selectedSubmission.pupil_name.split(' ')[0]}
+                        </h3>
+                        <textarea
+                          value={teacherFeedback}
+                          onChange={(e) => { setTeacherFeedback(e.target.value); setFeedbackSaved(false); }}
+                          rows={4}
+                          placeholder="Write a personal note for this pupil — what they did well, what to focus on next..."
+                          className="w-full px-4 py-3 rounded-xl border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)] resize-none"
+                        />
+                        <div className="flex items-center justify-between mt-2">
+                          {feedbackSaved && (
+                            <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                              ✓ Saved & marked as reviewed
+                            </span>
+                          )}
+                          {!feedbackSaved && <span />}
+                          <button
+                            onClick={handleSaveFeedback}
+                            disabled={savingFeedback}
+                            className="rounded-full bg-[var(--wrife-blue)] px-5 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
+                          >
+                            {savingFeedback ? 'Saving...' : selectedSubmission.status === 'reviewed' ? 'Update Feedback' : 'Save & Mark Reviewed'}
+                          </button>
                         </div>
                       </div>
                     )}
                   </div>
                 </>
               ) : (
-                <div className="p-8 text-center">
-                  <div className="mb-4">
-                    <span className="text-5xl">👈</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">Select a submission</h3>
+                <div className="p-8 text-center h-full flex flex-col items-center justify-center">
+                  <span className="text-5xl mb-4">👈</span>
+                  <h3 className="text-base font-bold text-[var(--wrife-text-main)] mb-1">Select a submission</h3>
                   <p className="text-sm text-[var(--wrife-text-muted)]">
-                    Click on a pupil's submission to view their work
+                    Click a pupil's name in the progress grid or the list to view their work
                   </p>
                 </div>
               )}
