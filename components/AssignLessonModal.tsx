@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
 
 interface AssignLessonModalProps {
   isOpen: boolean;
@@ -12,7 +10,7 @@ interface AssignLessonModalProps {
 }
 
 interface ClassOption {
-  id: string;
+  id: number;
   name: string;
   year_group: number;
 }
@@ -26,35 +24,24 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
   const [fetchingClasses, setFetchingClasses] = useState(true);
   const [classesError, setClassesError] = useState('');
   const [error, setError] = useState('');
-  const { user } = useAuth();
 
   useEffect(() => {
-    if (isOpen && user) {
+    if (isOpen) {
       fetchClasses();
       const oneWeekFromNow = new Date();
       oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
       setDueDate(oneWeekFromNow.toISOString().split('T')[0]);
     }
-  }, [isOpen, user]);
+  }, [isOpen]);
 
   async function fetchClasses() {
-    if (!user) return;
     setFetchingClasses(true);
     setClassesError('');
     try {
-      const { data, error: queryError } = await supabase
-        .from('classes')
-        .select('id, name, year_group')
-        .eq('teacher_id', user.id)
-        .order('name');
-
-      if (queryError) {
-        console.error('Error fetching classes:', queryError);
-        setClassesError('Unable to load classes. Please refresh the page.');
-        setClasses([]);
-      } else {
-        setClasses(data || []);
-      }
+      const res = await fetch('/api/classes');
+      if (!res.ok) throw new Error('Failed to load classes');
+      const data = await res.json();
+      setClasses(data.classes || []);
     } catch (err) {
       console.error('Error fetching classes:', err);
       setClassesError('Unable to load classes. Please refresh the page.');
@@ -73,28 +60,25 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
       return;
     }
 
-    if (!user) {
-      setError('You must be logged in');
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const { error: insertError } = await supabase
-        .from('assignments')
-        .insert({
-          lesson_id: lessonId,
-          class_id: selectedClassId,
-          teacher_id: user.id,
+      const res = await fetch('/api/teacher/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId,
+          classId: Number(selectedClassId),
           title: lessonTitle,
           instructions: instructions.trim() || null,
-          due_date: dueDate || null,
-        });
+          dueDate: dueDate || null,
+        }),
+      });
 
-      if (insertError) throw insertError;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to assign lesson');
 
-      const selectedClass = classes.find(c => c.id === selectedClassId);
+      const selectedClass = classes.find(c => String(c.id) === selectedClassId);
       alert(`Lesson assigned to ${selectedClass?.name || 'class'}!`);
       onClose();
       window.location.reload();
@@ -168,7 +152,7 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
               >
                 <option value="">Select a class...</option>
                 {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
+                  <option key={cls.id} value={String(cls.id)}>
                     Year {cls.year_group} - {cls.name}
                   </option>
                 ))}

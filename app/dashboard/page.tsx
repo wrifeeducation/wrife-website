@@ -224,9 +224,6 @@ function DashboardContent() {
       const fetchedClasses: ClassData[] = classesJson.classes || [];
       setClasses(fetchedClasses);
 
-      const classIds = fetchedClasses.map(c => c.id);
-      const classMap = new Map(fetchedClasses.map(c => [c.id, c]));
-
       let allPupils: PupilData[] = [];
       for (const cls of fetchedClasses) {
         const pupilsRes = await fetch(`/api/classes/${cls.id}/pupils`);
@@ -249,55 +246,22 @@ function DashboardContent() {
       let active: ActiveAssignment[] = [];
       let reviewedCount = 0;
 
-      if (classIds.length > 0) {
-        const { data: assignments } = await supabase
-          .from('assignments')
-          .select('id, title, class_id, due_date')
-          .in('class_id', classIds)
-          .order('due_date', { ascending: true });
+      const assignmentsRes = await fetch('/api/teacher/assignments');
+      if (assignmentsRes.ok) {
+        const assignmentsJson = await assignmentsRes.json();
+        const assignments: any[] = assignmentsJson.assignments || [];
 
-        if (assignments && assignments.length > 0) {
-          for (const assignment of assignments) {
-            const cls = classMap.get(assignment.class_id);
-            const { data: submissions } = await supabase
-              .from('submissions')
-              .select('id, pupil_id, status, submitted_at')
-              .eq('assignment_id', assignment.id);
-
-            const submittedSubs = submissions?.filter(s => s.status === 'submitted') || [];
-            const reviewedSubs = submissions?.filter(s => s.status === 'reviewed') || [];
-            reviewedCount += reviewedSubs.length;
-
-            active.push({
-              id: assignment.id,
-              title: assignment.title,
-              class_name: cls?.name || 'Unknown',
-              due_date: assignment.due_date,
-              total_pupils: Number(cls?.pupil_count || 0),
-              submitted_count: submittedSubs.length + reviewedSubs.length,
-              reviewed_count: reviewedSubs.length,
-            });
-
-            for (const sub of submittedSubs) {
-              const { data: pupil } = await supabase
-                .from('pupils')
-                .select('first_name, last_name')
-                .eq('id', sub.pupil_id)
-                .single();
-
-              const pupilName = pupil
-                ? `${pupil.first_name} ${pupil.last_name || ''}`.trim()
-                : 'Unknown';
-
-              pending.push({
-                id: sub.id,
-                assignment_id: assignment.id,
-                assignment_title: assignment.title,
-                pupil_name: pupilName,
-                submitted_at: sub.submitted_at || '',
-              });
-            }
-          }
+        for (const assignment of assignments) {
+          reviewedCount += Number(assignment.reviewed_count || 0);
+          active.push({
+            id: assignment.id,
+            title: assignment.title,
+            class_name: assignment.class_name || 'Unknown',
+            due_date: assignment.due_date,
+            total_pupils: Number(assignment.total_pupils || 0),
+            submitted_count: Number(assignment.submitted_count || 0),
+            reviewed_count: Number(assignment.reviewed_count || 0),
+          });
         }
       }
 
