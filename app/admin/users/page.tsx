@@ -68,7 +68,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const validFilters = ['all', 'unassigned', 'admin', 'school_admin', 'teacher', 'pupil'] as const;
   type FilterType = typeof validFilters[number];
-  const rawFilter = searchParams.get('filter') ?? 'all';
+  const rawFilter = searchParams?.get('filter') ?? 'all';
   const initialFilter: FilterType = (validFilters as readonly string[]).includes(rawFilter) ? rawFilter as FilterType : 'all';
   const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [searchTerm, setSearchTerm] = useState('');
