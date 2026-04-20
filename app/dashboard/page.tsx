@@ -586,6 +586,12 @@ function DashboardContent() {
                       <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Progressive Writing Practice (PWP)</h2>
                       <p className="text-sm text-[var(--wrife-text-muted)]">Formula-based sentence building with AI feedback</p>
                     </div>
+                    <Link
+                      href="/dashboard/writing-practice"
+                      className="shrink-0 rounded-full bg-green-500 px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
+                    >
+                      Browse Catalogue →
+                    </Link>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4">
                     {classes.length > 0 ? (
@@ -605,10 +611,10 @@ function DashboardContent() {
                       ))
                     ) : (
                       <div className="sm:col-span-2 text-center py-6">
-                        <p className="text-[var(--wrife-text-muted)] text-sm">Create a class first to assign PWP lessons</p>
-                        <button onClick={handleCreateClassClick} className="mt-2 text-green-600 font-semibold text-sm hover:underline">
-                          + Create Class
-                        </button>
+                        <p className="text-[var(--wrife-text-muted)] text-sm">Browse the PWP catalogue and assign lessons once you create a class</p>
+                        <Link href="/dashboard/writing-practice" className="mt-2 text-green-600 font-semibold text-sm hover:underline inline-block">
+                          Browse PWP Catalogue →
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -620,6 +626,12 @@ function DashboardContent() {
                       <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Daily Writing Practice (DWP)</h2>
                       <p className="text-sm text-[var(--wrife-text-muted)]">40-level progressive writing programme with AI assessment</p>
                     </div>
+                    <Link
+                      href="/dashboard/writing-practice"
+                      className="shrink-0 rounded-full bg-purple-500 px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
+                    >
+                      Browse Catalogue →
+                    </Link>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4">
                     {classes.length > 0 ? (
@@ -639,10 +651,10 @@ function DashboardContent() {
                       ))
                     ) : (
                       <div className="sm:col-span-2 text-center py-6">
-                        <p className="text-[var(--wrife-text-muted)] text-sm">Create a class first to assign DWP levels</p>
-                        <button onClick={handleCreateClassClick} className="mt-2 text-purple-600 font-semibold text-sm hover:underline">
-                          + Create Class
-                        </button>
+                        <p className="text-[var(--wrife-text-muted)] text-sm">Browse the DWP catalogue and assign levels once you create a class</p>
+                        <Link href="/dashboard/writing-practice" className="mt-2 text-purple-600 font-semibold text-sm hover:underline inline-block">
+                          Browse DWP Catalogue →
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -699,10 +711,16 @@ function DashboardContent() {
                   <p className="text-sm text-green-700 mb-4">
                     PWP helps pupils build sentences using word formulas. Each lesson focuses on different parts of speech.
                   </p>
+                  <Link
+                    href="/dashboard/writing-practice"
+                    className="inline-flex items-center gap-2 rounded-full bg-green-500 px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition"
+                  >
+                    Browse Full PWP Catalogue →
+                  </Link>
                 </div>
 
                 <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
-                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Select a Class to Assign PWP</h3>
+                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Quick Assign — Select a Class</h3>
                   {classes.length > 0 ? (
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {classes.map((cls) => (
@@ -715,7 +733,7 @@ function DashboardContent() {
                               </div>
                               <span className="text-3xl">📝</span>
                             </div>
-                            <p className="text-sm text-green-600 font-semibold">Assign PWP Lessons →</p>
+                            <p className="text-sm text-green-600 font-semibold">Manage PWP →</p>
                           </div>
                         </Link>
                       ))}
@@ -723,7 +741,7 @@ function DashboardContent() {
                   ) : (
                     <div className="text-center py-12">
                       <span className="text-5xl mb-4 block">📚</span>
-                      <p className="text-[var(--wrife-text-muted)] mb-4">Create a class first to assign PWP lessons</p>
+                      <p className="text-[var(--wrife-text-muted)] mb-4">Create a class to start assigning PWP lessons</p>
                       <button onClick={handleCreateClassClick} className="rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
                         + Create Class
                       </button>
@@ -746,10 +764,16 @@ function DashboardContent() {
                   <p className="text-sm text-purple-700 mb-4">
                     DWP guides pupils through 40 carefully structured levels, from word sorting to extended writing with AI-powered feedback.
                   </p>
+                  <Link
+                    href="/dashboard/writing-practice"
+                    className="inline-flex items-center gap-2 rounded-full bg-purple-500 px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition"
+                  >
+                    Browse Full DWP Catalogue →
+                  </Link>
                 </div>
 
                 <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
-                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Select a Class to Assign DWP Levels</h3>
+                  <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Quick Assign — Select a Class</h3>
                   {classes.length > 0 ? (
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {classes.map((cls) => (
@@ -762,7 +786,7 @@ function DashboardContent() {
                               </div>
                               <span className="text-3xl">✍️</span>
                             </div>
-                            <p className="text-sm text-purple-600 font-semibold">Assign DWP Levels →</p>
+                            <p className="text-sm text-purple-600 font-semibold">Manage DWP →</p>
                           </div>
                         </Link>
                       ))}
@@ -770,7 +794,7 @@ function DashboardContent() {
                   ) : (
                     <div className="text-center py-12">
                       <span className="text-5xl mb-4 block">📚</span>
-                      <p className="text-[var(--wrife-text-muted)] mb-4">Create a class first to assign DWP levels</p>
+                      <p className="text-[var(--wrife-text-muted)] mb-4">Create a class to start assigning DWP levels</p>
                       <button onClick={handleCreateClassClick} className="rounded-full bg-purple-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition">
                         + Create Class
                       </button>

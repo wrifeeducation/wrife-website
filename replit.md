@@ -40,7 +40,8 @@ The project is built with Next.js 15 (App Router), TypeScript, and Tailwind CSS 
 - **Weekly AI Reports:** Auto-generated per-pupil weekly summaries for teachers with strengths/weaknesses and intervention recommendations. API at `/api/teacher/weekly-reports`.
 - **AI Intervention Alerts:** Auto-flags struggling pupils for teacher attention with severity levels. API at `/api/teacher/intervention-alerts`.
 - **Pupil Workflow:** Includes distinct login, dashboard, assignment submission, and practice (PWP/DWP) pages.
-- **Freemium Membership:** Supports Free, Standard, Full, and School tiers. Tier resolution provides users with the highest applicable tier (personal or school).
+- **Freemium Membership:** Supports Free, Standard, Full, and School tiers. Tier resolution provides users with the highest applicable tier (personal or school). `lib/entitlements.ts` now includes `pwpLevelLimit` and `dwpLevelLimit` fields: Free gets 10 of each (25% preview), paid tiers get 'all'.
+- **Writing Practice Catalogue:** Standalone `/dashboard/writing-practice` page for all teachers to browse and assign PWP/DWP activities without admin pre-setup. APIs at `/api/teacher/pwp/catalogue` and `/api/teacher/dwp/catalogue`. DWP catalogue auto-seeds from `lib/dwp-levels-data.ts` if `writing_levels` table is empty. Server-side DWP assignment API at `/api/teacher/dwp/assign`.
 - **Subscription Management:** 
     - Admin can change user tiers via `/admin/users` page, which updates PostgreSQL directly.
     - Users can upgrade via Stripe checkout from `/pricing` page.

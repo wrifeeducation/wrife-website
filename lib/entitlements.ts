@@ -7,6 +7,8 @@ export interface Entitlements {
   canAssignWork: boolean;
   canViewProgress: boolean;
   canAccessAllComponents: boolean;
+  pwpLevelLimit: number | 'all';
+  dwpLevelLimit: number | 'all';
 }
 
 const FREE_FILE_TYPES = [
@@ -26,6 +28,9 @@ const STANDARD_FILE_TYPES = [
 
 const FULL_FILE_TYPES = [...STANDARD_FILE_TYPES];
 
+export const PWP_FREE_LIMIT = 10;
+export const DWP_FREE_LIMIT = 10;
+
 export function getEntitlements(
   membershipTier: string | null | undefined,
   schoolTier?: string | null
@@ -42,6 +47,8 @@ export function getEntitlements(
         canAssignWork: true,
         canViewProgress: true,
         canAccessAllComponents: true,
+        pwpLevelLimit: 'all',
+        dwpLevelLimit: 'all',
       };
 
     case 'standard':
@@ -52,6 +59,8 @@ export function getEntitlements(
         canAssignWork: true,
         canViewProgress: true,
         canAccessAllComponents: true,
+        pwpLevelLimit: 'all',
+        dwpLevelLimit: 'all',
       };
 
     case 'free':
@@ -63,6 +72,8 @@ export function getEntitlements(
         canAssignWork: false,
         canViewProgress: false,
         canAccessAllComponents: false,
+        pwpLevelLimit: PWP_FREE_LIMIT,
+        dwpLevelLimit: DWP_FREE_LIMIT,
       };
   }
 }
