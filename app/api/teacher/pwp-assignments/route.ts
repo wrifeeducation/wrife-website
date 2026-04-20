@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { Pool } from 'pg';
-
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 function getPool() {
   return new Pool({
@@ -24,7 +16,6 @@ interface AuthResult {
 }
 
 async function authenticateTeacher(): Promise<AuthResult | { error: string; status: number }> {
-  const supabaseAdmin = getSupabaseAdmin();
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,63 +35,58 @@ async function authenticateTeacher(): Promise<AuthResult | { error: string; stat
     return { error: 'Unauthorized - please log in', status: 401 };
   }
 
-  // Try to find profile by user ID first
-  let { data: profile, error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .single();
+  const pool = getPool();
+  let profileRow: { id: string; role: string; school_id: string | null } | null = null;
 
-  // If not found by ID, try by email (handles cross-environment accounts)
-  if (profileError?.code === 'PGRST116' && user.email) {
-    const emailResult = await supabaseAdmin
-      .from('profiles')
-      .select('id, role, school_id')
-      .ilike('email', user.email)
-      .single();
-    
-    if (!emailResult.error) {
-      profile = emailResult.data;
-      profileError = null;
+  // Try by user ID first, then email fallback
+  const byId = await pool.query(
+    'SELECT id, role, school_id FROM profiles WHERE id = $1 LIMIT 1',
+    [user.id]
+  );
+  if (byId.rows.length > 0) {
+    profileRow = byId.rows[0];
+  } else if (user.email) {
+    const byEmail = await pool.query(
+      'SELECT id, role, school_id FROM profiles WHERE LOWER(email) = LOWER($1) LIMIT 1',
+      [user.email]
+    );
+    if (byEmail.rows.length > 0) {
+      profileRow = byEmail.rows[0];
     }
   }
 
-  if (profileError || !profile || !['teacher', 'admin', 'school_admin'].includes(profile.role)) {
+  if (!profileRow || !['teacher', 'admin', 'school_admin'].includes(profileRow.role)) {
     return { error: 'Unauthorized - teacher access required', status: 403 };
   }
 
   return { 
-    userId: profile.id, 
-    role: profile.role,
-    schoolId: profile.school_id
+    userId: profileRow.id, 
+    role: profileRow.role,
+    schoolId: profileRow.school_id
   };
 }
 
 async function verifyClassOwnership(auth: AuthResult, classId: string): Promise<boolean> {
-  const supabaseAdmin = getSupabaseAdmin();
-  
   if (auth.role === 'admin') {
     return true;
   }
 
+  const pool = getPool();
+
   if (auth.role === 'teacher') {
-    const { data, error } = await supabaseAdmin
-      .from('classes')
-      .select('id')
-      .eq('id', classId)
-      .eq('teacher_id', auth.userId)
-      .single();
-    return !error && !!data;
+    const result = await pool.query(
+      'SELECT id FROM classes WHERE id = $1 AND teacher_id = $2 LIMIT 1',
+      [classId, auth.userId]
+    );
+    return result.rows.length > 0;
   }
 
   if (auth.role === 'school_admin' && auth.schoolId) {
-    const { data, error } = await supabaseAdmin
-      .from('classes')
-      .select('id')
-      .eq('id', classId)
-      .eq('school_id', auth.schoolId)
-      .single();
-    return !error && !!data;
+    const result = await pool.query(
+      'SELECT id FROM classes WHERE id = $1 AND school_id = $2 LIMIT 1',
+      [classId, auth.schoolId]
+    );
+    return result.rows.length > 0;
   }
 
   return false;

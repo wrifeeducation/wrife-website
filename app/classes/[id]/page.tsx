@@ -193,14 +193,15 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
 
   async function fetchClassData() {
     try {
-      const { data, error } = await supabase
-        .from('classes')
-        .select('*')
-        .eq('id', resolvedParams.id)
-        .single();
-
-      if (error) throw error;
-      setClassData(data);
+      const response = await fetch(`/api/classes/${resolvedParams.id}`);
+      if (!response.ok) {
+        const data = await response.json();
+        console.error('Error fetching class:', data.error);
+        setLoading(false);
+        return;
+      }
+      const data = await response.json();
+      setClassData(data.class);
     } catch (err) {
       console.error('Error fetching class:', err);
     } finally {
