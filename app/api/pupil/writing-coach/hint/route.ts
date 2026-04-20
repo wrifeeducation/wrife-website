@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const pool = getPool();
 
     const hintPrompts: Record<HintType, string> = {
-      formula: `You are a friendly writing coach for a Year ${pupil.year_group} pupil (age ${(pupil.year_group || 2) + 5}).
+      formula: `You are a friendly writing coach for a Year ${pupil.year_group} pupil (age ${Number(pupil.year_group || 2) + 5}).
 
 The pupil is trying to write a sentence using this formula: "${formulaUsed}"
 ${sentenceText ? `Their current attempt: "${sentenceText}"` : 'They haven\'t started writing yet.'}
@@ -52,7 +52,7 @@ Do NOT give the answer directly. Ask a question that guides them.
 
 Return JSON: {"hint": "<your guiding question>"}`,
 
-      grammar: `You are a friendly writing coach for a Year ${pupil.year_group} pupil (age ${(pupil.year_group || 2) + 5}).
+      grammar: `You are a friendly writing coach for a Year ${pupil.year_group} pupil (age ${Number(pupil.year_group || 2) + 5}).
 
 The pupil wrote: "${sentenceText || ''}"
 Using formula: "${formulaUsed}"
@@ -68,7 +68,7 @@ Do NOT correct the error directly. Ask a question that helps them find it.
 
 Return JSON: {"hint": "<your guiding question>"}`,
 
-      vocabulary: `You are a friendly writing coach for a Year ${pupil.year_group} pupil (age ${(pupil.year_group || 2) + 5}).
+      vocabulary: `You are a friendly writing coach for a Year ${pupil.year_group} pupil (age ${Number(pupil.year_group || 2) + 5}).
 
 The pupil wrote: "${sentenceText || ''}"
 Using formula: "${formulaUsed}"

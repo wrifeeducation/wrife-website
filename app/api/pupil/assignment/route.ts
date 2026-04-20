@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    let submission = null;
-    let assessment = null;
+    let submission: any = null;
+    let assessment: any = null;
 
     if (pupilId) {
       try {
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         if (subResult.rows.length > 0) {
           submission = subResult.rows[0];
 
-          if (submission.status === 'reviewed') {
+          if (submission && submission.status === 'reviewed') {
             const assessResult = await pool.query(
               `SELECT * FROM ai_assessments WHERE submission_id = $1 LIMIT 1`,
               [submission.id]
