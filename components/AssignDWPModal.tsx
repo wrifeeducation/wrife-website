@@ -74,17 +74,19 @@ export function AssignDWPModal({ isOpen, onClose, classId, className, yearGroup,
     setError('');
 
     try {
-      const { error } = await supabase
-        .from('dwp_assignments')
-        .insert({
+      const res = await fetch('/api/teacher/dwp/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           level_id: selectedLevel.level_id,
           class_id: classId,
-          teacher_id: teacherId,
           instructions: instructions.trim() || null,
           due_date: dueDate || null,
-        });
+        }),
+      });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to assign writing level');
 
       setSuccessMessage(`Level ${selectedLevel.level_number}: ${selectedLevel.activity_name} assigned successfully!`);
       setTimeout(() => {
