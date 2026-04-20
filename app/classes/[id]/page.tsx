@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, Suspense } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/lib/supabase';
@@ -126,7 +126,7 @@ interface PWPSession {
   completed_at: string | null;
 }
 
-export default function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
+function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [classData, setClassData] = useState<Class | null>(null);
   const [pupils, setPupils] = useState<Pupil[]>([]);
@@ -1413,5 +1413,13 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
     </>
+  );
+}
+
+export default function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+      <ClassDetailPageInner params={params} />
+    </Suspense>
   );
 }

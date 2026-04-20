@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { adminFetch } from '@/lib/admin-fetch';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -59,7 +59,7 @@ interface UserDetails {
   };
 }
 
-export default function AdminUsersPage() {
+function AdminUsersPageInner() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -801,5 +801,13 @@ export default function AdminUsersPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+      <AdminUsersPageInner />
+    </Suspense>
   );
 }
