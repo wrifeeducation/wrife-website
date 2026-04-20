@@ -595,13 +595,11 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     if (!confirm(`Are you sure you want to delete "${classData.name}"? This will remove all pupils and assignments for this class.`)) return;
 
     try {
-      const { error } = await supabase
-        .from('classes')
-        .delete()
-        .eq('id', resolvedParams.id)
-        .eq('teacher_id', user.id);
-
-      if (error) throw error;
+      const res = await fetch(`/api/classes/${resolvedParams.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete class');
+      }
       router.push('/dashboard');
     } catch (err) {
       console.error('Error deleting class:', err);
