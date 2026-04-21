@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
   try {
     const { pupilId, lessonId, classId, assignmentId, status = 'completed', progressPayload } = await request.json();
 
+    console.log(`[practice-complete] POST pupilId=${pupilId} lessonId=${lessonId} assignmentId=${assignmentId} status=${status}`);
+
     if (!pupilId || !lessonId) {
       return NextResponse.json({ error: 'Pupil ID and Lesson ID are required' }, { status: 400 });
     }
@@ -33,6 +35,7 @@ export async function POST(request: NextRequest) {
     if (!session.valid) {
       const exists = await verifyPupilExists(pupilId);
       if (!exists) {
+        console.error(`[practice-complete] Pupil ${pupilId} not found in DB — rejecting`);
         return NextResponse.json({ error: 'Session expired. Please log in again.' }, { status: 401 });
       }
       console.warn(`[practice-complete] Pupil ${pupilId} has no active session but exists in pupils table — allowing progress save`);
@@ -53,7 +56,10 @@ export async function POST(request: NextRequest) {
     const existingResult = await pool.query(existingSQL, existingParams);
     const existing = existingResult.rows[0] || null;
 
+    console.log(`[practice-complete] existing record: ${existing ? `id=${existing.id} status=${existing.status}` : 'none'}`);
+
     if (existing && existing.status === 'completed' && status === 'in_progress') {
+      console.log(`[practice-complete] already completed — skipping downgrade`);
       return NextResponse.json({ progress: existing });
     }
 
@@ -76,7 +82,9 @@ export async function POST(request: NextRequest) {
       updateParams.push(existing.id);
       const updateSQL = `UPDATE progress_records SET ${setClauses.join(', ')} WHERE id = $${updateParams.length} RETURNING *`;
 
+      console.log(`[practice-complete] updating record id=${existing.id} to status=${status}`);
       const updateResult = await pool.query(updateSQL, updateParams);
+      console.log(`[practice-complete] update result rows: ${updateResult.rows.length}`);
       return NextResponse.json({ progress: updateResult.rows[0] });
     } else {
       const insertCols = ['pupil_id', 'lesson_id', 'class_id', 'assignment_id', 'status', 'updated_at'];

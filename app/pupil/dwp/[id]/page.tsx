@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -57,33 +56,33 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
   const [level, setLevel] = useState<WritingLevel | null>(null);
   const [pupilId, setPupilId] = useState<string | null>(null);
   const [pupilName, setPupilName] = useState<string>('');
-  
+
   const [writing, setWriting] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [timeStarted, setTimeStarted] = useState<Date | null>(null);
-  
+
   const [submitting, setSubmitting] = useState(false);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  
+
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('pupilSession');
-    
+
     if (!stored) {
       router.push('/pupil/login');
       return;
     }
-    
+
     try {
       const session = JSON.parse(stored);
       if (!session.pupilId) {
         router.push('/pupil/login');
         return;
       }
-      
+
       setPupilId(session.pupilId);
       setPupilName(session.pupilName || '');
       setTimeStarted(new Date());
@@ -93,55 +92,26 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
     }
   }, [id, router]);
 
-  async function fetchAssignmentData(pupilId: string) {
+  async function fetchAssignmentData(pid: string) {
     try {
-      const { data: assignmentData, error: assignmentError } = await supabase
-        .from('dwp_assignments')
-        .select('*')
-        .eq('id', parseInt(id))
-        .single();
+      const res = await fetch(`/api/pupil/dwp/${id}?pupilId=${encodeURIComponent(pid)}`);
+      const data = await res.json();
 
-      if (assignmentError) throw assignmentError;
-      
-      const { data: enrollment, error: enrollmentError } = await supabase
-        .from('class_members')
-        .select('id')
-        .eq('class_id', assignmentData.class_id)
-        .eq('pupil_id', pupilId)
-        .single();
-      
-      if (enrollmentError || !enrollment) {
-        setError('You are not enrolled in this class');
+      if (!res.ok) {
+        setError(data.error || 'Could not load this writing activity');
         setLoading(false);
         return;
       }
-      
-      setAssignment(assignmentData);
 
-      const { data: levelData, error: levelError } = await supabase
-        .from('writing_levels')
-        .select('*')
-        .eq('level_id', assignmentData.level_id)
-        .single();
+      setAssignment(data.assignment);
+      setLevel(data.level);
 
-      if (levelError) throw levelError;
-      setLevel(levelData);
-
-      const { data: existingAttempt } = await supabase
-        .from('writing_attempts')
-        .select('*')
-        .eq('dwp_assignment_id', parseInt(id))
-        .eq('pupil_id', pupilId)
-        .eq('status', 'draft')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (existingAttempt) {
-        setWriting(existingAttempt.pupil_writing || '');
-        setAttemptId(existingAttempt.id);
+      if (data.draft) {
+        setWriting(data.draft.pupil_writing || '');
+        setAttemptId(data.draft.id);
+        const words = (data.draft.pupil_writing || '').trim().split(/\s+/).filter((w: string) => w.length > 0);
+        setWordCount(words.length);
       }
-
     } catch (err) {
       console.error('Error fetching assignment:', err);
       setError('Could not load this writing activity');
@@ -160,31 +130,22 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
     if (!pupilId || !assignment || !level) return;
 
     try {
-      if (attemptId) {
-        await supabase
-          .from('writing_attempts')
-          .update({
-            pupil_writing: writing,
-            word_count: wordCount,
-          })
-          .eq('id', attemptId);
-      } else {
-        const { data, error } = await supabase
-          .from('writing_attempts')
-          .insert({
-            pupil_id: pupilId,
-            dwp_assignment_id: assignment.id,
-            level_id: level.level_id,
-            pupil_writing: writing,
-            word_count: wordCount,
-            status: 'draft',
-            time_started: timeStarted?.toISOString(),
-          })
-          .select()
-          .single();
+      const res = await fetch('/api/pupil/dwp/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pupilId,
+          assignmentId: assignment.id,
+          levelId: level.level_id,
+          writing,
+          wordCount,
+          timeStarted: timeStarted?.toISOString(),
+        }),
+      });
 
-        if (error) throw error;
-        if (data) setAttemptId(data.id);
+      const data = await res.json();
+      if (res.ok && data.attemptId && !attemptId) {
+        setAttemptId(data.attemptId);
       }
     } catch (err) {
       console.error('Error saving draft:', err);
@@ -201,42 +162,32 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
     setError('');
 
     try {
-      let currentAttemptId = attemptId;
+      const now = new Date();
+      const elapsedSeconds = timeStarted ? Math.floor((now.getTime() - timeStarted.getTime()) / 1000) : null;
 
-      if (!currentAttemptId) {
-        const { data, error } = await supabase
-          .from('writing_attempts')
-          .insert({
-            pupil_id: pupilId,
-            dwp_assignment_id: assignment.id,
-            level_id: level.level_id,
-            pupil_writing: writing,
-            word_count: wordCount,
-            status: 'submitted',
-            time_started: timeStarted?.toISOString(),
-            time_submitted: new Date().toISOString(),
-            time_elapsed_seconds: timeStarted ? Math.floor((Date.now() - timeStarted.getTime()) / 1000) : null,
-          })
-          .select()
-          .single();
+      const draftRes = await fetch('/api/pupil/dwp/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pupilId,
+          assignmentId: assignment.id,
+          levelId: level.level_id,
+          writing,
+          wordCount,
+          timeStarted: timeStarted?.toISOString(),
+          status: 'submitted',
+          timeSubmitted: now.toISOString(),
+          timeElapsedSeconds: elapsedSeconds,
+        }),
+      });
 
-        if (error) throw error;
-        currentAttemptId = data.id;
-        setAttemptId(currentAttemptId);
-      } else {
-        await supabase
-          .from('writing_attempts')
-          .update({
-            pupil_writing: writing,
-            word_count: wordCount,
-            status: 'submitted',
-            time_submitted: new Date().toISOString(),
-            time_elapsed_seconds: timeStarted ? Math.floor((Date.now() - timeStarted.getTime()) / 1000) : null,
-          })
-          .eq('id', currentAttemptId);
-      }
+      const draftData = await draftRes.json();
+      if (!draftRes.ok) throw new Error(draftData.error || 'Could not save writing');
 
-      const response = await fetch('/api/dwp/assess', {
+      const currentAttemptId = draftData.attemptId;
+      setAttemptId(currentAttemptId);
+
+      const assessRes = await fetch('/api/dwp/assess', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -247,20 +198,19 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
         }),
       });
 
-      const contentType = response.headers.get('content-type');
+      const contentType = assessRes.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error('The assessment service is temporarily unavailable. Please try again later.');
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!assessRes.ok) {
+        const errorData = await assessRes.json();
         throw new Error(errorData.error || 'Assessment failed');
       }
 
-      const result = await response.json();
+      const result = await assessRes.json();
       setAssessment(result.assessment);
       setShowResults(true);
-
     } catch (err: any) {
       console.error('Submit error:', err);
       setError(err.message || 'Something went wrong. Please try again.');
@@ -306,8 +256,8 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
           <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
               <div className={`p-6 text-center ${
-                assessment.passed 
-                  ? 'bg-gradient-to-r from-green-400 to-emerald-500' 
+                assessment.passed
+                  ? 'bg-gradient-to-r from-green-400 to-emerald-500'
                   : 'bg-gradient-to-r from-orange-400 to-amber-500'
               }`}>
                 <div className="text-6xl mb-4">
