@@ -13,12 +13,18 @@ export function getPool(): Pool {
       );
     }
     
+    // Strip any ?sslmode from the connection string to avoid conflicts,
+    // then apply SSL via the config object instead (required for Supabase on Vercel)
+    const cleanConnectionString = connectionString.replace(/\?.*$/, '');
+
     pool = new Pool({
-      connectionString,
+      connectionString: cleanConnectionString,
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      ssl: { rejectUnauthorized: false },
+      ssl: {
+        rejectUnauthorized: false,
+      },
     });
   }
   return pool;
