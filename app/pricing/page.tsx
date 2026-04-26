@@ -51,8 +51,8 @@ const plans: Plan[] = [
     description: 'Full access to materials and class management',
     monthlyPrice: '£4.99',
     yearlyPrice: '£49',
-    monthlyPriceId: 'price_1ShALzD9ASFBLfAZQlGx5PMv',
-    yearlyPriceId: 'price_1ShAM0D9ASFBLfAZCGGiwZC3',
+    monthlyPriceId: 'price_1TQXl1Jw0OrBSQhGHTEGRetS',
+    yearlyPriceId: 'price_1TQXl1Jw0OrBSQhGDtvXKmc7',
     features: [
       { text: 'Teacher Guide for all 67 lessons', included: true },
       { text: 'Lesson Presentations', included: true },
@@ -72,8 +72,8 @@ const plans: Plan[] = [
     description: 'Complete platform access for your classroom',
     monthlyPrice: '£9.99',
     yearlyPrice: '£99',
-    monthlyPriceId: 'price_1ShAM0D9ASFBLfAZNoW2rRWR',
-    yearlyPriceId: 'price_1ShAM0D9ASFBLfAZtwT4EY9i',
+    monthlyPriceId: 'price_1TQXoJJw0OrBSQhGCr8MWyGU',
+    yearlyPriceId: 'price_1TQXoJJw0OrBSQhGQudtcyTG',
     highlighted: true,
     badge: 'Most Popular',
     features: [
