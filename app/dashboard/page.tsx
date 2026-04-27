@@ -508,78 +508,6 @@ function DashboardContent() {
           <>
             {activeTab === 'overview' && (
               <div className="grid lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
-                      Pending Reviews ({pendingReviews.length})
-                    </h2>
-                  </div>
-                  {pendingReviews.length === 0 ? (
-                    <p className="text-sm text-[var(--wrife-text-muted)] py-4 text-center">
-                      No submissions waiting for review
-                    </p>
-                  ) : (
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {pendingReviews.slice(0, 10).map((review) => (
-                        <Link
-                          key={review.id}
-                          href={`/assignments/${review.assignment_id}/review`}
-                          className="flex items-center justify-between p-3 rounded-lg bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 transition"
-                        >
-                          <div>
-                            <p className="font-semibold text-sm text-[var(--wrife-text-main)]">{review.pupil_name}</p>
-                            <p className="text-xs text-[var(--wrife-text-muted)]">{review.assignment_title}</p>
-                          </div>
-                          <span className="text-xs text-yellow-600 font-semibold">Review</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Upcoming Due Dates</h2>
-                  </div>
-                  {activeAssignments.filter(a => a.due_date).length === 0 ? (
-                    <p className="text-sm text-[var(--wrife-text-muted)] py-4 text-center">
-                      No upcoming deadlines
-                    </p>
-                  ) : (
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {activeAssignments
-                        .filter(a => a.due_date)
-                        .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())
-                        .slice(0, 5)
-                        .map((assignment) => {
-                          const dueDate = new Date(assignment.due_date!);
-                          const isOverdue = dueDate < new Date();
-                          const isDueSoon = !isOverdue && dueDate.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000;
-                          return (
-                            <div
-                              key={assignment.id}
-                              className={`p-3 rounded-lg border ${
-                                isOverdue ? 'bg-red-50 border-red-200' :
-                                isDueSoon ? 'bg-yellow-50 border-yellow-200' :
-                                'bg-[var(--wrife-bg)] border-[var(--wrife-border)]'
-                              }`}
-                            >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-semibold text-sm text-[var(--wrife-text-main)]">{assignment.title}</p>
-                                  <p className="text-xs text-[var(--wrife-text-muted)]">{assignment.class_name}</p>
-                                </div>
-                                <span className={`text-xs font-semibold ${isOverdue ? 'text-red-600' : isDueSoon ? 'text-yellow-600' : 'text-[var(--wrife-text-muted)]'}`}>
-                                  {dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  )}
-                </div>
-
                 <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-2xl p-6 border-2 border-green-200 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -658,6 +586,78 @@ function DashboardContent() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
+                      Pending Reviews ({pendingReviews.length})
+                    </h2>
+                  </div>
+                  {pendingReviews.length === 0 ? (
+                    <p className="text-sm text-[var(--wrife-text-muted)] py-4 text-center">
+                      No submissions waiting for review
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {pendingReviews.slice(0, 10).map((review) => (
+                        <Link
+                          key={review.id}
+                          href={`/assignments/${review.assignment_id}/review`}
+                          className="flex items-center justify-between p-3 rounded-lg bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 transition"
+                        >
+                          <div>
+                            <p className="font-semibold text-sm text-[var(--wrife-text-main)]">{review.pupil_name}</p>
+                            <p className="text-xs text-[var(--wrife-text-muted)]">{review.assignment_title}</p>
+                          </div>
+                          <span className="text-xs text-yellow-600 font-semibold">Review</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Upcoming Due Dates</h2>
+                  </div>
+                  {activeAssignments.filter(a => a.due_date).length === 0 ? (
+                    <p className="text-sm text-[var(--wrife-text-muted)] py-4 text-center">
+                      No upcoming deadlines
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {activeAssignments
+                        .filter(a => a.due_date)
+                        .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())
+                        .slice(0, 5)
+                        .map((assignment) => {
+                          const dueDate = new Date(assignment.due_date!);
+                          const isOverdue = dueDate < new Date();
+                          const isDueSoon = !isOverdue && dueDate.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000;
+                          return (
+                            <div
+                              key={assignment.id}
+                              className={`p-3 rounded-lg border ${
+                                isOverdue ? 'bg-red-50 border-red-200' :
+                                isDueSoon ? 'bg-yellow-50 border-yellow-200' :
+                                'bg-[var(--wrife-bg)] border-[var(--wrife-border)]'
+                              }`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-semibold text-sm text-[var(--wrife-text-main)]">{assignment.title}</p>
+                                  <p className="text-xs text-[var(--wrife-text-muted)]">{assignment.class_name}</p>
+                                </div>
+                                <span className={`text-xs font-semibold ${isOverdue ? 'text-red-600' : isDueSoon ? 'text-yellow-600' : 'text-[var(--wrife-text-muted)]'}`}>
+                                  {dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-[var(--wrife-border)] shadow-sm">
