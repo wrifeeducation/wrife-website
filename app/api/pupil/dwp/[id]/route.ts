@@ -61,16 +61,23 @@ export async function GET(
       try { level.rubric = JSON.parse(level.rubric); } catch {}
     }
 
-    const draftRes = await pool.query(
-      `SELECT id, pupil_writing, status FROM writing_attempts
-       WHERE dwp_assignment_id = $1 AND pupil_id = $2 AND status = 'draft'
+    const attemptRes = await pool.query(
+      `SELECT id, pupil_writing, status, ai_assessment, passed, percentage,
+              performance_band, badge_earned, score, total_items
+       FROM writing_attempts
+       WHERE dwp_assignment_id = $1 AND pupil_id = $2
        ORDER BY created_at DESC LIMIT 1`,
       [assignmentId, pupilId]
     );
 
-    const draft = draftRes.rows[0] || null;
+    const latestAttempt = attemptRes.rows[0] || null;
 
-    return NextResponse.json({ assignment, level, draft });
+    // Parse ai_assessment if it came back as a string
+    if (latestAttempt && typeof latestAttempt.ai_assessment === 'string') {
+      try { latestAttempt.ai_assessment = JSON.parse(latestAttempt.ai_assessment); } catch {}
+    }
+
+    return NextResponse.json({ assignment, level, latestAttempt });
   } catch (error: any) {
     console.error('[DWP GET assignment]', error);
     return NextResponse.json({ error: 'Could not load assignment' }, { status: 500 });

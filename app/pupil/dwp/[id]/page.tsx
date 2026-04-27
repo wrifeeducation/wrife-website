@@ -106,11 +106,32 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
       setAssignment(data.assignment);
       setLevel(data.level);
 
-      if (data.draft) {
-        setWriting(data.draft.pupil_writing || '');
-        setAttemptId(data.draft.id);
-        const words = (data.draft.pupil_writing || '').trim().split(/\s+/).filter((w: string) => w.length > 0);
+      const attempt = data.latestAttempt;
+      if (attempt) {
+        setAttemptId(attempt.id);
+        setWriting(attempt.pupil_writing || '');
+        const words = (attempt.pupil_writing || '').trim().split(/\s+/).filter((w: string) => w.length > 0);
         setWordCount(words.length);
+
+        // If already assessed, reconstruct assessment from stored data and show results
+        if (attempt.status === 'assessed' && attempt.ai_assessment) {
+          const ai = attempt.ai_assessment;
+          setAssessment({
+            score: ai.score ?? attempt.score ?? 0,
+            total: ai.total ?? attempt.total_items ?? 10,
+            percentage: ai.percentage ?? attempt.percentage ?? 0,
+            passed: ai.passed ?? attempt.passed ?? false,
+            performance_band: ai.performance_band ?? attempt.performance_band ?? 'developing',
+            badge: ai.badge ?? attempt.badge_earned ?? '',
+            feedback: {
+              main_message: ai.feedback?.main_message ?? 'Well done!',
+              specific_praise: ai.feedback?.specific_praise ?? '',
+              growth_area: ai.feedback?.growth_area ?? null,
+              encouragement: ai.feedback?.encouragement ?? 'Keep it up!',
+            },
+          });
+          setShowResults(true);
+        }
       }
     } catch (err) {
       console.error('Error fetching assignment:', err);
@@ -304,6 +325,13 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
                 <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                   <p className="text-[var(--wrife-blue)] font-medium">{assessment.feedback.encouragement}</p>
                 </div>
+
+                {writing && (
+                  <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <h3 className="font-semibold text-gray-700 mb-2">✏️ Your Writing:</h3>
+                    <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">{writing}</p>
+                  </div>
+                )}
 
                 <div className="flex gap-3">
                   <Link
