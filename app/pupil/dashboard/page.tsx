@@ -61,6 +61,7 @@ interface PWPSubmission {
   pwp_assignment_id: number;
   status: string;
   submitted_at: string | null;
+  has_assessment?: boolean;
 }
 
 interface WritingLevel {
@@ -686,7 +687,9 @@ export default function PupilDashboardPage() {
                   const status = getPWPSubmissionStatus(pwp.id);
                   return (
                     <Link key={pwp.id} href={`/pupil/pwp/${pwp.id}`}>
-                      <div className="bg-white rounded-lg p-3 border border-[var(--wrife-border)] hover:shadow-soft transition cursor-pointer">
+                      <div className={`bg-white rounded-lg p-3 border hover:shadow-soft transition cursor-pointer ${
+                        pwpSub?.has_assessment ? 'border-amber-300 bg-amber-50' : 'border-[var(--wrife-border)]'
+                      }`}>
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
                             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-purple-600 text-xs font-bold">
@@ -696,14 +699,21 @@ export default function PupilDashboardPage() {
                               {pwp.progressive_activities.level_name}
                             </p>
                           </div>
+                          {pwpSub?.has_assessment && (
+                            <span className="text-xs font-bold text-amber-600">⭐ Feedback!</span>
+                          )}
                         </div>
                         <p className="text-xs text-[var(--wrife-text-muted)] mb-2">
                           {pwp.progressive_activities.grammar_focus}
                         </p>
                         <div className="flex items-center justify-between">
-                          {status === 'submitted' || status === 'reviewed' ? (
+                          {pwpSub?.has_assessment ? (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                              View Feedback
+                            </span>
+                          ) : status === 'submitted' || status === 'reviewed' ? (
                             <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                              Done
+                              Submitted ✓
                             </span>
                           ) : status === 'draft' ? (
                             <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">

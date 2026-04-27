@@ -60,9 +60,9 @@ export default function PWPAssignmentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Derived state
-  const isReviewed = submission?.status === 'reviewed';
-  const isSubmitted = submission?.status === 'submitted';
+  // Derived state — show feedback if assessment exists (teacher has marked it)
+  const isReviewed = !!assessment;
+  const isSubmitted = !assessment && (submission?.status === 'submitted' || submission?.status === 'draft') && !!submission?.pupil_writing;
 
   useEffect(() => {
     const stored = localStorage.getItem('pupilSession');
@@ -93,14 +93,17 @@ export default function PWPAssignmentPage() {
       if (sub) {
         setSubmission(sub);
         setWriting(sub.pupil_writing || '');
+      }
 
-        // If reviewed, fetch feedback
-        if (sub.status === 'reviewed') {
-          const fbRes = await fetch(`/api/pupil/pwp-feedback?assignmentId=${assignmentId}&pupilId=${encodeURIComponent(pid)}`);
-          const fbData = await fbRes.json();
-          if (fbRes.ok && fbData.assessment) {
-            setAssessment(fbData.assessment);
-          }
+      // Show feedback if assessment exists (regardless of submission status)
+      if (data.existingAssessment) {
+        setAssessment(data.existingAssessment);
+      } else if (sub?.status === 'reviewed') {
+        // Fallback: fetch from dedicated feedback endpoint
+        const fbRes = await fetch(`/api/pupil/pwp-feedback?assignmentId=${assignmentId}&pupilId=${encodeURIComponent(pid)}`);
+        const fbData = await fbRes.json();
+        if (fbRes.ok && fbData.assessment) {
+          setAssessment(fbData.assessment);
         }
       }
     } catch {

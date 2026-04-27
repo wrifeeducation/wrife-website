@@ -126,7 +126,12 @@ export async function POST(request: NextRequest) {
       try {
         const pwpIds = pwpAssignments.map((a: any) => a.id);
         const pwpSubResult = await pool.query(
-          `SELECT * FROM pwp_submissions WHERE pupil_id = $1 AND pwp_assignment_id = ANY($2)`,
+          `SELECT ps.id, ps.pwp_assignment_id, ps.status, ps.submitted_at,
+                  CASE WHEN pa.id IS NOT NULL THEN true ELSE false END AS has_assessment
+           FROM pwp_submissions ps
+           LEFT JOIN pwp_assessments pa ON pa.pwp_submission_id = ps.id
+           WHERE ps.pupil_id = $1 AND ps.pwp_assignment_id = ANY($2)
+           ORDER BY ps.created_at DESC`,
           [pupilId, pwpIds]
         );
         pwpSubmissions = pwpSubResult.rows;

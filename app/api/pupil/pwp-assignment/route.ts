@@ -47,15 +47,44 @@ export async function GET(request: NextRequest) {
     if (typeof examples === 'string') { try { examples = JSON.parse(examples); } catch {} }
     if (typeof practicePrompts === 'string') { try { practicePrompts = JSON.parse(practicePrompts); } catch {} }
 
-    // Fetch existing submission if any
+    // Fetch existing submission + any assessment in one query
     const submissionRes = await pool.query(
-      `SELECT id, content AS pupil_writing, status, submitted_at
-       FROM pwp_submissions
-       WHERE pwp_assignment_id = $1 AND pupil_id = $2
-       ORDER BY created_at DESC LIMIT 1`,
+      `SELECT
+         ps.id, ps.content AS pupil_writing, ps.status, ps.submitted_at,
+         pa.grammar_accuracy, pa.structure_correctness, pa.feedback,
+         pa.corrections, pa.improved_example, pa.teacher_note, pa.created_at AS assessed_at
+       FROM pwp_submissions ps
+       LEFT JOIN pwp_assessments pa ON pa.pwp_submission_id = ps.id
+       WHERE ps.pwp_assignment_id = $1 AND ps.pupil_id = $2
+       ORDER BY ps.created_at DESC, pa.created_at DESC
+       LIMIT 1`,
       [parseInt(assignmentId, 10), pupilId]
     );
-    const existingSubmission = submissionRes.rows[0] || null;
+
+    let existingSubmission = null;
+    let existingAssessment = null;
+
+    if (submissionRes.rows.length > 0) {
+      const r = submissionRes.rows[0];
+      existingSubmission = {
+        id: r.id,
+        pupil_writing: r.pupil_writing,
+        status: r.status,
+        submitted_at: r.submitted_at,
+      };
+      // Return assessment if one exists regardless of submission status
+      if (r.grammar_accuracy !== null || r.feedback !== null) {
+        existingAssessment = {
+          grammar_accuracy: r.grammar_accuracy,
+          structure_correctness: r.structure_correctness,
+          feedback: r.feedback,
+          corrections: typeof r.corrections === 'string' ? JSON.parse(r.corrections) : (r.corrections || []),
+          improved_example: r.improved_example,
+          teacher_note: r.teacher_note,
+          assessed_at: r.assessed_at,
+        };
+      }
+    }
 
     return NextResponse.json({
       assignment: {
@@ -76,6 +105,7 @@ export async function GET(request: NextRequest) {
         practice_prompts: practicePrompts,
       },
       existingSubmission,
+      existingAssessment,
     });
   } catch (error: any) {
     console.error('[PWP assignment fetch]', error);
