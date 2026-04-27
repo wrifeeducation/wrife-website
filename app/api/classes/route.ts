@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
     const pool = getPool();
     
     const result = await pool.query(
-      `SELECT c.*, 
-              (SELECT COUNT(*) FROM pupils p WHERE p.class_id = c.id) as pupil_count,
+      `SELECT c.*,
+              (SELECT COUNT(*) FROM class_members cm WHERE cm.class_id = c.id) as pupil_count,
               pr.display_name as teacher_name
        FROM classes c
        LEFT JOIN profiles pr ON c.teacher_id = pr.id
