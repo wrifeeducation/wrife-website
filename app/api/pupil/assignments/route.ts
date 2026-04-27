@@ -1,6 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 
+// GET: fetch assignments for the currently logged-in pupil (via session cookie)
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.cookies.get('pupil_session')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const pool = getPool();
+
+    // Resolve session → pupil + class
+    const sessionResult = await pool.query(
+      `SELECT ps.pupil_id, cm.class_id
+       FROM pupil_sessions ps
+       JOIN class_members cm ON cm.pupil_id = ps.pupil_id
+       WHERE ps.session_token = $1 AND ps.expires_at > NOW()
+       ORDER BY cm.joined_at DESC LIMIT 1`,
+      [token]
+    );
+
+    if (sessionResult.rows.length === 0) {
+      return NextResponse.json({ error: 'Session expired' }, { status: 401 });
+    }
+
+    const { pupil_id: pupilId, class_id: classId } = sessionResult.rows[0];
+
+    // Use the POST handler logic with resolved IDs
+    const body = { classId, pupilId };
+    const syntheticReq = new Request(request.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return POST(syntheticReq as NextRequest);
+  } catch (error: any) {
+    console.error('GET pupil assignments error:', error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { classId, pupilId } = await request.json();
