@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getPool } from '@/lib/db';
 import { createClient } from '@supabase/supabase-js';
-import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-});
 
 function getSupabaseAdmin() {
   return createClient(

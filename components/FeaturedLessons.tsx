@@ -47,17 +47,17 @@ export default function FeaturedLessons() {
           .order("lesson_number")
           .limit(6);
 
-        // Parse year_groups text ("Years 2-3") into min/max numbers
-        if (data) {
-          data.forEach((l: any) => {
-            const match = l.year_groups?.match(/(\d+)-(\d+)/);
-            l.year_group_min = match ? parseInt(match[1]) : 2;
-            l.year_group_max = match ? parseInt(match[2]) : 6;
-          });
-        }
-
         if (!error && data && data.length > 0) {
-          setLessons(data);
+          // Parse year_groups text ("Years 2-3") into min/max numbers for component compatibility
+          const parsed: Lesson[] = data.map((l: any) => {
+            const match = l.year_groups?.match(/(\d+)-(\d+)/);
+            return {
+              ...l,
+              year_group_min: match ? parseInt(match[1]) : 2,
+              year_group_max: match ? parseInt(match[2]) : 6,
+            };
+          });
+          setLessons(parsed);
         }
       } catch (e) {
         console.log("Using static lesson data");

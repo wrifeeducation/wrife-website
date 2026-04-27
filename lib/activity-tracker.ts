@@ -1,8 +1,5 @@
-import { Pool } from 'pg';
+import { getPool } from '@/lib/db';
 
-const pool = new Pool({
-  connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-});
 
 export type ActivityEventType =
   | 'login'

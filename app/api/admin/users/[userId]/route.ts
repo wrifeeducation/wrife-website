@@ -25,7 +25,7 @@ export async function GET(
 
     const classesResult = await db.query(
       `SELECT c.id, c.name, c.year_group, c.class_code, c.school_name, c.created_at,
-              (SELECT COUNT(*) FROM pupils p WHERE p.class_id = c.id) as pupil_count
+              (SELECT COUNT(*) FROM class_members cm WHERE cm.class_id = c.id) as pupil_count
        FROM classes c WHERE c.teacher_id = $1
        ORDER BY c.created_at DESC`,
       [userId]
@@ -37,14 +37,15 @@ export async function GET(
     if (classIds.length > 0) {
       const pupilsResult = await db.query(
         `SELECT 
-           p.id, p.class_id, p.first_name, p.last_name, p.display_name, 
+           p.id, p.first_name, p.last_name, p.display_name, 
            p.username, p.year_group, p.is_active, p.last_login_at, p.created_at,
            c.name as class_name, c.class_code,
            (SELECT COUNT(*) FROM pupil_activity_log pal WHERE pal.pupil_id = p.id) as activity_count,
            (SELECT COUNT(*) FROM submissions s WHERE s.pupil_id = p.id AND s.status = 'submitted') as submissions_count
          FROM pupils p
-         LEFT JOIN classes c ON p.class_id = c.id
-         WHERE p.class_id = ANY($1)
+         JOIN class_members cm ON cm.pupil_id = p.id
+         LEFT JOIN classes c ON c.id = cm.class_id
+         WHERE cm.class_id = ANY($1)
          ORDER BY c.name, p.first_name, p.last_name`,
         [classIds]
       );

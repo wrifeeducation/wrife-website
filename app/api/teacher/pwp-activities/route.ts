@@ -2,19 +2,13 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { Pool } from 'pg';
+import { getPool } from '@/lib/db';
 
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-}
-
-function getPool() {
-  return new Pool({
-    connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-  });
 }
 
 export async function GET(request: NextRequest) {
@@ -80,7 +74,7 @@ export async function GET(request: NextRequest) {
 
     if (yearGroup) {
       const yearGroupNum = parseInt(yearGroup);
-      query += ' WHERE year_group_min <= $1 AND year_group_max >= $1';
+      // year group filter removed - column does not exist in pwp_activities
       params.push(yearGroupNum);
     }
 

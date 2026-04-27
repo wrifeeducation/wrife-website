@@ -37,7 +37,11 @@ export async function GET(
     const assignment = assignmentResult.rows[0];
 
     const pupilsResult = await pool.query(
-      `SELECT id, first_name, last_name FROM pupils WHERE class_id = $1 AND is_active = true ORDER BY first_name, last_name`,
+      `SELECT p.id, p.first_name, p.last_name
+       FROM pupils p
+       JOIN class_members cm ON cm.pupil_id = p.id
+       WHERE cm.class_id = $1 AND p.is_active = true
+       ORDER BY p.first_name, p.last_name`,
       [assignment.class_id]
     );
 

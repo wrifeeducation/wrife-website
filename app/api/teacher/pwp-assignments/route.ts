@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { Pool } from 'pg';
-
-function getPool() {
-  return new Pool({
-    connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-  });
-}
+import { getPool } from '@/lib/db';
 
 interface AuthResult {
   userId: string;

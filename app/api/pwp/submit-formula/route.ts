@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
 import OpenAI from 'openai';
+import { getPool } from '@/lib/db';
 
 function getOpenAI() {
   return new OpenAI({
@@ -9,17 +9,6 @@ function getOpenAI() {
   });
 }
 
-declare global {
-  var pgPool: Pool | undefined;
-}
-
-function getPool(): Pool {
-  if (!globalThis.pgPool) {
-    globalThis.pgPool = new Pool({
-      connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-      max: 3,
-    });
-  }
   return globalThis.pgPool;
 }
 

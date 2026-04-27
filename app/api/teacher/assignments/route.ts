@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
          a.id, a.lesson_id, a.class_id, a.title, a.instructions, a.due_date, a.created_at,
          c.name AS class_name,
          l.title AS lesson_title,
-         (SELECT COUNT(*) FROM pupils WHERE class_id = a.class_id AND is_active = true) AS total_pupils,
+         (SELECT COUNT(*) FROM class_members cm WHERE cm.class_id = a.class_id) AS total_pupils,
          COUNT(DISTINCT s.id) FILTER (WHERE s.status IN ('submitted', 'reviewed')) AS submitted_count,
          COUNT(DISTINCT s.id) FILTER (WHERE s.status = 'reviewed') AS reviewed_count,
          COALESCE(

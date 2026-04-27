@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin, AuthError } from '@/lib/admin-auth';
-import { Pool } from 'pg';
+import { getPool } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAuthenticatedAdmin();
 
-    const pool = new Pool({
-      connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-    });
+    const pool = getPool();
 
     try {
       await pool.query("NOTIFY pgrst, 'reload schema'");

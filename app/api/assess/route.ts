@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 Lesson: ${lesson.title}
 Chapter: ${lesson.chapter}, Unit: ${lesson.unit}
 Summary: ${lesson.summary || 'N/A'}
-Year Group: ${lesson.year_group_min}-${lesson.year_group_max}
+Year Group: ${lesson.year_groups || 'Years 2-6'}
 `;
       }
     }

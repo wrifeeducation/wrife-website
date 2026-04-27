@@ -1,12 +1,14 @@
+
+// PWP activities table not yet set up in database
+const PWP_TABLE_EXISTS = false;
+
+import { getPool } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin, AuthError } from '@/lib/admin-auth';
-import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-});
 
 export async function GET(request: NextRequest) {
+  const pool = getPool();
   try {
     const admin = await getAuthenticatedAdmin();
 
@@ -25,6 +27,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const pool = getPool();
   try {
     const admin = await getAuthenticatedAdmin();
     const body = await request.json();
@@ -58,6 +61,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const pool = getPool();
   try {
     const admin = await getAuthenticatedAdmin();
     const body = await request.json();
@@ -98,6 +102,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const pool = getPool();
   try {
     const admin = await getAuthenticatedAdmin();
     const { searchParams } = new URL(request.url);

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const params: any[] = [];
     if (yearGroup) {
       const yg = parseInt(yearGroup);
-      query += ' WHERE year_group_min <= $1 AND year_group_max >= $1';
+      // year group filter removed - column does not exist in pwp_activities
       params.push(yg);
     }
     query += ' ORDER BY level ASC';

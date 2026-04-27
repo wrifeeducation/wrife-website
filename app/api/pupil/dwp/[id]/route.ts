@@ -33,7 +33,9 @@ export async function GET(
     const assignment = assignmentRes.rows[0];
 
     const enrollmentRes = await pool.query(
-      'SELECT id FROM pupils WHERE id = $1 AND class_id = $2 AND is_active = TRUE LIMIT 1',
+      `SELECT p.id FROM pupils p
+       JOIN class_members cm ON cm.pupil_id = p.id
+       WHERE p.id = $1 AND cm.class_id = $2 AND p.is_active = TRUE LIMIT 1`,
       [pupilId, assignment.class_id]
     );
 

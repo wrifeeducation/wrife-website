@@ -10,16 +10,16 @@ export async function GET(
     const { id: classId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const pool = getPool();
-    
+
     const classResult = await pool.query(
-      `SELECT c.*, 
-              (SELECT COUNT(*) FROM pupils p WHERE p.class_id = c.id) as pupil_count
+      `SELECT c.*,
+              (SELECT COUNT(*) FROM class_members cm WHERE cm.class_id = c.id) as pupil_count
        FROM classes c
        WHERE c.id = $1 AND c.teacher_id = $2`,
       [classId, user.id]
@@ -29,16 +29,18 @@ export async function GET(
       return NextResponse.json({ error: 'Class not found' }, { status: 404 });
     }
 
+    // Fetch pupils via class_members join
     const pupilsResult = await pool.query(
-      `SELECT id, first_name, last_name, display_name, username, year_group, 
-              is_active, last_login_at, created_at
-       FROM pupils
-       WHERE class_id = $1
-       ORDER BY first_name, last_name`,
+      `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username,
+              p.year_group, p.is_active, p.last_login_at, p.created_at
+       FROM pupils p
+       JOIN class_members cm ON cm.pupil_id = p.id
+       WHERE cm.class_id = $1
+       ORDER BY p.first_name, p.last_name`,
       [classId]
     );
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       class: classResult.rows[0],
       pupils: pupilsResult.rows
     });
@@ -56,7 +58,7 @@ export async function PATCH(
     const { id: classId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -65,10 +67,10 @@ export async function PATCH(
     const { name, yearGroup } = body;
 
     const pool = getPool();
-    
+
     const result = await pool.query(
-      `UPDATE classes 
-       SET name = COALESCE($1, name), 
+      `UPDATE classes
+       SET name = COALESCE($1, name),
            year_group = COALESCE($2, year_group),
            updated_at = NOW()
        WHERE id = $3 AND teacher_id = $4
@@ -95,13 +97,13 @@ export async function DELETE(
     const { id: classId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const pool = getPool();
-    
+
     const result = await pool.query(
       'DELETE FROM classes WHERE id = $1 AND teacher_id = $2 RETURNING id',
       [classId, user.id]
