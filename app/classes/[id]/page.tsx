@@ -159,6 +159,7 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
     pupilName: string;
     activityName: string;
   } | null>(null);
+  const [expandedPupilId, setExpandedPupilId] = useState<string | null>(null);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -809,154 +810,256 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
           {activeTab === 'progress' && (
           <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
             <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">
-              Assignment Progress
+              Class Progress
             </h2>
 
-            {assignments.length === 0 ? (
+            {assignments.length === 0 && pwpAssignments.length === 0 && dwpAssignments.length === 0 ? (
               <div className="text-center py-12">
-                <div className="mb-4">
-                  <span className="text-5xl">📋</span>
-                </div>
+                <div className="mb-4"><span className="text-5xl">📋</span></div>
                 <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No assignments yet</h3>
                 <p className="text-sm text-[var(--wrife-text-muted)] mb-4">
-                  Assign lessons to this class to start tracking progress
+                  Assign lessons, PWP activities, or DWP levels to start tracking progress
                 </p>
-                <Link
-                  href="/"
-                  className="inline-block rounded-full bg-[var(--wrife-blue)] px-6 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition"
-                >
+                <Link href="/" className="inline-block rounded-full bg-[var(--wrife-blue)] px-6 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition">
                   Browse Lessons
                 </Link>
               </div>
             ) : pupils.length === 0 ? (
               <div className="text-center py-12">
-                <div className="mb-4">
-                  <span className="text-5xl">👥</span>
-                </div>
+                <div className="mb-4"><span className="text-5xl">👥</span></div>
                 <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No pupils yet</h3>
-                <p className="text-sm text-[var(--wrife-text-muted)]">
-                  Add pupils to see their progress on assignments
-                </p>
+                <p className="text-sm text-[var(--wrife-text-muted)]">Add pupils to see their progress</p>
               </div>
             ) : (
               <>
-                <div className="mb-4">
-                  <p className="text-xs font-semibold text-[var(--wrife-text-main)] mb-2">Writing:</p>
-                  <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">✓</span>
-                      Submitted
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
-                      In Progress
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs">★</span>
-                      Reviewed
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">○</span>
-                      Not Started
-                    </span>
-                  </div>
-                  <p className="text-xs font-semibold text-[var(--wrife-text-main)] mt-3 mb-2">Practice:</p>
-                  <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">🎮</span>
-                      Done
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
-                      In Progress
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">-</span>
-                      Not Started
-                    </span>
-                  </div>
-                </div>
+                {/* Class summary banner */}
+                {(() => {
+                  const pendingLessonReviews = submissions.filter(s => s.status === 'submitted').length;
+                  const pendingPwpReviews = pwpSubmissions.filter(s => s.status === 'submitted').length;
+                  const totalPending = pendingLessonReviews + pendingPwpReviews;
+                  const totalAssessed = writingAttempts.filter(a => a.status === 'assessed').length;
+                  const totalTasks = (assignments.length + pwpAssignments.length + dwpAssignments.length) * pupils.length;
+                  const totalDone =
+                    submissions.filter(s => s.status === 'submitted' || s.status === 'reviewed').length +
+                    pwpSubmissions.filter(s => s.status === 'submitted' || s.status === 'reviewed').length +
+                    writingAttempts.filter(a => a.status === 'assessed').length;
+                  const classPercent = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) : 0;
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                      <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 text-center">
+                        <p className="text-2xl font-bold text-blue-700">{classPercent}%</p>
+                        <p className="text-xs text-blue-600 mt-1">Class Completion</p>
+                      </div>
+                      <div className={`rounded-xl p-3 border text-center ${totalPending > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-100'}`}>
+                        <p className={`text-2xl font-bold ${totalPending > 0 ? 'text-amber-700' : 'text-gray-400'}`}>{totalPending}</p>
+                        <p className={`text-xs mt-1 ${totalPending > 0 ? 'text-amber-600' : 'text-gray-400'}`}>Awaiting Review</p>
+                      </div>
+                      <div className="bg-green-50 rounded-xl p-3 border border-green-100 text-center">
+                        <p className="text-2xl font-bold text-green-700">{totalAssessed}</p>
+                        <p className="text-xs text-green-600 mt-1">DWP Assessed</p>
+                      </div>
+                      <div className="bg-purple-50 rounded-xl p-3 border border-purple-100 text-center">
+                        <p className="text-2xl font-bold text-purple-700">{pupils.length}</p>
+                        <p className="text-xs text-purple-600 mt-1">Pupils</p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[var(--wrife-border)]">
-                        <th className="text-left py-3 px-2 font-semibold text-[var(--wrife-text-main)] sticky left-0 bg-white">
-                          Pupil
-                        </th>
-                        {assignments.map((assignment) => (
-                          <th key={assignment.id} className="text-center py-3 px-2 font-semibold text-[var(--wrife-text-main)] min-w-[80px]">
-                            <span className="block truncate max-w-[80px]" title={assignment.title}>
-                              {assignment.title.length > 12 ? assignment.title.slice(0, 12) + '...' : assignment.title}
-                            </span>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pupils.map((pupil) => (
-                        <tr key={pupil.id} className="border-b border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)]">
-                          <td className="py-3 px-2 sticky left-0 bg-white">
-                            <div className="flex items-center gap-2">
-                              <div className="h-8 w-8 rounded-full bg-[var(--wrife-blue-soft)] flex items-center justify-center text-xs font-bold text-[var(--wrife-blue)] uppercase">
-                                {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
+                {/* Pupil cards */}
+                <div className="space-y-2">
+                  {pupils.map((pupil) => {
+                    // Lesson assignments
+                    const lessonSubs = submissions.filter(s => s.pupil_id === pupil.id);
+                    const lessonSubmitted = lessonSubs.filter(s => s.status === 'submitted' || s.status === 'reviewed').length;
+                    const lessonReviewed = lessonSubs.filter(s => s.status === 'reviewed').length;
+                    const lessonAwaitingReview = lessonSubs.filter(s => s.status === 'submitted').length;
+
+                    // PWP
+                    const pupilPwpSubs = pwpSubmissions.filter(s => s.pupil_id === pupil.id);
+                    const pwpSubmitted = pupilPwpSubs.filter(s => s.status === 'submitted' || s.status === 'reviewed').length;
+                    const pwpReviewed = pupilPwpSubs.filter(s => s.status === 'reviewed').length;
+                    const pwpAwaitingReview = pupilPwpSubs.filter(s => s.status === 'submitted').length;
+
+                    // DWP
+                    const pupilAttempts = writingAttempts.filter(a => a.pupil_id === pupil.id);
+                    const dwpAssessed = pupilAttempts.filter(a => a.status === 'assessed').length;
+                    const dwpPassed = pupilAttempts.filter(a => a.passed === true).length;
+                    const avgPct = pupilAttempts.filter(a => a.percentage != null).length > 0
+                      ? Math.round(pupilAttempts.reduce((sum, a) => sum + (a.percentage ?? 0), 0) / pupilAttempts.filter(a => a.percentage != null).length)
+                      : null;
+
+                    // Overall %
+                    const totalAssigned = assignments.length + pwpAssignments.length + dwpAssignments.length;
+                    const totalDone = lessonSubmitted + pwpSubmitted + dwpAssessed;
+                    const overallPct = totalAssigned > 0 ? Math.round((totalDone / totalAssigned) * 100) : 0;
+
+                    const isExpanded = expandedPupilId === pupil.id;
+                    const pupilFullName = `${pupil.first_name} ${pupil.last_name || ''}`.trim();
+                    const needsAttention = lessonAwaitingReview > 0 || pwpAwaitingReview > 0;
+
+                    return (
+                      <div key={pupil.id} className={`border rounded-xl overflow-hidden transition ${needsAttention ? 'border-amber-200' : 'border-[var(--wrife-border)]'}`}>
+                        {/* Row header — always visible */}
+                        <button
+                          className="w-full text-left px-4 py-3 hover:bg-[var(--wrife-bg)] transition flex items-center gap-3"
+                          onClick={() => setExpandedPupilId(isExpanded ? null : pupil.id)}
+                        >
+                          {/* Avatar */}
+                          <div className="h-9 w-9 rounded-full bg-[var(--wrife-blue-soft)] flex items-center justify-center text-xs font-bold text-[var(--wrife-blue)] uppercase shrink-0">
+                            {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
+                          </div>
+
+                          {/* Name + progress bar */}
+                          <div className="min-w-[130px]">
+                            <p className="font-semibold text-sm text-[var(--wrife-text-main)] leading-tight">
+                              {pupilFullName}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <div className="h-1.5 w-20 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-[var(--wrife-blue)] transition-all"
+                                  style={{ width: `${overallPct}%` }}
+                                />
                               </div>
-                              <span className="font-medium text-[var(--wrife-text-main)]">
-                                {pupil.first_name} {pupil.last_name || ''}
-                              </span>
+                              <span className="text-xs text-[var(--wrife-text-muted)]">{overallPct}%</span>
                             </div>
-                          </td>
-                          {assignments.map((assignment) => {
-                            const submission = getSubmissionForPupil(pupil.id, assignment.id);
-                            const practiceComplete = isPracticeComplete(pupil.id, assignment.lesson_id);
-                            return (
-                              <td key={assignment.id} className="text-center py-3 px-2">
-                                <div className="flex items-center justify-center gap-1">
-                                  {submission ? (
-                                    <button
-                                      onClick={() => setSelectedSubmission({
-                                        submission,
-                                        pupilName: `${pupil.first_name} ${pupil.last_name || ''}`.trim(),
-                                        assignmentTitle: assignment.title
-                                      })}
-                                      className="hover:scale-110 transition cursor-pointer"
-                                      title="Click to view submission"
-                                    >
-                                      {getStatusBadge(submission.status)}
-                                    </button>
-                                  ) : (
-                                    getStatusBadge(undefined)
-                                  )}
-                                  {(() => {
-                                    const practiceStatus = getPracticeStatus(pupil.id, assignment.lesson_id);
-                                    if (practiceStatus === 'completed') {
-                                      return (
-                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600" title="Practice Completed">
-                                          🎮
-                                        </span>
-                                      );
-                                    } else if (practiceStatus === 'in_progress') {
-                                      return (
-                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 text-yellow-600" title="Practice In Progress">
-                                          ◐
-                                        </span>
-                                      );
-                                    } else {
-                                      return (
-                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50 text-gray-300" title="Practice Not Started">
-                                          -
-                                        </span>
-                                      );
-                                    }
-                                  })()}
+                          </div>
+
+                          {/* Three pillars */}
+                          <div className="flex gap-2 flex-1 justify-end items-center flex-wrap">
+                            {assignments.length > 0 && (
+                              <div className="text-center px-3 py-1 bg-gray-50 rounded-lg min-w-[72px]">
+                                <p className="text-xs text-[var(--wrife-text-muted)]">Writing</p>
+                                <p className="text-sm font-bold text-[var(--wrife-text-main)]">{lessonSubmitted}/{assignments.length}</p>
+                                {lessonAwaitingReview > 0 && (
+                                  <p className="text-xs text-amber-600 font-semibold">↑ review</p>
+                                )}
+                              </div>
+                            )}
+                            {pwpAssignments.length > 0 && (
+                              <div className="text-center px-3 py-1 bg-purple-50 rounded-lg min-w-[72px]">
+                                <p className="text-xs text-purple-500">Sentences</p>
+                                <p className="text-sm font-bold text-[var(--wrife-text-main)]">{pwpSubmitted}/{pwpAssignments.length}</p>
+                                {pwpReviewed > 0 && (
+                                  <p className="text-xs text-blue-500 font-semibold">★ {pwpReviewed}</p>
+                                )}
+                              </div>
+                            )}
+                            {dwpAssignments.length > 0 && (
+                              <div className="text-center px-3 py-1 bg-green-50 rounded-lg min-w-[72px]">
+                                <p className="text-xs text-green-600">Daily Writing</p>
+                                <p className="text-sm font-bold text-[var(--wrife-text-main)]">{dwpAssessed}/{dwpAssignments.length}</p>
+                                {avgPct !== null && (
+                                  <p className="text-xs text-green-600 font-semibold">{avgPct}% avg</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Chevron */}
+                          <svg
+                            className={`w-4 h-4 text-[var(--wrife-text-muted)] shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        {/* Expanded detail */}
+                        {isExpanded && (
+                          <div className="border-t border-[var(--wrife-border)] bg-[var(--wrife-bg)] px-4 py-4 space-y-4">
+
+                            {/* Lesson assignments */}
+                            {assignments.length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold text-[var(--wrife-text-main)] uppercase tracking-wide mb-2">📝 Writing Assignments</p>
+                                <div className="space-y-1">
+                                  {assignments.map(a => {
+                                    const sub = getSubmissionForPupil(pupil.id, a.id);
+                                    return (
+                                      <div key={a.id} className="flex items-center justify-between text-sm bg-white rounded-lg px-3 py-2 border border-[var(--wrife-border)]">
+                                        <span className="text-[var(--wrife-text-main)] truncate mr-2">{a.title}</span>
+                                        {sub ? (
+                                          <button
+                                            onClick={() => setSelectedSubmission({ submission: sub, pupilName: pupilFullName, assignmentTitle: a.title })}
+                                            className="shrink-0 hover:scale-110 transition"
+                                          >
+                                            {getStatusBadge(sub.status)}
+                                          </button>
+                                        ) : getStatusBadge(undefined)}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              </div>
+                            )}
+
+                            {/* PWP assignments */}
+                            {pwpAssignments.length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold text-[var(--wrife-text-main)] uppercase tracking-wide mb-2">🟣 Sentence Practice (PWP)</p>
+                                <div className="space-y-1">
+                                  {pwpAssignments.map(a => {
+                                    const sub = pwpSubmissions.find(s => s.pupil_id === pupil.id && s.pwp_assignment_id === a.id);
+                                    return (
+                                      <div key={a.id} className="flex items-center justify-between text-sm bg-white rounded-lg px-3 py-2 border border-[var(--wrife-border)]">
+                                        <span className="text-[var(--wrife-text-main)] truncate mr-2">
+                                          L{a.progressive_activities?.level} — {a.progressive_activities?.level_name}
+                                        </span>
+                                        {sub ? (
+                                          <button
+                                            onClick={() => setSelectedPWPSubmission({ submission: sub, pupilName: pupilFullName, activityName: a.progressive_activities?.level_name || 'PWP Activity' })}
+                                            className="shrink-0 hover:scale-110 transition"
+                                          >
+                                            {getStatusBadge(sub.status)}
+                                          </button>
+                                        ) : getStatusBadge(undefined)}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* DWP assignments */}
+                            {dwpAssignments.length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold text-[var(--wrife-text-main)] uppercase tracking-wide mb-2">✍️ Daily Writing (DWP)</p>
+                                <div className="space-y-1">
+                                  {dwpAssignments.map(a => {
+                                    const attempt = getWritingAttemptForPupil(pupil.id, a.id);
+                                    return (
+                                      <div key={a.id} className="flex items-center justify-between text-sm bg-white rounded-lg px-3 py-2 border border-[var(--wrife-border)]">
+                                        <span className="text-[var(--wrife-text-main)] truncate mr-2">
+                                          L{a.writing_levels?.level_number} — {a.writing_levels?.activity_name}
+                                        </span>
+                                        {attempt ? (
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            {attempt.passed ? (
+                                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">✓ Passed</span>
+                                            ) : (
+                                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">✗ Not Yet</span>
+                                            )}
+                                            {attempt.percentage != null && (
+                                              <span className="text-xs text-[var(--wrife-text-muted)]">{attempt.percentage}%</span>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-400">Not Started</span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             )}
