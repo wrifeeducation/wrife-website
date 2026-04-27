@@ -157,10 +157,25 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
 
     let assessment;
     try {
-      assessment = JSON.parse(responseText);
+      // Strip markdown code fences if present (Anthropic sometimes wraps JSON)
+      const cleaned = responseText
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```\s*$/, '')
+        .trim();
+      assessment = JSON.parse(cleaned);
     } catch (parseError) {
-      console.error('Failed to parse AI response:', responseText);
-      throw new Error('Failed to parse AI assessment response');
+      // Try extracting the first {...} block as fallback
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error('Failed to parse AI response:', responseText);
+        throw new Error('Failed to parse AI assessment response');
+      }
+      try {
+        assessment = JSON.parse(jsonMatch[0]);
+      } catch {
+        console.error('Failed to parse AI response:', responseText);
+        throw new Error('Failed to parse AI assessment response');
+      }
     }
     
     assessment = {
@@ -335,9 +350,12 @@ Assess this pupil's work. Be encouraging and age-appropriate.`;
 
     let assessment;
     try {
-      assessment = JSON.parse(responseText);
+      const cleaned = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+      assessment = JSON.parse(cleaned);
     } catch {
-      throw new Error('Failed to parse AI response');
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Failed to parse AI response');
+      assessment = JSON.parse(jsonMatch[0]);
     }
 
     const normalizeArray = (val: unknown, fallback: string[]): string[] => {
