@@ -96,16 +96,31 @@ export async function GET(request: NextRequest) {
     }
 
     const pupilsResult = await pool.query(
-      `SELECT id, first_name, last_name, username, pin_display, year_group, is_active
-       FROM pupils
-       WHERE class_id = $1 AND is_active = TRUE
-       ORDER BY first_name ASC, last_name ASC`,
+      `SELECT p.id, p.first_name, p.last_name, p.username, p.password_hash, p.year_group, p.is_active
+       FROM pupils p
+       JOIN class_members cm ON cm.pupil_id = p.id
+       WHERE cm.class_id = $1 AND p.is_active = TRUE
+       ORDER BY p.first_name ASC, p.last_name ASC`,
       [classId]
     );
 
+    // Return pin_display from password_hash only if still plain text (not yet bcrypt-upgraded)
+    const pupils = pupilsResult.rows.map((p: any) => {
+      const isHashed = p.password_hash?.startsWith('$2b$') || p.password_hash?.startsWith('$2a$');
+      return {
+        id: p.id,
+        first_name: p.first_name,
+        last_name: p.last_name,
+        username: p.username,
+        year_group: p.year_group,
+        is_active: p.is_active,
+        pin_display: isHashed ? null : (p.password_hash || null),
+      };
+    });
+
     return NextResponse.json({
       classData: classRow,
-      pupils: pupilsResult.rows,
+      pupils,
     });
   } catch (error) {
     console.error('Error in class-login-cards API:', error);
