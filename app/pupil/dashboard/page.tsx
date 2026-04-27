@@ -355,7 +355,7 @@ export default function PupilDashboardPage() {
     pwpSubmissions.filter(s => s.status === 'draft').length +
     writingAttempts.filter(a => a.status === 'draft').length;
 
-  const totalTaskCount = assignments.length + pwpAssignments.length + activeDwpAssignments.length;
+  const totalTaskCount = assignments.length + pwpAssignments.length + dwpAssignments.length;
   const totalProgress = totalTaskCount > 0 ? Math.round((completedCount / totalTaskCount) * 100) : 0;
 
   const today = new Date();
