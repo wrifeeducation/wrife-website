@@ -704,47 +704,58 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
             </div>
           </div>
 
-          <div className="mb-4 flex gap-2">
-            <button
-              onClick={() => setActiveTab('pupils')}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                activeTab === 'pupils'
-                  ? 'bg-[var(--wrife-blue)] text-white'
-                  : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
-              }`}
+          <div className="mb-4 flex gap-2 items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('pupils')}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  activeTab === 'pupils'
+                    ? 'bg-[var(--wrife-blue)] text-white'
+                    : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
+                }`}
+              >
+                Pupils ({pupils.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('progress')}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  activeTab === 'progress'
+                    ? 'bg-[var(--wrife-blue)] text-white'
+                    : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
+                }`}
+              >
+                Progress
+              </button>
+              <button
+                onClick={() => setActiveTab('pwp')}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  activeTab === 'pwp'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white border border-purple-200 text-purple-600 hover:bg-purple-50'
+                }`}
+              >
+                PWP ({pwpAssignments.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('dwp')}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  activeTab === 'dwp'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white border border-blue-200 text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                DWP ({dwpAssignments.length})
+              </button>
+            </div>
+            <Link
+              href={`/classes/${resolvedParams.id}/report`}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
             >
-              Pupils ({pupils.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('progress')}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                activeTab === 'progress'
-                  ? 'bg-[var(--wrife-blue)] text-white'
-                  : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
-              }`}
-            >
-              Progress
-            </button>
-            <button
-              onClick={() => setActiveTab('pwp')}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                activeTab === 'pwp'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white border border-purple-200 text-purple-600 hover:bg-purple-50'
-              }`}
-            >
-              PWP ({pwpAssignments.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('dwp')}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                activeTab === 'dwp'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-blue-200 text-blue-600 hover:bg-blue-50'
-              }`}
-            >
-              DWP ({dwpAssignments.length})
-            </button>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Progress Report
+            </Link>
           </div>
 
           {activeTab === 'pupils' && (
