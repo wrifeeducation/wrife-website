@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getPool } from '@/lib/db';
 
 function getSupabaseAdmin() {
   return createClient(
@@ -38,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Only return assessment if teacher has reviewed
-    let assessment = null;
+    let assessment: Record<string, any> | null = null;
     if (submission.status === 'reviewed') {
       const { data: asmData } = await supabaseAdmin
         .from('pwp_assessments')
