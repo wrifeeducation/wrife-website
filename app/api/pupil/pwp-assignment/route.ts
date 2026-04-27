@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
       [parseInt(assignmentId, 10), pupilId]
     );
 
-    let existingSubmission = null;
-    let existingAssessment = null;
+    let existingSubmission: Record<string, any> | null = null;
+    let existingAssessment: Record<string, any> | null = null;
 
     if (submissionRes.rows.length > 0) {
       const r = submissionRes.rows[0];
