@@ -29,7 +29,6 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [view, setView] = useState<'class' | 'individual'>('class');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login');
@@ -38,34 +37,15 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
   useEffect(() => {
     if (!user) return;
     fetch(`/api/classes/${resolvedParams.id}/report`)
-      .then(async r => {
-        const text = await r.text();
-        if (!r.ok) {
-          setErrorMsg(`HTTP ${r.status}: ${text.slice(0, 200)}`);
-          setLoading(false);
-          return null;
-        }
-        try {
-          return JSON.parse(text);
-        } catch {
-          setErrorMsg(`Bad JSON: ${text.slice(0, 200)}`);
-          setLoading(false);
-          return null;
-        }
+      .then(r => {
+        if (!r.ok) throw new Error(`API error ${r.status}`);
+        return r.json();
       })
       .then(d => {
-        if (!d) return;
-        if (d && Array.isArray(d.reportData)) {
-          setData(d);
-        } else {
-          setErrorMsg(`Unexpected response shape: ${JSON.stringify(d).slice(0, 200)}`);
-        }
+        if (d && Array.isArray(d.reportData)) setData(d);
         setLoading(false);
       })
-      .catch(err => {
-        setErrorMsg(`Fetch error: ${err?.message}`);
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, [user, resolvedParams.id]);
 
   async function downloadWord() {
@@ -106,13 +86,8 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center flex-col gap-3 px-8">
-        <p className="text-gray-500 font-medium">Could not load report data.</p>
-        {errorMsg && (
-          <pre className="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-3 max-w-2xl whitespace-pre-wrap break-all">
-            {errorMsg}
-          </pre>
-        )}
+      <div className="min-h-screen bg-white flex items-center justify-center flex-col gap-3">
+        <p className="text-gray-500">Could not load report data.</p>
         <Link href={`/classes/${resolvedParams.id}`} className="text-sm text-blue-600 hover:underline">← Back to class</Link>
       </div>
     );

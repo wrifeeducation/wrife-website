@@ -208,7 +208,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ classData, reportData });
   } catch (error: any) {
     console.error('Report error:', error);
-    return NextResponse.json({ error: 'Server error', detail: error?.message || String(error), stack: error?.stack?.split('\n').slice(0, 5) }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
 
