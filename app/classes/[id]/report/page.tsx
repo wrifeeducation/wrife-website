@@ -37,8 +37,16 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
   useEffect(() => {
     if (!user) return;
     fetch(`/api/classes/${resolvedParams.id}/report`)
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
+      .then(r => {
+        if (!r.ok) throw new Error(`API error ${r.status}`);
+        return r.json();
+      })
+      .then(d => {
+        if (d && Array.isArray(d.reportData)) {
+          setData(d);
+        }
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [user, resolvedParams.id]);
 

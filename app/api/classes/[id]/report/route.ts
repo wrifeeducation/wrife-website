@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 
 // NC year group expectations mapped to DWP level ranges
 const NC_EXPECTATIONS: Record<number, { min: number; max: number; label: string }> = {
@@ -82,12 +82,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const classId = resolvedParams.id;
   const format = new URL(request.url).searchParams.get('format');
 
-  // Verify teacher auth via Supabase
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { cookie: request.headers.get('cookie') || '' } } }
-  );
+  // Verify teacher auth via Supabase (SSR-aware client reads cookies correctly)
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
