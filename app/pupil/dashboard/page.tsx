@@ -685,6 +685,7 @@ export default function PupilDashboardPage() {
               <div className="space-y-3">
                 {activePwpAssignments.map((pwp) => {
                   const status = getPWPSubmissionStatus(pwp.id);
+                  const pwpSub = pwpSubmissions.find(s => s.pwp_assignment_id === pwp.id);
                   return (
                     <Link key={pwp.id} href={`/pupil/pwp/${pwp.id}`}>
                       <div className={`bg-white rounded-lg p-3 border hover:shadow-soft transition cursor-pointer ${
