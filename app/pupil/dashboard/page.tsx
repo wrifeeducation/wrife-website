@@ -377,18 +377,25 @@ export default function PupilDashboardPage() {
     return dueDate >= today;
   });
 
-  const activeDwpAssignments = dwpAssignments.filter((dwp) => {
-    const attempt = getDWPAttempt(dwp.id);
-    if (attempt) {
-      return true;
-    }
-    if (!dwp.due_date) {
-      return true;
-    }
-    const dueDate = new Date(dwp.due_date);
-    dueDate.setHours(0, 0, 0, 0);
-    return dueDate >= today;
-  });
+  // Separate DWP assignments into attempted and unstarted
+  const attemptedDwp = dwpAssignments
+    .filter((dwp) => !!getDWPAttempt(dwp.id))
+    .sort((a, b) => (a.writing_levels?.level_number ?? 0) - (b.writing_levels?.level_number ?? 0));
+
+  const unstartedDwp = dwpAssignments
+    .filter((dwp) => {
+      if (getDWPAttempt(dwp.id)) return false;
+      if (!dwp.due_date) return true;
+      const dueDate = new Date(dwp.due_date);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate >= today;
+    })
+    .sort((a, b) => (a.writing_levels?.level_number ?? 0) - (b.writing_levels?.level_number ?? 0));
+
+  // Show all attempted + up to 3 next unstarted
+  const activeDwpAssignments = [...attemptedDwp, ...unstartedDwp.slice(0, 3)];
+  const totalDwpAssigned = dwpAssignments.length;
+  const hiddenDwpCount = totalDwpAssigned - activeDwpAssignments.length;
 
   const streakCurrent = stats?.streak?.current ?? 0;
   const totalSentences = stats?.writingStats?.totalSentences ?? 0;
@@ -777,6 +784,11 @@ export default function PupilDashboardPage() {
                 );
               })}
             </div>
+            {hiddenDwpCount > 0 && (
+              <p className="mt-4 text-center text-sm text-[var(--wrife-text-muted)]">
+                +{hiddenDwpCount} more task{hiddenDwpCount !== 1 ? 's' : ''} — complete these first to unlock them!
+              </p>
+            )}
           </div>
         )}
       </main>
