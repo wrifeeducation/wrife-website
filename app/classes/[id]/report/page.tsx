@@ -227,7 +227,6 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
                   <th className="text-center py-2 px-2 font-semibold text-gray-700">DWP level</th>
                   <th className="text-center py-2 px-2 font-semibold text-gray-700">DWP avg %</th>
                   <th className="text-center py-2 px-2 font-semibold text-gray-700">PWP band</th>
-                  <th className="text-center py-2 px-2 font-semibold text-gray-700">Writing</th>
                   <th className="text-center py-2 px-2 font-semibold text-gray-700">Judgement</th>
                 </tr>
               </thead>
@@ -245,9 +244,6 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
                         {rd.dwp.avgPct !== null ? `${rd.dwp.avgPct}%` : '–'}
                       </td>
                       <td className="text-center py-2.5 px-2 text-gray-600">{rd.pwp.bandLabel}</td>
-                      <td className="text-center py-2.5 px-2 text-gray-600">
-                        {rd.writing.total > 0 ? `${rd.writing.submitted}/${rd.writing.total}` : '–'}
-                      </td>
                       <td className="text-center py-2.5 px-2">
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${js.badge}`}>
                           {js.label}
@@ -280,8 +276,8 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
                     </span>
                   </div>
 
-                  {/* Three pillars */}
-                  <div className="grid grid-cols-3 gap-3 mb-5">
+                  {/* Two pillars */}
+                  <div className="grid grid-cols-2 gap-3 mb-5">
                     <div className="border border-blue-200 bg-blue-50 rounded-lg p-3">
                       <p className="text-xs font-bold text-blue-700 mb-2">Daily Writing (DWP)</p>
                       <p className="text-sm font-semibold text-gray-900">
@@ -298,13 +294,6 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
                       <p className="text-sm font-semibold text-gray-900">{rd.pwp.bandLabel}</p>
                       {rd.pwp.highestLevel && <p className="text-xs text-gray-500 mt-0.5">PWP Level {rd.pwp.highestLevel}</p>}
                       <p className="text-xs text-gray-500 mt-1">{rd.pwp.submittedCount} activities submitted</p>
-                    </div>
-                    <div className="border border-green-200 bg-green-50 rounded-lg p-3">
-                      <p className="text-xs font-bold text-green-700 mb-2">Written Assignments</p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {rd.writing.total > 0 ? `${rd.writing.submitted} of ${rd.writing.total}` : 'None set'}
-                      </p>
-                      {rd.writing.reviewed > 0 && <p className="text-xs text-gray-500 mt-0.5">{rd.writing.reviewed} reviewed</p>}
                     </div>
                   </div>
 

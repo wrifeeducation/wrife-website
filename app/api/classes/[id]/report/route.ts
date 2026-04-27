@@ -161,27 +161,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const pwpMap: Record<string, any> = {};
     for (const row of pwpRes.rows) pwpMap[row.pupil_id] = row;
 
-    // Writing assignments: submissions per pupil
-    const assignRes = await pool.query(
-      `SELECT s.pupil_id,
-              COUNT(*) AS total_assignments,
-              COUNT(*) FILTER (WHERE s.status IN ('submitted','reviewed')) AS submitted,
-              COUNT(*) FILTER (WHERE s.status = 'reviewed') AS reviewed
-       FROM submissions s
-       JOIN assignments a ON a.id = s.assignment_id
-       WHERE a.class_id = $1 AND s.pupil_id = ANY($2)
-       GROUP BY s.pupil_id`,
-      [classId, pupilIds]
-    );
-    const assignMap: Record<string, any> = {};
-    for (const row of assignRes.rows) assignMap[row.pupil_id] = row;
+    // No separate 'submissions' table — written assignments not yet tracked separately
 
     // Assemble per-pupil report data
     const reportData = pupils.map((pupil: any) => {
       const yearGroup = pupil.year_group || classData.year_group || 4;
       const dwp = dwpMap[pupil.id] || null;
       const pwp = pwpMap[pupil.id] || null;
-      const writing = assignMap[pupil.id] || null;
       const highestPassed = dwp?.highest_passed ? parseInt(dwp.highest_passed) : null;
       const judgement = getNCJudgement(yearGroup, highestPassed);
       const exp = NC_EXPECTATIONS[yearGroup];
@@ -211,11 +197,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           avgStructure: pwp?.avg_structure ? parseFloat(pwp.avg_structure) : null,
           highestLevel: pwp?.highest_level ? parseInt(pwp.highest_level) : null,
           bandLabel: getPWPBandLabel(avgGrammar),
-        },
-        writing: {
-          submitted: writing ? parseInt(writing.submitted) : 0,
-          reviewed: writing ? parseInt(writing.reviewed) : 0,
-          total: writing ? parseInt(writing.total_assignments) : 0,
         },
       };
     });
