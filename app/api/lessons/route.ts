@@ -17,9 +17,8 @@ export async function GET() {
         chapter, 
         unit, 
         summary, 
-        duration_minutes, 
-        year_group_min, 
-        year_group_max
+        duration_minutes,
+        year_groups
       FROM lessons
       ORDER BY lesson_number ASC, part ASC
     `);
