@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 
-  return globalThis.pgPool;
-}
-
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const lessonNumber = parseInt(searchParams.get('lesson') || '10');

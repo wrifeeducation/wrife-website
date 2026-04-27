@@ -9,11 +9,8 @@ function getOpenAI() {
   });
 }
 
-  return globalThis.pgPool;
-}
-
 async function updateConceptMastery(
-  pool: Pool,
+  pool: any,
   pupilId: string,
   conceptsUsed: string[],
   lessonNumber: number,

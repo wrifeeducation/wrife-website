@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 
-  return globalThis.pgPool;
-}
-
 interface Formula {
   formula_number: number;
   formula_structure: string;
@@ -144,7 +141,7 @@ function getVerbsForSubject(subject: string): string[] {
   return VERBS_FOR_THINGS;
 }
 
-async function getPupilMastery(pool: Pool, pupilId: string | null, concepts: string[]): Promise<ConceptMastery[]> {
+async function getPupilMastery(pool: any, pupilId: string | null, concepts: string[]): Promise<ConceptMastery[]> {
   if (!pupilId) {
     return concepts.map(c => ({
       concept: c,
