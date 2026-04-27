@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
@@ -21,7 +21,7 @@ const JUDGEMENT_STYLES = {
   not_assessed: { badge: 'bg-gray-100 text-gray-500 border border-gray-200',         bar: 'bg-gray-300',   label: 'Not assessed' },
 };
 
-export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
+function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -330,5 +330,17 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         }
       `}</style>
     </>
+  );
+}
+
+export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <ReportPageInner params={params} />
+    </Suspense>
   );
 }
