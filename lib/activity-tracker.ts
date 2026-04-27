@@ -29,6 +29,7 @@ interface ActivityEvent {
 
 export async function trackActivity(event: ActivityEvent): Promise<void> {
   try {
+    const pool = getPool();
     await pool.query(
       `INSERT INTO user_activity (user_id, user_role, event_type, event_data, page_path, session_id, ip_address, user_agent)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
