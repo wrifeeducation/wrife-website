@@ -44,35 +44,29 @@ export async function GET(request: NextRequest) {
     let schoolTier: string | null = null;
     if (profile.school_id) {
       const schoolRes = await pool.query(
-        'SELECT membership_tier FROM schools WHERE id = $1 LIMIT 1',
+        'SELECT subscription_tier FROM schools WHERE id = $1 LIMIT 1',
         [profile.school_id]
       );
-      schoolTier = schoolRes.rows[0]?.membership_tier ?? null;
+      schoolTier = schoolRes.rows[0]?.subscription_tier ?? null;
     }
 
     const entitlements = getEntitlements(profile.membership_tier, schoolTier);
     const limit = entitlements.pwpLevelLimit;
 
-    const { searchParams } = new URL(request.url);
-    const yearGroup = searchParams.get('yearGroup');
+    // PWP activities live in writing_levels (not pwp_activities)
+    const result = await pool.query(
+      `SELECT id, level_number, tier_number, level_id, activity_name, activity_type,
+              learning_objective, prompt_title, expected_time_minutes,
+              difficulty_level, age_range, tier_finale, milestone, display_order
+       FROM writing_levels
+       ORDER BY level_number ASC`
+    );
 
-    let query = 'SELECT * FROM progressive_activities';
-    const params: any[] = [];
-    if (yearGroup) {
-      const yg = parseInt(yearGroup);
-      // year group filter removed - column does not exist in pwp_activities
-      params.push(yg);
-    }
-    query += ' ORDER BY level ASC';
+    const maxUnlocked = limit === 'all' ? Infinity : (limit as number);
 
-    const result = await pool.query(query, params);
-    const activities = result.rows;
-
-    const maxUnlocked = limit === 'all' ? Infinity : limit;
-
-    const catalogue = activities.map((a: any) => ({
+    const catalogue = result.rows.map((a: any) => ({
       ...a,
-      locked: a.level > maxUnlocked,
+      locked: a.level_number > maxUnlocked,
     }));
 
     return NextResponse.json({
