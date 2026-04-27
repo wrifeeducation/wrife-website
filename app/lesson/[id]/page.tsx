@@ -1,12 +1,8 @@
 import { notFound } from 'next/navigation';
-import { Pool } from 'pg';
+import { getPool } from '@/lib/db';
 import { LessonDetailPage } from '@/components/LessonDetailPage';
 import Navbar from '@/components/Navbar';
 import LessonPageWrapper from '@/components/LessonPageWrapper';
-
-const pool = new Pool({
-  connectionString: process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
-});
 
 export default async function LessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,10 +12,14 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     notFound();
   }
 
-  // Query lesson by ID from PostgreSQL
+  const pool = getPool();
+
+  // Query lesson by ID — parse year_groups text into min/max numbers for component compatibility
   const lessonResult = await pool.query(
-    `SELECT id, lesson_number, part, title, summary, duration_minutes, year_group_min, year_group_max 
-     FROM lessons 
+    `SELECT id, lesson_number, part, title, summary, duration_minutes, year_groups,
+            (regexp_match(year_groups, '(\\d+)-(\\d+)'))[1]::int AS year_group_min,
+            (regexp_match(year_groups, '(\\d+)-(\\d+)'))[2]::int AS year_group_max
+     FROM lessons
      WHERE id = $1`,
     [lessonId]
   );
@@ -30,11 +30,11 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
 
   const lesson = lessonResult.rows[0];
 
-  // Query lesson files from PostgreSQL
+  // Query lesson files
   const filesResult = await pool.query(
-    `SELECT id, file_type, file_name, file_url 
-     FROM lesson_files 
-     WHERE lesson_id = $1 
+    `SELECT id, file_type, file_name, file_url
+     FROM lesson_files
+     WHERE lesson_id = $1
      ORDER BY file_type`,
     [lesson.id]
   );

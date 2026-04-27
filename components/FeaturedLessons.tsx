@@ -43,9 +43,18 @@ export default function FeaturedLessons() {
       try {
         const { data, error } = await supabase
           .from("lessons")
-          .select("id, lesson_number, title, summary, chapter, year_group_min, year_group_max, duration_minutes")
+          .select("id, lesson_number, title, summary, chapter, year_groups, duration_minutes")
           .order("lesson_number")
           .limit(6);
+
+        // Parse year_groups text ("Years 2-3") into min/max numbers
+        if (data) {
+          data.forEach((l: any) => {
+            const match = l.year_groups?.match(/(\d+)-(\d+)/);
+            l.year_group_min = match ? parseInt(match[1]) : 2;
+            l.year_group_max = match ? parseInt(match[2]) : 6;
+          });
+        }
 
         if (!error && data && data.length > 0) {
           setLessons(data);

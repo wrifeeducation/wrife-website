@@ -8,21 +8,24 @@ export async function GET() {
 
   try {
     const result = await pool.query(`
-      SELECT 
-        id, 
-        lesson_number, 
-        title, 
-        has_parts, 
-        part, 
-        chapter, 
-        unit, 
-        summary, 
+      SELECT
+        id,
+        lesson_number,
+        title,
+        has_parts,
+        part,
+        chapter,
+        unit,
+        summary,
         duration_minutes,
-        year_groups
+        year_groups,
+        -- Parse "Years 2-3" into year_group_min and year_group_max for frontend compatibility
+        (regexp_match(year_groups, '(\\d+)-(\\d+)'))[1]::int AS year_group_min,
+        (regexp_match(year_groups, '(\\d+)-(\\d+)'))[2]::int AS year_group_max
       FROM lessons
       ORDER BY lesson_number ASC, part ASC
     `);
-    
+
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching lessons:', error);
