@@ -336,23 +336,21 @@ async function generateWordReport(classData: any, reportData: any[], request: Ne
       new Paragraph({ children: [new TextRun({ text: 'Class summary', bold: true, size: 24, font: 'Arial', color: '1F2937' })], spacing: { before: 400, after: 100 } }),
       new Table({
         width: { size: 9026, type: WidthType.DXA },
-        columnWidths: [2500, 900, 1600, 1500, 1200, 1326],
+        columnWidths: [2800, 900, 1800, 1800, 1726],
         rows: [
           new TableRow({ children: [
-            cell('Pupil', 2500, { bold: true, bg: LIGHT_BLUE }),
+            cell('Pupil', 2800, { bold: true, bg: LIGHT_BLUE }),
             cell('Year', 900, { bold: true, bg: LIGHT_BLUE, center: true }),
-            cell('DWP highest level', 1600, { bold: true, bg: LIGHT_BLUE, center: true }),
-            cell('PWP grammar band', 1500, { bold: true, bg: LIGHT_BLUE, center: true }),
-            cell('Writing done', 1200, { bold: true, bg: LIGHT_BLUE, center: true }),
-            cell('Judgement', 1326, { bold: true, bg: LIGHT_BLUE, center: true }),
+            cell('DWP highest level', 1800, { bold: true, bg: LIGHT_BLUE, center: true }),
+            cell('PWP grammar band', 1800, { bold: true, bg: LIGHT_BLUE, center: true }),
+            cell('Judgement', 1726, { bold: true, bg: LIGHT_BLUE, center: true }),
           ]}),
           ...reportData.map((rd: any) => new TableRow({ children: [
-            cell(rd.pupil.name, 2500),
+            cell(rd.pupil.name, 2800),
             cell(`Y${rd.pupil.year_group}`, 900, { center: true }),
-            cell(rd.dwp.highestLevelPassed ? `Level ${rd.dwp.highestLevelPassed}` : '–', 1600, { center: true }),
-            cell(rd.pwp.bandLabel, 1500, { center: true }),
-            cell(rd.writing.submitted > 0 ? `${rd.writing.submitted}/${rd.writing.total}` : '–', 1200, { center: true }),
-            cell(judgementLabel(rd.judgement), 1326, { bold: true, color: judgementColor(rd.judgement), bg: judgementBg(rd.judgement), center: true }),
+            cell(rd.dwp.highestLevelPassed ? `Level ${rd.dwp.highestLevelPassed}` : '–', 1800, { center: true }),
+            cell(rd.pwp.bandLabel, 1800, { center: true }),
+            cell(judgementLabel(rd.judgement), 1726, { bold: true, color: judgementColor(rd.judgement), bg: judgementBg(rd.judgement), center: true }),
           ]})),
         ],
       }),
@@ -386,31 +384,24 @@ async function generateWordReport(classData: any, reportData: any[], request: Ne
         new Paragraph({ children: [new TextRun({ text: 'Assessment summary', bold: true, size: 24, font: 'Arial', color: '1F2937' })], spacing: { before: 200, after: 100 } }),
         new Table({
           width: { size: 9026, type: WidthType.DXA },
-          columnWidths: [3008, 3009, 3009],
+          columnWidths: [4513, 4513],
           rows: [
             new TableRow({ children: [
-              cell('Daily Writing (DWP)', 3008, { bold: true, bg: LIGHT_BLUE }),
-              cell('Sentence Practice (PWP)', 3009, { bold: true, bg: 'F3E8FF' }),
-              cell('Written Assignments', 3009, { bold: true, bg: LIGHT_GREEN }),
+              cell('Daily Writing (DWP)', 4513, { bold: true, bg: LIGHT_BLUE }),
+              cell('Sentence Practice (PWP)', 4513, { bold: true, bg: 'F3E8FF' }),
             ]}),
             new TableRow({ children: [
               cell(
                 rd.dwp.highestLevelPassed
                   ? `Highest level passed: ${rd.dwp.highestLevelPassed}\n${rd.dwp.levelInfo?.activity_name || ''}\nAttempts: ${rd.dwp.attempts} · Passed: ${rd.dwp.passedCount}${rd.dwp.avgPct ? ` · Avg: ${rd.dwp.avgPct}%` : ''}`
                   : 'No levels attempted yet',
-                3008, { size: 19 }
+                4513, { size: 19 }
               ),
               cell(
                 rd.pwp.submittedCount > 0
                   ? `Submitted: ${rd.pwp.submittedCount}\nGrammar band: ${rd.pwp.bandLabel}${rd.pwp.highestLevel ? `\nHighest level: ${rd.pwp.highestLevel}` : ''}`
                   : 'No activities submitted yet',
-                3009, { size: 19 }
-              ),
-              cell(
-                rd.writing.total > 0
-                  ? `${rd.writing.submitted} of ${rd.writing.total} submitted\n${rd.writing.reviewed} reviewed by teacher`
-                  : 'No assignments set',
-                3009, { size: 19 }
+                4513, { size: 19 }
               ),
             ]}),
           ],
