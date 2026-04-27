@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const pool = getPool();
     const now = new Date();
     const todayStart = new Date(now);
     todayStart.setHours(0, 0, 0, 0);

@@ -28,6 +28,7 @@ const ALLOWED_MIME_TYPES = [
 
 async function verifyAdmin(request: NextRequest): Promise<{ authorized: boolean; error?: string }> {
   try {
+    const pool = getPool();
     const supabaseAdmin = getSupabaseAdmin();
     const authHeader = request.headers.get('Authorization');
     
@@ -161,6 +162,7 @@ export async function POST(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin();
   
   try {
+    const pool = getPool();
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const lessonId = formData.get('lessonId') as string;
@@ -265,6 +267,7 @@ export async function GET(request: NextRequest) {
   const lessonId = searchParams.get('lessonId');
 
   try {
+    const pool = getPool();
     const { data: buckets } = await supabaseAdmin.storage.listBuckets();
     const bucketExists = buckets?.some(b => b.name === BUCKET_NAME);
 
@@ -340,6 +343,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
+    const pool = getPool();
     const { lessonId, fileUrl, fileName, fileType } = await request.json();
 
     if (!lessonId || !fileUrl) {
@@ -377,6 +381,7 @@ export async function DELETE(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin();
 
   try {
+    const pool = getPool();
     const { lessonId, fileName } = await request.json();
 
     if (!lessonId || !fileName) {
