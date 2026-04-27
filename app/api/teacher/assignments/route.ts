@@ -31,14 +31,7 @@ export async function POST(request: NextRequest) {
       `INSERT INTO assignments (lesson_id, class_id, teacher_id, title, instructions, due_date)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, lesson_id, class_id, teacher_id, title, instructions, due_date, created_at`,
-      [
-        lessonId,
-        classId,
-        user.id,
-        title || 'Lesson Assignment',
-        instructions || null,
-        dueDate || null,
-      ]
+      [lessonId, classId, user.id, title || 'Lesson Assignment', instructions || null, dueDate || null]
     );
 
     return NextResponse.json({ assignment: result.rows[0] }, { status: 201 });
@@ -59,33 +52,22 @@ export async function GET(request: NextRequest) {
 
     const pool = getPool();
 
+    // Note: lesson assignments and writing_attempts are separate systems.
+    // writing_attempts tracks DWP/PWP writing; lesson assignments track assigned lessons.
     const result = await pool.query(
       `SELECT
          a.id, a.lesson_id, a.class_id, a.title, a.instructions, a.due_date, a.created_at,
          c.name AS class_name,
          l.title AS lesson_title,
+         l.lesson_number,
          (SELECT COUNT(*) FROM class_members cm WHERE cm.class_id = a.class_id) AS total_pupils,
-         COUNT(DISTINCT s.id) FILTER (WHERE s.status IN ('submitted', 'reviewed')) AS submitted_count,
-         COUNT(DISTINCT s.id) FILTER (WHERE s.status = 'reviewed') AS reviewed_count,
-         COALESCE(
-           json_agg(
-             json_build_object(
-               'id', s.id,
-               'pupil_name', concat(p.first_name, ' ', COALESCE(p.last_name, '')),
-               'submitted_at', s.submitted_at,
-               'assignment_id', a.id,
-               'assignment_title', a.title
-             )
-           ) FILTER (WHERE s.status = 'submitted'),
-           '[]'
-         ) AS pending_submissions
+         0 AS submitted_count,
+         0 AS reviewed_count,
+         '[]'::json AS pending_submissions
        FROM assignments a
        JOIN classes c ON c.id = a.class_id
        LEFT JOIN lessons l ON l.id = a.lesson_id
-       LEFT JOIN submissions s ON s.assignment_id = a.id
-       LEFT JOIN pupils p ON p.id = s.pupil_id
        WHERE a.teacher_id = $1
-       GROUP BY a.id, c.name, l.title
        ORDER BY a.created_at DESC`,
       [user.id]
     );

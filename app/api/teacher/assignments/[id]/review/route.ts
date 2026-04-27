@@ -7,11 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const assignmentId = parseInt(id);
-    if (isNaN(assignmentId)) {
-      return NextResponse.json({ error: 'Invalid assignment ID' }, { status: 400 });
-    }
+    const { id: assignmentId } = await params;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -19,6 +15,7 @@ export async function GET(
 
     const pool = getPool();
 
+    // Fetch assignment (UUID id)
     const assignmentResult = await pool.query(
       `SELECT a.id, a.lesson_id, a.class_id, a.title, a.instructions, a.due_date, a.created_at,
               c.name AS class_name, c.year_group,
@@ -36,8 +33,9 @@ export async function GET(
 
     const assignment = assignmentResult.rows[0];
 
+    // Fetch pupils in the class
     const pupilsResult = await pool.query(
-      `SELECT p.id, p.first_name, p.last_name
+      `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username
        FROM pupils p
        JOIN class_members cm ON cm.pupil_id = p.id
        WHERE cm.class_id = $1 AND p.is_active = true
@@ -45,55 +43,48 @@ export async function GET(
       [assignment.class_id]
     );
 
-    const submissionsResult = await pool.query(
-      `SELECT s.id, s.pupil_id, s.content, s.status, s.submitted_at, s.teacher_feedback, s.created_at, s.updated_at,
-              p.first_name, p.last_name
-       FROM submissions s
-       JOIN pupils p ON p.id = s.pupil_id
-       WHERE s.assignment_id = $1
-       ORDER BY s.submitted_at DESC NULLS LAST`,
-      [assignmentId]
-    );
-
-    const submissions = submissionsResult.rows.map(row => ({
-      id: row.id,
-      pupil_id: row.pupil_id,
-      content: row.content,
-      status: row.status,
-      submitted_at: row.submitted_at,
-      teacher_feedback: row.teacher_feedback,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-      pupil_name: `${row.first_name} ${row.last_name || ''}`.trim(),
-    }));
-
-    const submissionIds = submissions.map(s => s.id);
-    let assessments: any[] = [];
-    if (submissionIds.length > 0) {
-      const assessmentsResult = await pool.query(
-        `SELECT * FROM ai_assessments WHERE submission_id = ANY($1)`,
-        [submissionIds]
+    // Fetch writing attempts for pupils in this class (DWP/PWP writing data)
+    const pupilIds = pupilsResult.rows.map(p => p.id);
+    let writingAttempts: any[] = [];
+    if (pupilIds.length > 0) {
+      const attemptsResult = await pool.query(
+        `SELECT wa.id, wa.pupil_id, wa.level_id, wa.pupil_writing, wa.status,
+                wa.score, wa.percentage, wa.passed, wa.performance_band,
+                wa.ai_assessment, wa.teacher_reviewed, wa.teacher_notes,
+                wa.flagged_for_review, wa.time_submitted, wa.created_at,
+                p.first_name, p.last_name
+         FROM writing_attempts wa
+         JOIN pupils p ON p.id = wa.pupil_id
+         WHERE wa.pupil_id = ANY($1)
+         ORDER BY wa.time_submitted DESC NULLS LAST`,
+        [pupilIds]
       );
-      assessments = assessmentsResult.rows;
-    }
-
-    let progressRecords: any[] = [];
-    if (assignment.lesson_id) {
-      try {
-        const progressResult = await pool.query(
-          `SELECT pupil_id, status FROM progress_records WHERE lesson_id = $1`,
-          [assignment.lesson_id]
-        );
-        progressRecords = progressResult.rows;
-      } catch {}
+      writingAttempts = attemptsResult.rows.map(row => ({
+        id: row.id,
+        pupil_id: row.pupil_id,
+        pupil_name: `${row.first_name} ${row.last_name || ''}`.trim(),
+        level_id: row.level_id,
+        content: row.pupil_writing,
+        status: row.status || 'submitted',
+        submitted_at: row.time_submitted,
+        teacher_reviewed: row.teacher_reviewed,
+        teacher_notes: row.teacher_notes,
+        score: row.score,
+        percentage: row.percentage,
+        passed: row.passed,
+        performance_band: row.performance_band,
+        ai_assessment: row.ai_assessment,
+        flagged_for_review: row.flagged_for_review,
+        created_at: row.created_at,
+      }));
     }
 
     return NextResponse.json({
       assignment,
       pupils: pupilsResult.rows,
-      submissions,
-      assessments,
-      progressRecords,
+      submissions: writingAttempts,
+      assessments: [],
+      progressRecords: [],
     });
   } catch (error: any) {
     console.error('Error fetching review data:', error);
@@ -106,11 +97,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const assignmentId = parseInt(id);
-    if (isNaN(assignmentId)) {
-      return NextResponse.json({ error: 'Invalid assignment ID' }, { status: 400 });
-    }
+    const { id: assignmentId } = await params;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -121,25 +108,28 @@ export async function PATCH(
       return NextResponse.json({ error: 'submissionId is required' }, { status: 400 });
     }
 
+    // Verify teacher owns the assignment
     const pool = getPool();
-
     const ownerCheck = await pool.query(
-      `SELECT s.id FROM submissions s
-       JOIN assignments a ON a.id = s.assignment_id
-       WHERE s.id = $1 AND a.id = $2 AND a.teacher_id = $3`,
-      [submissionId, assignmentId, user.id]
+      'SELECT id FROM assignments WHERE id = $1 AND teacher_id = $2',
+      [assignmentId, user.id]
     );
     if (ownerCheck.rows.length === 0) {
-      return NextResponse.json({ error: 'Submission not found or access denied' }, { status: 404 });
+      return NextResponse.json({ error: 'Assignment not found or access denied' }, { status: 404 });
     }
 
+    // Save teacher feedback on the writing attempt
     const result = await pool.query(
-      `UPDATE submissions
-       SET teacher_feedback = $1, status = 'reviewed', updated_at = now()
+      `UPDATE writing_attempts
+       SET teacher_notes = $1, teacher_reviewed = true
        WHERE id = $2
-       RETURNING id, status, teacher_feedback, updated_at`,
+       RETURNING id, teacher_reviewed, teacher_notes`,
       [teacherFeedback || null, submissionId]
     );
+
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ submission: result.rows[0] });
   } catch (error: any) {

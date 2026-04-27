@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
        JOIN classes c ON c.id = cm.class_id
        LEFT JOIN profiles t ON c.teacher_id = t.id
        WHERE ps.session_token = $1 AND ps.expires_at > NOW()
-       ORDER BY cm.created_at DESC
+       ORDER BY cm.joined_at DESC
        LIMIT 1`,
       [token]
     );
