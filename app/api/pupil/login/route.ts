@@ -13,32 +13,29 @@ export async function POST(request: NextRequest) {
     const { classCode, username, pin } = body;
 
     if (!classCode || !username || !pin) {
-      return NextResponse.json({ 
-        error: 'Class code, username, and PIN are required' 
+      return NextResponse.json({
+        error: 'Class code, username, and PIN are required'
       }, { status: 400 });
     }
 
     const pool = getPool();
-    
+
+    // Look up pupil via class_members join (not the legacy pupils.class_id)
     const result = await pool.query(
-      `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username, 
-              p.password_hash, p.year_group, p.is_active, p.class_id,
-              c.name as class_name, c.class_code,
+      `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username,
+              p.password_hash, p.year_group, p.is_active,
+              c.id as class_uuid, c.name as class_name, c.class_code,
               t.display_name as teacher_name
        FROM pupils p
-       JOIN classes c ON p.class_id = c.id
+       JOIN class_members cm ON cm.pupil_id = p.id
+       JOIN classes c ON c.id = cm.class_id
        LEFT JOIN profiles t ON c.teacher_id = t.id
-       WHERE LOWER(c.class_code) = LOWER($1) AND LOWER(p.username) = LOWER($2)`,
+       WHERE LOWER(c.class_code) = LOWER($1)
+         AND LOWER(p.username) = LOWER($2)`,
       [classCode.trim(), username.trim()]
     );
 
     if (result.rows.length === 0) {
-      await pool.query(
-        `INSERT INTO pupil_activity_log (pupil_id, class_id, event_type, event_data, ip_address)
-         VALUES ('00000000-0000-0000-0000-000000000000', 0, 'login_failed', $1, $2)`,
-        [JSON.stringify({ classCode, username, reason: 'not_found' }), request.headers.get('x-forwarded-for') || 'unknown']
-      ).catch(() => {});
-      
       return NextResponse.json({ error: 'Invalid class code or username' }, { status: 401 });
     }
 
@@ -48,81 +45,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Account is disabled. Please contact your teacher.' }, { status: 403 });
     }
 
-    const isValidPassword = await bcrypt.compare(pin, pupil.password_hash);
+    // Try bcrypt first (for properly hashed passwords)
+    let isValidPassword = await bcrypt.compare(pin, pupil.password_hash);
+
+    // If bcrypt fails, check if this is a plain PIN from migration (4 digits, no bcrypt prefix)
+    // Auto-upgrade to bcrypt hash on successful plain-PIN login
+    if (!isValidPassword && /^\d{4}$/.test(pupil.password_hash) && pin === pupil.password_hash) {
+      isValidPassword = true;
+      const newHash = await bcrypt.hash(pin, 10);
+      pool.query('UPDATE pupils SET password_hash = $1 WHERE id = $2', [newHash, pupil.id]).catch(() => {});
+    }
 
     if (!isValidPassword) {
-      await pool.query(
-        `INSERT INTO pupil_activity_log (pupil_id, class_id, event_type, event_data, ip_address)
-         VALUES ($1, $2, 'login_failed', $3, $4)`,
-        [pupil.id, pupil.class_id, JSON.stringify({ reason: 'wrong_pin' }), request.headers.get('x-forwarded-for') || 'unknown']
-      );
-      
+      // Log failed attempt (non-fatal)
+      pool.query(
+        `INSERT INTO pupil_activity_log (pupil_id, event_type, event_data, ip_address)
+         VALUES ($1, 'login_failed', $2, $3)`,
+        [pupil.id, JSON.stringify({ reason: 'wrong_pin' }), request.headers.get('x-forwarded-for') || 'unknown']
+      ).catch(() => {});
+
       return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 });
     }
 
+    // Create session using correct column names
     const token = generateSessionToken();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 8);
 
     await pool.query(
-      `INSERT INTO pupil_sessions (pupil_id, class_id, token, expires_at)
+      `INSERT INTO pupil_sessions (pupil_id, session_token, expires_at, ip_address)
        VALUES ($1, $2, $3, $4)`,
-      [pupil.id, pupil.class_id, token, expiresAt]
+      [pupil.id, token, expiresAt, request.headers.get('x-forwarded-for') || null]
     );
 
-    await pool.query(
-      'UPDATE pupils SET last_login_at = NOW() WHERE id = $1',
-      [pupil.id]
-    );
+    // Update last login
+    pool.query('UPDATE pupils SET last_login_at = NOW() WHERE id = $1', [pupil.id]).catch(() => {});
 
-    await pool.query(
-      `INSERT INTO pupil_activity_log (pupil_id, class_id, event_type, event_data, ip_address)
-       VALUES ($1, $2, 'login', $3, $4)`,
-      [pupil.id, pupil.class_id, JSON.stringify({ success: true }), request.headers.get('x-forwarded-for') || 'unknown']
-    );
-
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const streakResult = await pool.query(
-        'SELECT * FROM pupil_streaks WHERE pupil_id = $1',
-        [pupil.id]
-      );
-
-      if (streakResult.rows.length === 0) {
-        await pool.query(
-          `INSERT INTO pupil_streaks (pupil_id, current_streak, longest_streak, total_logins, last_login_date)
-           VALUES ($1, 1, 1, 1, $2)`,
-          [pupil.id, today]
-        );
-      } else {
-        const streak = streakResult.rows[0];
-        const lastLoginDate = streak.last_login_date ? new Date(streak.last_login_date).toISOString().split('T')[0] : null;
-
-        if (lastLoginDate !== today) {
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-          let newStreak: number;
-          if (lastLoginDate === yesterdayStr) {
-            newStreak = (streak.current_streak || 0) + 1;
-          } else {
-            newStreak = 1;
-          }
-
-          const newLongest = Math.max(newStreak, streak.longest_streak || 0);
-
-          await pool.query(
-            `UPDATE pupil_streaks 
-             SET current_streak = $1, longest_streak = $2, total_logins = total_logins + 1, last_login_date = $3, updated_at = NOW()
-             WHERE pupil_id = $4`,
-            [newStreak, newLongest, today, pupil.id]
-          );
-        }
-      }
-    } catch (streakError) {
-      console.error('Streak tracking error (non-fatal):', streakError);
-    }
+    // Log success (non-fatal)
+    pool.query(
+      `INSERT INTO pupil_activity_log (pupil_id, event_type, event_data, ip_address)
+       VALUES ($1, 'login', $2, $3)`,
+      [pupil.id, JSON.stringify({ success: true }), request.headers.get('x-forwarded-for') || 'unknown']
+    ).catch(() => {});
 
     const response = NextResponse.json({
       success: true,
@@ -133,7 +97,7 @@ export async function POST(request: NextRequest) {
         displayName: pupil.display_name,
         username: pupil.username,
         yearGroup: pupil.year_group,
-        classId: pupil.class_id,
+        classId: pupil.class_uuid,
         className: pupil.class_name,
         teacherName: pupil.teacher_name
       }
