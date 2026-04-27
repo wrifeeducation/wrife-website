@@ -52,7 +52,11 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
     setDownloading(true);
     try {
       const res = await fetch(`/api/classes/${resolvedParams.id}/report?format=docx`);
-      if (!res.ok) throw new Error('Download failed');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        alert(`Word error: ${errData.detail || errData.error || res.status}`);
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -60,8 +64,8 @@ function ReportPageInner({ params }: { params: Promise<{ id: string }> }) {
       a.download = `WriFe-Progress-Report-${data?.classData?.name || 'Class'}.docx`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      alert('Could not generate Word document. Please try again.');
+    } catch (err: any) {
+      alert(`Could not generate Word document: ${err?.message}`);
     } finally {
       setDownloading(false);
     }

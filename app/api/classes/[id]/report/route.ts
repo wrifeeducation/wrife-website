@@ -531,6 +531,6 @@ async function generateWordReport(classData: any, reportData: any[], request: Ne
     });
   } catch (err: any) {
     console.error('Word generation error:', err);
-    return NextResponse.json({ error: 'Failed to generate Word document' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to generate Word document', detail: err?.message, stack: err?.stack?.split('\n').slice(0,4) }, { status: 500 });
   }
 }
