@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase'; // used for fetchAssessment read
 
 interface PWPSubmission {
   id: number;
@@ -114,7 +114,12 @@ export function PWPReviewModal({ submission, pupilName, activityName, onClose, o
   async function markReviewed() {
     setSaving(true);
     try {
-      await supabase.from('pwp_submissions').update({ status: 'reviewed' }).eq('id', submission.id);
+      const res = await fetch(`/api/teacher/pwp-submissions?id=${submission.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'reviewed' }),
+      });
+      if (!res.ok) throw new Error('Failed to mark as reviewed');
       setCurrentStatus('reviewed');
       onStatusUpdate?.();
     } catch (err) {

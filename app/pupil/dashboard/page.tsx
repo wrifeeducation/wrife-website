@@ -344,9 +344,19 @@ export default function PupilDashboardPage() {
     return null;
   }
 
-  const completedCount = submissions.filter(s => s.status === 'submitted' || s.status === 'reviewed').length;
-  const inProgressCount = submissions.filter(s => s.status === 'draft').length;
-  const totalProgress = assignments.length > 0 ? Math.round((completedCount / assignments.length) * 100) : 0;
+  // Unified progress across all task types
+  const completedCount =
+    submissions.filter(s => s.status === 'submitted' || s.status === 'reviewed').length +
+    pwpSubmissions.filter(s => s.status === 'submitted' || s.status === 'reviewed').length +
+    writingAttempts.filter(a => a.status === 'assessed').length;
+
+  const inProgressCount =
+    submissions.filter(s => s.status === 'draft').length +
+    pwpSubmissions.filter(s => s.status === 'draft').length +
+    writingAttempts.filter(a => a.status === 'draft').length;
+
+  const totalTaskCount = assignments.length + pwpAssignments.length + activeDwpAssignments.length;
+  const totalProgress = totalTaskCount > 0 ? Math.round((completedCount / totalTaskCount) * 100) : 0;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -523,7 +533,7 @@ export default function PupilDashboardPage() {
             <div className="flex justify-between text-xs text-[var(--wrife-text-muted)]">
               <span>{completedCount} done</span>
               <span>{inProgressCount} active</span>
-              <span>{assignments.length} total</span>
+              <span>{totalTaskCount} total</span>
             </div>
           </div>
 
