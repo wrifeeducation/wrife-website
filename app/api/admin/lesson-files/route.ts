@@ -262,71 +262,49 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: authCheck.error }, { status: 401 });
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
   const lessonId = searchParams.get('lessonId');
 
   try {
     const pool = getPool();
-    const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-    const bucketExists = buckets?.some(b => b.name === BUCKET_NAME);
-
-    if (!bucketExists) {
-      return NextResponse.json({ files: [], bucketExists: false });
-    }
 
     if (lessonId) {
-      const folderPath = `lesson-${lessonId}`;
-      const { data: files, error } = await supabaseAdmin.storage
-        .from(BUCKET_NAME)
-        .list(folderPath, { limit: 100, sortBy: { column: 'name', order: 'asc' } });
+      // Read from the lesson_files database table — the source of truth.
+      // The storage bucket folders are offset from current lesson IDs due to a
+      // historical lesson renumbering, so we never rely on storage listing here.
+      const result = await pool.query(
+        `SELECT id, file_type, file_name, file_url
+         FROM lesson_files
+         WHERE lesson_id = $1
+         ORDER BY file_name ASC`,
+        [parseInt(lessonId)]
+      );
 
-      if (error) {
-        console.error('Error listing files:', error);
-        return NextResponse.json({ error: 'Failed to list files' }, { status: 500 });
-      }
+      const files = result.rows.map((row: { id: number; file_type: string; file_name: string; file_url: string }) => ({
+        name: row.file_name,
+        fileType: row.file_type,
+        publicUrl: row.file_url,
+      }));
 
-      const filesWithUrls = (files || [])
-        .filter(f => f.id !== null)
-        .map(file => ({
-          name: file.name,
-          fileType: getFileType(file.name),
-          publicUrl: supabaseAdmin.storage.from(BUCKET_NAME).getPublicUrl(`${folderPath}/${file.name}`).data.publicUrl,
-          createdAt: file.created_at,
-          size: file.metadata?.size,
-        }));
-
-      return NextResponse.json({ files: filesWithUrls, lessonId });
+      return NextResponse.json({ files, lessonId });
     }
 
-    const { data: folders, error } = await supabaseAdmin.storage
-      .from(BUCKET_NAME)
-      .list('', { limit: 1000, sortBy: { column: 'name', order: 'asc' } });
+    // No lessonId — return all files grouped by lesson
+    const result = await pool.query(
+      `SELECT lesson_id, file_type, file_name, file_url
+       FROM lesson_files
+       ORDER BY lesson_id ASC, file_name ASC`
+    );
 
-    if (error) {
-      console.error('Error listing folders:', error);
-      return NextResponse.json({ error: 'Failed to list files' }, { status: 500 });
-    }
-
-    const lessonFolders = (folders || []).filter(f => f.id === null && f.name.startsWith('lesson-'));
-    
     const allFiles: Record<string, any[]> = {};
-    
-    for (const folder of lessonFolders) {
-      const lessonIdFromFolder = folder.name.replace('lesson-', '');
-      const { data: files } = await supabaseAdmin.storage
-        .from(BUCKET_NAME)
-        .list(folder.name, { limit: 100 });
-      
-      if (files && files.length > 0) {
-        allFiles[lessonIdFromFolder] = files
-          .filter(f => f.id !== null)
-          .map(file => ({
-            name: file.name,
-            fileType: getFileType(file.name),
-            publicUrl: supabaseAdmin.storage.from(BUCKET_NAME).getPublicUrl(`${folder.name}/${file.name}`).data.publicUrl,
-          }));
-      }
+    for (const row of result.rows) {
+      const key = String(row.lesson_id);
+      if (!allFiles[key]) allFiles[key] = [];
+      allFiles[key].push({
+        name: row.file_name,
+        fileType: row.file_type,
+        publicUrl: row.file_url,
+      });
     }
 
     return NextResponse.json({ filesByLesson: allFiles, bucketExists: true });
