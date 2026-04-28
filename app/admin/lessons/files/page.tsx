@@ -44,6 +44,7 @@ export default function AdminLessonFilesPage() {
   const [selectedLessonId, setSelectedLessonId] = useState<number | ''>('');
   const [selectedFileCategory, setSelectedFileCategory] = useState<string>('teacher_guide');
   const [lessonFiles, setLessonFiles] = useState<UploadedFile[]>([]);
+  const [fileCountByLesson, setFileCountByLesson] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
@@ -63,6 +64,7 @@ export default function AdminLessonFilesPage() {
         return;
       }
       fetchLessons();
+      fetchAllFileCounts();
     }
   }, [user, authLoading, router]);
 
@@ -87,6 +89,26 @@ export default function AdminLessonFilesPage() {
       console.error('Error fetching lessons:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchAllFileCounts() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const response = await fetch('/api/admin/lesson-files', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const counts: Record<string, number> = {};
+        for (const [lessonId, files] of Object.entries(data.filesByLesson || {})) {
+          counts[lessonId] = (files as any[]).length;
+        }
+        setFileCountByLesson(counts);
+      }
+    } catch (err) {
+      console.error('Error fetching file counts:', err);
     }
   }
 
@@ -227,7 +249,8 @@ export default function AdminLessonFilesPage() {
       }
 
       fetchLessonFiles(selectedLessonId);
-      
+      fetchAllFileCounts();
+
       setTimeout(() => setUploadProgress([]), 3000);
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to upload files');
@@ -258,6 +281,7 @@ export default function AdminLessonFilesPage() {
         setSuccessMessage('File deleted successfully');
         setTimeout(() => setSuccessMessage(''), 3000);
         fetchLessonFiles(selectedLessonId);
+        fetchAllFileCounts();
       } else {
         const data = await response.json();
         throw new Error(data.error || 'Delete failed');
@@ -432,11 +456,52 @@ export default function AdminLessonFilesPage() {
             </div>
           </div>
 
+          {/* Overview grid — always visible, shows total file count per lesson */}
+          {lessons.length > 0 && Object.keys(fileCountByLesson).length > 0 && (
+            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6 mb-6">
+              <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-1">File Overview</h2>
+              <p className="text-xs text-[var(--wrife-text-muted)] mb-4">
+                {Object.values(fileCountByLesson).reduce((a, b) => a + b, 0)} files across{' '}
+                {Object.keys(fileCountByLesson).length} lessons — click a lesson to manage its files
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                {lessons.map((lesson) => {
+                  const count = fileCountByLesson[String(lesson.id)] || 0;
+                  const isSelected = selectedLessonId === lesson.id;
+                  return (
+                    <button
+                      key={lesson.id}
+                      onClick={() => setSelectedLessonId(lesson.id)}
+                      className={`rounded-lg p-2 text-center text-xs transition border ${
+                        isSelected
+                          ? 'bg-[var(--wrife-blue)] text-white border-[var(--wrife-blue)]'
+                          : count > 0
+                          ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                          : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span className="font-bold block">L{lesson.lesson_number}{lesson.part || ''}</span>
+                      <span>{count > 0 ? `${count} files` : 'empty'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {selectedLessonId && (
             <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
-              <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">
-                Current Files for {lessons.find(l => l.id === selectedLessonId)?.title || 'Selected Lesson'}
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
+                  Files for Lesson {lessons.find(l => l.id === selectedLessonId)?.lesson_number}: {lessons.find(l => l.id === selectedLessonId)?.title}
+                </h2>
+                <button
+                  onClick={() => setSelectedLessonId('')}
+                  className="text-xs text-[var(--wrife-text-muted)] hover:text-[var(--wrife-text-main)] transition"
+                >
+                  ✕ Close
+                </button>
+              </div>
 
               {lessonFiles.length === 0 ? (
                 <p className="text-[var(--wrife-text-muted)] text-center py-8">
@@ -450,7 +515,7 @@ export default function AdminLessonFilesPage() {
                         <span className="text-2xl">{getFileIcon(file.fileType)}</span>
                         <div>
                           <p className="font-semibold text-[var(--wrife-text-main)]">{file.name}</p>
-                          <p className="text-xs text-[var(--wrife-text-muted)] uppercase">{file.fileType}</p>
+                          <p className="text-xs text-[var(--wrife-text-muted)] uppercase">{file.fileType.replace(/_/g, ' ')}</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
