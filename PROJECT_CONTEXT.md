@@ -1,29 +1,33 @@
 # WriFe Platform
-*Last updated: 2026-04-28 · Session 1*
+*Last updated: 2026-04-28 · Session 2*
 
 ## Current state
-Full-stack Next.js educational platform at wrife.co.uk. Admin dashboard manages schools, lessons, and file uploads. Two bugs were identified and fixed in this session. The app is deployed (likely on Vercel) and uses Supabase (project: gzmgjkbtsvezfclmreru "WriFe Platform") for auth, storage, and database. A separate "WriFe PWP App" project also exists.
+Full-stack Next.js educational platform at wrife.co.uk, deployed on Vercel, using Supabase (gzmgjkbtsvezfclmreru) for auth and PostgreSQL for data. The teacher class page now has a fully working **Progress Report** feature: a printable HTML report page at `/classes/[id]/report` with NC KS1/KS2 level mapping, per-pupil judgements (Below/At/Above), and a Word document download. Several TypeScript build errors were fixed this session. The Supabase keep-alive scheduled task is active. A systematic testing plan exists in `WriFe-Testing-Plan.md`.
 
 ## Next steps
-1. Deploy the fix to production (push changes and trigger a Vercel redeploy)
-2. Verify the lesson files page now shows correct files for each lesson
-3. Verify the analytics section loads without error (user_activity table now exists)
-4. Consider adding event tracking calls so the analytics section actually shows data
+1. Run test accounts through the testing plan (`WriFe-Testing-Plan.md`) — create `test.free@wrife.education`, `test.admin@wrife.education`, `test.teacher@wrife.education` via the signup page
+2. Test Stripe payment end-to-end (user's wife to sign up and test paid plan upgrade)
+3. Investigate the 2 "Below expectation" pupils showing in the report despite no DWP attempts — likely a `year_group` data issue
+4. Add "Print Report" link to the class page's individual pupil view or progress tab for quicker access
 
 ## Key decisions
-- **Lesson files source of truth:** GET /api/admin/lesson-files now reads from the `lesson_files` PostgreSQL table rather than listing the Supabase storage bucket directly. The bucket folders are permanently offset from current lesson IDs due to a historical renumbering — the DB is authoritative.
-- **user_activity table:** Was defined in db/schema.ts but never migrated. Applied via Supabase MCP and tracked in supabase/migrations/20260428_create_user_activity_table.sql.
+- **Report format:** Hybrid — printable HTML page (browser Print → Save as PDF) + server-side Word document via `docx` npm package. No separate PDF library needed.
+- **NC level mapping:** Y1=L1–10, Y2=L11–17, Y3=L18–24, Y4=L25–28, Y5=L29–33, Y6=L34–40. Judgement based on highest DWP level passed vs year-group expectation range.
+- **No `submissions` table:** Written assignment submissions table does not exist in the DB. The "Written Assignments" pillar was removed from the report; only DWP and PWP are reported.
+- **Report auth:** Uses `await createClient()` from `@/lib/supabase/server` (SSR-aware) — not raw Supabase client. All other API routes use the same pattern.
+- **Supabase keep-alive:** Scheduled Cowork task runs every Monday 9am — pings `SELECT COUNT(*) FROM profiles` to prevent free-tier pause.
 
 ## Files & locations
-- `app/api/admin/lesson-files/route.ts` — GET handler fixed to query `lesson_files` DB table
-- `app/api/admin/analytics/route.ts` — queries user_activity table (now exists)
-- `supabase/migrations/20260428_create_user_activity_table.sql` — new migration file
-- `db/schema.ts` — Drizzle schema definitions
-- `lib/db.ts` — PostgreSQL pool (uses PROD_DATABASE_URL)
+- `app/classes/[id]/page.tsx` — class detail page; has Progress Report button in tab bar (green, links to `/classes/[id]/report`)
+- `app/classes/[id]/report/page.tsx` — printable report page (class overview + individual pupils, print CSS, Word download button)
+- `app/api/classes/[id]/report/route.ts` — report data API; `?format=docx` streams a Word document
+- `WriFe-Testing-Plan.md` — full test suite for free teacher, school admin, and pupil flows + regression checklist
+- `package.json` — `docx@^9.5.0` added for server-side Word generation
 
 ## Open questions
-- The `lesson-files` storage bucket contains files in offset folders (lesson-10 has L07 files, etc.) — these are now bypassed by reading from DB, but the bucket is untidy. Worth cleaning up eventually.
-- No event tracking calls exist yet, so the analytics dashboard will show zeros until user activity logging is wired into the app.
+- Stripe payment flow not yet live-tested (waiting on test signup)
+- 2 pupils show "Below expectation" despite no DWP data — worth investigating their `year_group` values
+- School domain matching (`@kafed.org.uk` → Elfrida Primary) not yet enforced on signup
 
 ---
 
@@ -31,4 +35,5 @@ Full-stack Next.js educational platform at wrife.co.uk. Admin dashboard manages 
 
 | # | Date | Summary |
 |---|------|---------|
+| 2 | 2026-04-28 | Built NC progress report (HTML + Word), fixed Progress tab empty state, reordered dashboard cards, set up Supabase keep-alive, created testing plan |
 | 1 | 2026-04-28 | Fixed "Failed to fetch analytics" (missing user_activity table) and lesson files mismatch (GET handler now reads from DB, not storage) |

@@ -12,6 +12,24 @@ const tierMapping: Record<string, string> = {
   full: 'full',
 };
 
+/**
+ * Fallback: map price IDs directly to tiers in case product metadata isn't set.
+ * Update this if you add new prices.
+ */
+const priceIdToTier: Record<string, string> = {
+  'price_1TQXl1Jw0OrBSQhGHTEGRetS': 'standard', // Standard monthly £4.99
+  'price_1TQXl1Jw0OrBSQhGDtvXKmc7': 'standard', // Standard yearly  £49
+  'price_1TQXoJJw0OrBSQhGCr8MWyGU': 'full',      // Full monthly £9.99
+  'price_1TQXoJJw0OrBSQhGQudtcyTG': 'full',      // Full yearly  £99
+};
+
+function resolveTier(priceId: string, productMetadataTier?: string): string {
+  if (productMetadataTier && tierMapping[productMetadataTier]) {
+    return tierMapping[productMetadataTier];
+  }
+  return priceIdToTier[priceId] || 'standard';
+}
+
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const signature = request.headers.get('stripe-signature');
@@ -58,8 +76,7 @@ export async function POST(request: NextRequest) {
               expand: ['product'],
             });
             const product = price.product as Stripe.Product;
-            const wrifeTier = product.metadata?.wrife_tier;
-            const membershipTier = tierMapping[wrifeTier] || 'standard';
+            const membershipTier = resolveTier(priceId, product.metadata?.wrife_tier);
 
             await pool.query(
               `UPDATE profiles
@@ -95,8 +112,7 @@ export async function POST(request: NextRequest) {
               expand: ['product'],
             });
             const product = price.product as Stripe.Product;
-            const wrifeTier = product.metadata?.wrife_tier;
-            const membershipTier = tierMapping[wrifeTier] || 'standard';
+            const membershipTier = resolveTier(priceId, product.metadata?.wrife_tier);
 
             await pool.query(
               `UPDATE profiles
