@@ -25,18 +25,20 @@ export default function AuthConfirmPage() {
   useEffect(() => {
     async function confirm() {
       // Supabase puts the token in either query params or the URL hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
       const tokenHash =
-        searchParams.get('token_hash') ||
-        new URLSearchParams(window.location.hash.substring(1)).get('token_hash');
+        searchParams?.get('token_hash') ||
+        hashParams.get('token_hash');
 
       const typeParam =
-        (searchParams.get('type') ||
-          new URLSearchParams(window.location.hash.substring(1)).get('type') ||
+        (searchParams?.get('type') ||
+          hashParams.get('type') ||
           'signup') as string;
 
       const next =
-        searchParams.get('next') ||
-        new URLSearchParams(window.location.hash.substring(1)).get('next') ||
+        searchParams?.get('next') ||
+        hashParams.get('next') ||
         null;
 
       setType(typeParam);
