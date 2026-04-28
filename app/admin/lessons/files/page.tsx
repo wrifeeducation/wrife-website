@@ -35,6 +35,7 @@ const FILE_CATEGORIES = [
   { value: 'progress_tracker', label: 'Progress Tracker' },
   { value: 'assessment', label: 'Assessment' },
   { value: 'interactive_practice', label: 'Interactive Practice (HTML)' },
+  { value: 'resource', label: 'Additional Resource (Tutorial / Video / Other)' },
 ];
 
 export default function AdminLessonFilesPage() {
