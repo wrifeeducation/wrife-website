@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
@@ -16,6 +16,21 @@ const MESSAGES: Record<string, { heading: string; body: string }> = {
 };
 
 export default function AuthConfirmPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--wrife-blue)] mx-auto mb-4" />
+          <p className="text-sm text-[var(--wrife-text-muted)]">Loading…</p>
+        </div>
+      </div>
+    }>
+      <AuthConfirmInner />
+    </Suspense>
+  );
+}
+
+function AuthConfirmInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<Status>('verifying');
