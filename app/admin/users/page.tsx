@@ -79,6 +79,7 @@ function AdminUsersPageInner() {
 
   const [sendingReset, setSendingReset] = useState<string | null>(null);
   const [resetFeedback, setResetFeedback] = useState<Record<string, { ok: boolean; msg: string; fallbackLink?: string }>>({});
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
 
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
   const [createAdminForm, setCreateAdminForm] = useState({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin' });
@@ -239,6 +240,23 @@ function AdminUsersPageInner() {
       setResetFeedback(prev => ({ ...prev, [userId]: { ok: false, msg: 'Network error' } }));
     } finally {
       setSendingReset(null);
+    }
+  }
+
+  async function handleDeleteUser(profile: Profile) {
+    const name = profile.display_name || profile.email;
+    if (!confirm(`Permanently delete "${name}"? This removes the account from the platform and cannot be undone.`)) return;
+
+    setDeletingUser(profile.id);
+    try {
+      const response = await adminFetch(`/api/admin/users/${profile.id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Delete failed');
+      setProfiles(prev => prev.filter(p => p.id !== profile.id));
+    } catch (err: any) {
+      alert('Failed to delete user: ' + err.message);
+    } finally {
+      setDeletingUser(null);
     }
   }
 
@@ -696,6 +714,19 @@ function AdminUsersPageInner() {
                     <div className="text-sm text-[var(--wrife-text-muted)] min-w-[100px]">
                       {new Date(profile.created_at).toLocaleDateString()}
                     </div>
+
+                    {profile.role !== 'admin' && (
+                      <div onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleDeleteUser(profile)}
+                          disabled={deletingUser === profile.id}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                          title="Permanently delete this account"
+                        >
+                          {deletingUser === profile.id ? 'Deleting…' : '🗑 Delete'}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {expandedUser === profile.id && (

@@ -17,8 +17,7 @@ interface Lesson {
   unit: number;
   summary: string | null;
   duration_minutes: number | null;
-  year_group_min: number | null;
-  year_group_max: number | null;
+  year_groups: string | null;
 }
 
 const chapterTitles: { [key: number]: string } = {
@@ -73,8 +72,7 @@ export default function AdminLessonsPage() {
     unit: 1,
     summary: '',
     duration_minutes: 45,
-    year_group_min: 2,
-    year_group_max: 6,
+    year_groups: 'Years 2-3',
   });
 
   useEffect(() => {
@@ -118,8 +116,7 @@ export default function AdminLessonsPage() {
       unit: 1,
       summary: '',
       duration_minutes: 45,
-      year_group_min: 2,
-      year_group_max: 6,
+      year_groups: 'Years 2-3',
     });
     setFormError('');
   }
@@ -140,8 +137,7 @@ export default function AdminLessonsPage() {
       unit: lesson.unit,
       summary: lesson.summary || '',
       duration_minutes: lesson.duration_minutes || 45,
-      year_group_min: lesson.year_group_min || 2,
-      year_group_max: lesson.year_group_max || 6,
+      year_groups: lesson.year_groups || 'Years 2-3',
     });
     setFormError('');
     setShowEditModal(true);
@@ -168,8 +164,7 @@ export default function AdminLessonsPage() {
           unit: formData.unit,
           summary: formData.summary.trim() || null,
           duration_minutes: formData.duration_minutes,
-          year_group_min: formData.year_group_min,
-          year_group_max: formData.year_group_max,
+          year_groups: formData.year_groups || null,
         });
 
       if (error) throw error;
@@ -205,8 +200,7 @@ export default function AdminLessonsPage() {
           unit: formData.unit,
           summary: formData.summary.trim() || null,
           duration_minutes: formData.duration_minutes,
-          year_group_min: formData.year_group_min,
-          year_group_max: formData.year_group_max,
+          year_groups: formData.year_groups || null,
         })
         .eq('id', editingLesson.id);
 
@@ -361,7 +355,7 @@ export default function AdminLessonsPage() {
                               <div>
                                 <h3 className="font-semibold text-[var(--wrife-text-main)]">{lesson.title}</h3>
                                 <p className="text-xs text-[var(--wrife-text-muted)]">
-                                  Unit {lesson.unit}: {unitTitles[lesson.unit] || 'Lesson'} • Years {lesson.year_group_min}-{lesson.year_group_max}
+                                  Unit {lesson.unit}: {unitTitles[lesson.unit] || 'Lesson'} • {lesson.year_groups || 'All years'}
                                 </p>
                               </div>
                             </div>
@@ -506,7 +500,7 @@ export default function AdminLessonsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-1">
                         Duration (min)
@@ -521,29 +515,15 @@ export default function AdminLessonsPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-1">
-                        Min Year
+                        Year Groups
                       </label>
                       <select
-                        value={formData.year_group_min}
-                        onChange={(e) => setFormData({ ...formData, year_group_min: parseInt(e.target.value) })}
+                        value={formData.year_groups}
+                        onChange={(e) => setFormData({ ...formData, year_groups: e.target.value })}
                         className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
                       >
-                        {[2, 3, 4, 5, 6].map(year => (
-                          <option key={year} value={year}>Year {year}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-[var(--wrife-text-main)] mb-1">
-                        Max Year
-                      </label>
-                      <select
-                        value={formData.year_group_max}
-                        onChange={(e) => setFormData({ ...formData, year_group_max: parseInt(e.target.value) })}
-                        className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-                      >
-                        {[2, 3, 4, 5, 6].map(year => (
-                          <option key={year} value={year}>Year {year}</option>
+                        {['Years 2-3', 'Years 3-4', 'Years 4-5', 'Years 5-6', 'Years 2-6'].map(yg => (
+                          <option key={yg} value={yg}>{yg}</option>
                         ))}
                       </select>
                     </div>

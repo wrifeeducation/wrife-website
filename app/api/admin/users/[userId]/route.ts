@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedAdmin, AuthError } from '@/lib/admin-auth';
+import { getAuthenticatedAdmin, AuthError, getSupabaseAdmin } from '@/lib/admin-auth';
 import { getPool } from '@/lib/db';
 
 export async function GET(
@@ -73,6 +73,47 @@ export async function GET(
     });
   } catch (error: any) {
     console.error('Error fetching user details:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  try {
+    const admin = await getAuthenticatedAdmin();
+
+    // Only super-admins can delete accounts
+    if (admin.role !== 'admin') {
+      return NextResponse.json({ error: 'Super admin access required' }, { status: 403 });
+    }
+
+    const { userId } = await params;
+
+    // Prevent self-deletion
+    if (userId === admin.userId) {
+      return NextResponse.json({ error: 'You cannot delete your own account' }, { status: 400 });
+    }
+
+    // Delete from Supabase Auth — this cascades to profiles if RLS/triggers are set up,
+    // but we also explicitly clean up the profile row to be safe.
+    const supabase = getSupabaseAdmin();
+
+    const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+    if (authError) {
+      return NextResponse.json({ error: authError.message }, { status: 500 });
+    }
+
+    // Belt-and-braces: delete the profile row (may already be gone via cascade)
+    await supabase.from('profiles').delete().eq('id', userId);
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error deleting user:', error);
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
