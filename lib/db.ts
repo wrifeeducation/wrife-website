@@ -17,11 +17,15 @@ export function getPool(): Pool {
     // then apply SSL via the config object instead (required for Supabase on Vercel)
     const cleanConnectionString = connectionString.replace(/\?.*$/, '');
 
+    // IMPORTANT: In serverless environments (Vercel), each function invocation
+    // can create its own pool. Keep max very low (2) to avoid exhausting
+    // Supabase's connection limit (~100 on free tier, ~200 on pro).
+    // Use a short idle timeout so connections are released quickly.
     pool = new Pool({
       connectionString: cleanConnectionString,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      max: 2,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 8000,
       ssl: {
         rejectUnauthorized: false,
       },

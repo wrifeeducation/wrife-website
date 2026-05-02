@@ -16,7 +16,6 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
-  const [alreadyExists, setAlreadyExists] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
@@ -49,7 +48,6 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    setAlreadyExists(false);
     setLoading(true);
 
     if (password !== confirmPassword) {
@@ -72,12 +70,7 @@ export default function SignupPage() {
     const { error } = await signUp(email, password, displayName, redirectUrl);
 
     if (error) {
-      const msg = error.message.toLowerCase();
-      if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already exists') || msg.includes('email address is already')) {
-        setAlreadyExists(true);
-      } else {
-        setError(error.message);
-      }
+      setError(error.message);
       setLoading(false);
     } else {
       setSuccess(true);
@@ -149,29 +142,6 @@ export default function SignupPage() {
 
         <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {alreadyExists && (
-              <div className="p-4 rounded-lg bg-[var(--wrife-blue)]/5 border border-[var(--wrife-blue)]/30 text-sm text-[var(--wrife-text-main)]">
-                <p className="font-semibold mb-1">An account with this email already exists</p>
-                <p className="text-[var(--wrife-text-muted)] mb-3">
-                  Check your inbox for a confirmation email, or sign in directly if you&apos;ve already verified your account.
-                </p>
-                <div className="flex flex-col gap-2">
-                  <Link
-                    href={loginUrl}
-                    className="inline-block text-center rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
-                  >
-                    Sign in instead
-                  </Link>
-                  <Link
-                    href="/reset-password"
-                    className="text-center text-sm text-[var(--wrife-blue)] hover:underline"
-                  >
-                    Forgot your password? Reset it here
-                  </Link>
-                </div>
-              </div>
-            )}
-
             {error && (
               <div className="p-3 rounded-lg bg-[var(--wrife-coral)]/10 border border-[var(--wrife-coral)] text-sm text-[var(--wrife-danger)]">
                 {error}

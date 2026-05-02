@@ -43,12 +43,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSupabaseClient(client);
     let isMounted = true;
     
-    console.log('[AuthContext] Initializing, checking session...');
+    // Wrap getSession in a 6-second timeout so a paused/slow Supabase project
+    // doesn't block the entire page indefinitely with "Failed to fetch" retries.
+    const sessionTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn('[AuthContext] getSession timed out — Supabase may be unreachable. Proceeding as logged out.');
+        setUser(null);
+        setLoading(false);
+      }
+    }, 6000);
+
     client.auth.getSession().then(({ data: { session }, error }: any) => {
+      clearTimeout(sessionTimeout);
       if (!isMounted) return;
-      
+
       if (error) {
-        console.error('[AuthContext] getSession error:', error);
+        // Network-level failure (e.g. Supabase paused, no connectivity)
+        if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+          console.warn('[AuthContext] Supabase unreachable — proceeding as logged out.');
+          setUser(null);
+          setLoading(false);
+          return;
+        }
         if (error.code === 'refresh_token_not_found' || error.message?.includes('Refresh Token')) {
           console.log('[AuthContext] Invalid refresh token, clearing session...');
           client.auth.signOut();

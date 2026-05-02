@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { error: emailError } = await resend.emails.send({
-      from: 'WriFe <noreply@wrife.co.uk>',
+      from: 'WriFe <onboarding@resend.dev>',
       to: user.email,
       subject: 'Reset your WriFe password',
       html: buildResetEmailHtml(userName, resetLink, false),

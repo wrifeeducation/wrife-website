@@ -34,7 +34,6 @@ const fileTypeLabels: Record<string, string> = {
   worksheet: 'Worksheets',
   progress_tracker: 'Progress Tracker',
   assessment: 'Assessment',
-  resource: 'Resources',
 };
 
 const fileTypeOrder = [
@@ -44,14 +43,7 @@ const fileTypeOrder = [
   'worksheet',
   'progress_tracker',
   'assessment',
-  'resource',
 ];
-
-const STANDARD_FILE_TYPES = new Set([
-  'teacher_guide', 'presentation', 'interactive_practice',
-  'worksheet', 'worksheet_core', 'worksheet_support', 'worksheet_challenge',
-  'progress_tracker', 'assessment',
-]);
 
 export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [activeTab, setActiveTab] = useState(fileTypeOrder[0]);
@@ -66,15 +58,12 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
 
   const filesByType = files.reduce((acc, file) => {
     const baseType = file.file_type.replace(/_core|_support|_challenge/g, '');
-    // Any file type not in the standard set goes into the Resources tab
-    const bucket = STANDARD_FILE_TYPES.has(file.file_type) ? baseType : 'resource';
-    if (!acc[bucket]) acc[bucket] = [];
-    acc[bucket].push(file);
+    if (!acc[baseType]) acc[baseType] = [];
+    acc[baseType].push(file);
     return acc;
   }, {} as Record<string, LessonFile[]>);
 
   const isTabLocked = (tabType: string): boolean => {
-    if (tabType === 'resource') return false; // Resources always free
     if (tabType === 'worksheet') {
       return !entitlements.allowedFileTypes.includes('worksheet_core');
     }
@@ -167,7 +156,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
       <div className="bg-white border-b border-[var(--wrife-border)] overflow-x-auto">
         <div className="mx-auto max-w-6xl px-4">
           <nav className="flex gap-6 whitespace-nowrap">
-            {fileTypeOrder.filter(type => type !== 'resource' || (filesByType['resource']?.length ?? 0) > 0).map((type) => {
+            {fileTypeOrder.map((type) => {
               const locked = isTabLocked(type);
               return (
                 <button

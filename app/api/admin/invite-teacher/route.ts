@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const userName = firstName || existingUser.display_name || existingUser.first_name || 'there';
         const { error: emailError } = await resend.emails.send({
-          from: 'WriFe <noreply@wrife.co.uk>',
+          from: 'WriFe <onboarding@resend.dev>',
           to: email,
           subject: "You've been added to a school on WriFe",
           html: buildWelcomeEmailHtml(userName, email, linkData.properties.action_link, loginUrl),
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const userName = firstName || 'there';
       const { error: emailError } = await resend.emails.send({
-        from: 'WriFe <noreply@wrife.co.uk>',
+        from: 'WriFe <onboarding@resend.dev>',
         to: email,
         subject: "You've been invited to WriFe",
         html: buildWelcomeEmailHtml(userName, email, linkData.properties.action_link, loginUrl),
