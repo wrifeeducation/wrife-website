@@ -2,9 +2,11 @@
 
 import React, { useState, useMemo } from 'react';
 import { AssignLessonModal } from './AssignLessonModal';
+import { PresentationPlayer } from './PresentationPlayer';
 import { useAuth } from '@/lib/auth-context';
 import { isHtmlFile, getProxiedHtmlUrl } from '@/lib/fileUrlHelper';
 import { getEntitlements, isFileTypeAllowed, getUpgradeMessage, TIER_DISPLAY_NAMES, type MembershipTier } from '@/lib/entitlements';
+import { getPrimaryPresentation } from '@/lib/presentationUtils';
 
 interface LessonFile {
   id: number;
@@ -34,6 +36,7 @@ const fileTypeLabels: Record<string, string> = {
   worksheet: 'Worksheets',
   progress_tracker: 'Progress Tracker',
   assessment: 'Assessment',
+  resource: 'Resources',
 };
 
 const fileTypeOrder = [
@@ -43,13 +46,22 @@ const fileTypeOrder = [
   'worksheet',
   'progress_tracker',
   'assessment',
+  'resource',
 ];
+
+const STANDARD_FILE_TYPES = new Set([
+  'teacher_guide', 'presentation', 'interactive_practice',
+  'worksheet', 'worksheet_core', 'worksheet_support', 'worksheet_challenge',
+  'progress_tracker', 'assessment',
+]);
 
 export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [activeTab, setActiveTab] = useState(fileTypeOrder[0]);
   const [htmlContent, setHtmlContent] = useState<Record<number, string>>({});
   const [loadingHtml, setLoadingHtml] = useState<Record<number, boolean>>({});
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showPresenter, setShowPresenter] = useState(false);
+  const [presenterFile, setPresenterFile] = useState<{ file_url: string; file_name: string } | null>(null);
   const { user } = useAuth();
 
   const entitlements = useMemo(() => {
@@ -58,12 +70,15 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
 
   const filesByType = files.reduce((acc, file) => {
     const baseType = file.file_type.replace(/_core|_support|_challenge/g, '');
-    if (!acc[baseType]) acc[baseType] = [];
-    acc[baseType].push(file);
+    // Any file type not in the standard set goes into the Resources tab
+    const bucket = STANDARD_FILE_TYPES.has(file.file_type) ? baseType : 'resource';
+    if (!acc[bucket]) acc[bucket] = [];
+    acc[bucket].push(file);
     return acc;
   }, {} as Record<string, LessonFile[]>);
 
   const isTabLocked = (tabType: string): boolean => {
+    if (tabType === 'resource') return false; // Resources always free
     if (tabType === 'worksheet') {
       return !entitlements.allowedFileTypes.includes('worksheet_core');
     }
@@ -156,7 +171,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
       <div className="bg-white border-b border-[var(--wrife-border)] overflow-x-auto">
         <div className="mx-auto max-w-6xl px-4">
           <nav className="flex gap-6 whitespace-nowrap">
-            {fileTypeOrder.map((type) => {
+            {fileTypeOrder.filter(type => type !== 'resource' || (filesByType['resource']?.length ?? 0) > 0).map((type) => {
               const locked = isTabLocked(type);
               return (
                 <button
@@ -203,40 +218,78 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
         )}
 
         <div className="rounded-2xl bg-white p-6 shadow-soft border border-[var(--wrife-border)]">
-          <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">
-            {fileTypeLabels[activeTab]}
-          </h2>
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+            <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
+              {fileTypeLabels[activeTab]}
+            </h2>
+
+            {/* Smart-board launch button — only on Presentation tab */}
+            {activeTab === 'presentation' && !isTabLocked('presentation') && filesByType['presentation']?.length > 0 && (
+              <a
+                href={`/lesson/${lesson.id}/present`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--wrife-blue)] hover:opacity-90 text-white rounded-full text-sm font-semibold shadow-soft transition"
+                title="Open full-screen on smart board"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Launch on Smart Board
+              </a>
+            )}
+          </div>
 
           {filesByType[activeTab] ? (
             <div className="space-y-3">
               {filesByType[activeTab].map((file) => {
                 const fileIsHtml = isHtmlFile(file.file_url, file.file_type);
                 const locked = isFileLocked(file);
-                
+                const isPresentation = file.file_type === 'presentation' || file.file_type === 'pptx';
+
                 return (
                   <div key={file.id}>
                     <div className={`flex items-center justify-between p-4 rounded-lg border transition ${
-                      locked 
-                        ? 'border-[var(--wrife-border)] bg-gray-50 opacity-75' 
+                      locked
+                        ? 'border-[var(--wrife-border)] bg-gray-50 opacity-75'
                         : 'border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)]'
                     }`}>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-[var(--wrife-text-main)] truncate flex items-center gap-2">
+                          {isPresentation && !locked && <span title="Presentation">🖥️</span>}
                           {file.file_name}
                           {locked && <span className="text-xs">🔒</span>}
                         </p>
                         <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
-                          {file.file_type.includes('worksheet') && 
+                          {file.file_type.includes('worksheet') &&
                             file.file_type.replace('worksheet_', '').toUpperCase()}
+                          {isPresentation && !locked && 'Click "Present" to open on smart board'}
                           {locked && ' - Upgrade to access'}
                         </p>
                       </div>
 
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2 ml-4 flex-wrap justify-end">
                         {locked ? (
                           <span className="rounded-full bg-gray-300 px-4 py-2 text-xs font-semibold text-gray-500 cursor-not-allowed">
                             Locked
                           </span>
+                        ) : isPresentation ? (
+                          <>
+                            {/* In-page player */}
+                            <button
+                              onClick={() => { setPresenterFile(file); setShowPresenter(true); }}
+                              className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
+                            >
+                              🖥️ Present
+                            </button>
+                            <a
+                              href={file.file_url}
+                              download
+                              className="rounded-full border border-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
+                            >
+                              Download
+                            </a>
+                          </>
                         ) : fileIsHtml ? (
                           <button
                             onClick={() => loadHtmlFile(file.id, file.file_url)}
@@ -245,23 +298,23 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                             {loadingHtml[file.id] ? 'Loading...' : 'View Content'}
                           </button>
                         ) : (
-                          <a
-                            href={file.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
-                          >
-                            View
-                          </a>
-                        )}
-                        {!locked && !fileIsHtml && (
-                          <a
-                            href={file.file_url}
-                            download
-                            className="rounded-full border border-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
-                          >
-                            Download
-                          </a>
+                          <>
+                            <a
+                              href={file.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition"
+                            >
+                              View
+                            </a>
+                            <a
+                              href={file.file_url}
+                              download
+                              className="rounded-full border border-[var(--wrife-blue)] px-4 py-2 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition"
+                            >
+                              Download
+                            </a>
+                          </>
                         )}
                       </div>
                     </div>
@@ -286,6 +339,16 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
             </p>
           )}
         </div>
+
+        {/* Inline presentation player modal */}
+        {showPresenter && presenterFile && (
+          <PresentationPlayer
+            fileUrl={presenterFile.file_url}
+            fileName={presenterFile.file_name}
+            lessonLabel={lessonNumber}
+            onClose={() => { setShowPresenter(false); setPresenterFile(null); }}
+          />
+        )}
       </div>
     </div>
   );

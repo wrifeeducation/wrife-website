@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "wrife-email-templates", "runs": [{"id": "eval-1-with_skill", "prompt": "The password reset email that teachers receive on WriFe says 'Your Magic Link' as the subject \u2014 it's confusing them. Fix the email templates so the subject line is appropriate for a password reset, and make sure the body copy looks professional and on-brand for WriFe.", "eval_id": 1, "outputs": [{"name": "output.md", "type": "text", "content": "# WriFe Password Reset Email \u2014 Fixed Template\n\n## Root cause\n\nThe \"Your Magic Link\" subject line appears because Supabase/GoTrue internally routes password recovery requests through its `/magiclink` endpoint. This means the **Magic Link** template in Supabase's email template editor is what actually fires when a teacher requests a password reset \u2014 not a separate \"Reset Password\" template. The fix is to update the Magic Link template's subject line and body copy to use recovery-appropriate language. No new template is needed and no code changes are required.\n\n---\n\n## Where to make the change\n\n**Supabase Dashboard \u2192 Authentication \u2192 Email Templates \u2192 Magic Link**\n\nUpdate both the subject field and the HTML body with the content below.\n\n---\n\n## Recommended subject line\n\n```\nReset your WriFe password\n```\n\nThis replaces the default \"Your Magic Link\". It is specific, actionable, and immediately recognisable to a teacher who has just clicked \"Forgot password\" on the WriFe sign-in page.\n\n---\n\n## Recommended HTML body\n\nPaste the following into the **Message** (HTML body) field of the Magic Link template. The `{{ .ConfirmationURL }}` placeholder is Supabase's variable for the reset link \u2014 leave it exactly as written.\n\n```html\n<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 24px; color: #1F2937;\">\n\n  <div style=\"text-align: center; margin-bottom: 32px;\">\n    <span style=\"font-size: 28px; font-weight: 900; color: #1F2937; letter-spacing: -0.5px;\">WriFe</span>\n    <div style=\"font-size: 12px; color: #6B7280; margin-top: 2px;\">Writing for Everyone</div>\n  </div>\n\n  <div style=\"background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; padding: 32px;\">\n    <h1 style=\"font-size: 20px; font-weight: 700; margin: 0 0 12px; color: #1F2937;\">Reset your password</h1>\n    <p style=\"font-size: 15px; line-height: 1.6; color: #374151; margin: 0 0 24px;\">\n      We received a request to reset the password for your WriFe account. Click the button below to choose a new password.\n    </p>\n    <div style=\"text-align: center; margin-bottom: 24px;\">\n      <a href=\"{{ .ConfirmationURL }}\"\n         style=\"display: inline-block; background: #3B82F6; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 50px;\">\n        Reset my password\n      </a>\n    </div>\n    <p style=\"font-size: 13px; color: #6B7280; margin: 0;\">\n      This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email \u2014 your account remains secure.\n    </p>\n  </div>\n\n  <div style=\"text-align: center; margin-top: 24px; font-size: 12px; color: #9CA3AF;\">\n    This is an automated message from <a href=\"https://wrife.co.uk\" style=\"color: #3B82F6;\">wrife.co.uk</a>. Please do not reply.\n  </div>\n\n</div>\n```\n\n---\n\n## Design decisions\n\n| Decision | Rationale |\n|----------|-----------|\n| Subject: \"Reset your WriFe password\" | Directly describes the action the teacher took; no ambiguity about \"magic links\" |\n| H1: \"Reset your password\" | Mirrors the subject line so the email feels coherent from inbox to open |\n| Body copy: acknowledges the request | Reassures the teacher the email is expected; reduces support contacts |\n| CTA button: \"Reset my password\" | First-person phrasing is warmer and more direct than \"Click here\" |\n| 1-hour expiry note | Standard for password reset security; sets expectation and reduces \"the link didn't work\" reports |\n| \"If you didn't request this...\" line | Security best practice; prevents alarm if the email arrives unexpectedly |\n| WriFe blue (`#3B82F6`) button | On-brand; consistent with all other WriFe transactional emails |\n| Inline CSS only | Required for email client compatibility; no external stylesheets |\n| No logo image | Email clients block external images by default; plain-text wordmark is reliable |\n| Footer with wrife.co.uk link | Required by WriFe brand standards and good email practice |\n\n---\n\n## Also update: Reset Password template\n\nThe **Reset Password** template in Supabase fires for direct password reset flows. Apply the same subject and body to keep both flows consistent:\n\n**Subject:** `Reset your WriFe password`\n\n**Body:** Same HTML as above.\n\n---\n\n## After saving\n\n1. Refresh the Supabase template page and confirm the subject field shows \"Reset your WriFe password\" (Supabase can silently revert saves).\n2. Trigger a test password reset to a known email address.\n3. Confirm in Resend logs (resend.com \u2192 Emails \u2192 Sending) that the email shows subject \"Reset your WriFe password\" \u2014 not \"Your Magic Link\".\n4. Check the inbox to confirm the email renders correctly and the reset button works.\n"}], "grading": null}, {"id": "eval-1-without_skill", "prompt": "The password reset email that teachers receive on WriFe says 'Your Magic Link' as the subject \u2014 it's confusing them. Fix the email templates so the subject line is appropriate for a password reset, and make sure the body copy looks professional and on-brand for WriFe.", "eval_id": 1, "outputs": [{"name": "output.md", "type": "text", "content": "# WriFe Password Reset Email \u2014 Updated Template\n\n## What the problem is\n\nSupabase routes password recovery requests through its `/magiclink` endpoint internally. This means the email teachers receive when they click \"Forgot password?\" is generated from the **Magic Link** template in Supabase \u2014 not from a separate \"Reset Password\" template. The default Magic Link template ships with the subject line \"Your Magic Link\", which is meaningless and confusing to teachers who initiated a password reset.\n\nThe fix is to update the **Magic Link** template directly in the Supabase Dashboard. There is no separate recovery template to edit \u2014 this is the one.\n\n---\n\n## Where to make the change\n\n**Supabase Dashboard \u2192 Authentication \u2192 Email Templates \u2192 Magic Link**\n\nUpdate both the **Subject** field and the **Message (HTML) body** below.\n\n---\n\n## Recommended subject line\n\n```\nReset your WriFe password\n```\n\nThis is:\n- Specific about what the email is for\n- Action-oriented without being alarmist\n- Consistent with how the `/reset-password` page describes the flow (\"Send reset link\")\n\n---\n\n## Recommended HTML body\n\nPaste this verbatim into the Supabase Magic Link template body. The `{{ .ConfirmationURL }}` placeholder is Supabase's variable for the reset link \u2014 do not modify it.\n\n```html\n<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 24px; color: #1F2937;\">\n\n  <!-- WriFe wordmark header -->\n  <div style=\"text-align: center; margin-bottom: 32px;\">\n    <span style=\"font-size: 28px; font-weight: 900; color: #19213D; letter-spacing: -0.5px;\">WriFe</span>\n    <div style=\"font-size: 12px; color: #6B7280; margin-top: 4px; letter-spacing: 0.3px;\">Writing for Everyone</div>\n  </div>\n\n  <!-- Card -->\n  <div style=\"background: #ffffff; border: 1px solid #E3E6F0; border-radius: 16px; padding: 32px;\">\n\n    <h1 style=\"font-size: 20px; font-weight: 700; margin: 0 0 12px; color: #19213D;\">\n      Reset your password\n    </h1>\n\n    <p style=\"font-size: 15px; line-height: 1.6; color: #374151; margin: 0 0 8px;\">\n      We received a request to reset the password for your WriFe teacher account.\n    </p>\n\n    <p style=\"font-size: 15px; line-height: 1.6; color: #374151; margin: 0 0 28px;\">\n      Click the button below to choose a new password. This link is valid for <strong>1 hour</strong>.\n    </p>\n\n    <!-- CTA button -->\n    <div style=\"text-align: center; margin-bottom: 28px;\">\n      <a href=\"{{ .ConfirmationURL }}\"\n         style=\"display: inline-block; background: #2E5AFF; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 13px 36px; border-radius: 50px; letter-spacing: 0.2px;\">\n        Reset my password\n      </a>\n    </div>\n\n    <!-- Security note -->\n    <p style=\"font-size: 13px; color: #6B7280; margin: 0; line-height: 1.6;\">\n      If you didn't request a password reset, you can safely ignore this email \u2014 your account remains secure and your password has not been changed.\n    </p>\n\n  </div>\n\n  <!-- Footer -->\n  <div style=\"text-align: center; margin-top: 24px; font-size: 12px; color: #9CA3AF; line-height: 1.6;\">\n    This is an automated message from\n    <a href=\"https://wrife.co.uk\" style=\"color: #2E5AFF; text-decoration: none;\">wrife.co.uk</a>.\n    Please do not reply to this email.\n  </div>\n\n</div>\n```\n\n---\n\n## Why this template is on-brand for WriFe\n\n| Design decision | Rationale |\n|-----------------|-----------|\n| WriFe wordmark as plain text, not an image | Email clients block external images by default; inline text renders everywhere |\n| Button colour `#2E5AFF` | Matches `--wrife-blue` from the app's design system (globals.css) |\n| Dark text `#19213D` | Matches `--wrife-text-main` \u2014 consistent with the sign-in and reset-password pages |\n| Rounded pill button (border-radius: 50px) | Consistent with the pill button style used throughout the WriFe UI |\n| Tone: \"your WriFe teacher account\" | Addresses teachers specifically; reassuring, not robotic |\n| Security note | Best practice for password reset emails; reduces support queries from teachers who didn't initiate the reset |\n| 1-hour expiry stated explicitly | Sets expectation; reduces confusion when links expire |\n| No images or web fonts | Maximum compatibility across school IT environments, which often use Outlook or aged webmail clients |\n\n---\n\n## Also update: Reset Password template\n\nSupabase also has a separate **Reset Password** template. This fires in slightly different code paths. Apply the same subject and body to it for consistency:\n\n**Subject:** `Reset your WriFe password`\n**Body:** Use the identical HTML above.\n\nKeeping both templates in sync ensures teachers always see appropriate copy regardless of which auth path triggered the email.\n\n---\n\n## Where this template lives in Supabase\n\n- Dashboard URL: `https://supabase.com/dashboard/project/gzmgjkbtsvezfclmreru/auth/templates`\n- Template to edit: **Magic Link** (primary fix) and **Reset Password** (secondary, for consistency)\n- Sender name field: should read `WriFe` \u2014 confirm this hasn't reverted to blank or \"noreply\"\n- After saving: wait ~1 minute before testing, as Supabase caches templates\n\n---\n\n## Quick verification checklist after deploying\n\n1. Go to the WriFe login page \u2192 click \"Forgot password?\"\n2. Enter a real teacher email address\n3. Check the inbox \u2014 subject line should read \"Reset your WriFe password\"\n4. Confirm the button label reads \"Reset my password\"\n5. Click the link \u2014 should redirect to `/update-password` on wrife.co.uk\n6. Check Resend logs (resend.com \u2192 Emails) to confirm delivery status\n"}], "grading": null}, {"id": "eval-2-with_skill", "prompt": "A teacher at a school signed up for WriFe but says they never received the confirmation email. I've checked and the email address looks correct. Walk me through how to investigate and fix this.", "eval_id": 2, "outputs": [{"name": "output.md", "type": "text", "content": "# Investigating a Missing Confirmation Email \u2014 WriFe\n\nWhen a teacher signs up for WriFe but doesn't receive their confirmation email, work through the following steps in order. Each step narrows down where the failure occurred.\n\n---\n\n## Step 1 \u2014 Check Resend logs (start here every time)\n\nGo to **resend.com \u2192 Emails \u2192 Sending** and search for the teacher's email address and the approximate time of sign-up.\n\nThere are three possible outcomes:\n\n**\"Delivered\" status**\nResend successfully handed the email to the recipient's mail server. The problem is downstream \u2014 at their inbox. Jump to Step 2.\n\n**\"Bounced\" or \"Failed\" status**\nThe address is invalid, or the receiving mail server rejected it. Read the bounce reason carefully \u2014 it will tell you whether the address doesn't exist or whether the domain is actively blocking. If the address looks correct in your system but Resend is bouncing it, the domain's mail server may be rejecting emails from `noreply@wrife.co.uk`. Ask the teacher to contact their school IT admin and check Step 5 (domain verification).\n\n**No record at all**\nSupabase never handed the email to Resend. This is either a rate limit problem or a broken SMTP configuration. Go to Step 3 first, then Step 4.\n\n---\n\n## Step 2 \u2014 School or iCloud spam filtering\n\nIf Resend shows \"Delivered\" but the teacher has nothing in their inbox:\n\n- **Ask the teacher to check their Junk / Spam folder.** Many school email systems (especially those managed by local authorities in the UK) have aggressive inbound filtering.\n- **iCloud / me.com / mac.com addresses specifically:** Apple's iCloud mail frequently routes transactional emails from newer domains to Junk. If the teacher uses an iCloud address, this is the most likely cause. Ask them to check Junk and mark the email as \"Not Junk\" \u2014 this trains iCloud to accept future emails from `noreply@wrife.co.uk`.\n- **School IT whitelisting:** If the teacher's school address keeps blocking emails, ask them to have their IT admin whitelist `noreply@wrife.co.uk`. This is common for UK schools on local authority email systems.\n\n---\n\n## Step 3 \u2014 Check the Supabase free tier rate limit\n\nWriFe runs on Supabase's free tier, which allows only **3 auth emails per hour** across the entire project. If several sign-ups, password resets, or test emails went out in the same hour, Supabase silently drops later emails before they ever reach Resend \u2014 which explains why there would be no record in Resend at all.\n\nTo check whether this is the cause:\n- Look at whether other sign-ups or test emails happened in the same hour.\n- If so, wait until the hour has passed and trigger a fresh confirmation email for the teacher (either ask them to try signing up again, or resend from the Supabase dashboard if that option is available).\n\n**Long-term fix:** Upgrading to Supabase Pro removes the per-hour auth email cap. For a school-scale production deployment, this is strongly recommended.\n\n---\n\n## Step 4 \u2014 Verify SMTP configuration in Supabase\n\nGo to **Supabase Dashboard \u2192 Authentication \u2192 SMTP Settings** and confirm all of the following are set correctly:\n\n| Field | Expected value |\n|-------|---------------|\n| Enable Custom SMTP | On |\n| Host | `smtp.resend.com` |\n| Port | `465` |\n| Username | `resend` |\n| Password | A valid Resend API key starting with `re_` |\n| Sender name | `WriFe` |\n| Sender email | `noreply@wrife.co.uk` |\n\n**Important:** Supabase sometimes silently reverts to its default email provider after you save. After checking or updating these settings, refresh the page and confirm the fields still show the Resend credentials. Then send a test auth email to a known-good address to confirm Resend logs it.\n\nIf the SMTP config was missing or wrong, fix it and then ask the teacher to trigger a fresh confirmation (re-register or use a resend option).\n\n---\n\n## Step 5 \u2014 Check Resend domain verification\n\nGo to **resend.com \u2192 Domains** and confirm that `wrife.co.uk` shows as **Verified** with both DKIM and SPF records green.\n\nIf either record shows as unverified or pending:\n1. Check the DNS records Resend provided (DKIM TXT records + SPF) are correctly added to the `wrife.co.uk` domain's DNS.\n2. DNS propagation can take up to 48 hours after a change.\n3. Do not send production emails until both records are verified \u2014 unverified domains cause deliverability failures even when Resend shows \"Delivered.\"\n\n---\n\n## Resolving the teacher's immediate problem\n\nOnce you've identified and fixed the underlying cause, the teacher's existing confirmation link may have expired (links expire after 24 hours). To get them access:\n\n- Ask them to go back to the WriFe sign-up page and register again with the same email address, or use any \"Resend confirmation\" option if the app surfaces one.\n- Once the new confirmation email arrives and they click the link, their account will be active.\n\n---\n\n## What this is not\n\n- **Pupil account problem:** Pupils do not receive any emails \u2014 they authenticate via PIN and class code only. If a pupil can't log in, that is resolved by the teacher from the class management page (PIN reset), not by email troubleshooting.\n- **Wrong template:** The confirmation email for new teacher/school admin registrations fires from the Supabase **\"Confirm signup\"** template with subject line `Confirm your WriFe account`. If the teacher received something with a different subject (e.g. \"Your Magic Link\"), that indicates a template configuration issue \u2014 update the Confirm signup template in Supabase Dashboard \u2192 Authentication \u2192 Email Templates to match the WriFe standard.\n"}], "grading": null}, {"id": "eval-2-without_skill", "prompt": "A teacher at a school signed up for WriFe but says they never received the confirmation email. I've checked and the email address looks correct. Walk me through how to investigate and fix this.", "eval_id": 2, "outputs": [{"name": "output.md", "type": "text", "content": "# Troubleshooting: Teacher Did Not Receive Confirmation Email\n\nThis is a step-by-step investigation guide for when a teacher signs up for WriFe but never receives the confirmation email. Follow these steps in order.\n\n---\n\n## Step 1 \u2014 Check Resend logs first\n\nGo to **resend.com \u2192 Emails \u2192 Sending** and search for the teacher's email address and approximate sign-up timestamp.\n\nLook at the delivery status:\n\n- **\"Delivered\"** \u2014 Resend successfully handed the email to the recipient's mail server. The problem is at the teacher's end (spam filter, iCloud Junk folder, school firewall). Move to Step 2.\n- **\"Bounced\" or \"Failed\"** \u2014 The email address may be invalid, or the school's mail server rejected it. Read the bounce reason carefully. If the address genuinely looks correct, the school's mail server may be blocking it \u2014 advise the teacher to contact their school IT admin to whitelist `noreply@wrife.co.uk`.\n- **No record at all** \u2014 Supabase never handed the email to Resend. This points to either a broken SMTP configuration or a rate limit issue. Move to Step 3.\n\n---\n\n## Step 2 \u2014 iCloud / me.com / mac.com addresses (if status is \"Delivered\")\n\nIf the teacher uses an iCloud email address (`@icloud.com`, `@me.com`, `@mac.com`), Apple's mail filtering is very aggressive with transactional email, especially from newer domains.\n\nWhat to do:\n- Ask the teacher to check their **Junk** folder (not just Spam \u2014 iCloud calls it Junk).\n- If the email is there, ask them to mark it as **\"Not Junk\"**. This trains iCloud to accept future WriFe emails.\n- For school email addresses, ask the teacher to check their junk/spam folder and also ask their school IT admin whether emails from `noreply@wrife.co.uk` are being filtered at the domain level.\n\n---\n\n## Step 3 \u2014 Check the Supabase free tier rate limit (if no Resend record)\n\nWriFe uses Supabase's free tier, which allows only **3 auth emails per hour** across the entire project. If multiple sign-ups, password resets, or test emails went out in the same hour, later emails are silently dropped before they ever reach Resend. There will be no record in Resend at all.\n\nWhat to do:\n- Check whether other sign-ups or test emails were sent in the same hour window.\n- If the rate limit was hit, wait until the next hour and ask the teacher to try signing up again (or use Supabase's resend confirmation option from the Auth dashboard).\n- For a long-term fix: upgrading to **Supabase Pro** removes the per-hour auth email cap. This is recommended for a school-scale production deployment.\n\n---\n\n## Step 4 \u2014 Verify SMTP configuration is saved correctly (if no Resend record)\n\nSupabase has a known issue where it can **silently revert** to its default email provider after you save custom SMTP settings. If that has happened, emails will not go through Resend at all.\n\nCheck the settings:\n1. Go to **Supabase Dashboard \u2192 Authentication \u2192 SMTP Settings**\n2. Confirm the following fields are all correctly set:\n\n| Field | Expected value |\n|-------|----------------|\n| Enable Custom SMTP | On |\n| Host | `smtp.resend.com` |\n| Port | `465` |\n| Username | `resend` |\n| Password | A Resend API key starting with `re_` |\n| Sender name | `WriFe` |\n| Sender email | `noreply@wrife.co.uk` |\n\n3. If any fields are blank or reverted, re-enter the correct values, save, then **refresh the page** and check again to confirm they persisted.\n4. Send a test auth email to a known-good personal inbox to verify Resend picks it up.\n\n---\n\n## Step 5 \u2014 Check Resend domain verification\n\nEven if Resend shows emails as \"Delivered\", poor deliverability can result from the sending domain not being fully verified.\n\n1. Go to **resend.com \u2192 Domains**\n2. Find `wrife.co.uk` and confirm the status shows **\"Verified\"** for both DKIM and SPF.\n3. If either is unverified, follow Resend's instructions to add or fix the DNS records at the domain registrar, then wait for propagation (typically under 30 minutes, up to 48 hours in some cases).\n\n---\n\n## Immediate fix for the affected teacher\n\nWhile you investigate the root cause, you can manually resend the confirmation email:\n\n1. Go to **Supabase Dashboard \u2192 Authentication \u2192 Users**\n2. Find the teacher's account by email address\n3. Use the **\"Send magic link\"** or **\"Resend confirmation\"** option (depending on your Supabase version)\n4. Ask the teacher to check their inbox (and junk/spam) within the next few minutes\n\nIf you cannot resend via the dashboard, you can temporarily manually confirm the account using the Supabase SQL editor \u2014 but only do this if you have verified the email address is correct:\n\n```sql\nUPDATE auth.users\nSET email_confirmed_at = now()\nWHERE email = 'teacher@school.co.uk';\n```\n\nUse this with caution and only as a last resort.\n\n---\n\n## Summary: most likely causes in order\n\n1. **iCloud/school spam filter** \u2014 most common when Resend shows \"Delivered\"\n2. **Supabase rate limit hit** \u2014 most common when there is no Resend record and multiple sign-ups happened in the same hour\n3. **SMTP config silently reverted** \u2014 check the Supabase SMTP settings page\n4. **Domain not verified in Resend** \u2014 check DKIM/SPF status\n\nWork through these steps in order and you should be able to identify the exact cause.\n"}], "grading": null}, {"id": "eval-3-with_skill", "prompt": "We're setting up email for a new WriFe product. The Supabase project is fresh and email hasn't been configured yet. What do I need to do to get Resend working as the SMTP relay, and what templates should I put in place from day one?", "eval_id": 3, "outputs": [{"name": "output.md", "type": "text", "content": "# Setting Up Resend SMTP and Email Templates for a New WriFe Supabase Project\n\n## Part 1: Getting Resend Working as the SMTP Relay\n\n### Step 1 \u2014 Verify your sending domain in Resend\n\nBefore touching Supabase, make sure Resend knows about your sending domain.\n\n1. Log in to resend.com \u2192 Domains \u2192 Add Domain\n2. Enter `wrife.co.uk` as the sending domain\n3. Resend will give you DNS records to add (DKIM TXT records + SPF)\n4. Add those records to your domain's DNS settings\n5. Wait for propagation (usually under 30 minutes, up to 48 hours in rare cases)\n6. Confirm the domain shows \"Verified\" status in Resend before going any further\n\nDo not skip this step. If the domain is not verified in Resend, emails may appear as \"Delivered\" in Resend logs but still fail to reach inboxes reliably.\n\n### Step 2 \u2014 Get your Resend API key\n\nIn Resend, generate an API key. It will start with `re_`. Copy it \u2014 you will paste it into Supabase as the SMTP password.\n\n### Step 3 \u2014 Configure SMTP in Supabase\n\nGo to your Supabase Dashboard \u2192 Authentication \u2192 SMTP Settings, and fill in the following:\n\n| Field | Value |\n|-------|-------|\n| Enable Custom SMTP | On |\n| Host | `smtp.resend.com` |\n| Port | `465` |\n| Username | `resend` |\n| Password | Your Resend API key (starts with `re_`) |\n| Sender name | `WriFe` |\n| Sender email | `noreply@wrife.co.uk` |\n\nSave the settings, then immediately refresh the page and confirm the fields still show your Resend credentials. Supabase can silently revert to its default email provider after saving \u2014 always verify.\n\n### Step 4 \u2014 Send a test email\n\nTrigger a test auth email (e.g., a sign-up confirmation) to a real address you control, then check Resend \u2192 Emails \u2192 Sending to confirm it logged the send. A \"Delivered\" status confirms the relay is working.\n\n### Rate limit awareness\n\nOn the free tier, Supabase caps auth emails at 3 per hour across the entire project, and Resend's free tier allows 100 emails per day. Both limits are fine for initial setup and testing, but for a production school deployment you will want Supabase Pro (removes the per-hour cap) and a paid Resend plan (higher daily limit, dedicated IP option).\n\n---\n\n## Part 2: Templates to Put in Place from Day One\n\nSupabase has five email template slots under Authentication \u2192 Email Templates. All five should be configured before you go live. Use the HTML and subject lines below \u2014 they use WriFe's brand standards (inline CSS only, WriFe blue `#3B82F6`, neutral text `#1F2937`, plain-text logo header, noreply footer). The `{{ .ConfirmationURL }}` placeholder is Supabase's built-in variable for the action link \u2014 do not change it.\n\n---\n\n### 1. Confirm Signup\n\nUsed when a teacher or school admin registers for the first time.\n\n**Subject:** `Confirm your WriFe account`\n\n```html\n<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 24px; color: #1F2937;\">\n\n  <div style=\"text-align: center; margin-bottom: 32px;\">\n    <span style=\"font-size: 28px; font-weight: 900; color: #1F2937; letter-spacing: -0.5px;\">WriFe</span>\n    <div style=\"font-size: 12px; color: #6B7280; margin-top: 2px;\">Writing for Everyone</div>\n  </div>\n\n  <div style=\"background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; padding: 32px;\">\n    <h1 style=\"font-size: 20px; font-weight: 700; margin: 0 0 12px; color: #1F2937;\">Welcome to WriFe!</h1>\n    <p style=\"font-size: 15px; line-height: 1.6; color: #374151; margin: 0 0 24px;\">\n      Thanks for signing up. Click the button below to confirm your email address and activate your account.\n    </p>\n    <div style=\"text-align: center; margin-bottom: 24px;\">\n      <a href=\"{{ .ConfirmationURL }}\"\n         style=\"display: inline-block; background: #3B82F6; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 50px;\">\n        Confirm my account\n      </a>\n    </div>\n    <p style=\"font-size: 13px; color: #6B7280; margin: 0;\">\n      This link expires in 24 hours. If you didn't sign up for WriFe, you can ignore this email.\n    </p>\n  </div>\n\n  <div style=\"text-align: center; margin-top: 24px; font-size: 12px; color: #9CA3AF;\">\n    This is an automated message from <a href=\"https://wrife.co.uk\" style=\"color: #3B82F6;\">wrife.co.uk</a>. Please do not reply.\n  </div>\n\n</div>\n```\n\n---\n\n### 2. Magic Link (used internally for password recovery)\n\nImportant: Supabase/GoTrue routes password recovery requests through the `/magiclink` endpoint. This means the Magic Link template is what actually gets sent when a user asks to reset their password. You must update this template to use recovery-appropriate copy \u2014 not generic magic link copy. If you leave it as-is, users will receive a confusing \"Your Magic Link\" subject line when they request a password reset.\n\n**Subject:** `Reset your WriFe password`\n\n```html\n<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 24px; color: #1F2937;\">\n\n  <div style=\"text-align: center; margin-bottom: 32px;\">\n    <span style=\"font-size: 28px; font-weight: 900; color: #1F2937; letter-spacing: -0.5px;\">WriFe</span>\n    <div style=\"font-size: 12px; color: #6B7280; margin-top: 2px;\">Writing for Everyone</div>\n  </div>\n\n  <div style=\"background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; padding: 32px;\">\n    <h1 style=\"font-size: 20px; font-weight: 700; margin: 0 0 12px; color: #1F2937;\">Reset your password</h1>\n    <p style=\"font-size: 15px; line-height: 1.6; color: #374151; margin: 0 0 24px;\">\n      We received a request to reset the password for your WriFe account. Click the button below to choose a new password.\n    </p>\n    <div style=\"text-align: center; margin-bottom: 24px;\">\n      <a href=\"{{ .ConfirmationURL }}\"\n         style=\"display: inline-block; background: #3B82F6; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 50px;\">\n        Reset my password\n      </a>\n    </div>\n    <p style=\"font-size: 13px; color: #6B7280; margin: 0;\">\n      This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email \u2014 your account remains secure.\n    </p>\n  </div>\n\n  <div style=\"text-align: center; margin-top: 24px; font-size: 12px; color: #9CA3AF;\">\n    This is an automated message from <a href=\"https://wrife.co.uk\" style=\"color: #3B82F6;\">wrife.co.uk</a>. Please do not reply.\n  </div>\n\n</div>\n```\n\n---\n\n### 3. Reset Password\n\nUsed by the direct password reset flow. Use the same template body and subject as the Magic Link template above \u2014 both flows deliver a password reset, and consistency matters more than technical distinction.\n\n**Subject:** `Reset your WriFe password`\n\n(Same HTML as the Magic Link template.)\n\n---\n\n### 4. Invite User\n\nSent when an admin invites a teacher to the platform.\n\n**Subject:** `You've been invited to join WriFe`\n\n```html\n<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 24px; color: #1F2937;\">\n\n  <div style=\"text-align: center; margin-bottom: 32px;\">\n    <span style=\"font-size: 28px; font-weight: 900; color: #1F2937; letter-spacing: -0.5px;\">WriFe</span>\n    <div style=\"font-size: 12px; color: #6B7280; margin-top: 2px;\">Writing for Everyone</div>\n  </div>\n\n  <div style=\"background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; padding: 32px;\">\n    <h1 style=\"font-size: 20px; font-weight: 700; margin: 0 0 12px; color: #1F2937;\">You've been invited to WriFe</h1>\n    <p style=\"font-size: 15px; line-height: 1.6; color: #374151; margin: 0 0 24px;\">\n      Your school has set up a WriFe account for you. Click the button below to accept the invitation and create your password.\n    </p>\n    <div style=\"text-align: center; margin-bottom: 24px;\">\n      <a href=\"{{ .ConfirmationURL }}\"\n         style=\"display: inline-block; background: #3B82F6; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 50px;\">\n        Accept invitation\n      </a>\n    </div>\n    <p style=\"font-size: 13px; color: #6B7280; margin: 0;\">\n      This link expires in 24 hours. WriFe is a writing platform for schools \u2014 visit <a href=\"https://wrife.co.uk\" style=\"color: #3B82F6;\">wrife.co.uk</a> to learn more.\n    </p>\n  </div>\n\n  <div style=\"text-align: center; margin-top: 24px; font-size: 12px; color: #9CA3AF;\">\n    This is an automated message from <a href=\"https://wrife.co.uk\" style=\"color: #3B82F6;\">wrife.co.uk</a>. Please do not reply.\n  </div>\n\n</div>\n```\n\n---\n\n### 5. Change Email Address\n\nSent when an existing user updates the email address on their account.\n\n**Subject:** `Confirm your new WriFe email address`\n\n```html\n<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 24px; color: #1F2937;\">\n\n  <div style=\"text-align: center; margin-bottom: 32px;\">\n    <span style=\"font-size: 28px; font-weight: 900; color: #1F2937; letter-spacing: -0.5px;\">WriFe</span>\n    <div style=\"font-size: 12px; color: #6B7280; margin-top: 2px;\">Writing for Everyone</div>\n  </div>\n\n  <div style=\"background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; padding: 32px;\">\n    <h1 style=\"font-size: 20px; font-weight: 700; margin: 0 0 12px; color: #1F2937;\">Confirm your new email address</h1>\n    <p style=\"font-size: 15px; line-height: 1.6; color: #374151; margin: 0 0 24px;\">\n      You requested a change to the email address on your WriFe account. Click below to confirm the change.\n    </p>\n    <div style=\"text-align: center; margin-bottom: 24px;\">\n      <a href=\"{{ .ConfirmationURL }}\"\n         style=\"display: inline-block; background: #3B82F6; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 50px;\">\n        Confirm email change\n      </a>\n    </div>\n    <p style=\"font-size: 13px; color: #6B7280; margin: 0;\">\n      This link expires in 24 hours. If you didn't request this change, contact us at support@wrife.co.uk immediately.\n    </p>\n  </div>\n\n  <div style=\"text-align: center; margin-top: 24px; font-size: 12px; color: #9CA3AF;\">\n    This is an automated message from <a href=\"https://wrife.co.uk\" style=\"color: #3B82F6;\">wrife.co.uk</a>. Please do not reply.\n  </div>\n\n</div>\n```\n\n---\n\n## Common First-Day Pitfalls to Avoid\n\n- **Supabase silently reverting SMTP settings.** After saving, refresh the page and verify the Resend credentials are still there. Then send a real test email.\n- **\"Your Magic Link\" appearing in password reset emails.** This happens because GoTrue routes recovery through the magic link endpoint. The fix is to update the Magic Link template's subject and body to use password reset copy, as shown above. There is no separate recovery template in Supabase's UI.\n- **Sender name showing as \"noreply\".** Check the Supabase SMTP \"Sender name\" field \u2014 it must be set to `WriFe`, not left blank.\n- **Domain not verified in Resend.** Even if Resend shows \"Delivered\", an unverified domain causes deliverability problems. Always confirm DKIM and SPF show \"Verified\" in Resend \u2192 Domains before going live.\n- **iCloud addresses going to Junk.** Apple's iCloud mail is aggressive with transactional email from newer domains. If a user with an iCloud/me.com/mac.com address reports missing emails and Resend shows \"Delivered\", the email is almost certainly in their Junk folder. Ask them to check and mark as \"Not Junk\".\n- **Template changes not appearing.** Supabase caches templates. After saving a template change, wait a minute and trigger a fresh test email rather than re-clicking an old link.\n- **Pupils are not email users.** Pupils authenticate via PIN and class code \u2014 they have no Supabase account and no email address in the system. Pupil account issues are handled by the teacher from the class management page (PIN reset), not by email.\n"}], "grading": null}, {"id": "eval-3-without_skill", "prompt": "We're setting up email for a new WriFe product. The Supabase project is fresh and email hasn't been configured yet. What do I need to do to get Resend working as the SMTP relay, and what templates should I put in place from day one?", "eval_id": 3, "outputs": [{"name": "output.md", "type": "text", "content": "# WriFe Email Setup: Resend as Supabase SMTP Relay\n\n## Part 1: Configuring Resend as the SMTP Relay\n\n### Step 1: Resend Account and Domain Setup\n\n1. Create or log in to your Resend account at resend.com.\n2. Navigate to **Domains** and add `wrife.co.uk`.\n3. Resend will provide DNS records to add to your domain registrar:\n   - An SPF TXT record (typically `v=spf1 include:amazonses.com ~all` or Resend-specific)\n   - DKIM CNAME records (usually two or three)\n   - A DMARC TXT record (Resend may provide a starter policy)\n4. Add all DNS records at your registrar and wait for verification (usually 5\u201330 minutes, sometimes up to 48 hours).\n5. Once the domain shows as **Verified** in Resend, you can send from `noreply@wrife.co.uk`.\n\n### Step 2: Generate a Resend SMTP API Key\n\n1. In the Resend dashboard, go to **API Keys**.\n2. Create a new API key with **Full Access** (or at minimum, Send access).\n3. Copy the key \u2014 you won't be able to see it again.\n\nResend SMTP credentials are:\n- **Host:** `smtp.resend.com`\n- **Port:** `465` (TLS) or `587` (STARTTLS)\n- **Username:** `resend`\n- **Password:** your API key\n\n### Step 3: Configure Supabase Auth SMTP Settings\n\n1. Go to your Supabase project dashboard.\n2. Navigate to **Authentication \u2192 Settings \u2192 SMTP Settings**.\n3. Toggle **Enable Custom SMTP** on.\n4. Fill in:\n   - **Sender name:** `WriFe`\n   - **Sender email:** `noreply@wrife.co.uk`\n   - **Host:** `smtp.resend.com`\n   - **Port:** `465`\n   - **Username:** `resend`\n   - **Password:** (your Resend API key)\n   - **Minimum interval between emails:** leave at default (60 seconds) unless you have a specific reason to change it\n5. Click **Save**.\n6. Use the **Send Test Email** button to verify delivery \u2014 check your inbox and the Resend dashboard logs.\n\n### Step 4: Configure Auth Rate Limits and Redirect URLs\n\nWhile in **Authentication \u2192 Settings**, also confirm:\n- **Site URL** is set to your production domain (e.g., `https://wrife.co.uk` or `https://app.wrife.co.uk`)\n- **Redirect URLs** include any staging/preview URLs you use\n- Review the rate limits \u2014 for a school platform with potentially many simultaneous signups, the defaults (3 emails per hour per user) are fine initially\n\n---\n\n## Part 2: Email Templates to Put in Place from Day One\n\nSupabase Auth sends emails for specific trigger events. Each template lives at **Authentication \u2192 Email Templates** in the dashboard. You can also set them via the Supabase Management API or `config.toml` in the CLI.\n\nThe templates to configure are:\n\n### 1. Confirm Signup (Email Verification)\n\n**Trigger:** When a new user registers and Supabase sends a confirmation link.\n\n**Who receives it on WriFe:** Teachers creating accounts, school admins, and any parent/guardian with an account.\n\n**Template:**\n\n```html\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Confirm your WriFe account</title>\n</head>\n<body style=\"margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;\">\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f3f4f6;padding:40px 0;\">\n    <tr>\n      <td align=\"center\">\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;\">\n          <!-- Header -->\n          <tr>\n            <td style=\"background-color:#3B82F6;padding:32px 40px;text-align:center;\">\n              <h1 style=\"margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;\">WriFe</h1>\n              <p style=\"margin:4px 0 0;color:#dbeafe;font-size:13px;\">Educational Writing Platform</p>\n            </td>\n          </tr>\n          <!-- Body -->\n          <tr>\n            <td style=\"padding:40px 40px 32px;\">\n              <h2 style=\"margin:0 0 16px;color:#111827;font-size:22px;font-weight:600;\">Confirm your email address</h2>\n              <p style=\"margin:0 0 24px;color:#374151;font-size:16px;line-height:1.6;\">\n                Thanks for signing up to WriFe. Click the button below to confirm your email address and activate your account.\n              </p>\n              <table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n                <tr>\n                  <td align=\"center\" style=\"padding:8px 0 32px;\">\n                    <a href=\"{{ .ConfirmationURL }}\"\n                       style=\"display:inline-block;background-color:#F97316;color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 36px;border-radius:6px;\">\n                      Confirm my account\n                    </a>\n                  </td>\n                </tr>\n              </table>\n              <p style=\"margin:0 0 8px;color:#6b7280;font-size:14px;line-height:1.5;\">\n                If the button doesn't work, copy and paste this link into your browser:\n              </p>\n              <p style=\"margin:0 0 24px;word-break:break-all;\">\n                <a href=\"{{ .ConfirmationURL }}\" style=\"color:#3B82F6;font-size:13px;\">{{ .ConfirmationURL }}</a>\n              </p>\n              <p style=\"margin:0;color:#6b7280;font-size:14px;line-height:1.5;\">\n                This link expires in 24 hours. If you did not create a WriFe account, you can safely ignore this email.\n              </p>\n            </td>\n          </tr>\n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;\">\n              <p style=\"margin:0;color:#9ca3af;font-size:12px;text-align:center;line-height:1.6;\">\n                WriFe Education Ltd &middot; noreply@wrife.co.uk<br>\n                This is an automated message. Please do not reply to this email.\n              </p>\n            </td>\n          </tr>\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n```\n\n**Subject line:** `Confirm your WriFe account`\n\n---\n\n### 2. Magic Link (Passwordless Sign-in)\n\n**Trigger:** When a user requests a magic link login email.\n\n**Who receives it on WriFe:** Any user type using passwordless auth.\n\n**Template:**\n\n```html\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Your WriFe sign-in link</title>\n</head>\n<body style=\"margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;\">\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f3f4f6;padding:40px 0;\">\n    <tr>\n      <td align=\"center\">\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;\">\n          <tr>\n            <td style=\"background-color:#3B82F6;padding:32px 40px;text-align:center;\">\n              <h1 style=\"margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;\">WriFe</h1>\n              <p style=\"margin:4px 0 0;color:#dbeafe;font-size:13px;\">Educational Writing Platform</p>\n            </td>\n          </tr>\n          <tr>\n            <td style=\"padding:40px 40px 32px;\">\n              <h2 style=\"margin:0 0 16px;color:#111827;font-size:22px;font-weight:600;\">Your sign-in link</h2>\n              <p style=\"margin:0 0 24px;color:#374151;font-size:16px;line-height:1.6;\">\n                Click the button below to sign in to WriFe. This link can only be used once.\n              </p>\n              <table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n                <tr>\n                  <td align=\"center\" style=\"padding:8px 0 32px;\">\n                    <a href=\"{{ .ConfirmationURL }}\"\n                       style=\"display:inline-block;background-color:#F97316;color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 36px;border-radius:6px;\">\n                      Sign in to WriFe\n                    </a>\n                  </td>\n                </tr>\n              </table>\n              <p style=\"margin:0 0 8px;color:#6b7280;font-size:14px;line-height:1.5;\">\n                If the button doesn't work, copy and paste this link into your browser:\n              </p>\n              <p style=\"margin:0 0 24px;word-break:break-all;\">\n                <a href=\"{{ .ConfirmationURL }}\" style=\"color:#3B82F6;font-size:13px;\">{{ .ConfirmationURL }}</a>\n              </p>\n              <p style=\"margin:0;color:#6b7280;font-size:14px;line-height:1.5;\">\n                This link expires in 1 hour. If you did not request this link, you can safely ignore this email \u2014 your account remains secure.\n              </p>\n            </td>\n          </tr>\n          <tr>\n            <td style=\"background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;\">\n              <p style=\"margin:0;color:#9ca3af;font-size:12px;text-align:center;line-height:1.6;\">\n                WriFe Education Ltd &middot; noreply@wrife.co.uk<br>\n                This is an automated message. Please do not reply to this email.\n              </p>\n            </td>\n          </tr>\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n```\n\n**Subject line:** `Your WriFe sign-in link`\n\n---\n\n### 3. Password Reset\n\n**Trigger:** When a user clicks \"Forgot password\" and requests a reset link.\n\n**Who receives it on WriFe:** Teachers, school admins \u2014 any user with a password-based account.\n\n**Template:**\n\n```html\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Reset your WriFe password</title>\n</head>\n<body style=\"margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;\">\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f3f4f6;padding:40px 0;\">\n    <tr>\n      <td align=\"center\">\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;\">\n          <tr>\n            <td style=\"background-color:#3B82F6;padding:32px 40px;text-align:center;\">\n              <h1 style=\"margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;\">WriFe</h1>\n              <p style=\"margin:4px 0 0;color:#dbeafe;font-size:13px;\">Educational Writing Platform</p>\n            </td>\n          </tr>\n          <tr>\n            <td style=\"padding:40px 40px 32px;\">\n              <h2 style=\"margin:0 0 16px;color:#111827;font-size:22px;font-weight:600;\">Reset your password</h2>\n              <p style=\"margin:0 0 24px;color:#374151;font-size:16px;line-height:1.6;\">\n                We received a request to reset the password for your WriFe account. Click the button below to choose a new password.\n              </p>\n              <table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n                <tr>\n                  <td align=\"center\" style=\"padding:8px 0 32px;\">\n                    <a href=\"{{ .ConfirmationURL }}\"\n                       style=\"display:inline-block;background-color:#F97316;color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 36px;border-radius:6px;\">\n                      Reset my password\n                    </a>\n                  </td>\n                </tr>\n              </table>\n              <p style=\"margin:0 0 8px;color:#6b7280;font-size:14px;line-height:1.5;\">\n                If the button doesn't work, copy and paste this link into your browser:\n              </p>\n              <p style=\"margin:0 0 24px;word-break:break-all;\">\n                <a href=\"{{ .ConfirmationURL }}\" style=\"color:#3B82F6;font-size:13px;\">{{ .ConfirmationURL }}</a>\n              </p>\n              <p style=\"margin:0;color:#6b7280;font-size:14px;line-height:1.5;\">\n                This link expires in 1 hour. If you did not request a password reset, please ignore this email \u2014 your password will not be changed and your account remains secure.\n              </p>\n            </td>\n          </tr>\n          <tr>\n            <td style=\"background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;\">\n              <p style=\"margin:0;color:#9ca3af;font-size:12px;text-align:center;line-height:1.6;\">\n                WriFe Education Ltd &middot; noreply@wrife.co.uk<br>\n                This is an automated message. Please do not reply to this email.\n              </p>\n            </td>\n          </tr>\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n```\n\n**Subject line:** `Reset your WriFe password`\n\n---\n\n### 4. Invite User (Teacher/Admin Invitation)\n\n**Trigger:** When an admin invites a new user via `supabase.auth.admin.inviteUserByEmail()`.\n\n**Who receives it on WriFe:** Teachers invited by a school admin, or school admins invited by a WriFe super-admin.\n\n**Template:**\n\n```html\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>You've been invited to WriFe</title>\n</head>\n<body style=\"margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;\">\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f3f4f6;padding:40px 0;\">\n    <tr>\n      <td align=\"center\">\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;\">\n          <tr>\n            <td style=\"background-color:#3B82F6;padding:32px 40px;text-align:center;\">\n              <h1 style=\"margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;\">WriFe</h1>\n              <p style=\"margin:4px 0 0;color:#dbeafe;font-size:13px;\">Educational Writing Platform</p>\n            </td>\n          </tr>\n          <tr>\n            <td style=\"padding:40px 40px 32px;\">\n              <h2 style=\"margin:0 0 16px;color:#111827;font-size:22px;font-weight:600;\">You've been invited to WriFe</h2>\n              <p style=\"margin:0 0 24px;color:#374151;font-size:16px;line-height:1.6;\">\n                Your school has set up a WriFe account for you. WriFe is an educational writing platform designed to help pupils improve their writing skills.\n              </p>\n              <p style=\"margin:0 0 24px;color:#374151;font-size:16px;line-height:1.6;\">\n                Click the button below to accept your invitation and set up your password.\n              </p>\n              <table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n                <tr>\n                  <td align=\"center\" style=\"padding:8px 0 32px;\">\n                    <a href=\"{{ .ConfirmationURL }}\"\n                       style=\"display:inline-block;background-color:#F97316;color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 36px;border-radius:6px;\">\n                      Accept invitation\n                    </a>\n                  </td>\n                </tr>\n              </table>\n              <p style=\"margin:0 0 8px;color:#6b7280;font-size:14px;line-height:1.5;\">\n                If the button doesn't work, copy and paste this link into your browser:\n              </p>\n              <p style=\"margin:0 0 24px;word-break:break-all;\">\n                <a href=\"{{ .ConfirmationURL }}\" style=\"color:#3B82F6;font-size:13px;\">{{ .ConfirmationURL }}</a>\n              </p>\n              <p style=\"margin:0;color:#6b7280;font-size:14px;line-height:1.5;\">\n                This invitation expires in 24 hours. If you were not expecting this invitation, you can safely ignore this email.\n              </p>\n            </td>\n          </tr>\n          <tr>\n            <td style=\"background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;\">\n              <p style=\"margin:0;color:#9ca3af;font-size:12px;text-align:center;line-height:1.6;\">\n                WriFe Education Ltd &middot; noreply@wrife.co.uk<br>\n                This is an automated message. Please do not reply to this email.\n              </p>\n            </td>\n          </tr>\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n```\n\n**Subject line:** `You've been invited to WriFe`\n\n---\n\n### 5. Email Change Confirmation\n\n**Trigger:** When an authenticated user requests to change their email address. Supabase sends a confirmation to the new address.\n\n**Who receives it on WriFe:** Teachers or admins updating their account email.\n\n**Template:**\n\n```html\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Confirm your new WriFe email address</title>\n</head>\n<body style=\"margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;\">\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f3f4f6;padding:40px 0;\">\n    <tr>\n      <td align=\"center\">\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;\">\n          <tr>\n            <td style=\"background-color:#3B82F6;padding:32px 40px;text-align:center;\">\n              <h1 style=\"margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;\">WriFe</h1>\n              <p style=\"margin:4px 0 0;color:#dbeafe;font-size:13px;\">Educational Writing Platform</p>\n            </td>\n          </tr>\n          <tr>\n            <td style=\"padding:40px 40px 32px;\">\n              <h2 style=\"margin:0 0 16px;color:#111827;font-size:22px;font-weight:600;\">Confirm your new email address</h2>\n              <p style=\"margin:0 0 24px;color:#374151;font-size:16px;line-height:1.6;\">\n                We received a request to update the email address on your WriFe account to this address. Click the button below to confirm the change.\n              </p>\n              <table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n                <tr>\n                  <td align=\"center\" style=\"padding:8px 0 32px;\">\n                    <a href=\"{{ .ConfirmationURL }}\"\n                       style=\"display:inline-block;background-color:#F97316;color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 36px;border-radius:6px;\">\n                      Confirm new email address\n                    </a>\n                  </td>\n                </tr>\n              </table>\n              <p style=\"margin:0 0 8px;color:#6b7280;font-size:14px;line-height:1.5;\">\n                If the button doesn't work, copy and paste this link into your browser:\n              </p>\n              <p style=\"margin:0 0 24px;word-break:break-all;\">\n                <a href=\"{{ .ConfirmationURL }}\" style=\"color:#3B82F6;font-size:13px;\">{{ .ConfirmationURL }}</a>\n              </p>\n              <p style=\"margin:0;color:#6b7280;font-size:14px;line-height:1.5;\">\n                This link expires in 24 hours. If you did not request an email change, please contact us immediately at support@wrife.co.uk \u2014 someone may be attempting to access your account.\n              </p>\n            </td>\n          </tr>\n          <tr>\n            <td style=\"background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;\">\n              <p style=\"margin:0;color:#9ca3af;font-size:12px;text-align:center;line-height:1.6;\">\n                WriFe Education Ltd &middot; noreply@wrife.co.uk<br>\n                This is an automated message. Please do not reply to this email.\n              </p>\n            </td>\n          </tr>\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n```\n\n**Subject line:** `Confirm your new WriFe email address`\n\n---\n\n## Part 3: Template Variable Reference\n\nSupabase injects these variables into auth email templates. Use them as Go template syntax `{{ .Variable }}`:\n\n| Variable | Description |\n|---|---|\n| `{{ .ConfirmationURL }}` | The full one-time action URL (confirmation, reset, invite, magic link) |\n| `{{ .Email }}` | The recipient's email address |\n| `{{ .SiteURL }}` | Your configured Site URL |\n| `{{ .Token }}` | The raw OTP token (for custom implementations) |\n| `{{ .TokenHash }}` | Hashed version of the token |\n\nNote: `{{ .ConfirmationURL }}` is the correct variable for the clickable link in all five Supabase Auth templates. Use it for the href in the button and the plain-text fallback.\n\n---\n\n## Part 4: Applying the Templates\n\n### Via the Supabase Dashboard (quickest)\n\n1. Go to **Authentication \u2192 Email Templates** in your project dashboard.\n2. Select each template type from the dropdown (Confirm signup, Magic Link, Reset Password, Invite User, Change Email).\n3. Paste the HTML into the body field, enter the subject line, and click **Save**.\n\n### Via `config.toml` (recommended for source control)\n\nIf using the Supabase CLI, add this to `supabase/config.toml`:\n\n```toml\n[auth.email]\nenable_signup = true\ndouble_confirm_changes = true\nenable_confirmations = true\n\n[auth.email.template.confirmation]\nsubject = \"Confirm your WriFe account\"\ncontent_path = \"./supabase/templates/confirmation.html\"\n\n[auth.email.template.magic_link]\nsubject = \"Your WriFe sign-in link\"\ncontent_path = \"./supabase/templates/magic_link.html\"\n\n[auth.email.template.recovery]\nsubject = \"Reset your WriFe password\"\ncontent_path = \"./supabase/templates/recovery.html\"\n\n[auth.email.template.invite]\nsubject = \"You've been invited to WriFe\"\ncontent_path = \"./supabase/templates/invite.html\"\n\n[auth.email.template.email_change]\nsubject = \"Confirm your new WriFe email address\"\ncontent_path = \"./supabase/templates/email_change.html\"\n```\n\nStore each HTML template in `supabase/templates/` and commit to version control.\n\n---\n\n## Part 5: Additional Recommendations for a School Platform\n\n**Double confirm email changes:** Enable `double_confirm_changes = true` in config. This sends a confirmation to both the old and new email address before applying the change \u2014 important for school safeguarding.\n\n**SMTP rate limits:** Resend free tier allows 100 emails/day and 3,000/month. For a growing school rollout, monitor usage and upgrade to a paid plan before reaching limits. The first bulk teacher onboarding could hit free limits quickly.\n\n**Sender reputation:** Because `noreply@wrife.co.uk` is a new sending address, start with low volumes to build reputation. Avoid sending large batches of invite emails all at once in the first week.\n\n**School IT filtering:** Many UK schools run email filtering (e.g., Smoothwall, Cisco Umbrella). When teachers report not receiving emails, advise them to check spam or ask their IT coordinator to whitelist `noreply@wrife.co.uk` and `smtp.resend.com` IP ranges. Include a plain-text fallback URL in all templates (already done above) so links work even when HTML is stripped.\n\n**GDPR note:** Supabase stores email addresses in the `auth.users` table. For UK schools this is personal data under UK GDPR. Ensure your data processing agreement with Supabase covers this and that your privacy notice mentions email communications.\n\n**Resend webhooks (optional but useful):** Set up Resend webhook events for `email.bounced` and `email.complained` so you can automatically disable bounced addresses in your user records. This prevents repeated sends to invalid school email addresses and protects your sender reputation.\n"}], "grading": null}], "previous_feedback": {}, "previous_outputs": {}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
