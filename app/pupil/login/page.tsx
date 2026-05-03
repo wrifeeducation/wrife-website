@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import ChildMascot from '@/components/mascots/ChildMascot';
-import { createClient } from '@/lib/supabase';
 
 export default function PupilLoginPage() {
   const [classCode, setClassCode] = useState('');
@@ -39,21 +38,23 @@ export default function PupilLoginPage() {
         return;
       }
 
-      // ── Establish a real Supabase session ──────────────────────────────────
-      // This enables cross-domain SSO: the session tokens can be passed to
-      // practice.wrife.co.uk and pwp-studio.wrife.co.uk so pupils are
-      // automatically authenticated there without a second login.
+      // ── Store SSO tokens for cross-domain links (WITHOUT calling setSession) ─
+      // We intentionally do NOT call supabase.auth.setSession() here because
+      // that would write to the shared Supabase auth cookie on wrife.co.uk,
+      // overwriting any active teacher session in the same browser.
+      //
+      // Instead, tokens are stashed in localStorage under 'pupilSSOTokens'.
+      // lib/pupil-sso.ts reads from there when building the SSO URL for
+      // practice.wrife.co.uk and pwp-studio.wrife.co.uk.
       if (data.access_token && data.refresh_token) {
         try {
-          const supabase = createClient();
-          await supabase.auth.setSession({
+          localStorage.setItem('pupilSSOTokens', JSON.stringify({
             access_token: data.access_token,
             refresh_token: data.refresh_token,
-          });
-        } catch (ssoErr) {
-          // Non-fatal: the pupil can still use wrife.co.uk without the Supabase session.
-          // They just won't get seamless SSO into the other apps.
-          console.error('Supabase setSession failed (non-fatal):', ssoErr);
+            expires_at: Math.floor(Date.now() / 1000) + (data.expires_in ?? 3600),
+          }));
+        } catch (e) {
+          // Non-fatal — SSO links will fall back to base URL
         }
       }
 
