@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
        FROM assignments a
        LEFT JOIN lessons l ON l.id = a.lesson_id
        WHERE a.class_id = $1
+         AND a.status = 'active'
        ORDER BY a.created_at DESC`,
       [classId]
     );
@@ -91,33 +92,14 @@ export async function POST(request: NextRequest) {
 
     try {
       const pwpResult = await pool.query(
-        `SELECT pa.id, pa.activity_id, pa.instructions, pa.due_date, pa.created_at,
-                pg.id AS pg_id, pg.level, pg.level_name, pg.grammar_focus,
-                pg.sentence_structure, pg.instructions AS pg_instructions,
-                pg.examples, pg.practice_prompts
+        `SELECT pa.id, pa.level_from, pa.level_to, pa.instructions, pa.due_date, pa.created_at, pa.status
          FROM pwp_assignments pa
-         LEFT JOIN progressive_activities pg ON pg.id = pa.activity_id
          WHERE pa.class_id = $1
+           AND pa.status = 'active'
          ORDER BY pa.created_at DESC`,
         [String(classId)]
       );
-      pwpAssignments = pwpResult.rows.map(row => ({
-        id: row.id,
-        activity_id: row.activity_id,
-        instructions: row.instructions,
-        due_date: row.due_date,
-        created_at: row.created_at,
-        progressive_activities: row.pg_id ? {
-          id: row.pg_id,
-          level: row.level,
-          level_name: row.level_name,
-          grammar_focus: row.grammar_focus,
-          sentence_structure: row.sentence_structure,
-          instructions: row.pg_instructions,
-          examples: row.examples,
-          practice_prompts: row.practice_prompts,
-        } : null,
-      }));
+      pwpAssignments = pwpResult.rows;
     } catch (err) {
       console.log('PWP assignments may not exist, continuing');
     }

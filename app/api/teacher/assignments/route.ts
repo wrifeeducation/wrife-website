@@ -57,17 +57,28 @@ export async function GET(request: NextRequest) {
     const result = await pool.query(
       `SELECT
          a.id, a.lesson_id, a.class_id, a.title, a.instructions, a.due_date, a.created_at,
+         a.status,
          c.name AS class_name,
          l.title AS lesson_title,
          l.lesson_number,
          (SELECT COUNT(*) FROM class_members cm WHERE cm.class_id = a.class_id) AS total_pupils,
-         0 AS submitted_count,
-         0 AS reviewed_count,
-         '[]'::json AS pending_submissions
+         (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id) AS submitted_count,
+         (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id AND s.status = 'reviewed') AS reviewed_count,
+         COALESCE(
+           (SELECT json_agg(json_build_object(
+              'pupil_name', CONCAT(p.first_name, ' ', COALESCE(p.last_name, '')),
+              'submitted_at', s.submitted_at
+            ))
+            FROM submissions s
+            JOIN pupils p ON p.id = s.pupil_id
+            WHERE s.assignment_id = a.id AND s.status = 'submitted'),
+           '[]'::json
+         ) AS pending_submissions
        FROM assignments a
        JOIN classes c ON c.id = a.class_id
        LEFT JOIN lessons l ON l.id = a.lesson_id
        WHERE a.teacher_id = $1
+         AND a.status = 'active'
        ORDER BY a.created_at DESC`,
       [user.id]
     );

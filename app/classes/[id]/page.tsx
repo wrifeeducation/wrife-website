@@ -8,9 +8,9 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AddPupilModal } from '@/components/AddPupilModal';
 import { SubmissionReviewModal } from '@/components/SubmissionReviewModal';
-import { AssignDWPModal } from '@/components/AssignDWPModal';
 import { InteractivePracticeTab } from '@/components/InteractivePracticeTab';
 import { PWPStudioTab } from '@/components/PWPStudioTab';
+import { TeacherAssignmentsTab } from '@/components/TeacherAssignmentsTab';
 
 interface Class {
   id: string;
@@ -88,13 +88,12 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddPupil, setShowAddPupil] = useState(false);
-  const [showAssignDWP, setShowAssignDWP] = useState(false);
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get('tab');
-  const initialTab = tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'dwp'].includes(tabParam)
-    ? tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'dwp'
+  const initialTab = tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'assignments'].includes(tabParam)
+    ? tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'assignments'
     : 'pupils';
-  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'dwp'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'assignments'>(initialTab);
   const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
   const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<{
@@ -122,8 +121,8 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   }, [user, authLoading, resolvedParams.id, router]);
 
   useEffect(() => {
-    if (tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'dwp'].includes(tabParam)) {
-      setActiveTab(tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'dwp');
+    if (tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'assignments'].includes(tabParam)) {
+      setActiveTab(tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'assignments');
     }
   }, [tabParam]);
 
@@ -533,14 +532,14 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
                 ✏️ PWP Studio
               </button>
               <button
-                onClick={() => setActiveTab('dwp')}
+                onClick={() => setActiveTab('assignments')}
                 className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                  activeTab === 'dwp'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-blue-200 text-blue-600 hover:bg-blue-50'
+                  activeTab === 'assignments'
+                    ? 'bg-[var(--wrife-blue)] text-white'
+                    : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
                 }`}
               >
-                DWP ({dwpAssignments.length})
+                📋 Assignments
               </button>
             </div>
             <Link
@@ -856,165 +855,21 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
           )}
 
           {activeTab === 'pwp-studio' && (
-            <PWPStudioTab classId={resolvedParams.id} />
-          )}
-
-          {activeTab === 'dwp' && (
-          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
-                  Daily Writing Practice
-                </h2>
-                <p className="text-sm text-[var(--wrife-text-muted)]">
-                  40-level progressive writing programme with AI assessment
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAssignDWP(true)}
-                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition"
-              >
-                + Assign DWP
-              </button>
-            </div>
-
-            {dwpAssignments.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mb-4">
-                  <span className="text-5xl">📝</span>
-                </div>
-                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No DWP activities assigned</h3>
-                <p className="text-sm text-[var(--wrife-text-muted)] mb-4">
-                  Assign daily writing practice levels to help pupils progress through the 40-level programme
-                </p>
-              </div>
-            ) : pupils.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mb-4">
-                  <span className="text-5xl">👥</span>
-                </div>
-                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No pupils yet</h3>
-                <p className="text-sm text-[var(--wrife-text-muted)]">
-                  Add pupils to see their DWP progress
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4">
-                  <div className="flex gap-4 text-xs text-[var(--wrife-text-muted)]">
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs">✓</span>
-                      Passed
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs">◐</span>
-                      In Progress
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs">✗</span>
-                      Needs Retry
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs">○</span>
-                      Not Started
-                    </span>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[var(--wrife-border)]">
-                        <th className="text-left py-3 px-2 font-semibold text-[var(--wrife-text-main)] sticky left-0 bg-white">
-                          Pupil
-                        </th>
-                        {dwpAssignments.map((assignment) => (
-                          <th key={assignment.id} className="text-center py-3 px-2 font-semibold text-[var(--wrife-text-main)] min-w-[100px]">
-                            <div className="flex flex-col items-center gap-1">
-                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-xs font-bold">
-                                {assignment.writing_levels?.level_number ?? '?'}
-                              </span>
-                              <span className="block truncate max-w-[80px] text-xs" title={assignment.writing_levels?.activity_name ?? ''}>
-                                {(assignment.writing_levels?.activity_name ?? 'Unknown').slice(0, 12)}...
-                              </span>
-                              <button
-                                onClick={() => handleDeleteDWPAssignment(assignment.id)}
-                                className="text-xs text-red-400 hover:text-red-600"
-                                title="Remove assignment"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pupils.map((pupil) => (
-                        <tr key={pupil.id} className="border-b border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)]">
-                          <td className="py-3 px-2 sticky left-0 bg-white">
-                            <div className="flex items-center gap-2">
-                              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 uppercase">
-                                {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
-                              </div>
-                              <span className="font-medium text-[var(--wrife-text-main)]">
-                                {pupil.first_name} {pupil.last_name || ''}
-                              </span>
-                            </div>
-                          </td>
-                          {dwpAssignments.map((assignment) => {
-                            const attempt = getWritingAttemptForPupil(pupil.id, assignment.id);
-                            return (
-                              <td key={assignment.id} className="text-center py-3 px-2">
-                                {attempt ? (
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
-                                      attempt.passed === true
-                                        ? 'bg-green-100 text-green-600'
-                                        : attempt.passed === false
-                                        ? 'bg-red-100 text-red-600'
-                                        : attempt.status === 'draft'
-                                        ? 'bg-yellow-100 text-yellow-600'
-                                        : 'bg-blue-100 text-blue-600'
-                                    }`} title={attempt.passed ? 'Passed' : attempt.passed === false ? 'Needs Retry' : attempt.status}>
-                                      {attempt.passed === true ? '✓' : attempt.passed === false ? '✗' : attempt.status === 'draft' ? '◐' : '?'}
-                                    </span>
-                                    {attempt.percentage !== null && (
-                                      <span className="text-[10px] text-[var(--wrife-text-muted)]">{attempt.percentage}%</span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400" title="Not Started">
-                                    ○
-                                  </span>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </div>
-          )}
-
-          {showAssignDWP && classData && user && (
-            <AssignDWPModal
-              isOpen={showAssignDWP}
-              onClose={() => setShowAssignDWP(false)}
-              classId={classData.id}
-              className={classData.name}
-              yearGroup={classData.year_group}
-              teacherId={user.id}
-              onAssigned={() => {
-                fetchDWPAssignments();
-                fetchWritingAttempts();
-              }}
+            <PWPStudioTab
+              classId={resolvedParams.id}
+              className={classData?.name}
+              yearGroup={classData?.year_group}
             />
           )}
+
+          {activeTab === 'assignments' && classData && (
+            <TeacherAssignmentsTab
+              classId={resolvedParams.id}
+              className={classData.name}
+              yearGroup={classData.year_group}
+            />
+          )}
+
         </div>
       </div>
     </>

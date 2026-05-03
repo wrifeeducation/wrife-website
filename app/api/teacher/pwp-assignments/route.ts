@@ -74,10 +74,14 @@ export async function POST(request: NextRequest) {
     }
 
     const pool = getPool();
-    const { activity_id, class_id, instructions, due_date } = await request.json();
+    const { class_id, level_from, level_to, instructions, due_date } = await request.json();
 
-    if (!activity_id || !class_id) {
-      return NextResponse.json({ error: 'activity_id and class_id are required' }, { status: 400 });
+    if (!class_id || level_from == null || level_to == null) {
+      return NextResponse.json({ error: 'class_id, level_from, and level_to are required' }, { status: 400 });
+    }
+
+    if (level_from > level_to || level_from < 1 || level_to > 67) {
+      return NextResponse.json({ error: 'level_from must be ≤ level_to and within 1–67' }, { status: 400 });
     }
 
     const hasAccess = await verifyClassOwnership(authResult, class_id);
@@ -86,10 +90,10 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await pool.query(
-      `INSERT INTO pwp_assignments (activity_id, class_id, teacher_id, instructions, due_date)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO pwp_assignments (class_id, teacher_id, level_from, level_to, instructions, due_date, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'active')
        RETURNING id`,
-      [activity_id, class_id, authResult.userId, instructions || null, due_date || null]
+      [class_id, authResult.userId, level_from, level_to, instructions || null, due_date || null]
     );
 
     return NextResponse.json({ success: true, id: result.rows[0]?.id });
@@ -120,11 +124,10 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await pool.query(
-      `SELECT pa.id, pa.activity_id, pa.class_id, pa.instructions, pa.due_date, pa.created_at,
-              a.level, a.level_name, a.grammar_focus, a.sentence_structure
+      `SELECT pa.id, pa.class_id, pa.teacher_id, pa.level_from, pa.level_to,
+              pa.instructions, pa.due_date, pa.created_at, pa.status
        FROM pwp_assignments pa
-       JOIN progressive_activities a ON pa.activity_id = a.id
-       WHERE pa.class_id = $1
+       WHERE pa.class_id = $1 AND pa.status = 'active'
        ORDER BY pa.created_at DESC`,
       [classId]
     );

@@ -49,6 +49,24 @@ interface WritingLevel {
   learning_objective: string;
 }
 
+interface PWPAssignment {
+  id: string;
+  level_from: number;
+  level_to: number;
+  instructions: string | null;
+  due_date: string | null;
+  created_at: string;
+  status: string;
+}
+
+interface PWPSubmission {
+  id: string;
+  pwp_assignment_id: string;
+  status: string;
+  submitted_at: string | null;
+  has_assessment: boolean;
+}
+
 interface DWPAssignment {
   id: number;
   level_id: string;
@@ -128,6 +146,8 @@ export default function PupilDashboardPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
+  const [pwpAssignments, setPwpAssignments] = useState<PWPAssignment[]>([]);
+  const [pwpSubmissions, setPwpSubmissions] = useState<PWPSubmission[]>([]);
   const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
   const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
   const [stats, setStats] = useState<PupilStats | null>(null);
@@ -193,6 +213,8 @@ export default function PupilDashboardPage() {
       setAssignments(data.assignments || []);
       setSubmissions(data.submissions || []);
       setProgressRecords(data.progressRecords || []);
+      setPwpAssignments(data.pwpAssignments || []);
+      setPwpSubmissions(data.pwpSubmissions || []);
       setDwpAssignments(data.dwpAssignments || []);
       setWritingAttempts(data.writingAttempts || []);
     } catch (err) {
@@ -231,6 +253,24 @@ export default function PupilDashboardPage() {
 
   function getDWPAttempt(dwpAssignmentId: number): WritingAttempt | undefined {
     return writingAttempts.find(a => a.dwp_assignment_id === dwpAssignmentId);
+  }
+
+  function getPWPSubmission(assignmentId: string): PWPSubmission | undefined {
+    return pwpSubmissions.find(s => s.pwp_assignment_id === assignmentId);
+  }
+
+  function getPWPStatusBadge(assignmentId: string) {
+    const sub = getPWPSubmission(assignmentId);
+    if (!sub) {
+      return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">Not Started</span>;
+    }
+    if (sub.has_assessment) {
+      return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">✓ Assessed</span>;
+    }
+    if (sub.status === 'submitted') {
+      return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Submitted</span>;
+    }
+    return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">In Progress</span>;
   }
 
   function getAssignmentCTA(assignmentId: number, lessonId: number) {
@@ -312,7 +352,17 @@ export default function PupilDashboardPage() {
   const allBadges = stats?.badges ?? [];
   const latestBadges = allBadges.slice(0, 3);
 
-  const hasPendingWork = pendingAssignments.length > 0 || unstartedDwp.length > 0;
+  // Active PWP assignments (not yet assessed)
+  const activePwpAssignments = pwpAssignments.filter((a) => {
+    const sub = getPWPSubmission(a.id);
+    if (sub?.has_assessment) return false; // completed
+    if (!a.due_date) return true;
+    const due = new Date(a.due_date);
+    due.setHours(0, 0, 0, 0);
+    return due >= today;
+  });
+
+  const hasPendingWork = pendingAssignments.length > 0 || unstartedDwp.length > 0 || activePwpAssignments.length > 0;
 
   return (
     <div className="min-h-screen bg-[var(--wrife-bg)]">
@@ -529,6 +579,62 @@ export default function PupilDashboardPage() {
                 +{hiddenDwpCount} more task{hiddenDwpCount !== 1 ? 's' : ''} — complete these first to unlock them!
               </p>
             )}
+          </div>
+        )}
+
+        {/* ── PWP Studio Assignments ────────────────────────── */}
+        {activePwpAssignments.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-[var(--wrife-text-main)]" style={{ fontFamily: 'var(--font-display)' }}>
+                ✏️ PWP Studio Assignments
+              </h2>
+              <a
+                href={studioUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-1.5 rounded-full text-sm font-bold bg-[var(--wrife-blue)] text-white hover:opacity-90 transition"
+              >
+                Open PWP Studio →
+              </a>
+            </div>
+            <div className="space-y-3">
+              {activePwpAssignments.map((pwp) => {
+                const isOverdue = pwp.due_date && new Date(pwp.due_date) < new Date();
+                return (
+                  <div
+                    key={pwp.id}
+                    className="p-4 rounded-xl border border-[var(--wrife-border)] bg-[var(--wrife-bg)]"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--wrife-blue-soft)] text-[var(--wrife-blue)] text-sm font-bold">
+                          L{pwp.level_from} → L{pwp.level_to}
+                        </span>
+                        <span className="text-xs text-[var(--wrife-text-muted)]">
+                          ({pwp.level_to - pwp.level_from + 1} levels)
+                        </span>
+                      </div>
+                      {getPWPStatusBadge(pwp.id)}
+                    </div>
+                    {pwp.instructions && (
+                      <p className="text-xs text-[var(--wrife-text-muted)] mb-2">{pwp.instructions}</p>
+                    )}
+                    <p className={`text-xs ${isOverdue ? 'text-red-500 font-semibold' : 'text-[var(--wrife-text-muted)]'}`}>
+                      {pwp.due_date
+                        ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(pwp.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+                        : 'No due date'}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-xs text-[var(--wrife-text-muted)]">
+              Complete these levels at{' '}
+              <a href="https://pwp-studio.wrife.co.uk" target="_blank" rel="noopener noreferrer" className="text-[var(--wrife-blue)] hover:underline">
+                pwp-studio.wrife.co.uk
+              </a>
+            </p>
           </div>
         )}
 
