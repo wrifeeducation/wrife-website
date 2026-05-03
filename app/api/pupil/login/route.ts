@@ -1,10 +1,100 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 
 function generateSessionToken(): string {
   return randomBytes(32).toString('hex');
+}
+
+/**
+ * Generates a real Supabase session for a pupil.
+ * Auto-provisions a Supabase auth user on first login (id = pupil.id
+ * so auth.uid() === pupils.id in all RLS policies).
+ *
+ * Returns { access_token, refresh_token, expires_at } or null on failure.
+ * Never throws — caller treats token generation as non-fatal.
+ */
+async function generatePupilSupabaseSession(
+  pupilId: string,
+  authUserId: string | null
+): Promise<{ access_token: string; refresh_token: string; expires_at: number } | null> {
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const syntheticEmail = `pupil-${pupilId}@practice.wrife.co.uk`;
+
+    // Ensure auth user exists (provision on first login)
+    if (!authUserId) {
+      const { error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        id: pupilId,
+        email: syntheticEmail,
+        email_confirm: true,
+        user_metadata: { role: 'pupil', pupil_id: pupilId },
+      });
+
+      if (createErr) {
+        // User may already exist from Interactive Practice login — that's fine
+        const isAlreadyExists =
+          createErr.message?.toLowerCase().includes('already') ||
+          (createErr as { status?: number }).status === 422;
+        if (!isAlreadyExists) {
+          console.error('Failed to provision auth user:', createErr.message);
+          return null;
+        }
+      } else {
+        // Store auth_user_id so future logins skip provisioning
+        getPool()
+          .query('UPDATE pupils SET auth_user_id = $1 WHERE id = $2', [pupilId, pupilId])
+          .catch(() => {});
+      }
+    }
+
+    // Generate a magic-link OTP (no email sent)
+    const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: syntheticEmail,
+    });
+    if (linkErr || !linkData) {
+      console.error('generateLink failed:', linkErr?.message);
+      return null;
+    }
+
+    const otp = (linkData as { properties?: { email_otp?: string } }).properties?.email_otp;
+    if (!otp) {
+      console.error('generateLink returned no OTP');
+      return null;
+    }
+
+    // Exchange OTP for a real session using an anon client
+    // (verifyOtp requires the anon key, not the service role key)
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false, detectSessionInUrl: false } }
+    );
+
+    const { data: otpData, error: otpErr } = await anonClient.auth.verifyOtp({
+      email: syntheticEmail,
+      token: otp,
+      type: 'email',
+    });
+
+    if (otpErr || !otpData?.session) {
+      console.error('verifyOtp failed:', otpErr?.message ?? 'no session');
+      return null;
+    }
+
+    return {
+      access_token: otpData.session.access_token,
+      refresh_token: otpData.session.refresh_token,
+      expires_at: otpData.session.expires_at ?? Math.floor(Date.now() / 1000) + 3600,
+    };
+  } catch (err) {
+    console.error('generatePupilSupabaseSession error:', err);
+    return null;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -20,10 +110,10 @@ export async function POST(request: NextRequest) {
 
     const pool = getPool();
 
-    // Look up pupil via class_members join (not the legacy pupils.class_id)
+    // Look up pupil via class_members join — also fetch auth_user_id for SSO provisioning
     const result = await pool.query(
       `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username,
-              p.password_hash, p.year_group, p.is_active,
+              p.password_hash, p.year_group, p.is_active, p.auth_user_id,
               c.id as class_uuid, c.name as class_name, c.class_code,
               t.display_name as teacher_name
        FROM pupils p
@@ -42,32 +132,39 @@ export async function POST(request: NextRequest) {
     const pupil = result.rows[0];
 
     if (!pupil.is_active) {
-      return NextResponse.json({ error: 'Account is disabled. Please contact your teacher.' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Account is disabled. Please contact your teacher.' },
+        { status: 403 }
+      );
     }
 
-    // Try bcrypt first (for properly hashed passwords)
+    // Verify PIN — bcrypt first, then auto-upgrade legacy plain PINs
     let isValidPassword = await bcrypt.compare(pin, pupil.password_hash);
 
-    // If bcrypt fails, check if this is a plain PIN from migration (4 digits, no bcrypt prefix)
-    // Auto-upgrade to bcrypt hash on successful plain-PIN login
     if (!isValidPassword && /^\d{4}$/.test(pupil.password_hash) && pin === pupil.password_hash) {
       isValidPassword = true;
       const newHash = await bcrypt.hash(pin, 10);
-      pool.query('UPDATE pupils SET password_hash = $1 WHERE id = $2', [newHash, pupil.id]).catch(() => {});
+      pool
+        .query('UPDATE pupils SET password_hash = $1 WHERE id = $2', [newHash, pupil.id])
+        .catch(() => {});
     }
 
     if (!isValidPassword) {
-      // Log failed attempt (non-fatal)
-      pool.query(
-        `INSERT INTO pupil_activity_log (pupil_id, event_type, event_data, ip_address)
-         VALUES ($1, 'login_failed', $2, $3)`,
-        [pupil.id, JSON.stringify({ reason: 'wrong_pin' }), request.headers.get('x-forwarded-for') || 'unknown']
-      ).catch(() => {});
+      pool
+        .query(
+          `INSERT INTO pupil_activity_log (pupil_id, event_type, event_data, ip_address)
+           VALUES ($1, 'login_failed', $2, $3)`,
+          [pupil.id, JSON.stringify({ reason: 'wrong_pin' }), request.headers.get('x-forwarded-for') || 'unknown']
+        )
+        .catch(() => {});
 
       return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 });
     }
 
-    // Create session using correct column names
+    // Generate Supabase session tokens (non-fatal — login still succeeds without them)
+    const supabaseTokens = await generatePupilSupabaseSession(pupil.id, pupil.auth_user_id);
+
+    // Create legacy session cookie (kept for backward compat during migration)
     const token = generateSessionToken();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 8);
@@ -78,18 +175,19 @@ export async function POST(request: NextRequest) {
       [pupil.id, token, expiresAt, request.headers.get('x-forwarded-for') || null]
     );
 
-    // Update last login
     pool.query('UPDATE pupils SET last_login_at = NOW() WHERE id = $1', [pupil.id]).catch(() => {});
-
-    // Log success (non-fatal)
-    pool.query(
-      `INSERT INTO pupil_activity_log (pupil_id, event_type, event_data, ip_address)
-       VALUES ($1, 'login', $2, $3)`,
-      [pupil.id, JSON.stringify({ success: true }), request.headers.get('x-forwarded-for') || 'unknown']
-    ).catch(() => {});
+    pool
+      .query(
+        `INSERT INTO pupil_activity_log (pupil_id, event_type, event_data, ip_address)
+         VALUES ($1, 'login', $2, $3)`,
+        [pupil.id, JSON.stringify({ success: true, sso: !!supabaseTokens }), request.headers.get('x-forwarded-for') || 'unknown']
+      )
+      .catch(() => {});
 
     const response = NextResponse.json({
       success: true,
+      // Supabase session tokens — present when SSO provisioning succeeded
+      ...(supabaseTokens ?? {}),
       pupil: {
         id: pupil.id,
         firstName: pupil.first_name,
@@ -99,8 +197,8 @@ export async function POST(request: NextRequest) {
         yearGroup: pupil.year_group,
         classId: pupil.class_uuid,
         className: pupil.class_name,
-        teacherName: pupil.teacher_name
-      }
+        teacherName: pupil.teacher_name,
+      },
     });
 
     response.cookies.set('pupil_session', token, {
@@ -108,7 +206,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 8 * 60 * 60,
-      path: '/'
+      path: '/',
     });
 
     return response;

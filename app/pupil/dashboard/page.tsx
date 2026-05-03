@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import { buildSSOUrl } from '@/lib/pupil-sso';
 
 interface PupilSession {
   pupilId: string;
@@ -131,6 +132,9 @@ export default function PupilDashboardPage() {
   const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
   const [stats, setStats] = useState<PupilStats | null>(null);
   const [loading, setLoading] = useState(true);
+  // SSO URLs — computed on mount using the Supabase session
+  const [practiceUrl, setPracticeUrl] = useState('https://practice.wrife.co.uk');
+  const [studioUrl, setStudioUrl] = useState('https://pwp-studio.wrife.co.uk');
   const router = useRouter();
 
   useEffect(() => {
@@ -145,6 +149,11 @@ export default function PupilDashboardPage() {
       setSession(parsed);
       sessionRef.current = parsed;
       fetchAssignments(parsed.classId, parsed.pupilId);
+
+      // Build SSO URLs in the background — falls back to plain URL if no session
+      buildSSOUrl('https://practice.wrife.co.uk').then(setPracticeUrl).catch(() => {});
+      buildSSOUrl('https://pwp-studio.wrife.co.uk').then(setStudioUrl).catch(() => {});
+
       fetch(`/api/pupil/stats?pupilId=${parsed.pupilId}`)
         .then(res => res.ok ? res.json() : null)
         .then(data => { if (data) setStats(data); })
@@ -361,9 +370,9 @@ export default function PupilDashboardPage() {
 
         {/* ── App entry cards ───────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {/* Interactive Practice */}
+          {/* Interactive Practice — uses SSO URL so pupil is auto-authenticated */}
           <a
-            href="https://practice.wrife.co.uk"
+            href={practiceUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="block"
@@ -385,9 +394,9 @@ export default function PupilDashboardPage() {
             </div>
           </a>
 
-          {/* PWP Studio */}
+          {/* PWP Studio — uses SSO URL so pupil is auto-authenticated */}
           <a
-            href="https://pwp-studio.wrife.co.uk"
+            href={studioUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="block"
