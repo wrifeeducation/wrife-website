@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
          p.first_name,
          p.last_name,
          p.auth_user_id IS NOT NULL AS has_studio_account,
-         COALESCE(MAX(fl.level_number), 0)::int AS highest_level,
+         COALESCE(MAX(fl.id), 0)::int AS highest_level,
          COUNT(DISTINCT fs.id) FILTER (
            WHERE fs.created_at > NOW() - INTERVAL '30 days'
          )::int AS sessions_last_30d,
