@@ -73,8 +73,7 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
   const [timeExpired, setTimeExpired] = useState(false);
   // Stable ref so the timer effect can call the latest handleSubmit
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSubmitRef = useRef<(force?: boolean) => Promise<void>>(null as any);
+  const handleSubmitRef = useRef<((force?: boolean) => Promise<void>) | null>(null);
   const timerAutoSubmitDone = useRef(false);
 
   useEffect(() => {
