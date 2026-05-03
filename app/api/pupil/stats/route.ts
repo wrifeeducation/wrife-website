@@ -27,9 +27,19 @@ export async function GET(request: NextRequest) {
         'SELECT current_streak, longest_streak, total_logins FROM pupil_streaks WHERE pupil_id = $1',
         [pupilId]
       ),
+      // Fetch earned DWP badge slugs from writing_progress, then join badge definitions
       pool.query(
-        `SELECT badge_type, badge_name, badge_description, earned_at 
-         FROM pupil_badges WHERE pupil_id = $1 ORDER BY earned_at DESC`,
+        `SELECT wb.badge_id, wb.badge_type, wb.badge_name, wb.badge_icon, wb.badge_description
+         FROM writing_progress wp
+         CROSS JOIN LATERAL jsonb_array_elements_text(
+           CASE jsonb_typeof(wp.badges_earned)
+             WHEN 'array'  THEN wp.badges_earned
+             WHEN 'object' THEN (SELECT jsonb_agg(k) FROM jsonb_object_keys(wp.badges_earned) k)
+             ELSE '[]'::jsonb
+           END
+         ) AS earned_slug
+         JOIN writing_badges wb ON wb.badge_id = earned_slug
+         WHERE wp.pupil_id = $1`,
         [pupilId]
       ),
       pool.query(
@@ -63,10 +73,11 @@ export async function GET(request: NextRequest) {
         totalLogins: streak.total_logins,
       },
       badges: badgesResult.rows.map((b: Record<string, unknown>) => ({
+        badgeId: b.badge_id,
         badgeType: b.badge_type,
         badgeName: b.badge_name,
+        badgeIcon: b.badge_icon,
         badgeDescription: b.badge_description,
-        earnedAt: b.earned_at,
       })),
       writingStats: {
         totalSentences: writingStats.total_sentences,

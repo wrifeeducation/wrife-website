@@ -88,20 +88,18 @@ interface WritingAttempt {
 
 interface PupilStats {
   streak: { current: number; longest: number; totalLogins: number };
-  badges: Array<{ badgeType: string; badgeName: string; badgeDescription: string; earnedAt: string }>;
+  badges: Array<{ badgeId: string; badgeType: string; badgeName: string; badgeIcon: string; badgeDescription: string }>;
   writingStats: { totalSentences: number; masteryCount: number; averageScore: number };
   activityStats: { totalCompleted: number; masteryRate: number };
 }
 
-function getBadgeIcon(badgeType: string) {
+function getBadgeBg(badgeType: string) {
   switch (badgeType) {
-    case 'streak':      return { emoji: '🔥', bg: 'bg-orange-100', border: 'border-orange-300' };
-    case 'writing':     return { emoji: '✍️', bg: 'bg-blue-100',   border: 'border-blue-300' };
-    case 'mastery':     return { emoji: '⭐', bg: 'bg-yellow-100', border: 'border-yellow-300' };
-    case 'vocabulary':  return { emoji: '📚', bg: 'bg-green-100',  border: 'border-green-300' };
-    case 'completion':  return { emoji: '🏆', bg: 'bg-purple-100', border: 'border-purple-300' };
-    case 'consistency': return { emoji: '💪', bg: 'bg-pink-100',   border: 'border-pink-300' };
-    default:            return { emoji: '🎖️', bg: 'bg-gray-100',  border: 'border-gray-300' };
+    case 'streak':      return { bg: 'bg-orange-100', border: 'border-orange-300' };
+    case 'tier':        return { bg: 'bg-purple-100', border: 'border-purple-300' };
+    case 'programme':   return { bg: 'bg-yellow-100', border: 'border-yellow-300' };
+    case 'special':     return { bg: 'bg-blue-100',   border: 'border-blue-300' };
+    default:            return { bg: 'bg-gray-100',   border: 'border-gray-300' };
   }
 }
 
@@ -512,14 +510,14 @@ export default function PupilDashboardPage() {
             {latestBadges.length > 0 && (
               <div className="flex gap-1 mt-2">
                 {latestBadges.map((badge, i) => {
-                  const icon = getBadgeIcon(badge.badgeType);
+                  const { bg, border } = getBadgeBg(badge.badgeType);
                   return (
                     <span
                       key={i}
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${icon.bg} border ${icon.border} text-xs`}
+                      className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${bg} border ${border} text-xs`}
                       title={badge.badgeName}
                     >
-                      {icon.emoji}
+                      {badge.badgeIcon || '🎖️'}
                     </span>
                   );
                 })}
@@ -770,19 +768,16 @@ export default function PupilDashboardPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {allBadges.map((badge, i) => {
-                const icon = getBadgeIcon(badge.badgeType);
+                const { bg, border } = getBadgeBg(badge.badgeType);
                 return (
                   <div
                     key={i}
-                    className={`rounded-xl p-4 border ${icon.border} ${icon.bg} flex items-start gap-3`}
+                    className={`rounded-xl p-4 border ${border} ${bg} flex items-start gap-3`}
                   >
-                    <span className="text-2xl flex-shrink-0">{icon.emoji}</span>
+                    <span className="text-2xl flex-shrink-0">{badge.badgeIcon || '🎖️'}</span>
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-[var(--wrife-text-main)]">{badge.badgeName}</p>
                       <p className="text-xs text-[var(--wrife-text-muted)] mt-0.5">{badge.badgeDescription}</p>
-                      <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
-                        {new Date(badge.earnedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
                     </div>
                   </div>
                 );

@@ -228,6 +228,8 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
       throw updateError;
     }
 
+    let newlyEarnedBadges: string[] = [];
+
     if (assessment.passed) {
       const nextLevelNumber = level.level_number + 1;
       if (nextLevelNumber <= 40) {
@@ -248,7 +250,7 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
         }
       }
 
-      await updateProgress(supabaseAdmin, pupilId, level, assessment);
+      newlyEarnedBadges = await updateProgress(supabaseAdmin, pupilId, level, assessment);
     }
 
     const reqInfo = extractRequestInfo(request);
@@ -270,6 +272,7 @@ Assess this pupil's work using the rubric provided. Be encouraging and age-appro
       success: true,
       assessment,
       attempt: updatedAttempt,
+      newBadges: newlyEarnedBadges,
     });
 
   } catch (error: any) {
@@ -436,4 +439,73 @@ async function updateProgress(supabaseAdmin: any, pupilId: string, level: any, a
         ...updateData,
       });
   }
+
+  // Check and award writing badges; return newly earned badge_ids
+  return await checkAndAwardWritingBadges(supabaseAdmin, pupilId, assessment, {
+    ...progress,
+    ...updateData,
+  });
+}
+
+/**
+ * Checks all writing badge conditions and awards any not yet earned.
+ * Returns array of newly awarded badge_ids (slugs).
+ */
+async function checkAndAwardWritingBadges(
+  supabaseAdmin: any,
+  pupilId: string,
+  assessment: any,
+  progress: any,
+): Promise<string[]> {
+  const { data: allBadges } = await supabaseAdmin
+    .from('writing_badges')
+    .select('badge_id, badge_type, tier_number');
+
+  if (!allBadges?.length) return [];
+
+  const existingEarned: string[] = Array.isArray(progress?.badges_earned)
+    ? progress.badges_earned
+    : Object.keys(progress?.badges_earned || {});
+
+  const newlyEarned: string[] = [];
+
+  for (const badge of allBadges) {
+    if (existingEarned.includes(badge.badge_id)) continue;
+
+    let shouldAward = false;
+
+    switch (badge.badge_type) {
+      case 'special':
+        if (badge.badge_id === 'first_story') {
+          shouldAward = (progress.total_levels_passed || 0) >= 1;
+        } else if (badge.badge_id === 'perfect_score') {
+          shouldAward = assessment.percentage === 100;
+        }
+        break;
+      case 'tier':
+        if (badge.tier_number) {
+          shouldAward = !!progress[`tier${badge.tier_number}_completed`];
+        }
+        break;
+      case 'programme':
+        shouldAward = !!progress.programme_completed;
+        break;
+      case 'streak':
+        if (badge.badge_id === 'streak_5') shouldAward = (progress.current_streak || 0) >= 5;
+        else if (badge.badge_id === 'streak_10') shouldAward = (progress.current_streak || 0) >= 10;
+        else if (badge.badge_id === 'streak_30') shouldAward = (progress.current_streak || 0) >= 30;
+        break;
+    }
+
+    if (shouldAward) newlyEarned.push(badge.badge_id);
+  }
+
+  if (newlyEarned.length > 0) {
+    await supabaseAdmin
+      .from('writing_progress')
+      .update({ badges_earned: [...existingEarned, ...newlyEarned] })
+      .eq('pupil_id', pupilId);
+  }
+
+  return newlyEarned;
 }
