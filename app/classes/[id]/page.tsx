@@ -10,6 +10,7 @@ import { AddPupilModal } from '@/components/AddPupilModal';
 import { SubmissionReviewModal } from '@/components/SubmissionReviewModal';
 import { InteractivePracticeTab } from '@/components/InteractivePracticeTab';
 import { PWPStudioTab } from '@/components/PWPStudioTab';
+import { PWPChainTab } from '@/components/PWPChainTab';
 import { TeacherAssignmentsTab } from '@/components/TeacherAssignmentsTab';
 
 interface Class {
@@ -90,10 +91,10 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   const [showAddPupil, setShowAddPupil] = useState(false);
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get('tab');
-  const initialTab = tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'assignments'].includes(tabParam)
-    ? tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'assignments'
+  const initialTab = tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'pwp-chain', 'assignments'].includes(tabParam)
+    ? tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments'
     : 'pupils';
-  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'assignments'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments'>(initialTab);
   const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
   const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<{
@@ -121,8 +122,8 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   }, [user, authLoading, resolvedParams.id, router]);
 
   useEffect(() => {
-    if (tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'assignments'].includes(tabParam)) {
-      setActiveTab(tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'assignments');
+    if (tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'pwp-chain', 'assignments'].includes(tabParam)) {
+      setActiveTab(tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments');
     }
   }, [tabParam]);
 
@@ -532,6 +533,16 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
                 ✏️ PWP Studio
               </button>
               <button
+                onClick={() => setActiveTab('pwp-chain')}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  activeTab === 'pwp-chain'
+                    ? 'bg-[var(--wrife-blue)] text-white'
+                    : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
+                }`}
+              >
+                🔗 PWP Chain
+              </button>
+              <button
                 onClick={() => setActiveTab('assignments')}
                 className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
                   activeTab === 'assignments'
@@ -860,6 +871,10 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
               className={classData?.name}
               yearGroup={classData?.year_group}
             />
+          )}
+
+          {activeTab === 'pwp-chain' && (
+            <PWPChainTab classId={resolvedParams.id} />
           )}
 
           {activeTab === 'assignments' && classData && (
