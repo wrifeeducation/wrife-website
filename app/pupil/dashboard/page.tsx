@@ -134,7 +134,7 @@ export default function PupilDashboardPage() {
   const [loading, setLoading] = useState(true);
   // SSO URLs — computed on mount using the Supabase session
   const [practiceUrl, setPracticeUrl] = useState('https://practice.wrife.co.uk');
-  const [studioUrl, setStudioUrl] = useState('https://pwp-studio.wrife.co.uk');
+  const [studioUrl, setStudioUrl] = useState('https://pwp-studio.wrife.co.uk/dashboard');
   const router = useRouter();
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export default function PupilDashboardPage() {
 
       // Build SSO URLs in the background — falls back to plain URL if no session
       buildSSOUrl('https://practice.wrife.co.uk').then(setPracticeUrl).catch(() => {});
-      buildSSOUrl('https://pwp-studio.wrife.co.uk').then(setStudioUrl).catch(() => {});
+      buildSSOUrl('https://pwp-studio.wrife.co.uk/dashboard').then(setStudioUrl).catch(() => {});
 
       fetch(`/api/pupil/stats?pupilId=${parsed.pupilId}`)
         .then(res => res.ok ? res.json() : null)
