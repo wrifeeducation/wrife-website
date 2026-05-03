@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { AssignDWPModal } from '@/components/AssignDWPModal';
 import { AssignPWPModal } from '@/components/AssignPWPModal';
+import { DWPCompletionGrid } from '@/components/DWPCompletionGrid';
 
 /* ── Types ─────────────────────────────────────────────── */
 
@@ -83,6 +84,7 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
   const [deletingIPId, setDeletingIPId] = useState<number | null>(null);
   const [deletingPWPId, setDeletingPWPId] = useState<string | null>(null);
   const [deletingDWPId, setDeletingDWPId] = useState<number | null>(null);
+  const [selectedDwpId, setSelectedDwpId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAll();
@@ -338,35 +340,60 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
           <p className="text-sm text-[var(--wrife-text-muted)] text-center py-4">No DWP assignments yet.</p>
         ) : (
           <div className="space-y-2">
-            {dwpAssignments.map((a) => (
-              <div key={a.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--wrife-bg)] border border-[var(--wrife-border)]">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {a.writing_levels && (
-                    <span className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-purple-700 text-xs font-bold">
-                      {a.writing_levels.level_number}
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[var(--wrife-text-main)] truncate">
-                      {a.writing_levels?.activity_name ?? 'Writing Level'}
-                    </p>
-                    <div className="flex items-center gap-2 flex-wrap">
+            {dwpAssignments.map((a) => {
+              const isExpanded = selectedDwpId === a.id;
+              return (
+                <div key={a.id} className="rounded-xl border border-[var(--wrife-border)] overflow-hidden">
+                  {/* Assignment header row */}
+                  <div
+                    className="flex items-center justify-between p-3 bg-[var(--wrife-bg)] cursor-pointer hover:bg-gray-50 transition"
+                    onClick={() => setSelectedDwpId(isExpanded ? null : a.id)}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       {a.writing_levels && (
-                        <span className="text-xs text-[var(--wrife-text-muted)]">Tier {a.writing_levels.tier_number}</span>
+                        <span className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-purple-700 text-xs font-bold">
+                          {a.writing_levels.level_number}
+                        </span>
                       )}
-                      <DueBadge dueDate={a.due_date} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--wrife-text-main)] truncate">
+                          {a.writing_levels?.activity_name ?? 'Writing Level'}
+                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {a.writing_levels && (
+                            <span className="text-xs text-[var(--wrife-text-muted)]">Tier {a.writing_levels.tier_number}</span>
+                          )}
+                          <DueBadge dueDate={a.due_date} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 ml-3">
+                      <svg
+                        className={`w-4 h-4 text-[var(--wrife-text-muted)] transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteDWPAssignment(a.id); }}
+                        disabled={deletingDWPId === a.id}
+                        className="text-red-400 hover:text-red-600 text-xs font-semibold transition disabled:opacity-50"
+                        title="Remove assignment"
+                      >
+                        ✕
+                      </button>
                     </div>
                   </div>
+
+                  {/* Expandable completion grid */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 bg-white border-t border-[var(--wrife-border)]">
+                      <DWPCompletionGrid assignmentId={a.id} />
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={() => deleteDWPAssignment(a.id)}
-                  disabled={deletingDWPId === a.id}
-                  className="ml-3 text-red-400 hover:text-red-600 text-xs font-semibold transition disabled:opacity-50 shrink-0"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
