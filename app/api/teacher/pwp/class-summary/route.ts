@@ -78,21 +78,20 @@ export async function GET(req: NextRequest) {
     SELECT
       p.id                                   AS pupil_id,
       p.first_name,
-      NULL::text                             AS last_name,
+      p.last_name,
       COALESCE(pl.current_level, 1)          AS current_level,
       COALESCE(pl.mastery_signal, false)     AS mastery_signal,
       CASE WHEN cs.id IS NOT NULL THEN true ELSE false END AS completed_today,
       cs.subject_noun,
       cs.new_formula_attempts
     FROM class_members cm
-    JOIN profiles p ON p.id = cm.pupil_id
+    JOIN pupils p ON p.id = cm.pupil_id
     LEFT JOIN pwp_pupil_levels pl
       ON pl.pupil_id = p.id AND pl.class_id = cm.class_id
     LEFT JOIN pwp_chain_sessions cs
       ON cs.pupil_id = p.id AND cs.class_id = cm.class_id AND cs.session_date = $2
     WHERE cm.class_id = $1
-      AND p.role = 'pupil'
-    ORDER BY p.first_name
+    ORDER BY p.first_name, p.last_name
     `,
     [classId, today],
   );
