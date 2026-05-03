@@ -1,212 +1,256 @@
+/**
+ * POST /api/assess
+ * Teacher-triggered AI assessment for a lesson submission.
+ *
+ * Body:    { submission_id: string }
+ * Returns: { success: true, assessment: AIAssessmentRow }
+ *
+ * Scores six criteria on a 1–4 scale (1=Emerging … 4=Greater Depth):
+ *   composition, vocabulary, grammar, punctuation, spelling,
+ *   purpose_audience_effect
+ * Overall band is derived as the rounded average.
+ *
+ * Display-friendly content (strengths, improvements, improved_example,
+ * mechanical_edits, teacher_rationale) is stored in raw_ai_response JSONB.
+ *
+ * NOTE: This endpoint generates the AI assessment only — it does NOT approve
+ * the feedback or change submission.status. Teachers approve separately via
+ * POST /api/teacher/submissions/approve.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { generateCompletion, parseJSONResponse, getCurrentProviderInfo } from '@/lib/llm-provider';
+import { getPool } from '@/lib/db';
+import { generateCompletion, getCurrentProviderInfo } from '@/lib/llm-provider';
 
-function getSupabaseAdmin() {
-  return createClient(
+// ─── Auth ───────────────────────────────────────────────────────────────────
+
+async function getTeacherProfile() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll() } },
   );
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return null;
+
+  const pool = getPool();
+  const res = await pool.query(
+    'SELECT id, role FROM profiles WHERE id = $1 LIMIT 1',
+    [user.id],
+  );
+  return res.rows[0] as { id: string; role: string } | undefined;
 }
 
-interface AssessmentRequest {
-  submission_id: number;
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function clampBand(v: unknown): number {
+  const n = typeof v === 'number' ? v : parseInt(String(v), 10);
+  return isNaN(n) ? 2 : Math.max(1, Math.min(4, n));
 }
 
-interface AssessmentResult {
-  strengths: string[];
-  improvements: string[];
-  improved_example: string;
-  mechanical_edits: string[];
-  banding_score: number;
+function deriveOverallBand(scores: number[]): number {
+  const avg = scores.reduce((s, n) => s + n, 0) / scores.length;
+  if (avg >= 3.5) return 4;
+  if (avg >= 2.5) return 3;
+  if (avg >= 1.5) return 2;
+  return 1;
 }
+
+function toStrArr(v: unknown, fallback: string[]): string[] {
+  if (Array.isArray(v)) return (v as unknown[]).map(String).filter(Boolean);
+  if (typeof v === 'string' && v.trim()) return [v];
+  return fallback;
+}
+
+// ─── POST ────────────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   try {
-    const supabaseAdmin = getSupabaseAdmin();
-    
-    // Get authenticated user from session
-    const cookieStore = await cookies();
-    const supabaseAuth = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
+    const teacher = await getTeacherProfile();
+    if (!teacher || !['teacher', 'school_admin', 'admin'].includes(teacher.role)) {
+      return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+    }
+
+    const body = await request.json() as { submission_id?: string };
+    const { submission_id } = body;
+    if (!submission_id) {
+      return NextResponse.json({ error: 'submission_id is required' }, { status: 400 });
+    }
+
+    const pool = getPool();
+
+    // ── Fetch submission + assignment + lesson ──────────────────────────────
+    const subRes = await pool.query(
+      `SELECT
+         s.id, s.content, s.pupil_id,
+         a.id        AS assignment_id,
+         a.title     AS assignment_title,
+         a.class_id,
+         a.teacher_id,
+         COALESCE(l.year_group_min, 4) AS year_group
+       FROM submissions s
+       JOIN assignments a ON a.id = s.assignment_id
+       LEFT JOIN lessons l ON l.id = a.lesson_id
+       WHERE s.id = $1
+       LIMIT 1`,
+      [submission_id],
     );
 
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - please log in' },
-        { status: 401 }
-      );
+    if (subRes.rows.length === 0) {
+      return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
 
-    const teacher_id = user.id;
+    const sub = subRes.rows[0] as {
+      id: string;
+      content: string | null;
+      pupil_id: string;
+      assignment_id: string;
+      assignment_title: string;
+      class_id: string;
+      teacher_id: string;
+      year_group: number;
+    };
 
-    const body: AssessmentRequest = await request.json();
-    const { submission_id } = body;
-
-    if (!submission_id) {
-      return NextResponse.json(
-        { error: 'Missing required field: submission_id' },
-        { status: 400 }
+    // Admins bypass ownership check
+    if (teacher.role !== 'admin') {
+      const owns = await pool.query(
+        'SELECT 1 FROM classes WHERE id = $1 AND teacher_id = $2 LIMIT 1',
+        [sub.class_id, teacher.id],
       );
-    }
-
-    const { data: submission, error: submissionError } = await supabaseAdmin
-      .from('submissions')
-      .select('*, assignments(*)')
-      .eq('id', submission_id)
-      .single();
-
-    if (submissionError || !submission) {
-      return NextResponse.json(
-        { error: 'Submission not found' },
-        { status: 404 }
-      );
-    }
-
-    const assignment = submission.assignments;
-    
-    // Verify authenticated teacher owns this assignment
-    if (assignment?.teacher_id !== teacher_id) {
-      return NextResponse.json(
-        { error: 'You do not have permission to assess this submission' },
-        { status: 403 }
-      );
-    }
-    
-    let lessonInfo = '';
-    if (assignment?.lesson_id) {
-      const { data: lesson } = await supabaseAdmin
-        .from('lessons')
-        .select('*')
-        .eq('id', assignment.lesson_id)
-        .single();
-      
-      if (lesson) {
-        lessonInfo = `
-Lesson: ${lesson.title}
-Chapter: ${lesson.chapter}, Unit: ${lesson.unit}
-Summary: ${lesson.summary || 'N/A'}
-Year Group: ${lesson.year_groups || 'Years 2-6'}
-`;
+      if (owns.rows.length === 0) {
+        return NextResponse.json({ error: 'You do not own this class' }, { status: 403 });
       }
     }
 
-    const prompt = `You are an expert primary school writing teacher in the UK. Assess the following pupil writing and provide constructive feedback.
+    if (!sub.content?.trim()) {
+      return NextResponse.json({ error: 'Submission has no content to assess' }, { status: 400 });
+    }
 
-${lessonInfo}
+    const yg = sub.year_group;
 
-Assignment Title: ${assignment?.title || 'Writing Assignment'}
-Instructions: ${assignment?.instructions || 'Complete the writing task'}
+    // ── Build AI prompt ─────────────────────────────────────────────────────
+    const systemPrompt = `You are an expert UK primary school writing teacher assessing pupil work for Year ${yg} (aged ${yg + 4}–${yg + 5}).
 
-PUPIL'S WRITING:
-"""
-${submission.content}
-"""
+Your assessment must be age-appropriate, encouraging, and specific — quote phrases from the pupil's actual writing wherever possible. Identify ONE main improvement focus, not a long list.
 
-Please provide your assessment in the following JSON format:
+Score each criterion 1–4:
+  1 = Emerging   2 = Developing   3 = Secure   4 = Greater Depth
+
+Criteria:
+- composition_score: structure, ideas, organisation, coherence
+- vocabulary_score: word choice, variety, precision, effect
+- grammar_score: sentence construction, syntax, tense consistency
+- punctuation_score: accuracy of capitals, full stops, commas, speech marks etc.
+- spelling_score: spelling accuracy relative to Year ${yg} expectations
+- purpose_audience_effect_score: audience awareness, purpose, overall effect
+
+Return ONLY valid JSON — no markdown, no commentary:
 {
-  "strengths": ["List 2-3 specific things the pupil did well"],
-  "improvements": ["List 2-3 specific areas for improvement with actionable suggestions"],
-  "improved_example": "Rewrite one paragraph showing how to improve it",
-  "mechanical_edits": ["List specific spelling, punctuation, or grammar corrections needed"],
-  "banding_score": 2
-}
+  "composition_score": 1|2|3|4,
+  "vocabulary_score": 1|2|3|4,
+  "grammar_score": 1|2|3|4,
+  "punctuation_score": 1|2|3|4,
+  "spelling_score": 1|2|3|4,
+  "purpose_audience_effect_score": 1|2|3|4,
+  "strengths": ["specific strength quoting pupil's words", "second strength"],
+  "improvements": ["one main improvement with a concrete suggestion"],
+  "improved_example": "A rewritten 1–2 sentence example showing the improvement",
+  "mechanical_edits": ["specific spelling/punctuation note if needed — omit if none"],
+  "teacher_rationale": "2–3 sentence professional summary for the teacher's records"
+}`;
 
-Banding scores:
-1 = Working towards - Needs significant support
-2 = Expected - Meeting age-related expectations  
-3 = Greater depth - Exceeding expectations
-4 = Mastery - Exceptional work
+    const userPrompt = `Assignment: ${sub.assignment_title}
 
-Be encouraging and age-appropriate in your feedback. Focus on the positive while giving clear, helpful suggestions for improvement.
+Pupil's writing (Year ${yg}):
+"""
+${sub.content}
+"""
 
-Return ONLY valid JSON, no other text.`;
+Assess this work.`;
 
-    const { provider, model } = getCurrentProviderInfo();
-    console.log(`General Assessment using ${provider} (${model})`);
-
-    const llmResponse = await generateCompletion({
+    // ── Call LLM ─────────────────────────────────────────────────────────────
+    const llmRes = await generateCompletion({
       messages: [
-        { role: 'user', content: prompt }
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
       ],
-      temperature: 0.7,
+      temperature: 0.4,
+      maxTokens: 1200,
       jsonMode: true,
     });
 
-    const responseText = llmResponse.content || '';
-    
-    let assessment: AssessmentResult;
+    const { provider, model } = getCurrentProviderInfo();
+    const rawText = llmRes.content ?? '';
+
+    // Parse — strip markdown fences if present
+    let parsed: Record<string, unknown>;
     try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-      assessment = JSON.parse(jsonMatch[0]);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', responseText);
-      assessment = {
-        strengths: ['The pupil made a good effort on this writing task'],
-        improvements: ['Continue practising your writing skills'],
-        improved_example: 'Keep working on developing your ideas further.',
-        mechanical_edits: [],
-        banding_score: 2,
-      };
+      const cleaned = rawText
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```\s*$/, '')
+        .trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      const match = rawText.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('Could not parse AI response');
+      parsed = JSON.parse(match[0]);
     }
 
-    const { data: savedAssessment, error: saveError } = await supabaseAdmin
-      .from('ai_assessments')
-      .insert({
-        submission_id,
-        teacher_id,
-        strengths: assessment.strengths,
-        improvements: assessment.improvements,
-        improved_example: assessment.improved_example,
-        mechanical_edits: assessment.mechanical_edits,
-        banding_score: assessment.banding_score,
-        raw_response: {
-          provider: llmResponse.provider,
-          model: llmResponse.model,
-          usage: llmResponse.usage,
-          content: responseText,
-        },
-      })
-      .select()
-      .single();
+    const comp  = clampBand(parsed.composition_score);
+    const vocab = clampBand(parsed.vocabulary_score);
+    const gram  = clampBand(parsed.grammar_score);
+    const punc  = clampBand(parsed.punctuation_score);
+    const spell = clampBand(parsed.spelling_score);
+    const purp  = clampBand(parsed.purpose_audience_effect_score);
+    const band  = deriveOverallBand([comp, vocab, gram, punc, spell, purp]);
 
-    if (saveError) {
-      console.error('Error saving assessment:', saveError);
-      return NextResponse.json(
-        { error: 'Failed to save assessment' },
-        { status: 500 }
-      );
-    }
+    const rawAiResponse = {
+      strengths:         toStrArr(parsed.strengths, ['Good effort!']),
+      improvements:      toStrArr(parsed.improvements, ['Keep practising!']),
+      improved_example:  typeof parsed.improved_example === 'string' ? parsed.improved_example : '',
+      mechanical_edits:  toStrArr(parsed.mechanical_edits, []),
+      teacher_rationale: typeof parsed.teacher_rationale === 'string'
+        ? parsed.teacher_rationale
+        : '',
+    };
 
-    await supabaseAdmin
-      .from('submissions')
-      .update({ status: 'reviewed' })
-      .eq('id', submission_id);
-
-    return NextResponse.json({
-      success: true,
-      assessment: savedAssessment,
-    });
-  } catch (error) {
-    console.error('Assessment error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate assessment' },
-      { status: 500 }
+    // ── Upsert into ai_assessments (piece_id is the unique key) ────────────
+    const upsertRes = await pool.query(
+      `INSERT INTO ai_assessments (
+         piece_id, year_group_assessed,
+         composition_score, vocabulary_score, grammar_score,
+         punctuation_score, spelling_score, purpose_audience_effect_score,
+         overall_band, raw_ai_response, model_used, assessed_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
+       ON CONFLICT (piece_id) DO UPDATE SET
+         composition_score             = EXCLUDED.composition_score,
+         vocabulary_score              = EXCLUDED.vocabulary_score,
+         grammar_score                 = EXCLUDED.grammar_score,
+         punctuation_score             = EXCLUDED.punctuation_score,
+         spelling_score                = EXCLUDED.spelling_score,
+         purpose_audience_effect_score = EXCLUDED.purpose_audience_effect_score,
+         overall_band                  = EXCLUDED.overall_band,
+         raw_ai_response               = EXCLUDED.raw_ai_response,
+         model_used                    = EXCLUDED.model_used,
+         assessed_at                   = now()
+       RETURNING *`,
+      [
+        submission_id, yg,
+        comp, vocab, gram, punc, spell, purp,
+        band,
+        JSON.stringify(rawAiResponse),
+        `${provider}/${model}`,
+      ],
     );
+
+    console.log(`[/api/assess] assessed submission ${submission_id} via ${provider}/${model}`);
+    return NextResponse.json({ success: true, assessment: upsertRes.rows[0] });
+  } catch (err: unknown) {
+    console.error('[/api/assess] error:', err);
+    const message = err instanceof Error ? err.message : 'Assessment failed';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

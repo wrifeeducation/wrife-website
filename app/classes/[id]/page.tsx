@@ -39,7 +39,7 @@ interface Assignment {
 }
 
 interface Submission {
-  id: number;
+  id: string;            // UUID
   assignment_id: number;
   pupil_id: string;
   status: string;

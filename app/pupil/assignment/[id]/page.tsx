@@ -16,28 +16,34 @@ interface PupilSession {
 }
 
 interface Assignment {
-  id: number;
+  id: string;           // UUID
   title: string;
   instructions: string | null;
   due_date: string | null;
-  lesson_id: number;
+  lesson_id: string | null;
 }
 
 interface Submission {
-  id: number;
+  id: string;           // UUID
   content: string;
   status: string;
   submitted_at: string | null;
-  teacher_feedback: string | null;
+  teacher_note: string | null;
 }
 
-interface AIAssessment {
-  id: number;
+interface RawAIResponse {
   strengths: string[];
   improvements: string[];
   improved_example: string;
   mechanical_edits: string[];
-  banding_score: number;
+  teacher_rationale: string;
+}
+
+interface AIAssessment {
+  id: string;
+  piece_id: string;
+  overall_band: number;
+  raw_ai_response: RawAIResponse;
 }
 
 interface LessonFile {
@@ -136,8 +142,8 @@ export default function PupilAssignmentPage() {
       if (data.submission) {
         setSubmission(data.submission);
         setContent(data.submission.content || '');
-        if (data.submission.updated_at || data.submission.created_at) {
-          setLastSavedAt(new Date(data.submission.updated_at || data.submission.created_at));
+        if (data.submission.submitted_at) {
+          setLastSavedAt(new Date(data.submission.submitted_at));
         }
       }
 
@@ -523,30 +529,31 @@ export default function PupilAssignmentPage() {
             </div>
           )}
 
-          {submission?.status === 'reviewed' && submission?.teacher_feedback && (
+          {submission?.status === 'reviewed' && submission?.teacher_note && (
             <div className="mt-6 rounded-xl border-2 border-amber-300 bg-amber-50 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xl">💬</span>
-                <h3 className="text-base font-bold text-amber-800">Your Teacher's Feedback</h3>
+                <h3 className="text-base font-bold text-amber-800">Your Teacher&apos;s Note</h3>
               </div>
               <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-wrap">
-                {submission.teacher_feedback}
+                {submission.teacher_note}
               </p>
             </div>
           )}
 
-          {assessment && (
+          {assessment && assessment.raw_ai_response && (
             <div className="mt-6 space-y-4">
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold text-[var(--wrife-text-main)]">Your Feedback</h3>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  assessment.banding_score >= 3 ? 'bg-green-100 text-green-700' :
-                  assessment.banding_score === 2 ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-red-100 text-red-700'
+                  assessment.overall_band === 4 ? 'bg-purple-100 text-purple-700' :
+                  assessment.overall_band === 3 ? 'bg-green-100 text-green-700' :
+                  assessment.overall_band === 2 ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-orange-100 text-orange-700'
                 }`}>
-                  {assessment.banding_score === 4 ? 'Greater Depth' :
-                   assessment.banding_score === 3 ? 'Secure' :
-                   assessment.banding_score === 2 ? 'Developing' : 'Emerging'}
+                  {assessment.overall_band === 4 ? 'Greater Depth' :
+                   assessment.overall_band === 3 ? 'Secure' :
+                   assessment.overall_band === 2 ? 'Developing' : 'Emerging'}
                 </span>
               </div>
 
@@ -555,7 +562,7 @@ export default function PupilAssignmentPage() {
                   <span>⭐</span> What you did well
                 </h4>
                 <ul className="list-disc list-inside space-y-1">
-                  {assessment.strengths.map((s, i) => (
+                  {assessment.raw_ai_response.strengths.map((s, i) => (
                     <li key={i} className="text-sm text-green-700">{s}</li>
                   ))}
                 </ul>
@@ -566,31 +573,33 @@ export default function PupilAssignmentPage() {
                   <span>💡</span> Things to work on
                 </h4>
                 <ul className="list-disc list-inside space-y-1">
-                  {assessment.improvements.map((s, i) => (
+                  {assessment.raw_ai_response.improvements.map((s, i) => (
                     <li key={i} className="text-sm text-yellow-700">{s}</li>
                   ))}
                 </ul>
               </div>
 
-              {assessment.mechanical_edits.length > 0 && (
+              {assessment.raw_ai_response.mechanical_edits.length > 0 && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <h4 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
                     <span>✏️</span> Spelling & Grammar
                   </h4>
                   <ul className="list-disc list-inside space-y-1">
-                    {assessment.mechanical_edits.map((s, i) => (
+                    {assessment.raw_ai_response.mechanical_edits.map((s, i) => (
                       <li key={i} className="text-sm text-red-700">{s}</li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
-                  <span>✨</span> Example of how to improve
-                </h4>
-                <p className="text-sm text-blue-700 italic">"{assessment.improved_example}"</p>
-              </div>
+              {assessment.raw_ai_response.improved_example && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                    <span>✨</span> Example of how to improve
+                  </h4>
+                  <p className="text-sm text-blue-700 italic">&ldquo;{assessment.raw_ai_response.improved_example}&rdquo;</p>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     if (pupilId) {
       try {
         const subResult = await pool.query(
-          `SELECT id, assignment_id, pupil_id, content, status, submitted_at, teacher_feedback, created_at, updated_at
+          `SELECT id, assignment_id, pupil_id, content, status, submitted_at, teacher_note, reviewed_at
            FROM submissions WHERE assignment_id = $1 AND pupil_id = $2`,
           [assignmentId, pupilId]
         );
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
           if (submission && submission.status === 'reviewed') {
             const assessResult = await pool.query(
-              `SELECT * FROM ai_assessments WHERE submission_id = $1 LIMIT 1`,
+              `SELECT * FROM ai_assessments WHERE piece_id = $1 LIMIT 1`,
               [submission.id]
             );
             if (assessResult.rows.length > 0) {
@@ -130,7 +130,7 @@ export async function PUT(request: NextRequest) {
 
     if (existingResult.rows.length > 0) {
       const existingId = existingResult.rows[0].id;
-      const updateFields: string[] = ['content = $1', 'status = $2', 'updated_at = now()'];
+      const updateFields: string[] = ['content = $1', 'status = $2'];
       const updateValues: any[] = [content, status];
 
       if (status === 'submitted') {
