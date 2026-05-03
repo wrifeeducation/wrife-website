@@ -36,19 +36,19 @@ export default function Navbar() {
             <nav className="hidden md:flex items-center gap-6">
               <Link
                 href={dashboardPath}
-                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+                className="text-base font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
               >
                 Dashboard
               </Link>
               <Link
                 href="/dashboard?tab=lessons"
-                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+                className="text-base font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
               >
                 Lessons
               </Link>
               <Link
                 href="/dashboard/help"
-                className="text-sm font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+                className="text-base font-medium text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
               >
                 Help
               </Link>

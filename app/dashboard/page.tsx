@@ -380,23 +380,23 @@ function DashboardContent() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">
+            <h1 className="text-3xl font-extrabold text-[var(--wrife-text-main)]">
               Welcome, {user.display_name || 'Teacher'}
             </h1>
-            <p className="text-sm text-[var(--wrife-text-muted)]">
+            <p className="text-base text-[var(--wrife-text-muted)]">
               Manage your classes, pupils, and assignments
             </p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleCreateClassClick}
-              className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
+              className="rounded-full bg-[var(--wrife-blue)] px-5 py-2.5 text-base font-semibold text-white hover:opacity-90 transition"
             >
               + New Class
             </button>
             <button
               onClick={() => handleAddPupilClick()}
-              className="rounded-full bg-[var(--wrife-yellow)] px-4 py-2 text-sm font-bold text-[var(--wrife-text-main)] hover:opacity-90 transition"
+              className="rounded-full bg-[var(--wrife-yellow)] px-5 py-2.5 text-base font-bold text-[var(--wrife-text-main)] hover:opacity-90 transition"
             >
               + Add Pupil
             </button>
@@ -413,19 +413,19 @@ function DashboardContent() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 border border-[var(--wrife-border)] shadow-sm">
             <p className="text-2xl font-bold text-[var(--wrife-blue)]">{stats.totalClasses}</p>
-            <p className="text-xs text-[var(--wrife-text-muted)]">Classes</p>
+            <p className="text-sm font-medium text-[var(--wrife-text-muted)]">Classes</p>
           </div>
           <div className="bg-white rounded-xl p-4 border border-[var(--wrife-border)] shadow-sm">
             <p className="text-2xl font-bold text-[var(--wrife-text-main)]">{stats.totalPupils}</p>
-            <p className="text-xs text-[var(--wrife-text-muted)]">Pupils</p>
+            <p className="text-sm font-medium text-[var(--wrife-text-muted)]">Pupils</p>
           </div>
           <div className="bg-white rounded-xl p-4 border border-[var(--wrife-border)] shadow-sm">
             <p className="text-2xl font-bold text-yellow-600">{stats.pendingReviews}</p>
-            <p className="text-xs text-[var(--wrife-text-muted)]">Pending Reviews</p>
+            <p className="text-sm font-medium text-[var(--wrife-text-muted)]">Pending Reviews</p>
           </div>
           <div className="bg-white rounded-xl p-4 border border-[var(--wrife-border)] shadow-sm">
             <p className="text-2xl font-bold text-green-600">{stats.completedAssignments}</p>
-            <p className="text-xs text-[var(--wrife-text-muted)]">Reviewed</p>
+            <p className="text-sm font-medium text-[var(--wrife-text-muted)]">Reviewed</p>
           </div>
         </div>
 
@@ -434,7 +434,7 @@ function DashboardContent() {
             <Link
               key={tab}
               href={tab === 'overview' ? '/dashboard' : `/dashboard?tab=${tab}`}
-              className={`px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${
+              className={`px-4 py-3 text-base font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${
                 activeTab === tab
                   ? tab === 'pwp' ? 'border-green-500 text-green-600 bg-green-50'
                   : tab === 'dwp' ? 'border-purple-500 text-purple-600 bg-purple-50'
@@ -810,7 +810,7 @@ function DashboardContent() {
                   <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">All Pupils</h2>
                   <button
                     onClick={() => handleAddPupilClick()}
-                    className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
+                    className="rounded-full bg-[var(--wrife-blue)] px-5 py-2.5 text-base font-semibold text-white hover:opacity-90 transition"
                   >
                     + Add Pupil
                   </button>
@@ -949,7 +949,7 @@ function DashboardContent() {
                   <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">My Classes</h2>
                   <button
                     onClick={handleCreateClassClick}
-                    className="rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition"
+                    className="rounded-full bg-[var(--wrife-blue)] px-5 py-2.5 text-base font-semibold text-white hover:opacity-90 transition"
                   >
                     + Create Class
                   </button>
