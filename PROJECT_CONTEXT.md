@@ -1,54 +1,38 @@
 # WriFe Platform
-*Last updated: 2026-05-03 · Session 12*
+*Last updated: 2026-05-03 · Session 15*
 
 ## Current state
 Full-stack Next.js educational platform at wrife.co.uk and PWP Studio at pwp.studio.wrife.co.uk. Both deployed on Vercel, sharing Supabase Platform (`gzmgjkbtsvezfclmreru`).
 
-**Phase A of PWP Daily Chain Practice is built and ready to deploy.**
+**PWP Daily Chain Practice — Phases A, B, and C are fully complete and live.**
 
-### What was built in this session (Phase A):
-1. **DB migration applied** — 4 new tables live on Platform DB:
-   - `pwp_pupil_levels` — one row per pupil × class, tracks current_level + mastery_points
-   - `pwp_chain_sessions` — one daily session record per pupil (UNIQUE pupil_id, session_date)
-   - `pwp_chain_sentences` — individual sentence submissions within a session
-   - `pwp_class_themes` — optional weekly theme set by teacher
+---
 
-2. **PWP Studio (wrifeapp)** — new files:
-   - `src/lib/chain/formulaDefinitions.ts` — L1–L10 patterns, hints, examples
-   - `src/lib/chain/parseSentence.ts` — rule-based POS tagger
-   - `src/lib/chain/validateChainSentence.ts` — sentence validator against formula pattern
-   - `src/components/chain/SubjectPicker.tsx` — subject noun input with theme hints
-   - `src/components/chain/ChainBuilder.tsx` — orchestrates chain L1→Ln
-   - `src/components/chain/ChainRow.tsx` — one level row (input, tick, hint, error)
-   - `src/components/chain/SessionComplete.tsx` — celebration screen (25 XP, streak, summary)
-   - `src/pages/DailyPracticePage.tsx` — `/daily-practice` route (picks subject → chains → saves)
-   - `src/App.tsx` — added `/daily-practice` route (ProtectedRoute, Role.PUPIL)
-   - `src/types/index.ts` — added ChainRowState, ChainSessionSave, ChainSentenceSave, PupilChainLevel
+### Phase A (Session 12)
+4 new DB tables (`pwp_pupil_levels`, `pwp_chain_sessions`, `pwp_chain_sentences`, `pwp_class_themes`), full daily-practice flow in PWP Studio (L1–L10), teacher completion grid on class PWP tab.
 
-3. **wrife.co.uk** — new/changed files:
-   - `components/PWPChainTab.tsx` — teacher completion grid (today's status per pupil)
-   - `app/api/teacher/pwp/class-summary/route.ts` — GET endpoint for completion grid
-   - `app/classes/[id]/page.tsx` — added "🔗 PWP Chain" tab
+### Phase B (Session 13)
+- `parseSentence.ts` extended for L11–L30 vocab (modals, irregular verbs, adjectives, adverbs)
+- `formulaDefinitions.ts` extended to L11–L30 with `alternatives` mechanism
+- `validateChainSentence.ts` — alternatives support
+- Mastery signal on pupil dashboard `DailyPracticeCard` (progress bar + gold banner)
+- `POST /api/teacher/pwp/advance-level` — teacher advances mastery-signalled pupil to next level
+- `PWPChainTab.tsx` — "→ L{n+1}" advance button per mastery row
 
-### Decisions made (open questions now resolved):
-- One daily chain session per day (UNIQUE constraint kept)
-- L1 unlocked by default — no minimum level gate
-- 25 XP flat per completed chain session
+### Phase C (Sessions 14–15)
+- **`pwp_free_practice_sentences` table** — live on Platform DB (no UNIQUE constraint)
+- **`ChainRow` help mode** — `helpMode` prop shows word-class colour bands above input
+- **`ChainBuilder` help mode** — threads `helpMode` prop down to each ChainRow
+- **`FreePracticePage`** (`/free-practice`) — unlimited sessions, help mode on, 5 XP/sentence, L(n+1) challenge row, weekly theme wired
+- **Dashboard** — orange "🎨 Free Practice" button below the daily chain card
+- **Weekly theme setter** — `GET/POST /api/teacher/pwp/set-theme`; teacher form in `PWPChainTab.tsx`; both `/daily-practice` and `/free-practice` query `pwp_class_themes` and pass theme to `SubjectPicker`
+- **Chain streak display** — `computeChainStreak()` derives consecutive-day streak from `pwp_chain_sessions`; shown as "🔗 Nd streak" pill inside `DailyPracticeCard`
+- **Level distribution chart** — bottom of `PWPChainTab.tsx`; client-side bar chart from `pupils` array, 🏆 marker on levels with mastery-signalled pupils
 
-### Free Practice / differentiation (scoped for Phase C):
-- Unlimited additional "free practice" sessions — different subjects, lighter XP (5 XP/sentence)
-- Help mode: word class colour bands visible in free practice only
-- Challenge preview: L(n+1) sentence offered at end of free practice (bonus 10 XP)
-- Separate `pwp_free_practice_sentences` table (no UNIQUE constraint)
+---
 
-## Next steps
-1. **Commit and push both repos**:
-   - wrifeapp: `git add -A && git commit -m "feat(chain): Phase A PWP daily chain practice" && git push`
-   - wrife-website: `git add -A && git commit -m "feat(chain): Phase A teacher PWP chain tab + DB migration" && git push`
-2. **Add "Daily Practice" CTA button** to the pupil dashboard in wrifeapp (DashboardPage.tsx)
-3. **Seed L1 pwp_pupil_levels** — new pupils start at L1 automatically once they open /daily-practice, but an explicit "Set PWP level" UI in teacher class page would help for classes already in progress
-4. **Phase B** — mastery signal display + "Advance to L(n+1)" button, extend formula hints to L11–L30
-5. **Phase C** — weekly theme setter, streak on pupil dashboard, free practice mode
+## Mastery point thresholds
+`calculateMasteryPoints`: perfect session = 4 pts. `mastery_signal` fires at `mastery_points >= 12` (~3 perfect sessions).
 
 ## Architecture decision (2026-05-02)
 **wrifeapp** is the PWP Studio codebase (`pwp.studio.wrife.co.uk`). The three apps share one Supabase Platform project:
@@ -57,8 +41,17 @@ Full-stack Next.js educational platform at wrife.co.uk and PWP Studio at pwp.stu
 - pwp.studio.wrife.co.uk → PWP Studio (Platform DB ✅)
 
 ## Session collision fix (deployed 2026-05-03, commit 959ed30)
-Pupil SSO tokens are stored in `localStorage` under `pupilSSOTokens` only — never via `supabase.auth.setSession()`. This prevents the teacher's auth cookie on wrife.co.uk from being overwritten.
+Pupil SSO tokens are stored in `localStorage` under `pupilSSOTokens` only — never via `supabase.auth.setSession()`.
 `lib/pupil-sso.ts` reads from `localStorage.pupilSSOTokens` to build cross-domain hash URLs.
 
 ## Process — Post-phase smoke testing
 After every phase: teacher login → class page → new tab → assign something → pupil login → pupil dashboard → complete activity → check it saved.
+
+## Files changed in Session 15
+### wrifeapp (PWP Studio)
+- `src/pages/DashboardPage.tsx` — chain streak query + `computeChainStreak()` + `chainStreak` prop on `DailyPracticeCard`
+- `src/pages/FreePracticePage.tsx` — weekly theme query wired to SubjectPicker
+
+### wrife-website (wrife.co.uk)
+- `app/api/teacher/pwp/set-theme/route.ts` — new GET + POST endpoint
+- `components/PWPChainTab.tsx` — weekly theme setter UI + level distribution bar chart

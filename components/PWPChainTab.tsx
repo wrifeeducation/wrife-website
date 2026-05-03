@@ -1,10 +1,11 @@
 'use client';
 
 /**
- * PWP Daily Chain Practice — Teacher Tab (Phase B)
+ * PWP Daily Chain Practice — Teacher Tab (Phase C)
  *
  * Shows on the class page under "PWP Chain" tab.
  * Content:
+ *   - Weekly theme setter (teacher sets a subject hint for SubjectPicker)
  *   - Today's completion grid (who finished, subject used, new formula attempts)
  *   - Mastery signals (🏆 badge) + Advance button to move pupil to next level
  */
@@ -20,6 +21,11 @@ interface PupilRow {
   subject_noun: string | null;
   new_formula_attempts: number | null;
   mastery_signal: boolean;
+}
+
+interface ThemeData {
+  theme: string | null;
+  suggestions: string[];
 }
 
 interface Props {
@@ -45,9 +51,16 @@ export function PWPChainTab({ classId }: Props) {
   const [pupils, setPupils] = useState<PupilRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Track which pupil is being advanced (to disable button while in flight)
+  // Advance state
   const [advancingId, setAdvancingId] = useState<string | null>(null);
   const [advanceError, setAdvanceError] = useState<string | null>(null);
+  // Theme state
+  const [theme, setTheme] = useState<ThemeData>({ theme: null, suggestions: [] });
+  const [themeEditing, setThemeEditing] = useState(false);
+  const [themeInput, setThemeInput] = useState('');
+  const [suggestionsInput, setSuggestionsInput] = useState('');
+  const [themeSaving, setThemeSaving] = useState(false);
+  const [themeError, setThemeError] = useState<string | null>(null);
 
   const fetchSummary = () => {
     setLoading(true);
@@ -62,10 +75,60 @@ export function PWPChainTab({ classId }: Props) {
       .finally(() => setLoading(false));
   };
 
+  const fetchTheme = () => {
+    fetch(`/api/teacher/pwp/set-theme?classId=${classId}`)
+      .then((r) => r.json())
+      .then((d: ThemeData & { error?: string }) => {
+        if (!d.error) setTheme({ theme: d.theme, suggestions: d.suggestions ?? [] });
+      })
+      .catch(() => { /* non-critical — theme is optional */ });
+  };
+
   useEffect(() => {
     fetchSummary();
+    fetchTheme();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classId]);
+
+  const handleEditTheme = () => {
+    setThemeInput(theme.theme ?? '');
+    setSuggestionsInput(theme.suggestions.join(', '));
+    setThemeError(null);
+    setThemeEditing(true);
+  };
+
+  const handleCancelTheme = () => {
+    setThemeEditing(false);
+    setThemeError(null);
+  };
+
+  const handleSaveTheme = async () => {
+    if (!themeInput.trim()) {
+      setThemeError('Theme cannot be empty');
+      return;
+    }
+    setThemeSaving(true);
+    setThemeError(null);
+    try {
+      const suggestions = suggestionsInput
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const res = await fetch('/api/teacher/pwp/set-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classId, theme: themeInput.trim(), suggestions }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Save failed');
+      setTheme({ theme: themeInput.trim(), suggestions });
+      setThemeEditing(false);
+    } catch (e: unknown) {
+      setThemeError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setThemeSaving(false);
+    }
+  };
 
   const handleAdvance = async (pupilId: string, currentLevel: number, firstName: string) => {
     if (!confirm(`Advance ${firstName} from L${currentLevel} to L${currentLevel + 1}?`)) return;
@@ -117,6 +180,91 @@ export function PWPChainTab({ classId }: Props) {
 
   return (
     <div className="space-y-6">
+
+      {/* Weekly theme setter */}
+      <div className="bg-white rounded-xl border border-[var(--wrife-border)] overflow-hidden">
+        <div className="px-5 py-3 border-b border-[var(--wrife-border)] flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-[var(--wrife-text-main)]">
+            🎨 Weekly subject theme
+          </h3>
+          {!themeEditing && (
+            <button
+              onClick={handleEditTheme}
+              className="text-xs text-[var(--wrife-blue)] hover:underline"
+            >
+              {theme.theme ? 'Edit' : 'Set theme'}
+            </button>
+          )}
+        </div>
+
+        <div className="px-5 py-4">
+          {themeEditing ? (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[var(--wrife-text-muted)] mb-1">
+                  Theme word or phrase
+                </label>
+                <input
+                  type="text"
+                  value={themeInput}
+                  onChange={(e) => setThemeInput(e.target.value)}
+                  placeholder="e.g. space exploration"
+                  className="w-full rounded-lg border border-[var(--wrife-border)] px-3 py-2 text-sm text-[var(--wrife-text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                  maxLength={60}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[var(--wrife-text-muted)] mb-1">
+                  Suggestions <span className="font-normal">(comma-separated, optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={suggestionsInput}
+                  onChange={(e) => setSuggestionsInput(e.target.value)}
+                  placeholder="e.g. rocket, astronaut, satellite"
+                  className="w-full rounded-lg border border-[var(--wrife-border)] px-3 py-2 text-sm text-[var(--wrife-text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                />
+              </div>
+              {themeError && (
+                <p className="text-xs text-red-600">{themeError}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveTheme}
+                  disabled={themeSaving}
+                  className="rounded-lg bg-[var(--wrife-blue)] hover:opacity-90 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 transition"
+                >
+                  {themeSaving ? 'Saving…' : 'Save theme'}
+                </button>
+                <button
+                  onClick={handleCancelTheme}
+                  disabled={themeSaving}
+                  className="rounded-lg border border-[var(--wrife-border)] text-[var(--wrife-text-muted)] text-xs font-semibold px-4 py-2 hover:opacity-70 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : theme.theme ? (
+            <div>
+              <p className="text-sm text-[var(--wrife-text-main)]">
+                This week:{' '}
+                <span className="font-semibold text-[var(--wrife-blue)]">{theme.theme}</span>
+              </p>
+              {theme.suggestions.length > 0 && (
+                <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
+                  Suggestions: {theme.suggestions.join(', ')}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-[var(--wrife-text-muted)]">
+              No theme set for this week. Pupils will choose any subject noun.
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Summary stats */}
       <div className="flex flex-wrap gap-4">
         <div className="bg-white rounded-xl border border-[var(--wrife-border)] px-5 py-4 text-center min-w-[120px]">
@@ -244,6 +392,75 @@ export function PWPChainTab({ classId }: Props) {
           </table>
         )}
       </div>
+
+      {/* Level distribution chart — client-side from pupils array */}
+      {pupils.length > 0 && (() => {
+        // Build a map: level → count
+        const counts: Record<number, number> = {};
+        for (const p of pupils) {
+          counts[p.current_level] = (counts[p.current_level] ?? 0) + 1;
+        }
+        const levels = Object.keys(counts).map(Number).sort((a, b) => a - b);
+        const max = Math.max(...Object.values(counts));
+
+        return (
+          <div className="bg-white rounded-xl border border-[var(--wrife-border)] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[var(--wrife-border)]">
+              <h3 className="text-sm font-semibold text-[var(--wrife-text-main)]">
+                Level distribution
+              </h3>
+              <p className="text-xs text-[var(--wrife-text-muted)] mt-0.5">
+                {pupils.length} pupil{pupils.length !== 1 ? 's' : ''} · {levels.length} level{levels.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <div className="px-5 py-4 space-y-2">
+              {levels.map((level) => {
+                const count = counts[level];
+                const pct = Math.round((count / max) * 100);
+                const masteryAtLevel = pupils.filter(
+                  (p) => p.current_level === level && p.mastery_signal,
+                ).length;
+                return (
+                  <div key={level} className="flex items-center gap-3">
+                    {/* Level label */}
+                    <span className="w-8 shrink-0 text-xs font-bold text-[var(--wrife-blue)] text-right">
+                      L{level}
+                    </span>
+                    {/* Bar */}
+                    <div className="flex-1 h-5 rounded-full bg-[var(--wrife-bg)] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${pct}%`,
+                          minWidth: '8px',
+                          background: masteryAtLevel > 0
+                            ? 'linear-gradient(90deg, #3B82F6, #F59E0B)'
+                            : 'var(--wrife-blue)',
+                          opacity: 0.85,
+                        }}
+                      />
+                    </div>
+                    {/* Count + mastery indicator */}
+                    <div className="flex items-center gap-1 w-12 shrink-0">
+                      <span className="text-xs font-semibold text-[var(--wrife-text-main)]">
+                        {count}
+                      </span>
+                      {masteryAtLevel > 0 && (
+                        <span
+                          title={`${masteryAtLevel} ready to advance`}
+                          className="text-xs text-yellow-500"
+                        >
+                          🏆
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
