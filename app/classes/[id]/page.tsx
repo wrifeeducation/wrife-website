@@ -103,10 +103,11 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
     assignmentTitle: string;
   } | null>(null);
   const [expandedPupilId, setExpandedPupilId] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to resolve before redirecting
     if (!user) {
       router.push('/login');
       return;
@@ -118,7 +119,7 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
     fetchProgressRecords();
     fetchDWPAssignments();
     fetchWritingAttempts();
-  }, [user, resolvedParams.id, router]);
+  }, [user, authLoading, resolvedParams.id, router]);
 
   useEffect(() => {
     if (tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'dwp'].includes(tabParam)) {
