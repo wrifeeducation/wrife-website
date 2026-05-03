@@ -1,14 +1,12 @@
 'use client';
 
 /**
- * PWP Daily Chain Practice — Teacher Tab (Phase A)
+ * PWP Daily Chain Practice — Teacher Tab (Phase B)
  *
  * Shows on the class page under "PWP Chain" tab.
- * Phase A content:
+ * Content:
  *   - Today's completion grid (who finished, subject used, new formula attempts)
- *   - Mastery signals (🏆 badge — advance button coming in Phase B)
- *
- * Phase B will add: advance-pupil button, level distribution chart, theme setter.
+ *   - Mastery signals (🏆 badge) + Advance button to move pupil to next level
  */
 
 import { useEffect, useState } from 'react';
@@ -47,18 +45,51 @@ export function PWPChainTab({ classId }: Props) {
   const [pupils, setPupils] = useState<PupilRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Track which pupil is being advanced (to disable button while in flight)
+  const [advancingId, setAdvancingId] = useState<string | null>(null);
+  const [advanceError, setAdvanceError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchSummary = () => {
     setLoading(true);
+    setError(null);
     fetch(`/api/teacher/pwp/class-summary?classId=${classId}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) throw new Error(d.error);
         setPupils(d.pupils ?? []);
       })
-      .catch((e) => setError(e.message))
+      .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchSummary();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classId]);
+
+  const handleAdvance = async (pupilId: string, currentLevel: number, firstName: string) => {
+    if (!confirm(`Advance ${firstName} from L${currentLevel} to L${currentLevel + 1}?`)) return;
+
+    setAdvancingId(pupilId);
+    setAdvanceError(null);
+
+    try {
+      const res = await fetch('/api/teacher/pwp/advance-level', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pupilId, classId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Advance failed');
+      // Refresh grid so the new level shows immediately
+      fetchSummary();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Advance failed';
+      setAdvanceError(msg);
+    } finally {
+      setAdvancingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -99,26 +130,26 @@ export function PWPChainTab({ classId }: Props) {
         {masteryCount > 0 && (
           <div className="bg-yellow-50 rounded-xl border border-yellow-200 px-5 py-4 text-center min-w-[120px]">
             <p className="text-2xl font-bold text-yellow-600">🏆 {masteryCount}</p>
-            <p className="text-xs text-yellow-700 mt-1">Mastery signal{masteryCount !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-yellow-700 mt-1">Ready to advance</p>
           </div>
         )}
       </div>
+
+      {/* Advance error banner */}
+      {advanceError && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {advanceError}
+        </div>
+      )}
 
       {/* Completion grid */}
       <div className="bg-white rounded-xl border border-[var(--wrife-border)] overflow-hidden">
         <div className="px-5 py-3 border-b border-[var(--wrife-border)] flex items-center justify-between">
           <h3 className="text-sm font-semibold text-[var(--wrife-text-main)]">
-            Today's chain practice — {today}
+            Today&apos;s chain practice — {today}
           </h3>
           <button
-            onClick={() => {
-              setLoading(true);
-              fetch(`/api/teacher/pwp/class-summary?classId=${classId}`)
-                .then((r) => r.json())
-                .then((d) => setPupils(d.pupils ?? []))
-                .catch((e) => setError(e.message))
-                .finally(() => setLoading(false));
-            }}
+            onClick={fetchSummary}
             className="text-xs text-[var(--wrife-blue)] hover:underline"
           >
             Refresh
@@ -148,15 +179,23 @@ export function PWPChainTab({ classId }: Props) {
                 <th className="text-left px-3 py-2 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide">
                   New formula
                 </th>
+                <th className="text-left px-3 py-2 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase tracking-wide w-28">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--wrife-border)]">
               {pupils.map((pupil) => (
-                <tr key={pupil.pupil_id} className="hover:bg-[var(--wrife-bg)] transition">
+                <tr
+                  key={pupil.pupil_id}
+                  className={`hover:bg-[var(--wrife-bg)] transition ${
+                    pupil.mastery_signal ? 'bg-yellow-50/40' : ''
+                  }`}
+                >
                   <td className="px-5 py-3 font-medium text-[var(--wrife-text-main)]">
                     {pupil.first_name} {pupil.last_name ?? ''}
                     {pupil.mastery_signal && (
-                      <span className="ml-2 text-yellow-500" title="Mastery signal — consider advancing">
+                      <span className="ml-2 text-yellow-500" title="Ready to advance to the next level">
                         🏆
                       </span>
                     )}
@@ -183,17 +222,28 @@ export function PWPChainTab({ classId }: Props) {
                   <td className="px-3 py-3">
                     <AttemptsLabel attempts={pupil.new_formula_attempts} />
                   </td>
+                  <td className="px-3 py-3">
+                    {pupil.mastery_signal && pupil.current_level < 30 ? (
+                      <button
+                        onClick={() =>
+                          handleAdvance(pupil.pupil_id, pupil.current_level, pupil.first_name)
+                        }
+                        disabled={advancingId === pupil.pupil_id}
+                        title={`Advance ${pupil.first_name} to L${pupil.current_level + 1}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 text-white text-xs font-bold px-3 py-1 transition"
+                      >
+                        {advancingId === pupil.pupil_id ? '…' : `→ L${pupil.current_level + 1}`}
+                      </button>
+                    ) : (
+                      <span className="text-[var(--wrife-text-muted)]">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
-
-      {/* Phase B coming-soon notice */}
-      <p className="text-xs text-center text-[var(--wrife-text-muted)]">
-        Mastery advancement, level distribution chart, and theme setter coming in Phase B.
-      </p>
     </div>
   );
 }
