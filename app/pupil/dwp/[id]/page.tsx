@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -67,6 +67,15 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
   const [error, setError] = useState('');
 
   const [showResults, setShowResults] = useState(false);
+  const [timeTakenSeconds, setTimeTakenSeconds] = useState<number | null>(null);
+
+  // ── Timer ──────────────────────────────────────────────────────────────────
+  const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
+  const [timeExpired, setTimeExpired] = useState(false);
+  // Stable ref so the timer effect can call the latest handleSubmit
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSubmitRef = useRef<(force?: boolean) => Promise<void>>(null as any);
+  const timerAutoSubmitDone = useRef(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('pupilSession');
@@ -91,6 +100,31 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
       router.push('/pupil/login');
     }
   }, [id, router]);
+
+  // Initialise timer once level is known
+  useEffect(() => {
+    if (level && !showResults && timerSeconds === null) {
+      setTimerSeconds((level.expected_time_minutes || 7) * 60);
+    }
+  }, [level, showResults, timerSeconds]);
+
+  // Countdown — decrements by 1 each second
+  useEffect(() => {
+    if (timerSeconds === null || timerSeconds <= 0 || showResults) return;
+    const t = setTimeout(
+      () => setTimerSeconds(s => (s !== null ? s - 1 : null)),
+      1000,
+    );
+    return () => clearTimeout(t);
+  }, [timerSeconds, showResults]);
+
+  // Auto-submit when timer reaches 0
+  useEffect(() => {
+    if (timerSeconds !== 0 || showResults || timerAutoSubmitDone.current) return;
+    timerAutoSubmitDone.current = true;
+    setTimeExpired(true);
+    if (handleSubmitRef.current) handleSubmitRef.current(true);
+  }, [timerSeconds, showResults]);
 
   async function fetchAssignmentData(pid: string) {
     try {
@@ -173,11 +207,12 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
     }
   }
 
-  async function handleSubmit() {
-    if (!pupilId || !assignment || !level || !writing.trim()) {
+  async function handleSubmit(force = false) {
+    if (!force && !writing.trim()) {
       setError('Please write something before submitting');
       return;
     }
+    if (!pupilId || !assignment || !level) return;
 
     setSubmitting(true);
     setError('');
@@ -231,6 +266,7 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
 
       const result = await assessRes.json();
       setAssessment(result.assessment);
+      setTimeTakenSeconds(elapsedSeconds);
       setShowResults(true);
     } catch (err: any) {
       console.error('Submit error:', err);
@@ -238,6 +274,22 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Keep ref fresh so the timer effect always calls the latest handleSubmit
+  handleSubmitRef.current = handleSubmit;
+
+  // ── Timer display helper ────────────────────────────────────────────────
+  function formatTimer(s: number) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  function timerColor(s: number) {
+    if (s <= 60) return 'text-red-500';
+    if (s <= 120) return 'text-amber-500';
+    return 'text-white/80';
   }
 
   if (loading) {
@@ -308,6 +360,18 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
                   </div>
                 </div>
 
+                {timeTakenSeconds !== null && (
+                  <div className="mb-4 flex items-center gap-2 text-sm text-[var(--wrife-text-muted)]">
+                    <span>⏱</span>
+                    <span>
+                      Time taken:{' '}
+                      <span className="font-semibold text-[var(--wrife-text-main)]">
+                        {Math.floor(timeTakenSeconds / 60)}m {timeTakenSeconds % 60}s
+                      </span>
+                    </span>
+                  </div>
+                )}
+
                 {assessment.feedback.specific_praise && (
                   <div className="mb-4 p-4 bg-green-50 rounded-xl border border-green-200">
                     <h3 className="font-semibold text-green-700 mb-1">⭐ What you did well:</h3>
@@ -349,6 +413,10 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
                         setWriting('');
                         setWordCount(0);
                         setTimeStarted(new Date());
+                        setTimeTakenSeconds(null);
+                        setTimeExpired(false);
+                        setTimerSeconds(level ? (level.expected_time_minutes || 7) * 60 : null);
+                        timerAutoSubmitDone.current = false;
                       }}
                       className="flex-1 rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition"
                     >
@@ -377,18 +445,32 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
 
           <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
-              <div className="flex items-center gap-3 mb-2">
-                <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg font-bold ${
-                  level?.programme_finale ? 'ring-2 ring-yellow-400' : ''
-                }`}>
-                  {level?.level_number}
-                </span>
-                <div>
-                  <h1 className="text-xl font-bold">{level?.activity_name}</h1>
-                  <p className="text-white/80 text-sm">
-                    Tier {level?.tier_number} • {level?.expected_time_minutes} minutes
-                  </p>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="flex items-center gap-3">
+                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg font-bold ${
+                    level?.programme_finale ? 'ring-2 ring-yellow-400' : ''
+                  }`}>
+                    {level?.level_number}
+                  </span>
+                  <div>
+                    <h1 className="text-xl font-bold">{level?.activity_name}</h1>
+                    <p className="text-white/80 text-sm">
+                      Tier {level?.tier_number}
+                    </p>
+                  </div>
                 </div>
+
+                {/* Live countdown */}
+                {timerSeconds !== null && !showResults && (
+                  <div className="text-right shrink-0">
+                    <div className={`text-3xl font-mono font-bold tabular-nums ${timerColor(timerSeconds)}`}>
+                      {timeExpired ? '0:00' : formatTimer(timerSeconds)}
+                    </div>
+                    <p className="text-white/60 text-xs mt-0.5">
+                      {timeExpired ? "Time's up!" : timerSeconds <= 60 ? 'Finish up!' : 'remaining'}
+                    </p>
+                  </div>
+                )}
               </div>
               {level?.milestone && (
                 <span className="inline-block mt-2 text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full font-semibold">
@@ -436,9 +518,15 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
                   value={writing}
                   onChange={(e) => handleWritingChange(e.target.value)}
                   onBlur={saveDraft}
-                  className="w-full h-64 px-4 py-3 rounded-xl border-2 border-[var(--wrife-border)] text-[var(--wrife-text-main)] text-lg leading-relaxed focus:outline-none focus:border-[var(--wrife-blue)] focus:ring-2 focus:ring-[var(--wrife-blue)]/20 resize-none"
+                  disabled={timeExpired || submitting}
+                  className="w-full h-64 px-4 py-3 rounded-xl border-2 border-[var(--wrife-border)] text-[var(--wrife-text-main)] text-lg leading-relaxed focus:outline-none focus:border-[var(--wrife-blue)] focus:ring-2 focus:ring-[var(--wrife-blue)]/20 resize-none disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                   placeholder="Start writing here..."
                 />
+                {timeExpired && (
+                  <p className="mt-2 text-sm text-red-600 font-medium flex items-center gap-1">
+                    <span>⏰</span> Time&apos;s up — submitting your work…
+                  </p>
+                )}
               </div>
 
               {error && (
@@ -448,26 +536,42 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
               )}
 
               <div className="flex gap-3">
-                <button
-                  onClick={saveDraft}
-                  className="rounded-full border border-[var(--wrife-border)] px-6 py-3 text-sm font-semibold text-[var(--wrife-text-muted)] hover:bg-gray-50 transition"
-                >
-                  Save Draft
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || !writing.trim()}
-                  className="flex-1 rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-                >
-                  {submitting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></span>
-                      Checking your work...
-                    </span>
-                  ) : (
-                    'Submit for Feedback'
-                  )}
-                </button>
+                {!timeExpired && (
+                  <button
+                    onClick={saveDraft}
+                    disabled={submitting}
+                    className="rounded-full border border-[var(--wrife-border)] px-6 py-3 text-sm font-semibold text-[var(--wrife-text-muted)] hover:bg-gray-50 transition disabled:opacity-50"
+                  >
+                    Save Draft
+                  </button>
+                )}
+                {timeExpired ? (
+                  <div className="flex-1 rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white text-center opacity-70 cursor-not-allowed">
+                    {submitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></span>
+                        Submitting…
+                      </span>
+                    ) : (
+                      'Submitted'
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleSubmit()}
+                    disabled={submitting || !writing.trim()}
+                    className="flex-1 rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></span>
+                        Checking your work...
+                      </span>
+                    ) : (
+                      'Submit for Feedback'
+                    )}
+                  </button>
+                )}
               </div>
 
               <p className="text-center text-xs text-[var(--wrife-text-muted)] mt-4">
