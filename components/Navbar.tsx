@@ -86,12 +86,16 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
             <div className="hidden md:flex items-center gap-3">
-              <span className="text-sm text-[var(--wrife-text-muted)]">
+              <Link
+                href="/dashboard/account"
+                className="text-base text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition-colors"
+                title="Account settings"
+              >
                 {user.display_name || user.email}
-              </span>
+              </Link>
               <button
                 onClick={() => signOut()}
-                className="text-sm font-medium text-[var(--wrife-text-main)] hover:text-[var(--wrife-blue)] transition-colors px-4 py-2"
+                className="text-base font-medium text-[var(--wrife-text-main)] hover:text-[var(--wrife-blue)] transition-colors px-4 py-2"
               >
                 Sign Out
               </button>

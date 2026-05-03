@@ -103,6 +103,8 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
     assignmentTitle: string;
   } | null>(null);
   const [expandedPupilId, setExpandedPupilId] = useState<string | null>(null);
+  const [pinResetResult, setPinResetResult] = useState<{ pupilName: string; classCode: string; username: string; pin: string } | null>(null);
+  const [pinResetting, setPinResetting] = useState<string | null>(null); // pupil id being reset
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -358,6 +360,30 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
     }
   }
 
+  async function handleResetPin(pupil: Pupil) {
+    if (!confirm(`Reset PIN for ${pupil.first_name} ${pupil.last_name || ''}? A new random PIN will be generated.`)) return;
+    setPinResetting(pupil.id);
+    try {
+      const res = await fetch(`/api/classes/${resolvedParams.id}/pupils/${pupil.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset-password' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to reset PIN');
+      setPinResetResult({
+        pupilName: `${pupil.first_name} ${pupil.last_name || ''}`.trim(),
+        classCode: data.credentials.classCode,
+        username: data.credentials.username,
+        pin: data.credentials.pin,
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to reset PIN');
+    } finally {
+      setPinResetting(null);
+    }
+  }
+
   async function handleRemovePupil(pupilId: string) {
     if (!confirm('Are you sure you want to remove this pupil from the class? This cannot be undone.')) return;
 
@@ -610,13 +636,23 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
                         )}
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleRemovePupil(pupil.id)}
-                      className="text-red-500 hover:text-red-700 transition text-sm"
-                      title="Remove pupil"
-                    >
-                      ✕
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleResetPin(pupil)}
+                        disabled={pinResetting === pupil.id}
+                        className="text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition text-sm px-2 py-1 rounded"
+                        title="Reset pupil PIN"
+                      >
+                        {pinResetting === pupil.id ? '…' : '🔑'}
+                      </button>
+                      <button
+                        onClick={() => handleRemovePupil(pupil.id)}
+                        className="text-red-400 hover:text-red-600 transition text-sm px-2 py-1 rounded"
+                        title="Remove pupil"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -887,6 +923,44 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
 
         </div>
       </div>
+
+      {/* ── PIN Reset Result Modal ── */}
+      {pinResetResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-strong border border-[var(--wrife-border)] p-6 max-w-sm w-full">
+            <div className="text-center mb-4">
+              <span className="text-4xl">🔑</span>
+              <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mt-2">PIN Reset</h2>
+              <p className="text-sm text-[var(--wrife-text-muted)]">
+                New login credentials for <strong>{pinResetResult.pupilName}</strong>
+              </p>
+            </div>
+            <div className="bg-[var(--wrife-bg)] rounded-xl p-4 space-y-2 font-mono text-sm mb-4">
+              <div className="flex justify-between">
+                <span className="text-[var(--wrife-text-muted)]">Class code</span>
+                <span className="font-bold text-[var(--wrife-text-main)]">{pinResetResult.classCode}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--wrife-text-muted)]">Username</span>
+                <span className="font-bold text-[var(--wrife-text-main)]">{pinResetResult.username}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--wrife-text-muted)]">New PIN</span>
+                <span className="font-bold text-2xl text-[var(--wrife-blue)] tracking-widest">{pinResetResult.pin}</span>
+              </div>
+            </div>
+            <p className="text-xs text-[var(--wrife-text-muted)] text-center mb-4">
+              Note this down — the PIN won&apos;t be shown again.
+            </p>
+            <button
+              onClick={() => setPinResetResult(null)}
+              className="w-full rounded-full bg-[var(--wrife-blue)] px-6 py-2.5 text-base font-semibold text-white hover:opacity-90 transition"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
