@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import WrifeMascot from '@/components/mascots/WrifeMascot';
 
 interface WritingLevel {
   id: string;
@@ -332,8 +333,12 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
                   ? 'bg-gradient-to-r from-green-400 to-emerald-500'
                   : 'bg-gradient-to-r from-orange-400 to-amber-500'
               }`}>
-                <div className="text-6xl mb-4">
-                  {assessment.passed ? '🎉' : '💪'}
+                <div className="flex justify-center mb-4">
+                  <WrifeMascot
+                    pose={assessment.passed ? 'celebrating' : 'thinking'}
+                    size="lg"
+                    className="drop-shadow-lg"
+                  />
                 </div>
                 <h1 className="text-2xl font-bold text-white mb-2">
                   {assessment.feedback.main_message}
@@ -503,6 +508,12 @@ export default function PupilDWPPage({ params }: { params: Promise<{ id: string 
                 <div className="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
                   <h3 className="font-semibold text-amber-800 mb-1">Teacher's Instructions:</h3>
                   <p className="text-amber-700 text-sm">{assignment.instructions}</p>
+                </div>
+              )}
+
+              {!timeExpired && (
+                <div className="flex justify-end mb-2">
+                  <WrifeMascot pose="thinking" size="sm" decorative />
                 </div>
               )}
 

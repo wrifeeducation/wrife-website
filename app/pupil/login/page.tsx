@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
-import ChildMascot from '@/components/mascots/ChildMascot';
+import WrifeMascot from '@/components/mascots/WrifeMascot';
 
 export default function PupilLoginPage() {
   const [classCode, setClassCode] = useState('');
@@ -90,7 +90,7 @@ export default function PupilLoginPage() {
         <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-8">
           <div className="text-center mb-6">
             <div className="flex justify-center mb-4">
-              <ChildMascot size="lg" waving={true} />
+              <WrifeMascot pose="waving" size="lg" />
             </div>
             <h1
               className="text-2xl font-bold text-[var(--wrife-text-main)]"

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { buildSSOUrl } from '@/lib/pupil-sso';
+import WrifeMascot from '@/components/mascots/WrifeMascot';
 
 interface PupilSession {
   pupilId: string;
@@ -375,13 +376,16 @@ export default function PupilDashboardPage() {
       >
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-            <div>
-              <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                Hello, {session.pupilName}!
-              </h1>
-              <p className="text-blue-100 text-sm mt-0.5">
-                {session.className} · Year {session.yearGroup}
-              </p>
+            <div className="flex items-center gap-3">
+              <WrifeMascot pose="waving" size="md" decorative className="shrink-0 drop-shadow" />
+              <div>
+                <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                  Hello, {session.pupilName}!
+                </h1>
+                <p className="text-blue-100 text-sm mt-0.5">
+                  {session.className} · Year {session.yearGroup}
+                </p>
+              </div>
             </div>
             <button
               onClick={handleLogout}
