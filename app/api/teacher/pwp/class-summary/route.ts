@@ -46,6 +46,7 @@ async function getTeacherProfile() {
 }
 
 export async function GET(req: NextRequest) {
+  try {
   const { searchParams } = new URL(req.url);
   const classId = searchParams.get('classId');
 
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
     SELECT
       p.id                                   AS pupil_id,
       p.first_name,
-      p.last_name,
+      NULL::text                             AS last_name,
       COALESCE(pl.current_level, 1)          AS current_level,
       COALESCE(pl.mastery_signal, false)     AS mastery_signal,
       CASE WHEN cs.id IS NOT NULL THEN true ELSE false END AS completed_today,
@@ -91,10 +92,17 @@ export async function GET(req: NextRequest) {
       ON cs.pupil_id = p.id AND cs.class_id = cm.class_id AND cs.session_date = $2
     WHERE cm.class_id = $1
       AND p.role = 'pupil'
-    ORDER BY p.first_name, p.last_name
+    ORDER BY p.first_name
     `,
     [classId, today],
   );
 
   return NextResponse.json({ pupils: result.rows });
+  } catch (err) {
+    console.error('[pwp/class-summary] error:', err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Internal server error' },
+      { status: 500 },
+    );
+  }
 }
