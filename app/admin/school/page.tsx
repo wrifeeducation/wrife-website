@@ -46,6 +46,46 @@ interface TeacherInvite {
   expires_at: string;
 }
 
+// ── Analytics types ──────────────────────────────────────────────────────────
+interface AnalyticsSummary {
+  total_dwp_assessed: number;
+  total_dwp_passed: number;
+  pass_rate: number;
+  avg_word_count: number;
+  intervention_count: number;
+  active_pupils_7d: number;
+  total_submissions: number;
+}
+
+interface BandDistribution {
+  band: string;
+  count: number;
+}
+
+interface ClassBreakdown {
+  class_id: string;
+  class_name: string;
+  year_group: number;
+  teacher_name: string;
+  pupil_count: number;
+  dwp_assessed: number;
+  dwp_passed: number;
+  pass_rate: number;
+  avg_percentage: number;
+  submissions: number;
+}
+
+interface RecentActivity {
+  pupil_name: string;
+  class_name: string;
+  level_id: string;
+  performance_band: string;
+  passed: boolean;
+  percentage: number;
+  word_count: number;
+  time_submitted: string;
+}
+
 function getTierBadgeStyle(tier: string): string {
   switch (tier) {
     case 'trial':
@@ -86,7 +126,17 @@ export default function SchoolAdminDashboard() {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [pendingInvites, setPendingInvites] = useState<TeacherInvite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'pupils' | 'classes' | 'invites'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'pupils' | 'classes' | 'invites' | 'analytics'>('overview');
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState<{
+    summary: AnalyticsSummary;
+    band_distribution: BandDistribution[];
+    class_breakdown: ClassBreakdown[];
+    recent_activity: RecentActivity[];
+  } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState('');
   const [showAddTeacher, setShowAddTeacher] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteError, setInviteError] = useState('');
@@ -309,6 +359,28 @@ export default function SchoolAdminDashboard() {
     setTimeout(() => setCopiedCode(null), 2000);
   }
 
+  async function fetchAnalytics() {
+    setAnalyticsLoading(true);
+    setAnalyticsError('');
+    try {
+      const res = await fetch('/api/school-admin/analytics', { credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load analytics');
+      setAnalytics(data);
+    } catch (err: unknown) {
+      setAnalyticsError(err instanceof Error ? err.message : 'Could not load analytics');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }
+
+  function handleTabChange(tab: typeof activeTab) {
+    setActiveTab(tab);
+    if (tab === 'analytics' && !analytics && !analyticsLoading) {
+      fetchAnalytics();
+    }
+  }
+
   if (authLoading || loading) {
     return (
       <>
@@ -417,10 +489,10 @@ export default function SchoolAdminDashboard() {
           </div>
 
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-            {(['overview', 'teachers', 'invites', 'pupils', 'classes'] as const).map(tab => (
+            {(['overview', 'teachers', 'invites', 'pupils', 'classes', 'analytics'] as const).map(tab => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
                   activeTab === tab
                     ? 'bg-[var(--wrife-blue)] text-white'
@@ -457,7 +529,7 @@ export default function SchoolAdminDashboard() {
                 )}
                 {teachers.length > 5 && (
                   <button
-                    onClick={() => setActiveTab('teachers')}
+                    onClick={() => handleTabChange('teachers')}
                     className="mt-4 text-sm text-[var(--wrife-blue)] hover:underline"
                   >
                     View all {teachers.length} teachers →
@@ -486,7 +558,7 @@ export default function SchoolAdminDashboard() {
                 )}
                 {pendingInvites.length > 5 && (
                   <button
-                    onClick={() => setActiveTab('invites')}
+                    onClick={() => handleTabChange('invites')}
                     className="mt-4 text-sm text-[var(--wrife-blue)] hover:underline"
                   >
                     View all {pendingInvites.length} invites →
@@ -774,6 +846,196 @@ export default function SchoolAdminDashboard() {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+          )}
+
+          {/* ── Analytics tab ─────────────────────────────────────────────── */}
+          {activeTab === 'analytics' && (
+            <div className="space-y-6">
+              {analyticsLoading && (
+                <div className="flex items-center justify-center py-16 gap-3 text-[var(--wrife-text-muted)]">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-[var(--wrife-blue)] border-r-transparent" />
+                  Loading analytics…
+                </div>
+              )}
+
+              {analyticsError && (
+                <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center justify-between">
+                  <span>{analyticsError}</span>
+                  <button onClick={fetchAnalytics} className="ml-4 text-[var(--wrife-blue)] hover:underline text-xs font-semibold">Retry</button>
+                </div>
+              )}
+
+              {analytics && (
+                <>
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { label: 'DWP Assessed (30d)', value: analytics.summary.total_dwp_assessed, color: 'text-[var(--wrife-blue)]', bg: 'bg-blue-50' },
+                      { label: 'Pass Rate (30d)',     value: `${analytics.summary.pass_rate}%`,     color: analytics.summary.pass_rate >= 60 ? 'text-green-600' : 'text-amber-600', bg: 'bg-green-50' },
+                      { label: 'Active Pupils (7d)', value: analytics.summary.active_pupils_7d,    color: 'text-purple-600', bg: 'bg-purple-50' },
+                      { label: 'Avg Word Count (30d)', value: analytics.summary.avg_word_count,   color: 'text-[var(--wrife-text-main)]', bg: 'bg-gray-50' },
+                    ].map(card => (
+                      <div key={card.label} className={`${card.bg} rounded-xl p-4 border border-[var(--wrife-border)]`}>
+                        <p className="text-xs text-[var(--wrife-text-muted)] mb-1">{card.label}</p>
+                        <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Second row */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-xl p-4 border border-[var(--wrife-border)]">
+                      <p className="text-xs text-[var(--wrife-text-muted)] mb-1">Lesson Submissions (30d)</p>
+                      <p className="text-2xl font-bold text-[var(--wrife-blue)]">{analytics.summary.total_submissions}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-[var(--wrife-border)]">
+                      <p className="text-xs text-[var(--wrife-text-muted)] mb-1">Pupils Passed (30d)</p>
+                      <p className="text-2xl font-bold text-green-600">{analytics.summary.total_dwp_passed}</p>
+                    </div>
+                    {analytics.summary.intervention_count > 0 && (
+                      <div className="bg-red-50 rounded-xl p-4 border border-red-200">
+                        <p className="text-xs text-red-600 mb-1">Flagged for Support</p>
+                        <p className="text-2xl font-bold text-red-600 flex items-center gap-1">⚠ {analytics.summary.intervention_count}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Band distribution + recent activity */}
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Band distribution */}
+                    <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
+                      <h3 className="text-base font-bold text-[var(--wrife-text-main)] mb-4">Performance Band Distribution</h3>
+                      {analytics.band_distribution.length === 0 ? (
+                        <p className="text-sm text-[var(--wrife-text-muted)]">No assessed attempts yet</p>
+                      ) : (() => {
+                        const total = analytics.band_distribution.reduce((s, b) => s + b.count, 0);
+                        const BAND_STYLES: Record<string, string> = {
+                          mastery:    'bg-purple-500',
+                          secure:     'bg-green-500',
+                          developing: 'bg-yellow-400',
+                          emerging:   'bg-orange-400',
+                        };
+                        const BAND_TEXT: Record<string, string> = {
+                          mastery:    'text-purple-700 bg-purple-100',
+                          secure:     'text-green-700 bg-green-100',
+                          developing: 'text-yellow-700 bg-yellow-100',
+                          emerging:   'text-orange-700 bg-orange-100',
+                        };
+                        return (
+                          <div className="space-y-3">
+                            {analytics.band_distribution.map(b => {
+                              const pct = Math.round((b.count / total) * 100);
+                              return (
+                                <div key={b.band}>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${BAND_TEXT[b.band] ?? 'text-gray-700 bg-gray-100'}`}>
+                                      {b.band}
+                                    </span>
+                                    <span className="text-xs text-[var(--wrife-text-muted)]">{b.count} ({pct}%)</span>
+                                  </div>
+                                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${BAND_STYLES[b.band] ?? 'bg-gray-400'}`}
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Recent activity */}
+                    <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-bold text-[var(--wrife-text-main)]">Recent DWP Activity</h3>
+                        <button onClick={fetchAnalytics} className="text-xs text-[var(--wrife-blue)] hover:underline">Refresh</button>
+                      </div>
+                      {analytics.recent_activity.length === 0 ? (
+                        <p className="text-sm text-[var(--wrife-text-muted)]">No activity yet</p>
+                      ) : (
+                        <div className="divide-y divide-[var(--wrife-border)]">
+                          {analytics.recent_activity.map((a, i) => (
+                            <div key={i} className="py-2 flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-[var(--wrife-text-main)] truncate">{a.pupil_name}</p>
+                                <p className="text-xs text-[var(--wrife-text-muted)] truncate">{a.class_name} · {a.level_id}</p>
+                              </div>
+                              <div className="shrink-0 flex items-center gap-2">
+                                <span className="text-xs font-bold text-[var(--wrife-text-main)]">{a.percentage}%</span>
+                                {a.passed
+                                  ? <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-semibold">✓</span>
+                                  : <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-semibold">✗</span>
+                                }
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Per-class breakdown table */}
+                  <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] overflow-hidden">
+                    <div className="p-6 border-b border-[var(--wrife-border)]">
+                      <h3 className="text-base font-bold text-[var(--wrife-text-main)]">Class-by-Class Breakdown</h3>
+                      <p className="text-xs text-[var(--wrife-text-muted)] mt-1">DWP writing performance across all classes (all time)</p>
+                    </div>
+                    {analytics.class_breakdown.length === 0 ? (
+                      <div className="p-8 text-center text-sm text-[var(--wrife-text-muted)]">No class data yet</div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-[var(--wrife-border)] bg-gray-50">
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Class</th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Teacher</th>
+                              <th className="text-center px-4 py-3 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Pupils</th>
+                              <th className="text-center px-4 py-3 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">DWP Assessed</th>
+                              <th className="text-center px-4 py-3 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Pass Rate</th>
+                              <th className="text-center px-4 py-3 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Avg %</th>
+                              <th className="text-center px-4 py-3 text-xs font-semibold text-[var(--wrife-text-muted)] uppercase">Submissions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {analytics.class_breakdown.map(cls => (
+                              <tr key={cls.class_id} className="border-b border-[var(--wrife-border)] last:border-0 hover:bg-gray-50">
+                                <td className="px-4 py-3 font-medium text-[var(--wrife-text-main)]">
+                                  {cls.class_name}
+                                  <span className="ml-1 text-xs text-[var(--wrife-text-muted)]">Yr {cls.year_group}</span>
+                                </td>
+                                <td className="px-4 py-3 text-[var(--wrife-text-muted)]">{cls.teacher_name}</td>
+                                <td className="px-4 py-3 text-center text-[var(--wrife-text-main)]">{cls.pupil_count}</td>
+                                <td className="px-4 py-3 text-center text-[var(--wrife-text-main)]">{cls.dwp_assessed}</td>
+                                <td className="px-4 py-3 text-center">
+                                  {cls.dwp_assessed > 0 ? (
+                                    <span className={`font-semibold ${cls.pass_rate >= 60 ? 'text-green-600' : 'text-amber-600'}`}>
+                                      {cls.pass_rate}%
+                                    </span>
+                                  ) : (
+                                    <span className="text-[var(--wrife-text-muted)]">—</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  {cls.dwp_assessed > 0 ? (
+                                    <span className="text-[var(--wrife-text-main)]">{cls.avg_percentage}%</span>
+                                  ) : (
+                                    <span className="text-[var(--wrife-text-muted)]">—</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-center text-[var(--wrife-text-muted)]">{cls.submissions}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           )}
