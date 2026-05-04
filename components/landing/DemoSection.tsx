@@ -2,7 +2,6 @@
 
 import InteractivePracticeDemo from './InteractivePracticeDemo';
 import TeacherGuideDemo from './TeacherGuideDemo';
-import PresentationDemo from './PresentationDemo';
 import DWPAIDemo from './DWPAIDemo';
 import PWPDemo from './PWPDemo';
 
@@ -45,7 +44,6 @@ export default function DemoSection() {
         >
           <InteractivePracticeDemo />
           <TeacherGuideDemo />
-          <PresentationDemo />
           <PWPDemo />
           <DWPAIDemo />
         </div>
