@@ -1,13 +1,22 @@
 # WriFe Platform
-*Last updated: 2026-05-04 · Session 19*
+*Last updated: 2026-05-04 · Session 20*
 
 ## Current state
-Full-stack Next.js educational platform at wrife.co.uk. The `feat/redesign` branch has completed Phases 1–5 of the "Chromatic Momentum" redesign. Landing page (Phases 1–3), teacher dashboard (Phase 4, DashboardShell + new overview), and pupil dashboard (Phase 5, slim nav + XP bar + 6-app grid + Today's Tasks) are all committed and live on the Vercel preview. Awaiting user approval before merging to `main`.
+Chromatic Momentum redesign (Phases 1–6) is fully merged to `main` and live on wrife.co.uk. Landing page, teacher dashboard, pupil dashboard, and login pages are all deployed. Interactive Practice (Phase 6 lesson nav bar + HUD + World Map headers) and PWP Studio (brand token alignment + branded nav bars) are also deployed. One known cosmetic quirk: the homepage shows the compact authenticated nav when logged in — a redirect fix is pending.
 
 ## Next Steps
-1. **Review Phase 5 on preview:** https://wrife-website-pmy7-qa2d3td0a-wrifeeducations-projects.vercel.app/pupil/dashboard (login: SIL42495 / amab04 / 9543)
-2. **Phase 6:** Lesson screen redesign in the Interactive Practice repo (separate Vite SPA at practice.wrife.co.uk)
-3. **Merge feat/redesign → main** once all phases approved on preview
+1. **Add logged-in redirect:** `app/page.tsx` — redirect teachers to `/dashboard` when authenticated, so they never see the homepage with the compact nav
+2. **Smoke test all three apps** as Amadeo B end-to-end (pupil login → IP lesson → PWP daily practice)
+3. **Next feature work** — TBD
+
+## Key Decisions
+- **Separate login pages:** Teacher = professional split-screen; Pupil = game entry screen. Unified page rejected as unsuitable for primary-age users.
+- **DashboardShell:** Purple sidebar (w-48) + white top bar wrapper used for teacher dashboard; lazy-loaded.
+- **Pupil dashboard nav:** Slim 52px purple nav (no full Navbar) — WriFe logo left, streak + sentences pills right, log out link.
+- **XP bar proxy:** `totalSentences % 100` used as XP-within-level progress. 100 sentences = 1 level.
+- **Base font 16px:** Correct value — 17px caused oversized appearance at 100% zoom.
+- **Hero sizing:** `xl:text-7xl`, mascot container `lg:460×520px`, central circle 260px, `pt-20` desktop padding — matches prototype at 100% zoom.
+- **Demo section:** 4 cards only (`InteractivePracticeDemo`, `TeacherGuideDemo`, `PWPDemo`, `DWPAIDemo`) — 5th card (Presentation) removed to avoid row wrap in Safari.
 
 ## Key Decisions
 - **Separate login pages:** Teacher = professional split-screen; Pupil = game entry screen. Unified page rejected as unsuitable for primary-age users.
@@ -49,6 +58,7 @@ Full-stack Next.js educational platform at wrife.co.uk. The `feat/redesign` bran
 
 | # | Date | Summary |
 |---|------|---------|
+| 20 | 2026-05-04 | Phase 6 IP + PWP redesign deployed; wrife.co.uk feat/redesign merged to main; hero sizing restored to prototype spec; demo section fixed to 4 cards |
 | 19 | 2026-05-04 | Phase 5 pupil dashboard: slim purple nav, XP bar, 4 stat cards, 6-app grid, Today's Tasks section; verified on Vercel preview as Amadeo B |
 | 18 | 2026-05-04 | Phase 4 teacher dashboard: DashboardShell (purple sidebar + white top bar), overview with stat cards and class cards committed and verified |
 | 17 | 2026-05-04 | Chromatic Momentum redesign: Navbar, Hero, DemoSection, both login pages rebuilt; scale fixed; landing page approved at 100% zoom |

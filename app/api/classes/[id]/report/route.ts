@@ -69,11 +69,11 @@ function getNCJudgement(yearGroup: number, highestLevelPassed: number | null): '
   return 'at';
 }
 
-function getPWPBandLabel(avgBand: number | null): string {
-  if (!avgBand) return 'Not assessed';
-  if (avgBand >= 3.5) return 'Mastery';
-  if (avgBand >= 2.5) return 'Greater Depth';
-  if (avgBand >= 1.5) return 'Expected';
+function getPWPBandLabel(level: number | null): string {
+  if (!level) return 'Not started';
+  if (level >= 31) return 'Mastery';
+  if (level >= 21) return 'Greater Depth';
+  if (level >= 11) return 'Expected';
   return 'Working Towards';
 }
 
@@ -143,19 +143,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const levelMap: Record<number, any> = {};
     for (const row of dwpLevelRes.rows) levelMap[row.level_number] = row;
 
-    // PWP: avg grammar_accuracy per pupil
+    // PWP Chain: current level + completed sessions per pupil
     const pwpRes = await pool.query(
-      `SELECT ps.pupil_id,
-              COUNT(*) FILTER (WHERE ps.status IN ('submitted','reviewed')) AS submitted_count,
-              ROUND(AVG(pa.grammar_accuracy)::numeric, 1) AS avg_grammar,
-              ROUND(AVG(pa.structure_correctness)::numeric, 1) AS avg_structure,
-              MAX(pact.level) AS highest_level
-       FROM pwp_submissions ps
-       JOIN pwp_assignments pa_assign ON pa_assign.id = ps.pwp_assignment_id
-       JOIN progressive_activities pact ON pact.id = pa_assign.activity_id
-       LEFT JOIN pwp_assessments pa ON pa.pwp_submission_id = ps.id
-       WHERE pa_assign.class_id = $1 AND ps.pupil_id = ANY($2)
-       GROUP BY ps.pupil_id`,
+      `SELECT
+              ppl.pupil_id,
+              ppl.current_level AS highest_level,
+              ppl.mastery_signal,
+              COUNT(DISTINCT pcs.id) FILTER (WHERE pcs.chain_complete = true) AS submitted_count
+       FROM pwp_pupil_levels ppl
+       LEFT JOIN pwp_chain_sessions pcs ON pcs.pupil_id = ppl.pupil_id AND pcs.class_id = $1
+       WHERE ppl.class_id = $1 AND ppl.pupil_id = ANY($2)
+       GROUP BY ppl.pupil_id, ppl.current_level, ppl.mastery_signal`,
       [classId, pupilIds]
     );
     const pwpMap: Record<string, any> = {};
@@ -172,7 +170,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       const judgement = getNCJudgement(yearGroup, highestPassed);
       const exp = NC_EXPECTATIONS[yearGroup];
       const levelInfo = highestPassed ? levelMap[highestPassed] : null;
-      const avgGrammar = pwp?.avg_grammar ? parseFloat(pwp.avg_grammar) : null;
 
       return {
         pupil: {
@@ -193,10 +190,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
         pwp: {
           submittedCount: pwp ? parseInt(pwp.submitted_count) : 0,
-          avgGrammar,
-          avgStructure: pwp?.avg_structure ? parseFloat(pwp.avg_structure) : null,
+          avgGrammar: null,
+          avgStructure: null,
           highestLevel: pwp?.highest_level ? parseInt(pwp.highest_level) : null,
-          bandLabel: getPWPBandLabel(avgGrammar),
+          masterySignal: pwp?.mastery_signal ?? false,
+          bandLabel: getPWPBandLabel(pwp?.highest_level ? parseInt(pwp.highest_level) : null),
         },
       };
     });
@@ -398,9 +396,9 @@ async function generateWordReport(classData: any, reportData: any[], request: Ne
                 4513, { size: 19 }
               ),
               cell(
-                rd.pwp.submittedCount > 0
-                  ? `Submitted: ${rd.pwp.submittedCount}\nGrammar band: ${rd.pwp.bandLabel}${rd.pwp.highestLevel ? `\nHighest level: ${rd.pwp.highestLevel}` : ''}`
-                  : 'No activities submitted yet',
+                rd.pwp.highestLevel
+                  ? `Current level: ${rd.pwp.highestLevel}\nBand: ${rd.pwp.bandLabel}${rd.pwp.submittedCount > 0 ? `\nChains completed: ${rd.pwp.submittedCount}` : ''}${rd.pwp.masterySignal ? '\n★ Mastery signal' : ''}`
+                  : 'No chain practice yet',
                 4513, { size: 19 }
               ),
             ]}),
