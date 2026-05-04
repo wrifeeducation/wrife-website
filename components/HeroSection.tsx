@@ -57,7 +57,7 @@ export default function HeroSection() {
 
   return (
     <section className="w-full bg-[var(--wrife-bg)] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-10 pb-4 md:pt-14 md:pb-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-10 pb-4 md:pt-20 md:pb-8">
         <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-0">
 
           {/* ── Left column ── */}
@@ -73,7 +73,7 @@ export default function HeroSection() {
 
             {/* Headline */}
             <h1
-              className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.1] text-[var(--wrife-text-main)] mb-6"
+              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-[1.1] text-[var(--wrife-text-main)] mb-6"
               style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
             >
               Every child.{" "}
@@ -153,14 +153,14 @@ export default function HeroSection() {
           </div>
 
           {/* ── Right column — mascot constellation ── */}
-          <div className="flex-shrink-0 relative w-[280px] h-[340px] sm:w-[340px] sm:h-[400px] lg:w-[400px] lg:h-[450px]">
+          <div className="flex-shrink-0 relative w-[280px] h-[340px] sm:w-[340px] sm:h-[400px] lg:w-[460px] lg:h-[520px]">
 
             {/* Central lavender circle + waving mascot */}
             <div
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center"
               style={{
-                width: "220px",
-                height: "220px",
+                width: "260px",
+                height: "260px",
                 backgroundColor: "var(--wrife-blue-soft)",
               }}
             >
