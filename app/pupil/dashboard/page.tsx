@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { buildSSOUrl } from '@/lib/pupil-sso';
 import WrifeMascot from '@/components/mascots/WrifeMascot';
@@ -351,6 +350,16 @@ export default function PupilDashboardPage() {
   const allBadges = stats?.badges ?? [];
   const latestBadges = allBadges.slice(0, 3);
 
+  // XP / level — 100 sentences per level
+  const xpLevel = Math.floor(totalSentences / 100) + 1;
+  const xpIntoLevel = totalSentences % 100;
+  const xpBarPct = xpIntoLevel; // out of 100
+
+  // Current PWP level — highest level_to seen across assignments
+  const currentPwpLevel = pwpAssignments.length > 0
+    ? Math.max(...pwpAssignments.map(a => a.level_to))
+    : null;
+
   // Active PWP assignments (not yet assessed)
   const activePwpAssignments = pwpAssignments.filter((a) => {
     const sub = getPWPSubmission(a.id);
@@ -364,299 +373,381 @@ export default function PupilDashboardPage() {
   const hasPendingWork = pendingAssignments.length > 0 || unstartedDwp.length > 0 || activePwpAssignments.length > 0;
 
   return (
-    <div className="min-h-screen bg-[var(--wrife-bg)]">
-      <Navbar />
+    <div className="min-h-screen" style={{ backgroundColor: "var(--wrife-bg)" }}>
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <div
-        className="text-white py-6"
-        style={{ background: 'linear-gradient(135deg, var(--wrife-blue) 0%, #7c3aed 100%)' }}
+      {/* ── Slim pupil nav ─────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6"
+        style={{ backgroundColor: "var(--wrife-blue)", height: "52px" }}
       >
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <WrifeMascot pose="waving" size="md" decorative className="shrink-0 drop-shadow" />
-              <div>
-                <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                  Hello, {session.pupilName}!
-                </h1>
-                <p className="text-blue-100 text-sm mt-0.5">
-                  {session.className} · Year {session.yearGroup}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 rounded-full text-sm font-semibold bg-white/20 hover:bg-white/30 transition"
-            >
-              Log out
-            </button>
-          </div>
+        <Link href="/">
+          <span className="font-extrabold text-xl text-white" style={{ fontFamily: "var(--font-display)" }}>
+            WriFe
+          </span>
+        </Link>
 
-          {/* Cross-app progress strip */}
-          <div className="flex items-center gap-4 flex-wrap text-sm">
-            {streakCurrent > 0 && (
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold bg-white/20 ${
-                  streakCurrent >= 7 ? 'animate-pulse shadow-[0_0_12px_rgba(251,191,36,0.6)]' : ''
-                }`}
-              >
-                🔥 {streakCurrent} day streak!
-              </span>
-            )}
-            {totalSentences > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold bg-white/20">
-                ✏️ {totalSentences} sentences written
-              </span>
-            )}
-            {pendingAssignments.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold bg-white/20">
-                📝 {pendingAssignments.length} task{pendingAssignments.length !== 1 ? 's' : ''} to do
-              </span>
-            )}
-          </div>
+        {/* Right: streak + sentences pills */}
+        <div className="flex items-center gap-3">
+          {streakCurrent > 0 && (
+            <span className="text-sm font-bold text-white flex items-center gap-1">
+              🔥 {streakCurrent}
+            </span>
+          )}
+          <span className="text-sm font-bold text-white flex items-center gap-1">
+            ✏️ {totalSentences}
+          </span>
+          <button
+            onClick={handleLogout}
+            className="text-sm font-semibold ml-2 transition"
+            style={{ color: "rgba(255,255,255,0.65)" }}
+          >
+            Log out
+          </button>
+        </div>
+      </header>
+
+      {/* ── Hero: greeting + XP bar ────────────────────────── */}
+      <div className="max-w-3xl mx-auto px-4 pt-6 pb-2">
+        <h1
+          className="text-3xl sm:text-4xl font-extrabold mb-1"
+          style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+        >
+          Hi {session.pupilName.split(' ')[0]}! 🌅
+        </h1>
+
+        {/* XP bar — sentences written as proxy for XP */}
+        <div className="flex items-center justify-between text-xs font-semibold mb-2 mt-3"
+          style={{ color: "var(--wrife-text-muted)" }}>
+          <span>Sentences written: {totalSentences}</span>
+          <span style={{ color: "var(--wrife-blue)" }}>
+            LEVEL {xpLevel} → {xpLevel + 1}
+          </span>
+        </div>
+        <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#e5e7eb" }}>
+          <div
+            className="h-3 rounded-full transition-all"
+            style={{
+              width: `${xpBarPct}%`,
+              background: "linear-gradient(90deg, var(--wrife-blue) 0%, #7c3aed 100%)",
+            }}
+          />
         </div>
       </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 py-5 space-y-7">
 
-        {/* ── App entry cards ───────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {/* Interactive Practice — uses SSO URL so pupil is auto-authenticated */}
-          <a
-            href={practiceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block"
-          >
+        {/* ── 4 stat cards ─────────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            {
+              value: streakCurrent > 0 ? `${streakCurrent}-day` : '—',
+              label: 'Streak',
+              color: 'var(--wrife-orange)',
+              pulse: streakCurrent >= 7,
+            },
+            {
+              value: `${pendingAssignments.length + unstartedDwp.length + activePwpAssignments.length}`,
+              label: 'Tasks to Do',
+              color: pendingAssignments.length + unstartedDwp.length + activePwpAssignments.length > 0
+                ? '#ef4444'
+                : '#22c55e',
+              pulse: false,
+            },
+            {
+              value: `${totalSentences}`,
+              label: 'Sentences Written',
+              color: 'var(--wrife-blue)',
+              pulse: false,
+            },
+            {
+              value: currentPwpLevel ? `L${currentPwpLevel}` : allBadges.length > 0 ? `${allBadges.length}` : '—',
+              label: currentPwpLevel ? 'PWP Level' : 'Badges Earned',
+              color: '#7c3aed',
+              pulse: false,
+            },
+          ].map((card) => (
             <div
-              className="rounded-2xl p-4 text-white h-full flex flex-col justify-between hover:shadow-lg transition cursor-pointer"
-              style={{ background: 'linear-gradient(135deg, #6C5CE7 0%, #4834d4 100%)' }}
+              key={card.label}
+              className="rounded-2xl p-4"
+              style={{
+                backgroundColor: "var(--wrife-surface)",
+                border: "1.5px solid var(--wrife-border)",
+              }}
             >
-              <div>
-                <span className="text-2xl block mb-2">🎮</span>
-                <p className="font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                  Interactive Practice
-                </p>
-                <p className="text-purple-200 text-xs mt-1">61 lessons · earn XP</p>
-              </div>
-              <span className="mt-3 inline-block w-full text-center py-1.5 rounded-full font-bold text-purple-700 bg-white hover:bg-purple-50 transition text-xs">
-                Play →
-              </span>
+              <p
+                className={`text-2xl font-extrabold leading-none ${card.pulse ? 'animate-pulse' : ''}`}
+                style={{ color: card.color, fontFamily: "var(--font-display)" }}
+              >
+                {card.value}
+              </p>
+              <p className="text-xs mt-1.5 font-medium" style={{ color: "var(--wrife-text-muted)" }}>
+                {card.label}
+              </p>
             </div>
-          </a>
+          ))}
+        </div>
 
-          {/* PWP Studio — uses SSO URL so pupil is auto-authenticated */}
-          <a
-            href={studioUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block"
+        {/* ── Your Apps (6-card grid, like "Your Worlds") ───── */}
+        <div>
+          <h2
+            className="text-xl font-extrabold mb-3"
+            style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
           >
-            <div
-              className="rounded-2xl p-4 text-white h-full flex flex-col justify-between hover:shadow-lg transition cursor-pointer"
-              style={{ background: 'linear-gradient(135deg, #F5A623 0%, #e67e22 100%)' }}
-            >
-              <div>
-                <span className="text-2xl block mb-2">✏️</span>
-                <p className="font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                  PWP Studio
-                </p>
-                <p className="text-orange-100 text-xs mt-1">67 levels · build sentences</p>
+            Your Apps
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+
+            {/* Interactive Practice */}
+            <a href={practiceUrl} target="_blank" rel="noopener noreferrer" className="block group">
+              <div
+                className="rounded-2xl p-4 text-white h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                style={{ background: "linear-gradient(135deg, #6C5CE7 0%, #4834d4 100%)" }}
+              >
+                <div>
+                  <span className="text-xl">🎮</span>
+                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+                    Interactive Practice
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    {progressRecords.length > 0
+                      ? `In progress · L${progressRecords[progressRecords.length - 1]?.lesson_id ?? '?'}`
+                      : '61 lessons'}
+                  </p>
+                </div>
+                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold bg-white transition group-hover:bg-purple-50"
+                  style={{ color: "#4834d4" }}>
+                  Play →
+                </span>
               </div>
-              <span className="mt-3 inline-block w-full text-center py-1.5 rounded-full font-bold text-orange-700 bg-white hover:bg-orange-50 transition text-xs">
-                Write →
-              </span>
-            </div>
-          </a>
+            </a>
 
-          {/* Assignments summary */}
-          <div
-            className="rounded-2xl p-4"
-            style={{ backgroundColor: 'var(--wrife-yellow-soft)', border: '1px solid var(--wrife-yellow)' }}
-          >
-            <span className="text-2xl block mb-2">📝</span>
-            <p className="font-bold text-sm text-[var(--wrife-text-main)]" style={{ fontFamily: 'var(--font-display)' }}>
-              Assignments
-            </p>
-            <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
-              {pendingAssignments.length > 0
-                ? `${pendingAssignments.length} to do`
-                : completedAssignments.length > 0
-                ? `${completedAssignments.length} done`
-                : 'None yet'}
-            </p>
-            {activeAssignments.length > 0 && (
-              <div className="mt-2 w-full bg-white rounded-full h-2">
+            {/* PWP Studio */}
+            <a href={studioUrl} target="_blank" rel="noopener noreferrer" className="block group">
+              <div
+                className="rounded-2xl p-4 text-white h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                style={{ background: "linear-gradient(135deg, #F5A623 0%, #e07b10 100%)" }}
+              >
+                <div>
+                  <span className="text-xl">✏️</span>
+                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+                    PWP Studio
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
+                    {currentPwpLevel ? `Level ${currentPwpLevel} · keep going!` : '67 levels · build sentences'}
+                  </p>
+                </div>
+                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold bg-white transition group-hover:bg-orange-50"
+                  style={{ color: "#e07b10" }}>
+                  Write →
+                </span>
+              </div>
+            </a>
+
+            {/* Daily Writing Practice */}
+            {nextDwp ? (
+              <Link href={`/pupil/dwp/${nextDwp.id}`} className="block group">
                 <div
-                  className="bg-[var(--wrife-yellow)] h-2 rounded-full transition-all"
+                  className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
                   style={{
-                    width: `${activeAssignments.length > 0 ? Math.round((completedAssignments.length / activeAssignments.length) * 100) : 0}%`
+                    background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)",
+                    border: "1.5px solid #c4b5fd",
                   }}
-                />
+                >
+                  <div>
+                    <span className="text-xl">📖</span>
+                    <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#5b21b6" }}>
+                      Daily Writing
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: "#7c3aed" }}>
+                      {activeDwpAssignments.length} task{activeDwpAssignments.length !== 1 ? 's' : ''} assigned
+                    </p>
+                  </div>
+                  <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold transition group-hover:opacity-90"
+                    style={{ backgroundColor: "#7c3aed", color: "white" }}>
+                    Start →
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div
+                className="rounded-2xl p-4 h-full flex flex-col"
+                style={{ backgroundColor: "#f3f4f6", border: "1.5px solid #e5e7eb" }}
+              >
+                <span className="text-xl" style={{ color: "#9ca3af" }}>📖</span>
+                <p className="font-bold text-sm mt-2" style={{ color: "#9ca3af", fontFamily: "var(--font-display)" }}>
+                  Daily Writing
+                </p>
+                <p className="text-xs mt-1" style={{ color: "#d1d5db" }}>No tasks yet</p>
               </div>
             )}
-          </div>
 
-          {/* Streak / badges */}
-          <div
-            className="rounded-2xl p-4"
-            style={{ background: 'linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%)', border: '1px solid #fbbf24' }}
-          >
-            <span className={`text-2xl block mb-2 ${streakCurrent >= 7 ? 'animate-pulse' : ''}`}>🔥</span>
-            <p className="font-bold text-sm text-[var(--wrife-text-main)]" style={{ fontFamily: 'var(--font-display)' }}>
-              {streakCurrent > 0 ? `${streakCurrent} Day Streak` : 'Start a Streak!'}
-            </p>
-            {latestBadges.length > 0 && (
-              <div className="flex gap-1 mt-2">
-                {latestBadges.map((badge, i) => {
-                  const { bg, border } = getBadgeBg(badge.badgeType);
-                  return (
-                    <span
-                      key={i}
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${bg} border ${border} text-xs`}
-                      title={badge.badgeName}
-                    >
-                      {badge.badgeIcon || '🎖️'}
-                    </span>
-                  );
-                })}
+            {/* Writing Assignments */}
+            {pendingAssignments.length > 0 ? (
+              <div className="rounded-2xl p-4 h-full flex flex-col justify-between"
+                style={{
+                  background: "linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)",
+                  border: "1.5px solid #fde047",
+                }}>
+                <div>
+                  <span className="text-xl">📝</span>
+                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#854d0e" }}>
+                    Assignments
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "#a16207" }}>
+                    {pendingAssignments.length} to do
+                    {activeAssignments.length > 0 && ` · ${completedAssignments.length}/${activeAssignments.length} done`}
+                  </p>
+                </div>
+                {activeAssignments.length > 0 && (
+                  <div className="mt-3 w-full rounded-full h-1.5" style={{ backgroundColor: "#fef08a" }}>
+                    <div className="h-1.5 rounded-full" style={{
+                      width: `${Math.round((completedAssignments.length / activeAssignments.length) * 100)}%`,
+                      backgroundColor: "#eab308",
+                    }} />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-2xl p-4 h-full flex flex-col"
+                style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac" }}>
+                <span className="text-xl">📝</span>
+                <p className="font-bold text-sm mt-2" style={{ fontFamily: "var(--font-display)", color: "#166534" }}>
+                  Assignments
+                </p>
+                <p className="text-xs mt-1" style={{ color: "#16a34a" }}>All done! ✓</p>
               </div>
             )}
+
+            {/* AI Writing Coach */}
+            <Link href="/pupil/writing-coach" className="block group">
+              <div
+                className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                style={{
+                  background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
+                  border: "1.5px solid #6ee7b7",
+                }}
+              >
+                <div>
+                  <span className="text-xl">✍️</span>
+                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#065f46" }}>
+                    Writing Coach
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "#059669" }}>AI-powered feedback</p>
+                </div>
+                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold transition group-hover:opacity-90"
+                  style={{ backgroundColor: "#10b981", color: "white" }}>
+                  Open →
+                </span>
+              </div>
+            </Link>
+
+            {/* Achievements */}
+            <Link href="#achievements" className="block group">
+              <div
+                className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                style={{
+                  background: "linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)",
+                  border: "1.5px solid #fbbf24",
+                }}
+              >
+                <div>
+                  <span className="text-xl">🏆</span>
+                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#92400e" }}>
+                    Achievements
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "#b45309" }}>
+                    {allBadges.length > 0 ? `${allBadges.length} badge${allBadges.length !== 1 ? 's' : ''} earned` : 'Earn your first badge!'}
+                  </p>
+                </div>
+                {latestBadges.length > 0 && (
+                  <div className="mt-2 flex gap-1">
+                    {latestBadges.map((b, i) => (
+                      <span key={i} className="text-base" title={b.badgeName}>{b.badgeIcon || '🎖️'}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Link>
           </div>
         </div>
 
-        {/* ── Daily Writing Practice (anchor / daily habit) ─── */}
-        {activeDwpAssignments.length > 0 && (
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-5 border-2 border-purple-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-[var(--wrife-text-main)]" style={{ fontFamily: 'var(--font-display)' }}>
-                Daily Writing Practice
-              </h2>
+        {/* ── Today's Tasks ─────────────────────────────────── */}
+        {(nextDwp || pendingAssignments.length > 0 || activePwpAssignments.length > 0) && (
+          <div>
+            <h2
+              className="text-xl font-extrabold mb-3"
+              style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+            >
+              Today's Tasks
+            </h2>
+
+            <div className="space-y-3">
+
+              {/* Primary: next DWP (styled like prototype orange Practice card) */}
               {nextDwp && (
                 <Link href={`/pupil/dwp/${nextDwp.id}`}>
-                  <span className="px-4 py-1.5 rounded-full text-sm font-bold bg-purple-600 text-white hover:bg-purple-700 transition">
-                    Start Today's Task →
-                  </span>
+                  <div
+                    className="rounded-2xl p-5 cursor-pointer transition hover:opacity-95 hover:shadow-lg"
+                    style={{ background: "linear-gradient(135deg, #F5A623 0%, #e07b10 100%)" }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-bold text-white opacity-80">📖 Daily Writing Practice</span>
+                    </div>
+                    <p className="text-white font-extrabold text-base" style={{ fontFamily: "var(--font-display)" }}>
+                      {nextDwp.writing_levels?.activity_name || `Writing Level ${nextDwp.writing_levels?.level_number}`}
+                    </p>
+                    <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.8)" }}>
+                      Tier {nextDwp.writing_levels?.tier_number} · {nextDwp.writing_levels?.learning_objective?.slice(0, 60)}…
+                    </p>
+                    <div className="mt-4 flex gap-3">
+                      <span className="px-5 py-2 rounded-full text-sm font-bold bg-white transition hover:bg-orange-50"
+                        style={{ color: "#e07b10" }}>
+                        Start Writing →
+                      </span>
+                    </div>
+                  </div>
                 </Link>
               )}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {activeDwpAssignments.map((dwp) => {
-                const attempt = getDWPAttempt(dwp.id);
+
+              {/* PWP assignments */}
+              {activePwpAssignments.slice(0, 2).map((pwp) => {
+                const isOverdue = pwp.due_date && new Date(pwp.due_date) < new Date();
                 return (
-                  <Link key={dwp.id} href={`/pupil/dwp/${dwp.id}`}>
-                    <div className="bg-white rounded-xl p-4 border border-purple-200 hover:border-purple-400 hover:shadow-md transition cursor-pointer">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600 text-sm font-bold">
-                          {dwp.writing_levels?.level_number || '?'}
-                        </span>
+                  <a key={pwp.id} href={studioUrl} target="_blank" rel="noopener noreferrer">
+                    <div
+                      className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
+                      style={{
+                        backgroundColor: "var(--wrife-surface)",
+                        border: "1.5px solid var(--wrife-border)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
+                          style={{ backgroundColor: "var(--wrife-blue-soft)" }}>
+                          ✏️
+                        </div>
                         <div>
-                          <p className="font-semibold text-sm text-[var(--wrife-text-main)]">
-                            {dwp.writing_levels?.activity_name || 'Writing Level'}
+                          <p className="font-bold text-sm" style={{ color: "var(--wrife-text-main)" }}>
+                            PWP Studio · L{pwp.level_from}–{pwp.level_to}
                           </p>
-                          <p className="text-xs text-[var(--wrife-text-muted)]">
-                            Tier {dwp.writing_levels?.tier_number || '?'}
+                          <p className="text-xs" style={{ color: isOverdue ? "var(--wrife-danger)" : "var(--wrife-text-muted)" }}>
+                            {pwp.due_date
+                              ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(pwp.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+                              : 'No due date'}
                           </p>
                         </div>
                       </div>
-                      <p className="text-xs text-[var(--wrife-text-muted)] mb-3 line-clamp-2">
-                        {dwp.writing_levels?.learning_objective || 'Complete this writing activity'}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        {getDWPStatusBadge(attempt)}
-                        {dwp.due_date && (
-                          <span className="text-xs text-[var(--wrife-text-muted)]">
-                            Due: {new Date(dwp.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-            {hiddenDwpCount > 0 && (
-              <p className="mt-3 text-center text-sm text-[var(--wrife-text-muted)]">
-                +{hiddenDwpCount} more task{hiddenDwpCount !== 1 ? 's' : ''} — complete these first to unlock them!
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* ── PWP Studio Assignments ────────────────────────── */}
-        {activePwpAssignments.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-[var(--wrife-text-main)]" style={{ fontFamily: 'var(--font-display)' }}>
-                ✏️ PWP Studio Assignments
-              </h2>
-              <a
-                href={studioUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-1.5 rounded-full text-sm font-bold bg-[var(--wrife-blue)] text-white hover:opacity-90 transition"
-              >
-                Open PWP Studio →
-              </a>
-            </div>
-            <div className="space-y-3">
-              {activePwpAssignments.map((pwp) => {
-                const isOverdue = pwp.due_date && new Date(pwp.due_date) < new Date();
-                return (
-                  <div
-                    key={pwp.id}
-                    className="p-4 rounded-xl border border-[var(--wrife-border)] bg-[var(--wrife-bg)]"
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--wrife-blue-soft)] text-[var(--wrife-blue)] text-sm font-bold">
-                          L{pwp.level_from} → L{pwp.level_to}
-                        </span>
-                        <span className="text-xs text-[var(--wrife-text-muted)]">
-                          ({pwp.level_to - pwp.level_from + 1} levels)
-                        </span>
+                        {getPWPStatusBadge(pwp.id)}
+                        <span className="text-xs font-bold shrink-0" style={{ color: "var(--wrife-blue)" }}>Open →</span>
                       </div>
-                      {getPWPStatusBadge(pwp.id)}
                     </div>
-                    {pwp.instructions && (
-                      <p className="text-xs text-[var(--wrife-text-muted)] mb-2">{pwp.instructions}</p>
-                    )}
-                    <p className={`text-xs ${isOverdue ? 'text-red-500 font-semibold' : 'text-[var(--wrife-text-muted)]'}`}>
-                      {pwp.due_date
-                        ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(pwp.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
-                        : 'No due date'}
-                    </p>
-                  </div>
+                  </a>
                 );
               })}
-            </div>
-            <p className="mt-3 text-xs text-[var(--wrife-text-muted)]">
-              Complete these levels at{' '}
-              <a href="https://pwp-studio.wrife.co.uk" target="_blank" rel="noopener noreferrer" className="text-[var(--wrife-blue)] hover:underline">
-                pwp-studio.wrife.co.uk
-              </a>
-            </p>
-          </div>
-        )}
 
-        {/* ── Writing Assignments ───────────────────────────── */}
-        <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5">
-          <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Your Assignments
-          </h2>
-
-          {activeAssignments.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--wrife-bg)] mb-4">
-                <span className="text-3xl">📚</span>
-              </div>
-              <h3 className="text-lg font-semibold text-[var(--wrife-text-main)] mb-2">No active assignments</h3>
-              <p className="text-sm text-[var(--wrife-text-muted)]">Your teacher will assign lessons soon!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activeAssignments.map((assignment) => {
+              {/* IP assignments */}
+              {pendingAssignments.map((assignment) => {
                 const subStatus = getSubmissionStatus(assignment.id);
                 const overallStatus = getOverallStatus(assignment.id, assignment.lesson_id);
                 const submission = submissions.find(s => s.assignment_id === assignment.id);
@@ -667,117 +758,109 @@ export default function PupilDashboardPage() {
 
                 return (
                   <Link key={assignment.id} href={`/pupil/assignment/${assignment.id}`}>
-                    <div className={`p-4 rounded-xl border hover:shadow-soft transition cursor-pointer ${getAssignmentCardBorder(assignment.id)}`}>
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <h3 className="font-bold text-[var(--wrife-text-main)] leading-tight">
+                    <div
+                      className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
+                      style={{
+                        border: subStatus === 'reviewed' ? "1.5px solid #86efac"
+                          : subStatus === 'submitted' ? "1.5px solid #93c5fd"
+                          : subStatus === 'draft' ? "1.5px solid #fcd34d"
+                          : "1.5px solid var(--wrife-border)",
+                        backgroundColor: subStatus === 'reviewed' ? "#f0fdf4"
+                          : subStatus === 'submitted' ? "#eff6ff"
+                          : subStatus === 'draft' ? "#fffbeb"
+                          : "var(--wrife-surface)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
+                          style={{ backgroundColor: "var(--wrife-bg)" }}>
+                          📝
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-bold text-sm truncate" style={{ color: "var(--wrife-text-main)" }}>
                               {assignment.title}
-                            </h3>
+                            </p>
                             {subStatus === 'reviewed' && hasTeacherFeedback && (
-                              <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-white">
+                              <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-bold text-white"
+                                style={{ backgroundColor: "var(--wrife-orange)" }}>
                                 New Feedback!
                               </span>
                             )}
                           </div>
-                          {assignment.instructions && (
-                            <p className="text-xs text-[var(--wrife-text-muted)] line-clamp-1">{assignment.instructions}</p>
-                          )}
+                          <p className="text-xs" style={{ color: isOverdue ? "var(--wrife-danger)" : "var(--wrife-text-muted)" }}>
+                            {assignment.due_date
+                              ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+                              : overallStatus === 'practice_complete' ? 'Practice done · ready to submit'
+                              : 'No due date'}
+                          </p>
                         </div>
-                        <span className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition ${cta.className}`}>
-                          {cta.label}
-                        </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-[var(--wrife-text-muted)]">
-                        <span className={isOverdue ? 'text-red-500 font-semibold' : ''}>
-                          {assignment.due_date
-                            ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
-                            : 'No due date'}
-                        </span>
-                        <span className="capitalize text-[var(--wrife-text-muted)]">
-                          {overallStatus === 'practice_complete' ? 'Practice done · ready to write' :
-                           overallStatus === 'practice_in_progress' ? 'Practice started' :
-                           subStatus === 'not_started' ? 'Not started' :
-                           subStatus}
-                        </span>
-                      </div>
+                      <span className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition ${cta.className}`}>
+                        {cta.label}
+                      </span>
                     </div>
                   </Link>
                 );
               })}
+
+              {/* Completed assignments */}
+              {completedAssignments.map((assignment) => {
+                const subStatus = getSubmissionStatus(assignment.id);
+                const cta = getAssignmentCTA(assignment.id, assignment.lesson_id);
+                return (
+                  <Link key={assignment.id} href={`/pupil/assignment/${assignment.id}`}>
+                    <div
+                      className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
+                      style={{
+                        border: subStatus === 'reviewed' ? "1.5px solid #86efac" : "1.5px solid #93c5fd",
+                        backgroundColor: subStatus === 'reviewed' ? "#f0fdf4" : "#eff6ff",
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
+                          style={{ backgroundColor: subStatus === 'reviewed' ? "#dcfce7" : "#dbeafe" }}>
+                          {subStatus === 'reviewed' ? '✅' : '⏳'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-sm truncate" style={{ color: "var(--wrife-text-main)" }}>
+                            {assignment.title}
+                          </p>
+                          <p className="text-xs" style={{ color: "var(--wrife-text-muted)" }}>
+                            {subStatus === 'reviewed' ? 'Reviewed by teacher' : 'Submitted · awaiting review'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition ${cta.className}`}>
+                        {cta.label}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+
             </div>
-          )}
-        </div>
-
-        {/* ── Tools row ────────────────────────────────────── */}
-        {!hasPendingWork && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link href="/pupil/writing-coach" className="block">
-              <div
-                className="rounded-2xl p-5 text-white flex items-center gap-4 hover:shadow-lg transition cursor-pointer"
-                style={{ background: 'linear-gradient(135deg, var(--wrife-blue) 0%, #7c3aed 100%)' }}
-              >
-                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                  <span className="text-xl">✍️</span>
-                </div>
-                <div>
-                  <p className="font-bold" style={{ fontFamily: 'var(--font-display)' }}>AI Writing Coach</p>
-                  <p className="text-blue-100 text-sm">Write sentences with AI feedback</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/pupil/word-bank" className="block">
-              <div
-                className="rounded-2xl p-5 text-white flex items-center gap-4 hover:shadow-lg transition cursor-pointer"
-                style={{ background: 'linear-gradient(135deg, var(--wrife-green) 0%, #059669 100%)' }}
-              >
-                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                  <span className="text-xl">📖</span>
-                </div>
-                <div>
-                  <p className="font-bold" style={{ fontFamily: 'var(--font-display)' }}>My Word Bank</p>
-                  <p className="text-green-100 text-sm">Build your vocabulary</p>
-                </div>
-              </div>
-            </Link>
-          </div>
-        )}
-
-        {/* Always-visible tools when there IS pending work */}
-        {hasPendingWork && (
-          <div className="flex gap-3 flex-wrap">
-            <Link href="/pupil/writing-coach">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-white border border-[var(--wrife-border)] hover:shadow-soft transition text-[var(--wrife-text-main)]">
-                ✍️ AI Writing Coach
-              </span>
-            </Link>
-            <Link href="/pupil/word-bank">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-white border border-[var(--wrife-border)] hover:shadow-soft transition text-[var(--wrife-text-main)]">
-                📖 My Word Bank
-              </span>
-            </Link>
           </div>
         )}
 
         {/* ── Achievements ─────────────────────────────────── */}
         {allBadges.length > 0 && (
-          <div id="achievements" className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
-            <h2 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              🏆 Your Achievements
+          <div id="achievements">
+            <h2
+              className="text-xl font-extrabold mb-3"
+              style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+            >
+              Your Achievements
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {allBadges.map((badge, i) => {
                 const { bg, border } = getBadgeBg(badge.badgeType);
                 return (
-                  <div
-                    key={i}
-                    className={`rounded-xl p-4 border ${border} ${bg} flex items-start gap-3`}
-                  >
-                    <span className="text-2xl flex-shrink-0">{badge.badgeIcon || '🎖️'}</span>
+                  <div key={i} className={`rounded-2xl p-3.5 border ${border} ${bg} flex items-center gap-3`}>
+                    <span className="text-2xl shrink-0">{badge.badgeIcon || '🎖️'}</span>
                     <div className="min-w-0">
-                      <p className="font-bold text-sm text-[var(--wrife-text-main)]">{badge.badgeName}</p>
-                      <p className="text-xs text-[var(--wrife-text-muted)] mt-0.5">{badge.badgeDescription}</p>
+                      <p className="font-bold text-sm" style={{ color: "var(--wrife-text-main)" }}>{badge.badgeName}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>{badge.badgeDescription}</p>
                     </div>
                   </div>
                 );
@@ -786,6 +869,20 @@ export default function PupilDashboardPage() {
           </div>
         )}
 
+        {/* Empty state when nothing to do */}
+        {!nextDwp && pendingAssignments.length === 0 && activePwpAssignments.length === 0 && (
+          <div className="text-center py-12">
+            <WrifeMascot pose="celebrating" size="lg" decorative className="mx-auto mb-4 drop-shadow mascot-float-a" />
+            <p className="text-xl font-extrabold" style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}>
+              All caught up! 🎉
+            </p>
+            <p className="text-sm mt-2" style={{ color: "var(--wrife-text-muted)" }}>
+              No tasks right now. Why not practise in Interactive Practice or PWP Studio?
+            </p>
+          </div>
+        )}
+
+        <div className="h-8" />
       </main>
     </div>
   );
