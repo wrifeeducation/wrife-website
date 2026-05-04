@@ -1,57 +1,56 @@
 # WriFe Platform
-*Last updated: 2026-05-03 · Session 15*
+*Last updated: 2026-05-04 · Session 19*
 
 ## Current state
-Full-stack Next.js educational platform at wrife.co.uk and PWP Studio at pwp.studio.wrife.co.uk. Both deployed on Vercel, sharing Supabase Platform (`gzmgjkbtsvezfclmreru`).
+Full-stack Next.js educational platform at wrife.co.uk. The `feat/redesign` branch has completed Phases 1–5 of the "Chromatic Momentum" redesign. Landing page (Phases 1–3), teacher dashboard (Phase 4, DashboardShell + new overview), and pupil dashboard (Phase 5, slim nav + XP bar + 6-app grid + Today's Tasks) are all committed and live on the Vercel preview. Awaiting user approval before merging to `main`.
 
-**PWP Daily Chain Practice — Phases A, B, and C are fully complete and live.**
+## Next Steps
+1. **Review Phase 5 on preview:** https://wrife-website-pmy7-qa2d3td0a-wrifeeducations-projects.vercel.app/pupil/dashboard (login: SIL42495 / amab04 / 9543)
+2. **Phase 6:** Lesson screen redesign in the Interactive Practice repo (separate Vite SPA at practice.wrife.co.uk)
+3. **Merge feat/redesign → main** once all phases approved on preview
 
----
+## Key Decisions
+- **Separate login pages:** Teacher = professional split-screen; Pupil = game entry screen. Unified page rejected as unsuitable for primary-age users.
+- **DashboardShell:** Purple sidebar (w-48) + white top bar wrapper used for teacher dashboard; lazy-loaded.
+- **Pupil dashboard nav:** Slim 52px purple nav (no full Navbar) — WriFe logo left, streak + sentences pills right, log out link.
+- **XP bar proxy:** `totalSentences % 100` used as XP-within-level progress. 100 sentences = 1 level.
+- **PWP Level display:** Derived from `Math.max(...pwpAssignments.map(a => a.level_to))` — highest assigned level.
+- **feat/redesign branch:** All redesign work isolated; production (`main`) untouched until all phases approved.
+- **CSS auto-fill grid:** `minmax(240px, 1fr)` for 6-app card grid, robust at all viewports.
+- **Base font 16px:** Changed from 17px — 17px caused oversized appearance at 100% zoom.
 
-### Phase A (Session 12)
-4 new DB tables (`pwp_pupil_levels`, `pwp_chain_sessions`, `pwp_chain_sentences`, `pwp_class_themes`), full daily-practice flow in PWP Studio (L1–L10), teacher completion grid on class PWP tab.
+## Files & Locations (Redesign)
+- `components/Navbar.tsx` — Purple sticky nav (landing page / teacher views)
+- `components/HeroSection.tsx` — Typewriter + mascot constellation + portal cards
+- `components/landing/DemoSection.tsx` — 4-card grid, brand-aligned
+- `components/dashboard/DashboardShell.tsx` — Teacher dashboard sidebar + top bar shell
+- `app/page.tsx` — Landing page (DemoSection restored)
+- `app/dashboard/page.tsx` — Teacher dashboard (Phase 4 rewrite, uses DashboardShell)
+- `app/pupil/dashboard/page.tsx` — Pupil dashboard (Phase 5 rewrite, slim nav + new layout)
+- `app/pupil/login/page.tsx` — Playful game-entry login redesign
+- `app/login/page.tsx` — Split-screen professional login redesign
+- `styles/globals.css` — 16px base font, float animation keyframes, typewriter cursor
 
-### Phase B (Session 13)
-- `parseSentence.ts` extended for L11–L30 vocab (modals, irregular verbs, adjectives, adverbs)
-- `formulaDefinitions.ts` extended to L11–L30 with `alternatives` mechanism
-- `validateChainSentence.ts` — alternatives support
-- Mastery signal on pupil dashboard `DailyPracticeCard` (progress bar + gold banner)
-- `POST /api/teacher/pwp/advance-level` — teacher advances mastery-signalled pupil to next level
-- `PWPChainTab.tsx` — "→ L{n+1}" advance button per mastery row
-
-### Phase C (Sessions 14–15)
-- **`pwp_free_practice_sentences` table** — live on Platform DB (no UNIQUE constraint)
-- **`ChainRow` help mode** — `helpMode` prop shows word-class colour bands above input
-- **`ChainBuilder` help mode** — threads `helpMode` prop down to each ChainRow
-- **`FreePracticePage`** (`/free-practice`) — unlimited sessions, help mode on, 5 XP/sentence, L(n+1) challenge row, weekly theme wired
-- **Dashboard** — orange "🎨 Free Practice" button below the daily chain card
-- **Weekly theme setter** — `GET/POST /api/teacher/pwp/set-theme`; teacher form in `PWPChainTab.tsx`; both `/daily-practice` and `/free-practice` query `pwp_class_themes` and pass theme to `SubjectPicker`
-- **Chain streak display** — `computeChainStreak()` derives consecutive-day streak from `pwp_chain_sessions`; shown as "🔗 Nd streak" pill inside `DailyPracticeCard`
-- **Level distribution chart** — bottom of `PWPChainTab.tsx`; client-side bar chart from `pupils` array, 🏆 marker on levels with mastery-signalled pupils
-
----
-
-## Mastery point thresholds
-`calculateMasteryPoints`: perfect session = 4 pts. `mastery_signal` fires at `mastery_points >= 12` (~3 perfect sessions).
-
-## Architecture decision (2026-05-02)
-**wrifeapp** is the PWP Studio codebase (`pwp.studio.wrife.co.uk`). The three apps share one Supabase Platform project:
-- wrife.co.uk → teacher dashboard + admin (Platform DB)
+## Architecture
+- wrife.co.uk → teacher dashboard + admin (Platform DB `gzmgjkbtsvezfclmreru`)
 - practice.wrife.co.uk → Interactive Practice (Platform DB ✅)
 - pwp.studio.wrife.co.uk → PWP Studio (Platform DB ✅)
+- Pool: `max: 2` in `lib/db.ts` — critical for free-tier Supabase connections
+- Pupil auth: `localStorage` `pupilSession` key only (no Supabase cookie)
+- SSO links: `buildSSOUrl()` from `lib/pupil-sso.ts`
 
-## Session collision fix (deployed 2026-05-03, commit 959ed30)
-Pupil SSO tokens are stored in `localStorage` under `pupilSSOTokens` only — never via `supabase.auth.setSession()`.
-`lib/pupil-sso.ts` reads from `localStorage.pupilSSOTokens` to build cross-domain hash URLs.
+## Test Credentials
+- **Pupil:** Amadeo B · Silver Birch Y4 · SIL42495 / amab04 / 9543 (47 tasks, PWP L15)
+- **Teacher:** mankrah@kafed.org.uk / niiotin99
 
-## Process — Post-phase smoke testing
-After every phase: teacher login → class page → new tab → assign something → pupil login → pupil dashboard → complete activity → check it saved.
+---
 
-## Files changed in Session 15
-### wrifeapp (PWP Studio)
-- `src/pages/DashboardPage.tsx` — chain streak query + `computeChainStreak()` + `chainStreak` prop on `DailyPracticeCard`
-- `src/pages/FreePracticePage.tsx` — weekly theme query wired to SubjectPicker
+## Session Log
 
-### wrife-website (wrife.co.uk)
-- `app/api/teacher/pwp/set-theme/route.ts` — new GET + POST endpoint
-- `components/PWPChainTab.tsx` — weekly theme setter UI + level distribution bar chart
+| # | Date | Summary |
+|---|------|---------|
+| 19 | 2026-05-04 | Phase 5 pupil dashboard: slim purple nav, XP bar, 4 stat cards, 6-app grid, Today's Tasks section; verified on Vercel preview as Amadeo B |
+| 18 | 2026-05-04 | Phase 4 teacher dashboard: DashboardShell (purple sidebar + white top bar), overview with stat cards and class cards committed and verified |
+| 17 | 2026-05-04 | Chromatic Momentum redesign: Navbar, Hero, DemoSection, both login pages rebuilt; scale fixed; landing page approved at 100% zoom |
+| 16 | 2026-05-03 | E2E test fixed 3 missing DB tables; font sizes improved platform-wide; password management streamlined |
+| 15 | 2026-05-03 | PWP Phase C complete: chain streak, level distribution chart, weekly theme wired to Free Practice |
