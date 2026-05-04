@@ -11,8 +11,14 @@ export default function DemoSection() {
     <section id="try-it" className="w-full px-4 md:px-8 py-16 bg-gradient-to-b from-[var(--wrife-bg)] to-white">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-4"
+            style={{ backgroundColor: "var(--wrife-blue-soft)", color: "var(--wrife-blue)" }}
+          >
+            <span
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{ backgroundColor: "var(--wrife-blue)" }}
+            />
             Try Before You Buy
           </div>
           <h2 
@@ -40,7 +46,8 @@ export default function DemoSection() {
           </p>
           <a
             href="/signup"
-            className="inline-flex items-center gap-2 px-8 py-4 text-lg font-bold text-white bg-[var(--wrife-blue)] rounded-full shadow-lg hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-8 py-4 text-lg font-bold text-white rounded-full shadow-soft hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "var(--wrife-orange)" }}
           >
             Start Your Free Trial
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
