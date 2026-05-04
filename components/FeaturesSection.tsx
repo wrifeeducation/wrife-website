@@ -1,4 +1,4 @@
-import OwlMascot from "./mascots/OwlMascot";
+import Image from "next/image";
 
 const features = [
   {
@@ -109,7 +109,13 @@ export default function FeaturesSection() {
 
         <div className="mt-16 bg-[var(--wrife-blue)] rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
           <div className="flex-shrink-0">
-            <OwlMascot size="lg" />
+            <Image
+              src="/mascots/pencil-celebrating.png"
+              alt="WriFe mascot celebrating"
+              width={140}
+              height={160}
+              className="drop-shadow-lg"
+            />
           </div>
           <div className="text-center md:text-left text-white">
             <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>

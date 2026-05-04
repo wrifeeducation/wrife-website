@@ -2,26 +2,47 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&display=swap');
 
 :root {
-  --wrife-blue: #2E5AFF;
-  --wrife-blue-soft: #CDE1FF;
-  --wrife-blue-dark: #1E3A8A;
-  --wrife-yellow: #FFCF4A;
-  --wrife-yellow-soft: #FFF3C4;
-  --wrife-orange: #F97316;
-  --wrife-green: #58C791;
+  /* ── Primary brand — Purple (teacher portal, nav, primary actions) ── */
+  --wrife-blue: #6C5CE7;          /* renamed conceptually to "purple" but token unchanged for compat */
+  --wrife-blue-soft: #EDE9FE;     /* lavender tint for backgrounds and badges */
+  --wrife-blue-dark: #4C3FBF;     /* deeper purple for hover/active states */
+
+  /* ── App accent — Teal (PWP Studio) ── */
+  --wrife-teal: #00B894;
+  --wrife-teal-soft: #CCFBF1;
+
+  /* ── App accent — Electric Blue (Interactive Practice) ── */
+  --wrife-electric: #0984E3;
+  --wrife-electric-soft: #DBEAFE;
+
+  /* ── CTA — Orange ── */
+  --wrife-orange: #F5A623;        /* warmer amber-orange per prototype */
+  --wrife-orange-soft: #FEF3C7;
+
+  /* ── Supporting palette ── */
+  --wrife-yellow: #F5C500;        /* XP / stars / gold */
+  --wrife-yellow-soft: #FEF9C3;
+  --wrife-green: #27AE60;
   --wrife-green-soft: #D1FAE5;
-  --wrife-coral: #FF7A64;
+  --wrife-coral: #E17055;
   --wrife-coral-soft: #FEE2E2;
-  --wrife-bg: #FFF9F0;
+
+  /* ── Surfaces ── */
+  --wrife-bg: #FDF8EE;            /* warm cream — matches prototype exactly */
+  --wrife-bg-alt: #F0EEFF;        /* lavender tint for auth/form backgrounds */
   --wrife-surface: #FFFFFF;
-  --wrife-border: #E3E6F0;
-  --wrife-text-main: #19213D;
-  --wrife-text-muted: #6B7280;
+  --wrife-border: #E8E0D5;        /* warm border to match cream background */
+
+  /* ── Text ── */
+  --wrife-text-main: #2D3436;     /* near-black from prototype */
+  --wrife-text-muted: #636E72;    /* mid-grey from prototype */
   --wrife-danger: #E11D48;
-  
-  --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.08);
-  --shadow-strong: 0 12px 28px rgba(15, 23, 42, 0.16);
-  --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.06);
+
+  /* ── Shadows (tinted purple) ── */
+  --shadow-soft: 0 8px 20px rgba(108, 92, 231, 0.10);
+  --shadow-strong: 0 12px 28px rgba(108, 92, 231, 0.18);
+  --shadow-card: 0 4px 12px rgba(108, 92, 231, 0.07);
+  --shadow-purple: 0 20px 60px rgba(108, 92, 231, 0.35); /* featured card glow */
 }
 
 html {
@@ -216,4 +237,36 @@ a {
 .animate-blink {
   animation: blink 0.8s infinite;
   font-weight: 100;
+}
+
+/* ── Mascot floating animations ── */
+@keyframes floatA {
+  0%, 100% { transform: translateY(0) rotate(-12deg); }
+  50%       { transform: translateY(-10px) rotate(-8deg); }
+}
+@keyframes floatB {
+  0%, 100% { transform: translateY(0) rotate(10deg); }
+  50%       { transform: translateY(-8px) rotate(6deg); }
+}
+@keyframes floatC {
+  0%, 100% { transform: translateY(0) rotate(6deg); }
+  50%       { transform: translateY(-12px) rotate(2deg); }
+}
+
+.mascot-float-a { animation: floatA 3s ease-in-out infinite; }
+.mascot-float-b { animation: floatB 4s ease-in-out infinite; }
+.mascot-float-c { animation: floatC 3.5s ease-in-out infinite reverse; }
+
+/* ── Typewriter cursor ── */
+@keyframes cursorBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.typewriter-cursor {
+  display: inline-block;
+  width: 3px;
+  background: currentColor;
+  margin-left: 4px;
+  animation: cursorBlink 1s step-end infinite;
+  vertical-align: middle;
 }

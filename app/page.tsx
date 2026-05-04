@@ -2,7 +2,7 @@
 
 import Navbar from "../components/Navbar";
 import HeroSection from "../components/HeroSection";
-import DemoSection from "../components/landing/DemoSection";
+import ProductTilesSection from "../components/landing/ProductTilesSection";
 import FeaturedLessons from "../components/FeaturedLessons";
 import FeaturesSection from "../components/FeaturesSection";
 import PricingSection from "../components/PricingSection";
@@ -13,7 +13,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-[var(--wrife-bg)]">
       <Navbar />
       <HeroSection />
-      <DemoSection />
+      <ProductTilesSection />
       <FeaturedLessons />
       <FeaturesSection />
       <PricingSection />
