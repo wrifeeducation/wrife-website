@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { buildTeacherSSOUrl } from '@/lib/teacher-sso';
 
 interface PracticeRow {
   id: string;
@@ -33,6 +34,17 @@ export function InteractivePracticeTab({ classId }: Props) {
   const [rows, setRows] = useState<PracticeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ssoLoading, setSsoLoading] = useState(false);
+
+  const handleOpenInApp = useCallback(async () => {
+    setSsoLoading(true);
+    try {
+      const url = await buildTeacherSSOUrl('https://practice.wrife.co.uk', '/teacher');
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } finally {
+      setSsoLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -94,14 +106,30 @@ export function InteractivePracticeTab({ classId }: Props) {
 
   return (
     <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
-      <div className="flex items-center gap-3 mb-2">
-        <span className="text-2xl">🎮</span>
-        <div>
-          <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Interactive Practice</h2>
-          <p className="text-sm text-[var(--wrife-text-muted)]">
-            Gamified writing & grammar lessons — 61 lessons across 6 worlds
-          </p>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🎮</span>
+          <div>
+            <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">Interactive Practice</h2>
+            <p className="text-sm text-[var(--wrife-text-muted)]">
+              Gamified writing & grammar lessons — 61 lessons across 6 worlds
+            </p>
+          </div>
         </div>
+        <button
+          onClick={handleOpenInApp}
+          disabled={ssoLoading}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition disabled:opacity-60"
+        >
+          {ssoLoading ? (
+            <>
+              <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-r-transparent" />
+              Opening…
+            </>
+          ) : (
+            <>Open in app ↗</>
+          )}
+        </button>
       </div>
 
       {/* Class summary stats */}
@@ -208,15 +236,7 @@ export function InteractivePracticeTab({ classId }: Props) {
       )}
 
       <p className="mt-4 text-xs text-[var(--wrife-text-muted)]">
-        Data from{' '}
-        <a
-          href="https://practice.wrife.co.uk"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[var(--wrife-blue)] hover:underline"
-        >
-          practice.wrife.co.uk
-        </a>
+        Data from practice.wrife.co.uk
       </p>
     </div>
   );
