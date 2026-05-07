@@ -83,13 +83,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const format = new URL(request.url).searchParams.get('format');
 
   // Verify teacher auth via Supabase (SSR-aware client reads cookies correctly)
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let user: { id: string } | null = null;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error('Report auth error:', error.message);
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    user = data.user as { id: string } | null;
+  } catch (authErr: unknown) {
+    console.error('Report auth exception:', authErr);
+    return NextResponse.json({ error: 'Auth error' }, { status: 401 });
+  }
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const pool = getPool();
-
   try {
+    const pool = getPool();
     // Class info
     const classRes = await pool.query(
       `SELECT c.id, c.name, c.year_group, c.class_code,

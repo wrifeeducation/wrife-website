@@ -26,7 +26,7 @@ export async function middleware(req: NextRequest) {
   }
   
   // For auth-protected routes, run session update
-  const protectedPaths = ['/lesson', '/dashboard', '/classes', '/admin', '/api/admin'];
+  const protectedPaths = ['/lesson', '/dashboard', '/classes', '/admin', '/api/admin', '/api/classes', '/api/teacher', '/api/pupil'];
   const isProtected = protectedPaths.some(path => pathname.startsWith(path));
   
   if (isProtected) {

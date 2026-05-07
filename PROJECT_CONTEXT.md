@@ -1,13 +1,16 @@
 # WriFe Platform
-*Last updated: 2026-05-04 · Session 20*
+*Last updated: 2026-05-07 · Session 27*
 
 ## Current state
-Chromatic Momentum redesign (Phases 1–6) is fully merged to `main` and live on wrife.co.uk. Landing page, teacher dashboard, pupil dashboard, and login pages are all deployed. Interactive Practice (Phase 6 lesson nav bar + HUD + World Map headers) and PWP Studio (brand token alignment + branded nav bars) are also deployed. One known cosmetic quirk: the homepage shows the compact authenticated nav when logged in — a redirect fix is pending.
+All redesign phases (1–6) are live. Auto-submit of IP lesson completions to the teacher's Assignments tab is now working end-to-end — verified: Amadeo completes L1 → submission row created → teacher sees "1/25 submitted". Two Platform DB RLS bugs fixed (infinite recursion in `school_admins` and `pupils` policies). Three bugs remain before live school use.
 
 ## Next Steps
-1. **Add logged-in redirect:** `app/page.tsx` — redirect teachers to `/dashboard` when authenticated, so they never see the homepage with the compact nav
-2. **Smoke test all three apps** as Amadeo B end-to-end (pupil login → IP lesson → PWP daily practice)
-3. **Next feature work** — TBD
+1. **Fix Bug #1 (CRITICAL)** — Set `ANTHROPIC_API_KEY` secret on Platform Supabase: `supabase secrets set ANTHROPIC_API_KEY=<key> --project-ref gzmgjkbtsvezfclmreru`. All PWP formula assessments currently return mock score of 70.
+2. **Fix Bug #2 (HIGH)** — IP login label "YOUR FIRST NAME" → "YOUR USERNAME" in IP app login component. Causes pupil login failures. File: `InteractivePracticeApp/src/pages/AuthPage.tsx` (or equivalent login component).
+3. **Fix Bug #5 (HIGH)** — Progress Report page "Could not load report data." — check `/api/report/[id]/route.ts` query against Platform DB schema, likely a column name mismatch.
+4. **Fix Bug #3 (MEDIUM)** — World Map sidebar XP/lessons shows 0 after lesson completion — add DB re-fetch on `WorldMapPage` mount in Zustand `gameStore`.
+5. **Build Route D** — independent teacher sign-up on sub-apps
+6. **Wire learning_events** — IP and wrifeapp INSERT events on lesson/formula completion
 
 ## Key Decisions
 - **Separate login pages:** Teacher = professional split-screen; Pupil = game entry screen. Unified page rejected as unsuitable for primary-age users.
@@ -52,12 +55,31 @@ Chromatic Momentum redesign (Phases 1–6) is fully merged to `main` and live on
 - **Pupil:** Amadeo B · Silver Birch Y4 · SIL42495 / amab04 / 9543 (47 tasks, PWP L15)
 - **Teacher:** mankrah@kafed.org.uk / niiotin99
 
+## Open Questions / Future Architecture
+
+### B2C Individual Plan (parent/teacher buys for one child)
+The current architecture is school/class-centric — pupils MUST belong to a class to log in (the `pupil-login` Edge Function joins on `class_members`). This means the individual plan model is not yet supported. What needs building:
+
+- **Parent → child provisioning:** When a parent completes Stripe checkout, a webhook should create a "home class" (or class-free pupil record) and return credentials to the parent
+- **Class-free login path:** Either remove the class code requirement for home-use pupils, or auto-assign them to a virtual home class on signup
+- **Parent dashboard:** A view where the parent logs in and can see their child's progress (the parent auth form exists in wrifeapp but the backend is not wired up)
+- **Stripe webhook integration:** The parent sign-up flow in wrifeapp already collects child name/year group and redirects to `/pricing` — the missing piece is the Stripe webhook that fires after payment and provisions the account
+
+**Decision needed:** Should home-use pupils log in with class code + username + PIN (same as school pupils, with a generated class code), or should there be a separate parent-launches-child-session model where the parent authenticates and hands off to the child?
+
 ---
 
 ## Session Log
 
 | # | Date | Summary |
 |---|------|---------|
+| 27 | 2026-05-07 | Auto-submit E2E verified: fixed 2 recursive RLS policies (school_admins + pupils) that caused autoSubmitAssignment to silently fail; Assignments tab now shows 1/25 submitted after pupil completes lesson |
+| 26 | 2026-05-07 | Full cross-app E2E test completed: teacher assigns PWP+IP, pupil completes via SSO, teacher sees progress — core flow confirmed working; 4 bugs documented in docs/e2e-test-2026-05-07.md |
+| 25 | 2026-05-07 | Route C live on both apps: /home-signup on wrifeapp + IP app (cross-origin handoff via ?nc= param); PLATFORM_STATUS.md created and mirrored in all 3 repos |
+| 24 | 2026-05-07 | Direct sign-up framework: home_accounts, learning_events, pupil_parent_links tables live on Platform DB; classes+pupils extended; wrife-brand-ecosystem plugin installed globally |
+| 23 | 2026-05-04 | Fixed direct pupil login on pwp-studio: replaced PIN-only form with 3-field (class code + username + PIN) calling pupil-login Edge Function; deployed |
+| 22 | 2026-05-04 | Formula Practice fixed: created formula_progress table, renamed 30 queries across 17 files, seeded existing pupils, added formula_levels RLS read policy — verified working |
+| 21 | 2026-05-04 | Homepage redirect added; all 6 teacher dashboard tabs audited; Progress Report 500 fixed (PWP schema mismatch); duplicate PWP assignment cleaned up |
 | 20 | 2026-05-04 | Phase 6 IP + PWP redesign deployed; wrife.co.uk feat/redesign merged to main; hero sizing restored to prototype spec; demo section fixed to 4 cards |
 | 19 | 2026-05-04 | Phase 5 pupil dashboard: slim purple nav, XP bar, 4 stat cards, 6-app grid, Today's Tasks section; verified on Vercel preview as Amadeo B |
 | 18 | 2026-05-04 | Phase 4 teacher dashboard: DashboardShell (purple sidebar + white top bar), overview with stat cards and class cards committed and verified |
