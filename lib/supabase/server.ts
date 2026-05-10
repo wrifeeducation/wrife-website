@@ -7,12 +7,14 @@ import { cookies, headers } from 'next/headers'
  * subdomain). On Vercel preview URLs we leave domain unset — a cookie scoped
  * to the wrong domain is immediately unreadable and causes an infinite redirect.
  */
-function cookieDomain(): string | undefined {
+async function cookieDomain(): Promise<string | undefined> {
   if (process.env.NODE_ENV !== 'production') return undefined
   const configured = process.env.NEXT_PUBLIC_SITE_DOMAIN
   if (configured) return `.${configured}`
   try {
-    const host = headers().get('host') ?? ''
+    // In Next.js 15, headers() is async
+    const headersList = await headers()
+    const host = headersList.get('host') ?? ''
     if (host === 'wrife.co.uk' || host.endsWith('.wrife.co.uk')) return '.wrife.co.uk'
   } catch {
     // headers() not available in some build contexts
@@ -22,7 +24,7 @@ function cookieDomain(): string | undefined {
 
 export async function createClient() {
   const cookieStore = await cookies()
-  const domain = cookieDomain()
+  const domain = await cookieDomain()
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
