@@ -1,10 +1,25 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+/**
+ * Returns '.wrife.co.uk' when the request comes from the production domain so
+ * the refreshed session cookie is shared across all WriFe subdomains.
+ */
+function cookieDomain(request: NextRequest): string | undefined {
+  if (process.env.NODE_ENV !== 'production') return undefined
+  const configured = process.env.NEXT_PUBLIC_SITE_DOMAIN
+  if (configured) return `.${configured}`
+  const host = request.headers.get('host') ?? ''
+  if (host === 'wrife.co.uk' || host.endsWith('.wrife.co.uk')) return '.wrife.co.uk'
+  return undefined
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
+
+  const domain = cookieDomain(request)
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +28,7 @@ export async function updateSession(request: NextRequest) {
       cookieOptions: {
         sameSite: 'none',
         secure: true,
+        ...(domain ? { domain } : {}),
       },
       cookies: {
         getAll() {
@@ -24,7 +40,12 @@ export async function updateSession(request: NextRequest) {
             request,
           })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, { ...options, sameSite: 'none', secure: true })
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              sameSite: 'none',
+              secure: true,
+              ...(domain ? { domain } : {}),
+            })
           )
         },
       },

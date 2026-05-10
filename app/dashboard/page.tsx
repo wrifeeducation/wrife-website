@@ -217,6 +217,62 @@ function OverviewTab({
         ))}
       </div>
 
+      {/* WriFe Apps */}
+      <div>
+        <h2 className="text-base font-bold mb-3" style={{ color: "var(--wrife-text-muted)" }}>
+          WriFe Apps
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Interactive Practice */}
+          <a
+            href="https://practice.wrife.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-2xl p-4 border transition hover:shadow-md"
+            style={{ backgroundColor: "var(--wrife-electric-soft)", borderColor: "var(--wrife-electric)" }}
+          >
+            <span className="text-2xl">🎮</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm leading-tight" style={{ color: "var(--wrife-text-main)" }}>Interactive Practice</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>Gamified lesson activities</p>
+            </div>
+            <span className="text-xs font-semibold shrink-0" style={{ color: "var(--wrife-electric)" }}>Open →</span>
+          </a>
+
+          {/* Resources */}
+          <a
+            href="https://resources.wrife.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-2xl p-4 border transition hover:shadow-md"
+            style={{ backgroundColor: "var(--wrife-green-soft)", borderColor: "var(--wrife-green)" }}
+          >
+            <span className="text-2xl">🤖</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm leading-tight" style={{ color: "var(--wrife-text-main)" }}>AI Writing Tools</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>9 tools · real-time feedback</p>
+            </div>
+            <span className="text-xs font-semibold shrink-0" style={{ color: "var(--wrife-green)" }}>Open →</span>
+          </a>
+
+          {/* PWP Studio */}
+          <a
+            href="https://pwp.studio.wrife.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-2xl p-4 border transition hover:shadow-md"
+            style={{ backgroundColor: "var(--wrife-teal-soft)", borderColor: "var(--wrife-teal)" }}
+          >
+            <span className="text-2xl">📝</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm leading-tight" style={{ color: "var(--wrife-text-main)" }}>PWP Studio</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>Formula writing practice</p>
+            </div>
+            <span className="text-xs font-semibold shrink-0" style={{ color: "var(--wrife-teal)" }}>Open →</span>
+          </a>
+        </div>
+      </div>
+
       {/* My Classes */}
       <div>
         <div className="flex items-center justify-between mb-4">
