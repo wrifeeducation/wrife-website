@@ -42,62 +42,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const client = createClient();
     setSupabaseClient(client);
     let isMounted = true;
-    
-    // Wrap getSession in a 6-second timeout so a paused/slow Supabase project
-    // doesn't block the entire page indefinitely with "Failed to fetch" retries.
-    const sessionTimeout = setTimeout(() => {
-      if (isMounted) {
-        console.warn('[AuthContext] getSession timed out — Supabase may be unreachable. Proceeding as logged out.');
-        setUser(null);
-        setLoading(false);
-      }
-    }, 6000);
 
-    client.auth.getSession().then(({ data: { session }, error }: any) => {
-      clearTimeout(sessionTimeout);
-      if (!isMounted) return;
-
-      if (error) {
-        // Network-level failure (e.g. Supabase paused, no connectivity)
-        if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
-          console.warn('[AuthContext] Supabase unreachable — proceeding as logged out.');
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-        if (error.code === 'refresh_token_not_found' || error.message?.includes('Refresh Token')) {
-          console.log('[AuthContext] Invalid refresh token, clearing session...');
-          client.auth.signOut();
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-      }
-      console.log('[AuthContext] getSession result:', session ? `User: ${session.user.id}` : 'No session');
-      if (session?.user) {
-        fetchUserProfile(session.user.id, session.user.email);
-      } else {
-        setLoading(false);
-      }
-    }).catch((err: any) => {
-      if (!isMounted) return;
-      console.error('[AuthContext] getSession exception:', err);
-      setLoading(false);
-    });
-
+    // Use onAuthStateChange as the SOLE source of session truth.
+    // Calling getSession() separately causes a double fetchUserProfile race:
+    // both resolve near-simultaneously; if the first fails, loading briefly
+    // becomes false with user=null, triggering erroneous redirects.
+    // onAuthStateChange fires synchronously with INITIAL_SESSION on subscription,
+    // which is the correct Supabase v2 pattern.
     const { data: { subscription } } = client.auth.onAuthStateChange(async (_event: any, session: any) => {
       if (!isMounted) return;
       console.log('[AuthContext] onAuthStateChange:', _event, session ? `User: ${session.user.id}` : 'No session');
-      
+
       if (_event === 'SIGNED_OUT') {
         setUser(null);
         setLoading(false);
         return;
       }
-      
+
       if (session?.user) {
-        fetchUserProfile(session.user.id, session.user.email);
-      } else if (_event !== 'INITIAL_SESSION') {
+        await fetchUserProfile(session.user.id, session.user.email);
+      } else {
+        // INITIAL_SESSION with no session, or any other no-session event
         setUser(null);
         setLoading(false);
       }
@@ -143,12 +108,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         console.log('[AuthContext] User set successfully:', data.profile.role);
       } else {
+        // No profile in DB — treat as logged out so pages don't hang in limbo
         console.log('[AuthContext] No profile found for user:', userId);
+        setUser(null);
       }
     } catch (error) {
       console.error('[AuthContext] Error fetching profile:', error);
+      setUser(null);
     }
-    
+
     setLoading(false);
     console.log('[AuthContext] Loading set to false');
   }
