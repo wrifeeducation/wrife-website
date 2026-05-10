@@ -34,12 +34,15 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    if (!authLoading && user) {
+    // Skip auto-redirect while form submission is in progress — the handleSubmit
+    // will navigate once the profile is confirmed, preventing stale-session races
+    // (e.g., old admin session firing while teacher tries to sign in).
+    if (!authLoading && user && !loading) {
       const target = getRedirectUrl();
       console.log('Login page: User authenticated, redirecting to:', target);
       window.location.href = target;
     }
-  }, [user, authLoading, redirectTo, planParam, billingParam, getDashboardPath]);
+  }, [user, authLoading, loading, redirectTo, planParam, billingParam, getDashboardPath]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

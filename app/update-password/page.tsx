@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import BookLogo from '@/components/mascots/BookLogo';
 import Link from 'next/link';
 
-export default function UpdatePasswordPage() {
+function UpdatePasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,73 +14,81 @@ export default function UpdatePasswordPage() {
   const [error, setError] = useState('');
   const [sessionChecked, setSessionChecked] = useState(false);
   const [hasValidSession, setHasValidSession] = useState(false);
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const handlePasswordRecovery = async () => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log('[UpdatePassword] Auth event:', event);
-        
-        if (event === 'PASSWORD_RECOVERY') {
-          console.log('[UpdatePassword] PASSWORD_RECOVERY event received');
-          setIsRecoveryMode(true);
-          setHasValidSession(true);
-          setSessionChecked(true);
-        } else if (event === 'SIGNED_IN' && session) {
-          console.log('[UpdatePassword] SIGNED_IN event with session');
-          setHasValidSession(true);
+    // Subscribe to auth events — must be set up before any async work so we
+    // don't miss PASSWORD_RECOVERY / SIGNED_IN events fired by verifyOtp below.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[UpdatePassword] Auth event:', event);
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setHasValidSession(true);
+        setSessionChecked(true);
+      }
+    });
+
+    async function establishSession() {
+      // ── Path A: token_hash in query params (PKCE flow from auth/confirm) ──
+      // auth/confirm now passes the token_hash here so we can call verifyOtp
+      // directly on this page where the PASSWORD_RECOVERY listener is active.
+      const tokenHash = searchParams?.get('token_hash');
+      const typeParam = searchParams?.get('type') ?? 'recovery';
+
+      if (tokenHash) {
+        console.log('[UpdatePassword] token_hash found, calling verifyOtp...');
+        const { error: otpError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: typeParam as 'recovery',
+        });
+        if (otpError) {
+          console.error('[UpdatePassword] verifyOtp error:', otpError.message);
+          setError('Invalid or expired reset link. Please request a new one.');
           setSessionChecked(true);
         }
-      });
+        // On success, onAuthStateChange fires PASSWORD_RECOVERY → sets state.
+        // Clean the token_hash from the URL so a refresh doesn't re-attempt it.
+        window.history.replaceState(null, '', window.location.pathname);
+        return;
+      }
 
+      // ── Path B: legacy hash-based tokens (implicit flow) ──
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
-      const type = hashParams.get('type');
+      const hashType = hashParams.get('type');
 
-      console.log('[UpdatePassword] Hash params - type:', type, 'hasAccessToken:', !!accessToken);
-
-      if (type === 'recovery' && accessToken && refreshToken) {
-        console.log('[UpdatePassword] Recovery tokens found in URL, setting session...');
-        
+      if (hashType === 'recovery' && accessToken && refreshToken) {
+        console.log('[UpdatePassword] Hash recovery tokens found, setting session...');
         const { data, error: sessionError } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-
-        if (sessionError) {
+        if (sessionError || !data.session) {
           console.error('[UpdatePassword] Error setting session:', sessionError);
           setError('Invalid or expired reset link. Please request a new one.');
           setSessionChecked(true);
-          return;
         }
-
-        if (data.session) {
-          console.log('[UpdatePassword] Session established from recovery tokens');
-          setIsRecoveryMode(true);
-          setHasValidSession(true);
-          setSessionChecked(true);
-          
-          window.history.replaceState(null, '', window.location.pathname);
-          return;
-        }
+        // onAuthStateChange fires SIGNED_IN → sets state.
+        window.history.replaceState(null, '', window.location.pathname);
+        return;
       }
 
+      // ── Path C: session already in cookies (fallback) ──
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        console.log('[UpdatePassword] Existing session found');
+        console.log('[UpdatePassword] Existing session found via getSession');
         setHasValidSession(true);
       }
       setSessionChecked(true);
+    }
 
-      return () => {
-        subscription.unsubscribe();
-      };
+    establishSession();
+
+    return () => {
+      subscription.unsubscribe();
     };
-
-    handlePasswordRecovery();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -126,7 +134,7 @@ export default function UpdatePasswordPage() {
       <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--wrife-blue)] mx-auto"></div>
-          <p className="mt-4 text-sm text-[var(--wrife-text-muted)]">Verifying reset link...</p>
+          <p className="mt-4 text-sm text-[var(--wrife-text-muted)]">Verifying reset link…</p>
         </div>
       </div>
     );
@@ -233,5 +241,21 @@ export default function UpdatePasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Wrap in Suspense because useSearchParams() requires it in the Next.js App Router
+export default function UpdatePasswordPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--wrife-blue)] mx-auto"></div>
+          <p className="mt-4 text-sm text-[var(--wrife-text-muted)]">Loading…</p>
+        </div>
+      </div>
+    }>
+      <UpdatePasswordPage />
+    </Suspense>
   );
 }

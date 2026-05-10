@@ -134,7 +134,18 @@ export default function AdminDashboard() {
     }
   }
 
-  if (authLoading || loading) {
+  // During auth check, render nothing — avoids flashing the admin UI for non-admin users
+  if (authLoading) {
+    return null;
+  }
+
+  // If auth resolved and user is not an admin, render nothing — the useEffect handles redirect
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
+
+  // We know the user is admin — safe to show the data-loading skeleton
+  if (loading) {
     return (
       <>
         <Navbar />

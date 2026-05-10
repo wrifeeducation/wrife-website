@@ -69,6 +69,21 @@ function AuthConfirmInner() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
 
+      // For password recovery, hand the token_hash directly to /update-password
+      // so the session can be established there (where the PASSWORD_RECOVERY
+      // listener is active). Calling verifyOtp here and then navigating away
+      // causes a race: the session is in cookies but the global Supabase
+      // singleton on the next page has a stale null-session cache and may miss
+      // the event.
+      if (typeParam === 'recovery') {
+        setStatus('success');
+        setTimeout(
+          () => router.replace(`/update-password?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`),
+          1800
+        );
+        return;
+      }
+
       const { error } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
         type: typeParam as any,
@@ -90,7 +105,7 @@ function AuthConfirmInner() {
       // Determine where to redirect after a short delay
       let destination = '/dashboard';
 
-      if (typeParam === 'recovery' || typeParam === 'invite') {
+      if (typeParam === 'invite') {
         destination = '/update-password';
       } else if (next) {
         // Validate the `next` param is a relative path (no open redirects)
