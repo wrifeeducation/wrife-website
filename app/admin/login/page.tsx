@@ -10,18 +10,15 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user, signIn, signOut } = useAuth();
+  const { user, signIn } = useAuth();
 
+  // Only redirect confirmed admins. Non-admin signout is handled in handleSubmit
+  // — calling signOut() here too causes double auth requests and hits rate limits.
   useEffect(() => {
-    if (user) {
-      if (user.role === 'admin') {
-        window.location.href = '/admin';
-      } else {
-        setError('Access denied. Administrator credentials required.');
-        signOut();
-      }
+    if (user?.role === 'admin') {
+      window.location.href = '/admin';
     }
-  }, [user, signOut]);
+  }, [user]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
