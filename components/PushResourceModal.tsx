@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 /* ── Types ─────────────────────────────────────────────────── */
 
@@ -181,7 +182,7 @@ export function PushResourceModal({
               ) : classes.length === 0 ? (
                 <p className="text-sm text-[var(--wrife-text-muted)]">
                   No classes found.{' '}
-                  <a href="/classes/new" className="text-[var(--wrife-blue)] underline">Create one first.</a>
+                  <Link href="/classes/new" className="text-[var(--wrife-blue)] underline">Create one first.</Link>
                 </p>
               ) : (
                 <select
