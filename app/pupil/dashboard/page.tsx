@@ -85,6 +85,19 @@ interface WritingAttempt {
   performance_band: string | null;
 }
 
+interface ResourceAssignment {
+  id: number;
+  title: string;
+  file_type: string;
+  file_url: string;
+  message: string | null;
+  due_date: string | null;
+  created_at: string;
+  lesson_number: number | null;
+  lesson_part: string | null;
+  lesson_title: string | null;
+}
+
 interface PupilStats {
   streak: { current: number; longest: number; totalLogins: number };
   badges: Array<{ badgeId: string; badgeType: string; badgeName: string; badgeIcon: string; badgeDescription: string }>;
@@ -148,6 +161,7 @@ export default function PupilDashboardPage() {
   const [pwpSubmissions, setPwpSubmissions] = useState<PWPSubmission[]>([]);
   const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
   const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
+  const [resourceAssignments, setResourceAssignments] = useState<ResourceAssignment[]>([]);
   const [stats, setStats] = useState<PupilStats | null>(null);
   const [loading, setLoading] = useState(true);
   // SSO URLs — computed on mount using the Supabase session
@@ -215,6 +229,16 @@ export default function PupilDashboardPage() {
       setPwpSubmissions(data.pwpSubmissions || []);
       setDwpAssignments(data.dwpAssignments || []);
       setWritingAttempts(data.writingAttempts || []);
+
+      // Fetch teacher-pushed resources for this class (non-blocking)
+      fetch('/api/pupil/resource-assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classId }),
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setResourceAssignments(d.resourceAssignments || []); })
+        .catch(() => {});
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -839,6 +863,78 @@ export default function PupilDashboardPage() {
                 );
               })}
 
+            </div>
+          </div>
+        )}
+
+        {/* ── Resources from your teacher ──────────────────── */}
+        {resourceAssignments.length > 0 && (
+          <div>
+            <h2
+              className="text-xl font-extrabold mb-3"
+              style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+            >
+              Resources from Your Teacher
+            </h2>
+            <div className="space-y-3">
+              {resourceAssignments.map(r => {
+                const isOverdue = r.due_date && new Date(r.due_date) < new Date();
+                const lessonLabel = r.lesson_number != null
+                  ? `L${r.lesson_number}${r.lesson_part ?? ''}`
+                  : null;
+                const fileIcon =
+                  r.file_type.includes('worksheet') ? '📋'
+                  : r.file_type === 'resource' ? '📄'
+                  : '📎';
+
+                return (
+                  <a
+                    key={r.id}
+                    href={r.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <div
+                      className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
+                      style={{
+                        backgroundColor: "var(--wrife-surface)",
+                        border: "1.5px solid var(--wrife-border)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
+                          style={{ backgroundColor: "var(--wrife-green-soft,#e8f5e9)" }}
+                        >
+                          {fileIcon}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-sm truncate" style={{ color: "var(--wrife-text-main)" }}>
+                            {r.title}
+                          </p>
+                          {r.message && (
+                            <p className="text-xs truncate italic" style={{ color: "var(--wrife-text-muted)" }}>
+                              &ldquo;{r.message}&rdquo;
+                            </p>
+                          )}
+                          <p className="text-xs mt-0.5" style={{ color: isOverdue ? "var(--wrife-danger)" : "var(--wrife-text-muted)" }}>
+                            {lessonLabel && `${lessonLabel} · `}
+                            {r.due_date
+                              ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(r.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+                              : 'No due date'}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition"
+                        style={{ backgroundColor: "var(--wrife-green-soft,#e8f5e9)", color: "var(--wrife-green,#27ae60)" }}
+                      >
+                        Open →
+                      </span>
+                    </div>
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}
