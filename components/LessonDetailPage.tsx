@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { AssignLessonModal } from './AssignLessonModal';
 import { PresentationPlayer } from './PresentationPlayer';
+import { PushResourceModal } from './PushResourceModal';
 import { useAuth } from '@/lib/auth-context';
 import { isHtmlFile, getProxiedHtmlUrl } from '@/lib/fileUrlHelper';
 import { getEntitlements, isFileTypeAllowed, getUpgradeMessage, TIER_DISPLAY_NAMES, type MembershipTier } from '@/lib/entitlements';
@@ -55,6 +56,11 @@ const STANDARD_FILE_TYPES = new Set([
   'progress_tracker', 'assessment',
 ]);
 
+// File types a teacher can push directly to pupils' dashboards
+const PUSHABLE_FILE_TYPES = new Set([
+  'worksheet', 'worksheet_core', 'worksheet_support', 'worksheet_challenge', 'resource',
+]);
+
 export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [activeTab, setActiveTab] = useState(fileTypeOrder[0]);
   const [htmlContent, setHtmlContent] = useState<Record<number, string>>({});
@@ -62,7 +68,10 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showPresenter, setShowPresenter] = useState(false);
   const [presenterFile, setPresenterFile] = useState<{ file_url: string; file_name: string } | null>(null);
+  const [pushFile, setPushFile] = useState<LessonFile | null>(null);
+
   const { user } = useAuth();
+  const isTeacherOrAdmin = user && ['teacher', 'school_admin', 'admin'].includes(user.role);
 
   const entitlements = useMemo(() => {
     return getEntitlements(user?.membership_tier, user?.school_tier);
@@ -167,6 +176,16 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
         lessonId={lesson.id}
         lessonTitle={lesson.title}
       />
+
+      {pushFile && (
+        <PushResourceModal
+          isOpen={!!pushFile}
+          onClose={() => setPushFile(null)}
+          file={pushFile}
+          lessonId={lesson.id}
+          lessonTitle={lesson.title}
+        />
+      )}
 
       <div className="bg-white border-b border-[var(--wrife-border)] overflow-x-auto">
         <div className="mx-auto max-w-6xl px-4">
@@ -314,6 +333,15 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
                             >
                               Download
                             </a>
+                            {isTeacherOrAdmin && PUSHABLE_FILE_TYPES.has(file.file_type) && (
+                              <button
+                                onClick={() => setPushFile(file)}
+                                title="Push this resource to a class — pupils will see it on their dashboard"
+                                className="rounded-full border border-[var(--wrife-green)] px-4 py-2 text-xs font-semibold text-[var(--wrife-green)] hover:bg-[var(--wrife-green-soft)] transition"
+                              >
+                                📤 Push
+                              </button>
+                            )}
                           </>
                         )}
                       </div>

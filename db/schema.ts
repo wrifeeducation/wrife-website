@@ -423,3 +423,18 @@ export const pupilActivityLog = pgTable('pupil_activity_log', {
   ipAddress: varchar('ip_address'),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
 });
+
+export const resourceAssignments = pgTable('resource_assignments', {
+  id: serial('id').primaryKey(),
+  lessonFileId: integer('lesson_file_id').notNull(),
+  lessonId: integer('lesson_id').notNull(),
+  classId: integer('class_id').notNull(),
+  teacherId: uuid('teacher_id').notNull(),
+  title: varchar('title').notNull(),
+  fileType: varchar('file_type').notNull(),
+  fileUrl: text('file_url').notNull(),
+  message: text('message'),
+  dueDate: date('due_date'),
+  status: varchar('status').notNull().default('active'),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`),
+});

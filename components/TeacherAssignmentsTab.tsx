@@ -48,6 +48,21 @@ interface DWPAssignment {
   } | null;
 }
 
+interface ResourceAssignment {
+  id: number;
+  lesson_file_id: number;
+  lesson_id: number;
+  title: string;
+  file_type: string;
+  file_url: string;
+  message: string | null;
+  due_date: string | null;
+  created_at: string;
+  lesson_number: number | null;
+  lesson_part: string | null;
+  lesson_title: string | null;
+}
+
 interface Props {
   classId: string;
   className: string;
@@ -73,9 +88,11 @@ function DueBadge({ dueDate }: { dueDate: string | null }) {
 export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) {
   const { user } = useAuth();
 
-  const [ipAssignments, setIpAssignments] = useState<IPAssignment[]>([]);
-  const [pwpAssignments, setPwpAssignments] = useState<PWPAssignment[]>([]);
-  const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
+  const [ipAssignments, setIpAssignments]         = useState<IPAssignment[]>([]);
+  const [pwpAssignments, setPwpAssignments]       = useState<PWPAssignment[]>([]);
+  const [dwpAssignments, setDwpAssignments]       = useState<DWPAssignment[]>([]);
+  const [resourceAssignments, setResourceAssignments] = useState<ResourceAssignment[]>([]);
+  const [archivingResourceId, setArchivingResourceId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [showPWPModal, setShowPWPModal] = useState(false);
@@ -92,8 +109,36 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
 
   async function fetchAll() {
     setLoading(true);
-    await Promise.all([fetchIP(), fetchPWP(), fetchDWP()]);
+    await Promise.all([fetchIP(), fetchPWP(), fetchDWP(), fetchResources()]);
     setLoading(false);
+  }
+
+  async function fetchResources() {
+    try {
+      const res = await fetch(`/api/teacher/resource-assignments?classId=${classId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setResourceAssignments(data.resourceAssignments || []);
+    } catch (err) {
+      console.error('Error fetching resource assignments:', err);
+    }
+  }
+
+  async function archiveResource(id: number) {
+    if (!confirm('Remove this resource from pupils\' dashboards?')) return;
+    setArchivingResourceId(id);
+    try {
+      const res = await fetch(`/api/teacher/resource-assignments?id=${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'archived' }),
+      });
+      if (res.ok) setResourceAssignments(prev => prev.filter(r => r.id !== id));
+    } catch (err) {
+      console.error('Error archiving resource assignment:', err);
+    } finally {
+      setArchivingResourceId(null);
+    }
   }
 
   async function fetchIP() {
@@ -177,7 +222,7 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
     }
   }
 
-  const totalActive = ipAssignments.length + pwpAssignments.length + dwpAssignments.length;
+  const totalActive = ipAssignments.length + pwpAssignments.length + dwpAssignments.length + resourceAssignments.length;
 
   if (loading) {
     return (
@@ -203,7 +248,7 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white rounded-2xl border border-[var(--wrife-border)] p-4 text-center">
             <p className="text-2xl font-bold text-[var(--wrife-blue)]">{ipAssignments.length}</p>
             <p className="text-xs text-[var(--wrife-text-muted)] mt-1">🎮 Interactive Practice</p>
@@ -215,6 +260,10 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
           <div className="bg-white rounded-2xl border border-[var(--wrife-border)] p-4 text-center">
             <p className="text-2xl font-bold text-[var(--wrife-blue)]">{dwpAssignments.length}</p>
             <p className="text-xs text-[var(--wrife-text-muted)] mt-1">✍️ Daily Writing</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-[var(--wrife-border)] p-4 text-center">
+            <p className="text-2xl font-bold text-[var(--wrife-blue)]">{resourceAssignments.length}</p>
+            <p className="text-xs text-[var(--wrife-text-muted)] mt-1">📤 Pushed Resources</p>
           </div>
         </div>
       )}
@@ -391,6 +440,97 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
                       <DWPCompletionGrid assignmentId={a.id} />
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Pushed Resources ────────────────────────────── */}
+      <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">📤 Pushed Resources</h2>
+            <p className="text-sm text-[var(--wrife-text-muted)]">
+              Worksheets and resources visible on pupils&apos; dashboards
+            </p>
+          </div>
+          <a
+            href="/lessons"
+            className="text-xs font-semibold text-[var(--wrife-blue)] hover:underline shrink-0"
+          >
+            Browse lessons →
+          </a>
+        </div>
+
+        {resourceAssignments.length === 0 ? (
+          <div className="py-6 text-center">
+            <p className="text-sm text-[var(--wrife-text-muted)]">No resources pushed yet</p>
+            <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
+              Open any lesson, go to Worksheets or Resources, and click <strong>📤 Push</strong> to share with this class.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {resourceAssignments.map(r => {
+              const lessonLabel = r.lesson_number != null
+                ? `L${r.lesson_number}${r.lesson_part ?? ''}`
+                : null;
+              const isOverdue = r.due_date && new Date(r.due_date) < new Date();
+
+              return (
+                <div
+                  key={r.id}
+                  className="flex items-start justify-between gap-3 p-4 rounded-xl border border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)] transition"
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="h-9 w-9 rounded-xl bg-[var(--wrife-green-soft)] flex items-center justify-center text-base shrink-0">
+                      📄
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[var(--wrife-text-main)] truncate">
+                        {r.title}
+                      </p>
+                      {lessonLabel && (
+                        <p className="text-xs text-[var(--wrife-text-muted)] truncate">
+                          {lessonLabel}{r.lesson_title ? ` · ${r.lesson_title}` : ''}
+                        </p>
+                      )}
+                      {r.message && (
+                        <p className="text-xs text-[var(--wrife-text-muted)] mt-0.5 italic truncate">
+                          &ldquo;{r.message}&rdquo;
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-1">
+                        {r.due_date ? (
+                          <span className={`text-xs font-semibold ${isOverdue ? 'text-red-500' : 'text-[var(--wrife-text-muted)]'}`}>
+                            {isOverdue ? 'Overdue: ' : 'Due: '}
+                            {new Date(r.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[var(--wrife-text-muted)]">No due date</span>
+                        )}
+                        <a
+                          href={r.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold text-[var(--wrife-blue)] hover:underline"
+                        >
+                          View file ↗
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => archiveResource(r.id)}
+                    disabled={archivingResourceId === r.id}
+                    title="Remove from pupils' dashboards"
+                    className="text-red-400 hover:text-red-600 text-xs font-semibold transition disabled:opacity-50 shrink-0 mt-1"
+                  >
+                    {archivingResourceId === r.id ? '…' : '✕'}
+                  </button>
                 </div>
               );
             })}
