@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
          (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id AND s.status = 'reviewed') AS reviewed_count,
          COALESCE(
            (SELECT json_agg(json_build_object(
+              'id', s.id,
               'pupil_name', CONCAT(p.first_name, ' ', COALESCE(p.last_name, '')),
               'submitted_at', s.submitted_at
             ))
