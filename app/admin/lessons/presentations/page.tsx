@@ -77,7 +77,7 @@ export default function AdminPresentationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeader]);
+  }, []);
 
   useEffect(() => { loadLessons(); }, [loadLessons]);
 

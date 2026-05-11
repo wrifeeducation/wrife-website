@@ -472,12 +472,12 @@ function AdminUsersPageInner() {
               >
                 <span className="text-lg leading-none">+</span> Create User Account
               </button>
-              <a
+              <Link
                 href="/admin/schools"
                 className="rounded-full border border-green-500 px-5 py-2.5 text-sm font-semibold text-green-700 hover:bg-green-50 transition flex items-center gap-2"
               >
                 🧑‍🎓 Manage Pupils (via Schools)
-              </a>
+              </Link>
             </div>
             <p className="text-xs text-[var(--wrife-text-muted)] mt-2">
               Pupils are created per-class inside each school. Use &ldquo;Manage Pupils&rdquo; → select a school → add pupils there.
