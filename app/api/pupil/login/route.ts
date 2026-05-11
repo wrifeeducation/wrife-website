@@ -19,11 +19,22 @@ function generateSessionToken(): string {
  */
 async function generatePupilSupabaseSession(
   pupilId: string,
-  authUserId: string | null
+  authUserId: string | null,
+  firstName: string | null,
+  displayName: string | null,
 ): Promise<{ access_token: string; refresh_token: string; expires_at: number } | null> {
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const syntheticEmail = `pupil-${pupilId}@practice.wrife.co.uk`;
+    // Include first_name in user_metadata so sub-apps can read it from the JWT
+    // without a separate DB query. Safe to call on every login — updateUserById
+    // is idempotent and keeps the metadata current if the name ever changes.
+    const userMeta = {
+      role: 'pupil',
+      pupil_id: pupilId,
+      first_name: firstName ?? '',
+      display_name: displayName ?? firstName ?? '',
+    };
 
     // Ensure auth user exists (provision on first login)
     if (!authUserId) {
@@ -31,7 +42,7 @@ async function generatePupilSupabaseSession(
         id: pupilId,
         email: syntheticEmail,
         email_confirm: true,
-        user_metadata: { role: 'pupil', pupil_id: pupilId },
+        user_metadata: userMeta,
       });
 
       if (createErr) {
@@ -50,6 +61,13 @@ async function generatePupilSupabaseSession(
           .catch(() => {});
       }
     }
+
+    // Always refresh user_metadata so first_name is current in the JWT.
+    // This is a no-op cost on repeat logins and fixes existing provisioned users
+    // who were created before first_name was added to user_metadata.
+    supabaseAdmin.auth.admin
+      .updateUserById(pupilId, { user_metadata: userMeta })
+      .catch((e: Error) => console.error('user_metadata update failed:', e.message));
 
     // Generate a magic-link OTP (no email sent)
     const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
@@ -162,7 +180,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate Supabase session tokens (non-fatal — login still succeeds without them)
-    const supabaseTokens = await generatePupilSupabaseSession(pupil.id, pupil.auth_user_id);
+    const supabaseTokens = await generatePupilSupabaseSession(
+      pupil.id, pupil.auth_user_id, pupil.first_name ?? null, pupil.display_name ?? null
+    );
 
     // Create legacy session cookie (kept for backward compat during migration)
     const token = generateSessionToken();
