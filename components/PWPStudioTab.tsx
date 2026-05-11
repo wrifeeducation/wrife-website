@@ -14,6 +14,8 @@ interface StudioRow {
   sessions_last_30d: number;
   writing_pieces: number;
   last_active: string | null;
+  // S6-3: true when last 3 formula scores all > 95 — teacher cue to advance the level
+  ready_to_advance: boolean;
 }
 
 interface PWPAssignment {
@@ -286,11 +288,22 @@ export function PWPStudioTab({ classId, className = 'this class', yearGroup = 5 
                           {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
                         </div>
                         <div>
-                          <span className="font-medium text-[var(--wrife-text-main)]">
-                            {pupil.first_name} {pupil.last_name || ''}
-                          </span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-[var(--wrife-text-main)]">
+                              {pupil.first_name} {pupil.last_name || ''}
+                            </span>
+                            {/* S6-3: Ready to Advance badge — last 3 scores all > 95 */}
+                            {pupil.ready_to_advance && (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700"
+                                title="This pupil has scored above 95% in their last 3 sessions — consider advancing their level"
+                              >
+                                ✅ Ready to advance
+                              </span>
+                            )}
+                          </div>
                           {!pupil.has_studio_account && (
-                            <span className="ml-2 text-xs text-[var(--wrife-text-muted)]" title="Pupil has not linked a PWP Studio account">
+                            <span className="text-xs text-[var(--wrife-text-muted)]" title="Pupil has not linked a PWP Studio account">
                               (not linked)
                             </span>
                           )}

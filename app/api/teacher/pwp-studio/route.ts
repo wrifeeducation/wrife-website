@@ -88,6 +88,7 @@ export async function GET(request: NextRequest) {
     const pool = getPool();
 
     // Bridge: class_members → pupils (id) → pupils.auth_user_id → formula_sessions/writing_pieces (pupil_id = profiles.id)
+    // S6-3: also join formula_progress to surface ready_to_advance for teacher view
     const result = await pool.query(
       `SELECT
          p.id,
@@ -99,14 +100,16 @@ export async function GET(request: NextRequest) {
            WHERE fs.created_at > NOW() - INTERVAL '30 days'
          )::int AS sessions_last_30d,
          COUNT(DISTINCT wp.id)::int AS writing_pieces,
-         GREATEST(MAX(fs.created_at), MAX(wp.created_at)) AS last_active
+         GREATEST(MAX(fs.created_at), MAX(wp.created_at)) AS last_active,
+         COALESCE(fp.ready_to_advance, false) AS ready_to_advance
        FROM class_members cm
        JOIN pupils p ON cm.pupil_id = p.id
        LEFT JOIN formula_sessions fs ON fs.pupil_id = p.auth_user_id
        LEFT JOIN formula_levels fl ON fl.id = fs.level_id
        LEFT JOIN writing_pieces wp ON wp.pupil_id = p.auth_user_id
+       LEFT JOIN formula_progress fp ON fp.pupil_id = p.auth_user_id
        WHERE cm.class_id = $1
-       GROUP BY p.id, p.first_name, p.last_name, p.auth_user_id
+       GROUP BY p.id, p.first_name, p.last_name, p.auth_user_id, fp.ready_to_advance
        ORDER BY p.first_name, p.last_name`,
       [classId]
     );

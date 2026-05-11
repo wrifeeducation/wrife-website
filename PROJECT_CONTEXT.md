@@ -1,18 +1,20 @@
 # WriFe Platform
-*Last updated: 2026-05-07 · Session 27*
+*Last updated: 2026-05-09 · Session 31*
 
 ## Current state
-All redesign phases (1–6) are live. Auto-submit of IP lesson completions to the teacher's Assignments tab is now working end-to-end — verified: Amadeo completes L1 → submission row created → teacher sees "1/25 submitted". Two Platform DB RLS bugs fixed (infinite recursion in `school_admins` and `pupils` policies). Three bugs remain before live school use.
+All auth routes (A, B, C, D) are live and verified. The `learning_events` bridge is now fully wired in both sub-apps. PWP Studio dashboard is live and loading correctly after a `coins` column was added to `formula_progress` and a defensive null-guard fix was deployed to `DashboardPage.tsx`.
 
 ## Next Steps
-1. **Fix Bug #1 (CRITICAL)** — Set `ANTHROPIC_API_KEY` secret on Platform Supabase: `supabase secrets set ANTHROPIC_API_KEY=<key> --project-ref gzmgjkbtsvezfclmreru`. All PWP formula assessments currently return mock score of 70.
-2. **Fix Bug #2 (HIGH)** — IP login label "YOUR FIRST NAME" → "YOUR USERNAME" in IP app login component. Causes pupil login failures. File: `InteractivePracticeApp/src/pages/AuthPage.tsx` (or equivalent login component).
-3. **Fix Bug #5 (HIGH)** — Progress Report page "Could not load report data." — check `/api/report/[id]/route.ts` query against Platform DB schema, likely a column name mismatch.
-4. **Fix Bug #3 (MEDIUM)** — World Map sidebar XP/lessons shows 0 after lesson completion — add DB re-fetch on `WorldMapPage` mount in Zustand `gameStore`.
-5. **Build Route D** — independent teacher sign-up on sub-apps
-6. **Wire learning_events** — IP and wrifeapp INSERT events on lesson/formula completion
+1. **Retire Route B for school pupils** — Sub-app direct login forms (pwp-studio + IP `/login`) should reject school pupils and redirect to wrife.co.uk. Only home learners (Route C) and independent teacher pupils (Route D) should log in directly on sub-apps.
+2. **Clarify `pwp_pupil_progress` vs `formula_progress`** — Both tables track overlapping PWP progress data. `formula_progress` is what the PWP dashboard queries; `pwp_pupil_progress` exists but is not yet wired to the UI. Decide whether to consolidate or keep them separate.
+3. **Stripe + Route C backend** — Parent home sign-up collects child info and redirects to `/pricing`, but the Stripe webhook that provisions pupil credentials after payment is not yet built.
+4. **Route C for IP** — `practice.wrife.co.uk/home-signup` page exists but the home-learner PIN login path through the `pupil-login` Edge Function needs testing with a real home class.
+5. **Consume learning_events on wrife.co.uk** — Teacher class view should query `learning_events` to show IP lesson completions and PWP session counts alongside the existing assignment submission data.
+6. **First paying school onboarding** — Upgrade WriFe Platform Supabase to Pro (£22/month) to prevent auto-pause.
 
 ## Key Decisions
+- **Login routing rule (2026-05-09):** wrife.co.uk is the sole login point for school pupils. Sub-apps (PWP Studio, Interactive Practice) handle sign-up and login ONLY for their own direct users — home learners (Route C) and independent teachers (Route D). Route B for school pupils is being retired to eliminate session confusion and stale localStorage issues.
+- **formula_progress is the PWP dashboard's progress table:** `DashboardPage.tsx` queries `formula_progress` (not `pwp_pupil_progress`). When adding new gamification columns (e.g. `coins`), add them to `formula_progress` with a `DEFAULT` value so all existing and future pupils are covered automatically.
 - **Separate login pages:** Teacher = professional split-screen; Pupil = game entry screen. Unified page rejected as unsuitable for primary-age users.
 - **DashboardShell:** Purple sidebar (w-48) + white top bar wrapper used for teacher dashboard; lazy-loaded.
 - **Pupil dashboard nav:** Slim 52px purple nav (no full Navbar) — WriFe logo left, streak + sentences pills right, log out link.
@@ -73,6 +75,11 @@ The current architecture is school/class-centric — pupils MUST belong to a cla
 
 | # | Date | Summary |
 |---|------|---------|
+| 32 | 2026-05-09 | wrife-brand-ecosystem skill updated: Route B retired for school pupils; `formula_progress` documented as primary PWP progress table; `NOT NULL DEFAULT` rule added for gamification columns; cross-app checklist updated. |
+| 31 | 2026-05-09 | PWP dashboard crash fixed: added `coins INTEGER DEFAULT 0` to `formula_progress`; added null guards to `DashboardPage.tsx` stats fields; deployed to Vercel. Diagnosed 3x pupil-login 500 errors (transient, self-resolved). Architectural decision: wrife.co.uk is sole login for school pupils; sub-apps handle direct sign-up only. |
+| 30 | 2026-05-07 | Formula Practice 3-bug fix: (1) DefinitionUnlock voice overlap removed — gated to screen !== 'intro'; (2) TTS default changed to off; (3) ConceptCard now shows technical definition first (e.g. "A noun is...") with plain-English alias second; (4) assess-formula Edge Function v5 deployed — model changed from claude-haiku-4-5-20251001 (502) to claude-3-5-haiku-20241022 |
+| 29 | 2026-05-07 | learning_events wired in both sub-apps: IP inserts lesson_completed + world_completed; PWP inserts formula_completed, chain_session_completed, free_practice_session; new insertLearningEvent helpers in progress.ts (IP) and learningEvents.ts (PWP) |
+| 28 | 2026-05-07 | Full E2E auth test (#140) passed: Route A hub SSO (wrife.co.uk → IP + PWP with JWT hash), Route B direct login on both sub-apps, Route D teacher sign-up, teacher SSO deep-links — all verified; one minor bug (← WriFe shows unconditionally in PWP Studio) |
 | 27 | 2026-05-07 | Auto-submit E2E verified: fixed 2 recursive RLS policies (school_admins + pupils) that caused autoSubmitAssignment to silently fail; Assignments tab now shows 1/25 submitted after pupil completes lesson |
 | 26 | 2026-05-07 | Full cross-app E2E test completed: teacher assigns PWP+IP, pupil completes via SSO, teacher sees progress — core flow confirmed working; 4 bugs documented in docs/e2e-test-2026-05-07.md |
 | 25 | 2026-05-07 | Route C live on both apps: /home-signup on wrifeapp + IP app (cross-origin handoff via ?nc= param); PLATFORM_STATUS.md created and mirrored in all 3 repos |
