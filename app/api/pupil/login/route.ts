@@ -62,10 +62,10 @@ async function generatePupilSupabaseSession(
       }
     }
 
-    // Always refresh user_metadata so first_name is current in the JWT.
-    // This is a no-op cost on repeat logins and fixes existing provisioned users
-    // who were created before first_name was added to user_metadata.
-    supabaseAdmin.auth.admin
+    // Always refresh user_metadata BEFORE generating the OTP so the new JWT
+    // includes the updated first_name. Must be awaited — if fire-and-forget,
+    // generateLink races ahead and issues the JWT with stale metadata (no first_name).
+    await supabaseAdmin.auth.admin
       .updateUserById(pupilId, { user_metadata: userMeta })
       .catch((e: Error) => console.error('user_metadata update failed:', e.message));
 
