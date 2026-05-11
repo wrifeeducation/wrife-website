@@ -12,6 +12,7 @@ import { InteractivePracticeTab } from '@/components/InteractivePracticeTab';
 import { PWPStudioTab } from '@/components/PWPStudioTab';
 import { PWPChainTab } from '@/components/PWPChainTab';
 import { TeacherAssignmentsTab } from '@/components/TeacherAssignmentsTab';
+import { ClassActivityPanel } from '@/components/ClassActivityPanel';
 
 interface Class {
   id: string;
@@ -715,6 +716,9 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
                     </div>
                   );
                 })()}
+
+                {/* Sub-app activity (learning_events bridge) */}
+                <ClassActivityPanel classId={resolvedParams.id} />
 
                 {/* Pupil cards */}
                 <div className="space-y-2">
