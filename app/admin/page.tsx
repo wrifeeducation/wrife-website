@@ -227,6 +227,11 @@ export default function AdminDashboard() {
                   🔑 My Account
                 </button>
               </Link>
+              <Link href="/admin/registrations" className="contents">
+                <button className="rounded-full border border-yellow-500 bg-yellow-50 px-3 py-2 lg:px-4 lg:py-3 text-xs lg:text-sm font-semibold text-yellow-700 hover:bg-yellow-100 transition whitespace-nowrap">
+                  📬 Registrations
+                </button>
+              </Link>
               <Link href="/admin/schools/new" className="col-span-2 sm:col-span-1 contents">
                 <button className="rounded-full bg-[var(--wrife-blue)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white shadow-soft hover:opacity-90 transition whitespace-nowrap">
                   + New School

@@ -3,9 +3,9 @@ import Link from "next/link";
 
 const tiles = [
   {
-    title: "Teacher Guide",
+    title: "Teacher Dashboard",
     description:
-      "Detailed lesson plans with objectives, model texts, and teaching notes for every one of the 67 lessons.",
+      "Lesson plans, model texts, teaching notes, class progress tracking, and assignment tools — all in one place for every one of the 67 lessons.",
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -15,12 +15,14 @@ const tiles = [
     color: "var(--wrife-blue)",
     bgColor: "var(--wrife-blue-soft)",
     href: "/login",
+    cta: "Sign in →",
     mascot: "/mascots/pencil-reading.png",
+    external: false,
   },
   {
     title: "Lesson Presentations",
     description:
-      "Ready-made slides for every lesson — just click and teach. Perfect for whole-class instruction on any device.",
+      "Ready-made slides for every lesson — just click and teach. Perfect for whole-class instruction on any interactive whiteboard.",
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -30,37 +32,45 @@ const tiles = [
     color: "var(--wrife-orange)",
     bgColor: "var(--wrife-yellow-soft)",
     href: "/login",
+    cta: "Sign in →",
     mascot: null,
+    external: false,
   },
   {
-    title: "Practice Activities",
+    title: "Interactive Practice",
     description:
-      "Gamified interactive exercises keep pupils engaged — drag-and-drop, fill-in-the-blank, and writing tasks with AI feedback.",
+      "Gamified grammar games across 61 lessons — drag-and-drop, matching, and writing tasks with instant feedback. Pupils earn badges and climb worlds.",
+    icon: (
+      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    color: "var(--wrife-green)",
+    bgColor: "var(--wrife-green-soft)",
+    href: "https://practice.wrife.co.uk",
+    cta: "Try it →",
+    mascot: "/mascots/pencil-waving.png",
+    external: true,
+  },
+  {
+    title: "Writing Practice Studio",
+    description:
+      "Structured sentence-level writing practice using the WriFe formula engine, chain building, and AI-assessed writing tasks with progress tracking.",
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
           d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
       </svg>
     ),
-    color: "var(--wrife-green)",
-    bgColor: "var(--wrife-green-soft)",
-    href: "/pupil/login",
-    mascot: "/mascots/pencil-waving.png",
-  },
-  {
-    title: "Student Worksheets",
-    description:
-      "Printable and digital worksheets at three levels — core, support, and challenge — for every lesson.",
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
     color: "var(--wrife-coral)",
     bgColor: "var(--wrife-coral-soft)",
-    href: "/login",
+    href: "https://pwp-studio.wrife.co.uk",
+    cta: "Try it →",
     mascot: null,
+    external: true,
   },
 ];
 
@@ -85,6 +95,8 @@ export default function ProductTilesSection() {
             <Link
               key={tile.title}
               href={tile.href}
+              target={tile.external ? "_blank" : undefined}
+              rel={tile.external ? "noopener noreferrer" : undefined}
               className="group bg-white rounded-2xl border border-[var(--wrife-border)] shadow-card hover:shadow-soft transition-all hover:-translate-y-1 overflow-hidden flex flex-col"
             >
               {/* Coloured header */}
@@ -128,7 +140,7 @@ export default function ProductTilesSection() {
                   className="text-sm font-semibold group-hover:underline"
                   style={{ color: tile.color }}
                 >
-                  Learn more →
+                  {tile.cta}
                 </span>
               </div>
             </Link>

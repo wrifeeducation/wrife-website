@@ -82,7 +82,7 @@ function AdminUsersPageInner() {
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
 
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
-  const [createAdminForm, setCreateAdminForm] = useState({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin' });
+  const [createAdminForm, setCreateAdminForm] = useState({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin', schoolId: '' });
   const [createAdminLoading, setCreateAdminLoading] = useState(false);
   const [createAdminError, setCreateAdminError] = useState('');
   const [createAdminSuccess, setCreateAdminSuccess] = useState('');
@@ -265,30 +265,54 @@ function AdminUsersPageInner() {
     setCreateAdminError('');
     setCreateAdminSuccess('');
 
-    if (createAdminForm.password !== createAdminForm.confirmPassword) {
-      setCreateAdminError('Passwords do not match');
-      return;
+    const isTeacher = createAdminForm.role === 'teacher';
+
+    if (!isTeacher) {
+      if (createAdminForm.password !== createAdminForm.confirmPassword) {
+        setCreateAdminError('Passwords do not match');
+        return;
+      }
+      if (createAdminForm.password.length < 8) {
+        setCreateAdminError('Password must be at least 8 characters');
+        return;
+      }
     }
 
-    if (createAdminForm.password.length < 8) {
-      setCreateAdminError('Password must be at least 8 characters');
+    if (isTeacher && !createAdminForm.schoolId) {
+      setCreateAdminError('Please select a school for this teacher');
       return;
     }
 
     setCreateAdminLoading(true);
 
     try {
-      const response = await adminFetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: createAdminForm.email,
-          password: createAdminForm.password,
-          firstName: createAdminForm.firstName,
-          lastName: createAdminForm.lastName,
-          role: createAdminForm.role,
-        }),
-      });
+      let response: Response;
+
+      if (isTeacher) {
+        // Route teacher creation through invite-teacher (sends welcome email + sets up account)
+        response = await adminFetch('/api/admin/invite-teacher', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: createAdminForm.email,
+            firstName: createAdminForm.firstName,
+            lastName: createAdminForm.lastName,
+            schoolId: createAdminForm.schoolId,
+          }),
+        });
+      } else {
+        response = await adminFetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: createAdminForm.email,
+            password: createAdminForm.password,
+            firstName: createAdminForm.firstName,
+            lastName: createAdminForm.lastName,
+            role: createAdminForm.role,
+          }),
+        });
+      }
 
       const data = await response.json();
 
@@ -299,11 +323,14 @@ function AdminUsersPageInner() {
       }
 
       setCreateAdminSuccess(data.message || 'Account created successfully');
-      setCreateAdminForm({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin' });
+      setCreateAdminForm({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', role: 'admin', schoolId: '' });
 
       if (data.profile) {
         setProfiles(prev => [data.profile, ...prev]);
       }
+
+      // Refresh profiles list to show newly created user
+      fetchData();
 
       setTimeout(() => {
         setShowCreateAdmin(false);
@@ -438,16 +465,27 @@ function AdminUsersPageInner() {
           </div>
 
           <div className="mb-6">
-            <button
-              onClick={() => { setShowCreateAdmin(!showCreateAdmin); setCreateAdminError(''); setCreateAdminSuccess(''); }}
-              className="rounded-full bg-[var(--wrife-blue)] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition flex items-center gap-2"
-            >
-              <span className="text-lg leading-none">+</span> Create Admin Account
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => { setShowCreateAdmin(!showCreateAdmin); setCreateAdminError(''); setCreateAdminSuccess(''); }}
+                className="rounded-full bg-[var(--wrife-blue)] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition flex items-center gap-2"
+              >
+                <span className="text-lg leading-none">+</span> Create User Account
+              </button>
+              <a
+                href="/admin/schools"
+                className="rounded-full border border-green-500 px-5 py-2.5 text-sm font-semibold text-green-700 hover:bg-green-50 transition flex items-center gap-2"
+              >
+                🧑‍🎓 Manage Pupils (via Schools)
+              </a>
+            </div>
+            <p className="text-xs text-[var(--wrife-text-muted)] mt-2">
+              Pupils are created per-class inside each school. Use &ldquo;Manage Pupils&rdquo; → select a school → add pupils there.
+            </p>
 
             {showCreateAdmin && (
               <div className="mt-4 bg-white rounded-2xl border border-[var(--wrife-border)] p-6">
-                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Create New Admin Account</h3>
+                <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-4">Create New User Account</h3>
 
                 {createAdminSuccess && (
                   <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">
@@ -501,40 +539,65 @@ function AdminUsersPageInner() {
                     <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Role</label>
                     <select
                       value={createAdminForm.role}
-                      onChange={e => setCreateAdminForm(prev => ({ ...prev, role: e.target.value }))}
+                      onChange={e => setCreateAdminForm(prev => ({ ...prev, role: e.target.value, schoolId: '' }))}
                       className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
                     >
                       <option value="admin">Super Admin</option>
                       <option value="school_admin">School Admin</option>
+                      <option value="teacher">Teacher</option>
                     </select>
+                    {createAdminForm.role === 'teacher' && (
+                      <p className="text-xs text-[var(--wrife-text-muted)] mt-1">
+                        A welcome email with a setup link will be sent automatically — no password needed.
+                      </p>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {createAdminForm.role === 'teacher' && (
                     <div>
-                      <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Password</label>
-                      <input
-                        type="password"
-                        value={createAdminForm.password}
-                        onChange={e => setCreateAdminForm(prev => ({ ...prev, password: e.target.value }))}
+                      <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">School <span className="text-red-500">*</span></label>
+                      <select
+                        value={createAdminForm.schoolId}
+                        onChange={e => setCreateAdminForm(prev => ({ ...prev, schoolId: e.target.value }))}
                         required
-                        minLength={8}
                         className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-                        placeholder="Min 8 characters"
-                      />
+                      >
+                        <option value="">-- Select a school --</option>
+                        {schools.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Confirm password</label>
-                      <input
-                        type="password"
-                        value={createAdminForm.confirmPassword}
-                        onChange={e => setCreateAdminForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        required
-                        minLength={8}
-                        className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
-                        placeholder="Repeat password"
-                      />
+                  )}
+
+                  {createAdminForm.role !== 'teacher' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Password</label>
+                        <input
+                          type="password"
+                          value={createAdminForm.password}
+                          onChange={e => setCreateAdminForm(prev => ({ ...prev, password: e.target.value }))}
+                          required={createAdminForm.role !== 'teacher'}
+                          minLength={8}
+                          className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                          placeholder="Min 8 characters"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--wrife-text-main)] mb-1">Confirm password</label>
+                        <input
+                          type="password"
+                          value={createAdminForm.confirmPassword}
+                          onChange={e => setCreateAdminForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                          required={createAdminForm.role !== 'teacher'}
+                          minLength={8}
+                          className="w-full px-4 py-2 rounded-lg border border-[var(--wrife-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--wrife-blue)]"
+                          placeholder="Repeat password"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex gap-3 pt-2">
                     <button

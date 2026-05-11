@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { adminFetch } from '@/lib/admin-fetch';
 import { resolvePresentationUrls } from '@/lib/presentationUtils';
 
 interface Lesson {
@@ -32,24 +33,12 @@ export default function AdminPresentationsPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [filter, setFilter] = useState<'all' | 'missing' | 'present'>('all');
 
-  const getAuthHeader = useCallback(async () => {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    const { data: { session } } = await supabase.auth.getSession();
-    return session ? `Bearer ${session.access_token}` : '';
-  }, []);
-
   const loadLessons = useCallback(async () => {
     setLoading(true);
     try {
       const [lessonsRes, filesRes] = await Promise.all([
         fetch('/api/lessons'),
-        fetch('/api/admin/lesson-files', {
-          headers: { Authorization: await getAuthHeader() },
-        }),
+        adminFetch('/api/admin/lesson-files'),
       ]);
 
       const lessonsData = await lessonsRes.json();
@@ -101,9 +90,12 @@ export default function AdminPresentationsPage() {
       form.append('lessonId', String(lessonId));
       form.append('fileCategory', 'presentation');
 
+      // Use adminFetch but override Content-Type so FormData boundary is set correctly
+      const { supabase } = await import('@/lib/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch('/api/admin/lesson-files', {
         method: 'POST',
-        headers: { Authorization: await getAuthHeader() },
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
         body: form,
       });
 
@@ -124,12 +116,9 @@ export default function AdminPresentationsPage() {
     setLinking(lessonId);
     setMessage(null);
     try {
-      const res = await fetch('/api/admin/lesson-files', {
+      const res = await adminFetch('/api/admin/lesson-files', {
         method: 'PATCH',
-        headers: {
-          Authorization: await getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           lessonId,
           fileUrl: url,
