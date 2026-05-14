@@ -1,5 +1,26 @@
 # WriFe Platform
-*Last updated: 2026-05-11 · Session 34*
+*Last updated: 2026-05-14 · Session 35*
+
+---
+
+## ⚠️ CRITICAL ARCHITECTURAL RULE — READ BEFORE TOUCHING ANYTHING
+
+**PWP Studio (`pwp-studio.wrife.co.uk`) does NOT live in this repo.**
+
+This repo (`wrife-website`) is for **wrife.co.uk only** — the teacher dashboard, admin panel, and marketing site. It is a Next.js app.
+
+PWP Studio is a **separate Vite/React SPA** in the `wrifeapp` repository. It is deployed independently at `pwp-studio.wrife.co.uk`.
+
+**What this means in practice:**
+- Do NOT create `app/pwp/` routes here. They will be deleted.
+- Do NOT create `components/pwp2/` here. They will be deleted.
+- The `components/pwp/` folder that exists here contains teacher-dashboard display components only (review modals, chain tabs). It is NOT the PWP app.
+- The `app/api/pwp/` folder here contains teacher-facing API routes only. It is NOT the PWP app backend.
+- If asked to work on the PWP pupil experience, the writing steps, the world map, or the level system — **stop and ask the user to connect the `wrifeapp` folder instead.**
+
+This rule exists because a previous session built an entire `app/pwp/` implementation inside wrife-website by mistake. It wasted a full day and had to be surgically removed (git reset to `375d29d`, 2026-05-13).
+
+---
 
 ## Current state
 Five issues addressed this session: admin user creation now supports teachers (via invite-teacher flow); the Presentations tab was broken due to a fresh Supabase client being created instead of using the shared `adminFetch` helper (now fixed); the landing page product tiles updated to link to the actual sub-apps with correct CTAs; PWP progress was silently failing on `.update()` when no `formula_progress` row existed for new pupils (changed to `.upsert()`); and a full school registration flow was built (public form, admin review panel, bulk CSV teacher import).
@@ -37,9 +58,9 @@ Five issues addressed this session: admin user creation now supports teachers (v
 - `wrifeapp/src/pages/FormulaPage.tsx` — fixed progress save: `.update()` → `.upsert()` in both submit handlers
 
 ## Architecture
-- wrife.co.uk → teacher dashboard + admin (Platform DB `gzmgjkbtsvezfclmreru`)
-- practice.wrife.co.uk → Interactive Practice (Platform DB ✅)
-- pwp.studio.wrife.co.uk → PWP Studio (Platform DB ✅)
+- wrife.co.uk → teacher dashboard + admin (Platform DB `gzmgjkbtsvezfclmreru`) — **THIS REPO**
+- practice.wrife.co.uk → Interactive Practice — **InteractivePracticeApp repo** (Vite)
+- pwp-studio.wrife.co.uk → PWP Studio — **wrifeapp repo** (Vite/React SPA) — NOT THIS REPO
 - Pool: `max: 2` in `lib/db.ts` — critical for free-tier Supabase connections
 
 ## Test Credentials
@@ -52,6 +73,7 @@ Five issues addressed this session: admin user creation now supports teachers (v
 
 | # | Date | Summary |
 |---|------|---------|
+| 35 | 2026-05-14 | Surgically removed mistaken app/pwp/ + components/pwp2/ build from wrife-website (git reset --hard 375d29d, force-pushed). Added viewport export to app/layout.tsx. |
 | 34 | 2026-05-11 | Fixed presentations auth, admin user creation for all types, product tiles, PWP progress save bug, school registration flow + bulk CSV import |
 | 33 | 2026-05-11 | Sprint 5 + Sprint 6 complete: portfolio table, shareable links, difficulty_profile rolling window, ready_to_advance badge, ai_attempts logging |
 | 32 | 2026-05-09 | wrife-brand-ecosystem skill updated: Route B retired for school pupils; formula_progress documented as primary PWP progress table |
