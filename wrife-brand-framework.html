@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WriFe Brand Framework — Design System Reference</title>
+  <style>
+    /* ─── Reset & Base ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── WriFe Design Tokens ────────────────────────────────────────── */
+    :root {
+      /* Brand palette */
+      --wrife-purple:       #6C5CE7;
+      --wrife-purple-dark:  #3d35a0;
+      --wrife-purple-light: #a29bf5;
+      --wrife-purple-bg:    #f5f3ff;
+      --wrife-orange:       #F5A623;
+      --wrife-orange-dark:  #c47a0a;
+      --wrife-orange-bg:    #fff3e0;
+      --wrife-teal:         #00b894;
+      --wrife-teal-dark:    #007d67;
+      --wrife-teal-bg:      #e6faf6;
+      --wrife-text:         #2D3436;
+      --wrife-subtext:      #636e72;
+      --wrife-border:       #e0d8ff;
+      --wrife-bg:           #FDF8EE;
+
+      /* Word-class colours */
+      --wc-noun:        #E05252;
+      --wc-verb:        #3B6FD4;
+      --wc-determiner:  #2BAC7E;
+      --wc-adjective:   #E8861A;
+      --wc-adverb:      #8B5CF6;
+      --wc-pronoun:     #D4468A;
+      --wc-preposition: #6B7280;
+      --wc-conjunction: #9B8A2E;
+
+      /* Fluid typography scale (matches wrifeapp src/index.css) */
+      --pwp-text-xs:   clamp(10px, 2.2vw, 13px);
+      --pwp-text-sm:   clamp(12px, 2.8vw, 15px);
+      --pwp-text-base: clamp(14px, 3.4vw, 18px);
+      --pwp-text-md:   clamp(17px, 4.2vw, 22px);
+      --pwp-text-lg:   clamp(21px, 5.2vw, 28px);
+      --pwp-text-xl:   clamp(26px, 6.5vw, 36px);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0eff8;
+      color: var(--wrife-text);
+      line-height: 1.5;
+    }
+
+    /* ─── Layout ─────────────────────────────────────────────────────── */
+    .page-header {
+      background: var(--wrife-purple);
+      border-bottom: 5px solid var(--wrife-purple-dark);
+      padding: 32px 40px 28px;
+      color: white;
+    }
+    .page-header h1 {
+      font-size: clamp(24px, 4vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .page-header p {
+      opacity: 0.8;
+      font-size: 15px;
+    }
+
+    .page-nav {
+      background: white;
+      border-bottom: 2px solid var(--wrife-border);
+      padding: 0 40px;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+    }
+    .page-nav a {
+      padding: 14px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--wrife-subtext);
+      text-decoration: none;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .page-nav a:hover { color: var(--wrife-purple); border-bottom-color: var(--wrife-purple); }
+
+    .content { max-width: 1100px; margin: 0 auto; padding: 48px 40px; }
+
+    section { margin-bottom: 72px; }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--wrife-text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: var(--wrife-border);
+      border-radius: 1px;
+    }
+    .section-desc {
+      font-size: 14px;
+      color: var(--wrife-subtext);
+      margin-bottom: 28px;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+
+    /* ─── Component: Swatch Card ─────────────────────────────────────── */
+    .swatch-card {
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      background: white;
+    }
+    .swatch-color { height: 80px; }
+    .swatch-info { padding: 12px 14px; }
+    .swatch-name { font-size: 13px; font-weight: 700; color: var(--wrife-text); }
+    .swatch-hex  { font-size: 12px; color: var(--wrife-subtext); font-family: monospace; }
+    .swatch-use  { font-size: 11px; color: var(--wrife-subtext); margin-top: 3px; }
+
+    /* ─── Component: Word-class chip ─────────────────────────────────── */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: var(--pwp-text-sm);
+      font-weight: 700;
+      color: white;
+      cursor: default;
+      user-select: none;
+      border: none;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .chip:hover { transform: scale(1.04); }
+    .chip:active { transform: translateY(3px); box-shadow: 0 0 0 0 transparent !important; }
+    .chip-label {
+      font-size: 10px;
+      font-weight: 900;
+      background: rgba(255,255,255,0.28);
+      border-radius: 5px;
+      padding: 1px 5px;
+      letter-spacing: 0.3px;
+    }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    /* ─── Component: Chunky Button ───────────────────────────────────── */
+    .btn-chunky {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 14px;
+      font-size: var(--pwp-text-base);
+      font-weight: 800;
+      color: white;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.08s, box-shadow 0.08s;
+      min-height: 52px;
+    }
+    .btn-chunky:hover { filter: brightness(1.04); }
+    .btn-chunky:active { transform: translateY(4px); box-shadow: 0 0 0 0 transparent !important; }
+
+    .btn-primary   { background: var(--wrife-purple); box-shadow: 0 4px 0 0 var(--wrife-purple-dark); }
+    .btn-orange    { background: var(--wrife-orange); box-shadow: 0 4px 0 0 var(--wrife-orange-dark); }
+    .btn-teal      { background: var(--wrife-teal);   box-shadow: 0 4px 0 0 var(--wrife-teal-dark); }
+    .btn-ghost     { background: white; color: var(--wrife-purple); border: 2px solid var(--wrife-border); box-shadow: 0 3px 0 0 var(--wrife-border); }
+    .btn-ghost:active { box-shadow: 0 0 0 0 transparent !important; }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+    /* ─── Component: Chapter Banner ──────────────────────────────────── */
+    .chapter-banner {
+      border-radius: 16px;
+      padding: 18px 24px;
+      color: white;
+    }
+    .chapter-banner h3  { font-size: var(--pwp-text-lg); font-weight: 900; margin-bottom: 6px; }
+    .chapter-banner p   { opacity: 0.85; font-size: var(--pwp-text-sm); }
+    .chapter-banner .pills { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .pill {
+      background: rgba(255,255,255,0.22);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .banner-purple { background: var(--wrife-purple); border-bottom: 4px solid var(--wrife-purple-dark); }
+    .banner-teal   { background: var(--wrife-teal);   border-bottom: 4px solid var(--wrife-teal-dark); }
+    .banner-orange { background: var(--wrife-orange); border-bottom: 4px solid var(--wrife-orange-dark); }
+
+    /* ─── Component: Level Path Node ────────────────────────────────── */
+    .path-demo {
+      background: var(--wrife-purple-bg);
+      border-radius: 16px;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      min-width: 100px;
+      position: relative;
+    }
+    .path-node-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .node-callout {
+      background: var(--wrife-orange);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      border-radius: 20px;
+      padding: 3px 10px;
+      margin-bottom: 5px;
+      box-shadow: 0 2px 0 0 var(--wrife-orange-dark);
+    }
+    .path-node {
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+      color: white;
+      cursor: pointer;
+      border: none;
+      flex-shrink: 0;
+    }
+    .node-current {
+      width: 64px; height: 64px;
+      background: var(--wrife-orange);
+      box-shadow: 0 5px 0 0 var(--wrife-orange-dark);
+      outline: 4px solid var(--wrife-orange-bg);
+    }
+    .node-done {
+      width: 52px; height: 52px;
+      background: var(--wrife-purple-light);
+      box-shadow: 0 4px 0 0 var(--wrife-purple-dark);
+    }
+    .node-next {
+      width: 56px; height: 56px;
+      background: var(--wrife-purple);
+      box-shadow: 0 4px 0 0 var(--wrife-purple-dark);
+    }
+    .node-locked {
+      width: 48px; height: 48px;
+      background: #ddd;
+      box-shadow: 0 3px 0 0 #bbb;
+      color: #999;
+    }
+    .node-label {
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 6px;
+      color: var(--wrife-subtext);
+    }
+    .connector {
+      width: 4px;
+      height: 28px;
+      border-radius: 2px;
+      margin: 4px 0;
+    }
+    .connector-done   { background: var(--wrife-purple); }
+    .connector-locked { background: #ddd; }
+
+    /* ─── Component: Feedback Panel ─────────────────────────────────── */
+    .feedback-panel {
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 12px;
+    }
+    .feedback-panel.correct { background: var(--wrife-teal); }
+    .feedback-panel.incorrect { background: var(--wrife-orange); }
+    .feedback-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .feedback-heading {
+      font-size: var(--pwp-text-md);
+      font-weight: 900;
+      color: white;
+      flex: 1;
+    }
+    .xp-chip {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+    .feedback-message {
+      color: rgba(255,255,255,0.9);
+      font-size: var(--pwp-text-sm);
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .feedback-continue-btn {
+      width: 100%;
+      background: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: var(--pwp-text-base);
+      font-weight: 800;
+      cursor: pointer;
+      min-height: 52px;
+      box-shadow: 0 3px 0 0 rgba(0,0,0,0.12);
+      transition: transform 0.08s, box-shadow 0.08s;
+    }
+    .feedback-continue-btn:hover { filter: brightness(0.97); }
+    .feedback-continue-btn:active { transform: translateY(3px); box-shadow: 0 0 0 0 transparent; }
+    .feedback-continue-btn.teal  { color: var(--wrife-teal-dark); }
+    .feedback-continue-btn.amber { color: var(--wrife-orange-dark); }
+
+    /* ─── Component: Typography ─────────────────────────────────────── */
+    .type-specimen {
+      background: white;
+      border-radius: 14px;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .type-row {
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--wrife-border);
+    }
+    .type-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .type-meta { width: 140px; flex-shrink: 0; }
+    .type-meta .token-name { font-size: 12px; font-weight: 700; color: var(--wrife-purple); font-family: monospace; }
+    .type-meta .token-size { font-size: 11px; color: var(--wrife-subtext); }
+
+    /* ─── Component: Sentence Tray ──────────────────────────────────── */
+    .sentence-tray {
+      background: white;
+      border: 2px solid var(--wrife-purple);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      min-height: 64px;
+    }
+
+    /* ─── Component: Token Box ───────────────────────────────────────── */
+    .token-box {
+      background: white;
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .token-box .name { font-size: 12px; font-weight: 700; font-family: monospace; color: var(--wrife-purple); margin-bottom: 4px; }
+    .token-box .value { font-size: 11px; color: var(--wrife-subtext); font-family: monospace; }
+    .token-box .preview { margin-top: 8px; height: 6px; border-radius: 3px; }
+
+    /* ─── Code block ─────────────────────────────────────────────────── */
+    .code-block {
+      background: #1e1e2e;
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: #cdd6f4;
+      overflow-x: auto;
+    }
+    .code-block .kw  { color: #cba6f7; }
+    .code-block .str { color: #a6e3a1; }
+    .code-block .prop { color: #89b4fa; }
+    .code-block .cmt { color: #6c7086; font-style: italic; }
+
+    /* ─── Do / Don't ─────────────────────────────────────────────────── */
+    .do-dont { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .do-box, .dont-box {
+      border-radius: 14px;
+      padding: 20px 22px;
+    }
+    .do-box   { background: var(--wrife-teal-bg); border: 2px solid var(--wrife-teal); }
+    .dont-box { background: #fff0f0; border: 2px solid #e05252; }
+    .do-box h4   { color: var(--wrife-teal-dark); font-size: 13px; font-weight: 800; margin-bottom: 10px; }
+    .dont-box h4 { color: #c0392b;                font-size: 13px; font-weight: 800; margin-bottom: 10px; }
+    .do-box p, .dont-box p { font-size: 13px; line-height: 1.5; color: var(--wrife-text); }
+
+    @media (max-width: 600px) {
+      .content { padding: 28px 20px; }
+      .page-header { padding: 24px 20px; }
+      .do-dont { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── PAGE HEADER ──────────────────────────────────────────────────── -->
+<header class="page-header">
+  <h1>🎓 WriFe Brand Framework</h1>
+  <p>Design system reference — colours, typography, components, and interaction patterns</p>
+</header>
+
+<nav class="page-nav">
+  <a href="#colours">Colours</a>
+  <a href="#typography">Typography</a>
+  <a href="#word-classes">Word Classes</a>
+  <a href="#buttons">Buttons</a>
+  <a href="#banners">Banners</a>
+  <a href="#path-nodes">Path Nodes</a>
+  <a href="#feedback">Feedback Panels</a>
+  <a href="#word-bank">Word Bank</a>
+  <a href="#dos-donts">Do / Don't</a>
+</nav>
+
+<main class="content">
+
+  <!-- ─── 1. COLOURS ──────────────────────────────────────────────── -->
+  <section id="colours">
+    <h2 class="section-title">Colour Palette</h2>
+    <p class="section-desc">Three primary brand colours plus semantic tones. Never use raw hex values in components — always reference CSS tokens.</p>
+
+    <div class="grid-3" style="margin-bottom:20px;">
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#6C5CE7;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">WriFe Purple</div>
+          <div class="swatch-hex">--wrife-purple · #6C5CE7</div>
+          <div class="swatch-use">Primary UI, headers, CTAs, level banners</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#F5A623;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">WriFe Orange</div>
+          <div class="swatch-hex">--wrife-orange · #F5A623</div>
+          <div class="swatch-use">Current level nodes, submit buttons, "Start!" callouts</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#00b894;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">WriFe Teal</div>
+          <div class="swatch-hex">--wrife-teal · #00b894</div>
+          <div class="swatch-use">Correct feedback, paragraph phase, success states</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-4">
+      <div class="token-box">
+        <div class="name">--wrife-purple-dark</div>
+        <div class="value">#3d35a0</div>
+        <div class="preview" style="background:#3d35a0;"></div>
+      </div>
+      <div class="token-box">
+        <div class="name">--wrife-purple-light</div>
+        <div class="value">#a29bf5</div>
+        <div class="preview" style="background:#a29bf5;"></div>
+      </div>
+      <div class="token-box">
+        <div class="name">--wrife-purple-bg</div>
+        <div class="value">#f5f3ff</div>
+        <div class="preview" style="background:#f5f3ff; border: 1px solid #e0d8ff;"></div>
+      </div>
+      <div class="token-box">
+        <div class="name">--wrife-orange-dark</div>
+        <div class="value">#c47a0a</div>
+        <div class="preview" style="background:#c47a0a;"></div>
+      </div>
+      <div class="token-box">
+        <div class="name">--wrife-teal-dark</div>
+        <div class="value">#007d67</div>
+        <div class="preview" style="background:#007d67;"></div>
+      </div>
+      <div class="token-box">
+        <div class="name">--wrife-bg</div>
+        <div class="value">#FDF8EE</div>
+        <div class="preview" style="background:#FDF8EE; border: 1px solid #e8dcc8;"></div>
+      </div>
+      <div class="token-box">
+        <div class="name">--wrife-text</div>
+        <div class="value">#2D3436</div>
+        <div class="preview" style="background:#2D3436;"></div>
+      </div>
+      <div class="token-box">
+        <div class="name">--wrife-border</div>
+        <div class="value">#e0d8ff</div>
+        <div class="preview" style="background:#e0d8ff;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 2. TYPOGRAPHY ────────────────────────────────────────────── -->
+  <section id="typography">
+    <h2 class="section-title">Fluid Typography Scale</h2>
+    <p class="section-desc">All font sizes use CSS <code>clamp()</code> so they scale proportionally between mobile (375px) and desktop (1200px). Never hardcode a pixel value.</p>
+
+    <div class="type-specimen">
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="token-name">--pwp-text-xl</div>
+          <div class="token-size">26px → 36px</div>
+        </div>
+        <div style="font-size: var(--pwp-text-xl); font-weight: 900; line-height: 1.2;">Level Complete!</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="token-name">--pwp-text-lg</div>
+          <div class="token-size">21px → 28px</div>
+        </div>
+        <div style="font-size: var(--pwp-text-lg); font-weight: 800;">Chapter 1: First Words</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="token-name">--pwp-text-md</div>
+          <div class="token-size">17px → 22px</div>
+        </div>
+        <div style="font-size: var(--pwp-text-md); font-weight: 700; color: var(--wrife-purple);">Noun + verb (past tense)</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="token-name">--pwp-text-base</div>
+          <div class="token-size">14px → 18px</div>
+        </div>
+        <div style="font-size: var(--pwp-text-base);">Sam ran quickly through the dark forest at night.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="token-name">--pwp-text-sm</div>
+          <div class="token-size">12px → 15px</div>
+        </div>
+        <div style="font-size: var(--pwp-text-sm); color: var(--wrife-subtext);">Example: <em>The cat jumped.</em> · Use a noun and a past-tense verb.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="token-name">--pwp-text-xs</div>
+          <div class="token-size">10px → 13px</div>
+        </div>
+        <div style="font-size: var(--pwp-text-xs); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; color: var(--wrife-subtext);">Word Class Labels · Section Headers</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 3. WORD CLASSES ──────────────────────────────────────────── -->
+  <section id="word-classes">
+    <h2 class="section-title">Word-Class Colour System</h2>
+    <p class="section-desc">Eight canonical word classes each have a fixed colour. These colours appear on chips in the word bank, formula bar, guidance panel, and feedback. The colour system is defined in <code>src/constants/wordClassColours.ts</code> — never redefine these elsewhere.</p>
+
+    <div class="grid-4" style="margin-bottom: 24px;">
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#E05252;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Noun <span style="font-weight:400;color:#999">N</span></div>
+          <div class="swatch-hex">#E05252</div>
+          <div class="swatch-use">Coral red — dominant, central</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#3B6FD4;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Verb <span style="font-weight:400;color:#999">V</span></div>
+          <div class="swatch-hex">#3B6FD4</div>
+          <div class="swatch-use">Royal blue — action, purposeful</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#2BAC7E;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Determiner <span style="font-weight:400;color:#999">D</span></div>
+          <div class="swatch-hex">#2BAC7E</div>
+          <div class="swatch-use">Teal green — supportive, calm</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#E8861A;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Adjective <span style="font-weight:400;color:#999">Adj</span></div>
+          <div class="swatch-hex">#E8861A</div>
+          <div class="swatch-use">Amber orange — warm, descriptive</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#8B5CF6;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Adverb <span style="font-weight:400;color:#999">Adv</span></div>
+          <div class="swatch-hex">#8B5CF6</div>
+          <div class="swatch-use">Violet purple — layered</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#D4468A;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Pronoun <span style="font-weight:400;color:#999">Pro</span></div>
+          <div class="swatch-hex">#D4468A</div>
+          <div class="swatch-use">Rose pink — personal</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#6B7280;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Preposition <span style="font-weight:400;color:#999">Prep</span></div>
+          <div class="swatch-hex">#6B7280</div>
+          <div class="swatch-use">Slate grey — positional</div>
+        </div>
+      </div>
+      <div class="swatch-card">
+        <div class="swatch-color" style="background:#9B8A2E;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Conjunction <span style="font-weight:400;color:#999">Conj</span></div>
+          <div class="swatch-hex">#9B8A2E</div>
+          <div class="swatch-use">Olive gold — connector</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;font-weight:700;color:var(--wrife-text);margin-bottom:12px;">Live chip examples — as they appear in the word bank:</h3>
+    <div class="chip-row">
+      <button class="chip" style="background:#E05252; box-shadow: 0 3px 0 0 #b03a3a;">
+        <span class="chip-label">N</span> cat
+      </button>
+      <button class="chip" style="background:#E05252; box-shadow: 0 3px 0 0 #b03a3a;">
+        <span class="chip-label">N</span> dragon
+      </button>
+      <button class="chip" style="background:#3B6FD4; box-shadow: 0 3px 0 0 #1e4a99;">
+        <span class="chip-label">V</span> ran
+      </button>
+      <button class="chip" style="background:#3B6FD4; box-shadow: 0 3px 0 0 #1e4a99;">
+        <span class="chip-label">V</span> is running
+      </button>
+      <button class="chip" style="background:#2BAC7E; box-shadow: 0 3px 0 0 #1a7a59;">
+        <span class="chip-label">D</span> the
+      </button>
+      <button class="chip" style="background:#E8861A; box-shadow: 0 3px 0 0 #a05e10;">
+        <span class="chip-label">Adj</span> enormous
+      </button>
+      <button class="chip" style="background:#8B5CF6; box-shadow: 0 3px 0 0 #5b35b5;">
+        <span class="chip-label">Adv</span> quickly
+      </button>
+    </div>
+  </section>
+
+  <!-- ─── 4. BUTTONS ───────────────────────────────────────────────── -->
+  <section id="buttons">
+    <h2 class="section-title">Chunky CTA Buttons</h2>
+    <p class="section-desc">The WriFe World button has a thick bottom border that creates physical 3D depth. On tap/click it physically presses down (translateY + box-shadow collapse). Never use CSS gradients or glow effects on buttons.</p>
+
+    <div class="btn-row" style="margin-bottom:28px;">
+      <button class="btn-chunky btn-primary">Start Level 1 →</button>
+      <button class="btn-chunky btn-orange">Check My Sentence</button>
+      <button class="btn-chunky btn-teal">Continue →</button>
+      <button class="btn-chunky btn-ghost">← Back to Path</button>
+    </div>
+
+    <div class="code-block">
+<span class="cmt">/* The bottom-border "press" pattern (Framer Motion) */</span>
+<span class="prop">style</span>={{
+  <span class="prop">background</span>: <span class="str">'#F5A623'</span>,
+  <span class="prop">boxShadow</span>: <span class="str">'0 4px 0 0 #c47a0a'</span>,   <span class="cmt">// thick bottom border</span>
+}}
+<span class="prop">whileHover</span>={{ <span class="prop">scale</span>: <span class="str">1.01</span> }}
+<span class="prop">whileTap</span>={{ <span class="prop">y</span>: <span class="str">4</span>, <span class="prop">boxShadow</span>: <span class="str">'0 0 0 0 transparent'</span> }}  <span class="cmt">// presses down</span>
+    </div>
+
+    <p style="font-size:13px;color:var(--wrife-subtext);margin-top:12px;">Touch target minimum: <strong>52px height</strong> (desktop) / <strong>56px height</strong> (mobile). Use <code>min-height: 52px</code> always.</p>
+  </section>
+
+  <!-- ─── 5. BANNERS ───────────────────────────────────────────────── -->
+  <section id="banners">
+    <h2 class="section-title">Chapter Banners</h2>
+    <p class="section-desc">Bold full-bleed banners introduce each chapter or unit. The thick bottom border (4px solid darker shade) reinforces the physical language of the app. White text only. Pills use semi-transparent white backgrounds.</p>
+
+    <div class="grid-2">
+      <div class="chapter-banner banner-purple">
+        <h3>Chapter 1: First Words</h3>
+        <p>Master the noun + verb sentence — the foundation of all writing</p>
+        <div class="pills">
+          <span class="pill">Levels 1–6</span>
+          <span class="pill">18 steps</span>
+          <span class="pill">Word Bank</span>
+        </div>
+      </div>
+      <div class="chapter-banner banner-teal">
+        <h3>Paragraph Builder</h3>
+        <p>Lead → Support → Close. Build your first full paragraph with structure.</p>
+        <div class="pills">
+          <span class="pill">Levels 29–35</span>
+          <span class="pill">LSC Scaffold</span>
+        </div>
+      </div>
+      <div class="chapter-banner banner-orange">
+        <h3>🌟 Level Complete!</h3>
+        <p>You've mastered Level 1: Past Tense. Keep your streak going!</p>
+        <div class="pills">
+          <span class="pill">+50 XP</span>
+          <span class="pill">🔥 3 day streak</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 6. PATH NODES ────────────────────────────────────────────── -->
+  <section id="path-nodes">
+    <h2 class="section-title">Level Path Nodes</h2>
+    <p class="section-desc">Circular nodes represent levels on the learning path. Size and styling communicates state. The current (active) node is always orange with an outline ring. Completed nodes are soft purple. Locked nodes are grey and smaller.</p>
+
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <!-- Done → current → next → locked chain -->
+      <div class="path-demo">
+        <div class="path-node-wrap">
+          <div class="path-node node-done">✓</div>
+          <span class="node-label">Done · L1</span>
+        </div>
+        <div class="connector connector-done"></div>
+        <div class="path-node-wrap">
+          <span class="node-callout">Start!</span>
+          <div class="path-node node-current">2</div>
+          <span class="node-label">Active · L2</span>
+        </div>
+        <div class="connector connector-locked"></div>
+        <div class="path-node-wrap">
+          <div class="path-node node-next">3</div>
+          <span class="node-label">Next · L3</span>
+        </div>
+        <div class="connector connector-locked"></div>
+        <div class="path-node-wrap">
+          <div class="path-node node-locked">🔒</div>
+          <span class="node-label">Locked · L4</span>
+        </div>
+      </div>
+
+      <!-- Sizes reference -->
+      <div style="background:white;border-radius:16px;padding:24px;display:flex;align-items:flex-end;gap:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div class="path-node node-current">★</div>
+          <span class="node-label">Current<br>64px</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div class="path-node node-next" style="font-size:16px;">→</div>
+          <span class="node-label">Next<br>56px</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div class="path-node node-done">✓</div>
+          <span class="node-label">Done<br>52px</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div class="path-node node-locked">🔒</div>
+          <span class="node-label">Locked<br>48px</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 7. FEEDBACK PANELS ───────────────────────────────────────── -->
+  <section id="feedback">
+    <h2 class="section-title">Feedback Panels</h2>
+    <p class="section-desc">Feedback slides up from the bottom of the screen as a full-width fixed panel (Framer Motion: <code>initial={{ y: '100%' }}</code> → <code>animate={{ y: 0 }}</code>, spring). Two states: correct (teal) and needs revision (orange). The Continue button is always white.</p>
+
+    <div class="grid-2">
+      <div class="feedback-panel correct">
+        <div class="feedback-header">
+          <span class="feedback-heading">🌟 Brilliant!</span>
+          <span class="xp-chip">+10 XP</span>
+        </div>
+        <p class="feedback-message">Your sentence follows the Noun + verb pattern perfectly. Notice how the past-tense verb tells us what already happened.</p>
+        <button class="feedback-continue-btn teal">Continue →</button>
+      </div>
+
+      <div class="feedback-panel incorrect">
+        <div class="feedback-header">
+          <span class="feedback-heading">Not quite — try again</span>
+        </div>
+        <p class="feedback-message">Check the word order. A noun (person, place, or thing) should come before the verb. Which word is the doing word?</p>
+        <button class="feedback-continue-btn amber">Try Again →</button>
+      </div>
+    </div>
+
+    <div class="code-block" style="margin-top:20px;">
+<span class="cmt">/* Slide-up spring animation (Framer Motion) */</span>
+&lt;<span class="prop">AnimatePresence</span>&gt;
+  {<span class="prop">feedback</span> &amp;&amp; (
+    &lt;<span class="prop">motion.div</span>
+      <span class="prop">initial</span>={{ <span class="prop">y</span>: <span class="str">'100%'</span> }}
+      <span class="prop">animate</span>={{ <span class="prop">y</span>: <span class="str">0</span> }}
+      <span class="prop">exit</span>={{ <span class="prop">y</span>: <span class="str">'100%'</span> }}
+      <span class="prop">transition</span>={{ <span class="prop">type</span>: <span class="str">'spring'</span>, <span class="prop">damping</span>: <span class="str">30</span>, <span class="prop">stiffness</span>: <span class="str">300</span> }}
+      <span class="prop">style</span>={{ <span class="prop">position</span>: <span class="str">'fixed'</span>, <span class="prop">bottom</span>: <span class="str">0</span>, <span class="prop">left</span>: <span class="str">0</span>, <span class="prop">right</span>: <span class="str">0</span>, <span class="prop">zIndex</span>: <span class="str">100</span> }}
+    /&gt;
+  )}
+&lt;/<span class="prop">AnimatePresence</span>&gt;
+    </div>
+  </section>
+
+  <!-- ─── 8. WORD BANK ─────────────────────────────────────────────── -->
+  <section id="word-bank">
+    <h2 class="section-title">Word Bank (Phase A — Build Mode)</h2>
+    <p class="section-desc">Phase A is the introductory word bank for levels 1–6. Pupils tap chips to assemble their sentence. Words are grouped by word class with labelled section headers. The sentence tray shows assembled words; tapping a tray word returns it to the bank.</p>
+
+    <!-- Sentence tray mock -->
+    <div style="background:#f8f5ff;border-radius:16px;padding:16px 20px;margin-bottom:16px;">
+      <div style="font-size:var(--pwp-text-xs);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:var(--wrife-purple);margin-bottom:10px;">Your sentence</div>
+      <div class="sentence-tray">
+        <button class="chip" style="background:#E05252;box-shadow:0 2px 0 0 #b03a3a;">
+          <span class="chip-label">N</span> cat
+        </button>
+        <button class="chip" style="background:#3B6FD4;box-shadow:0 2px 0 0 #1e4a99;">
+          <span class="chip-label">V</span> ran
+        </button>
+        <span style="font-size:12px;color:#bbb;margin-left:auto;">Clear ✕</span>
+      </div>
+    </div>
+
+    <!-- Word bank mock -->
+    <div style="background:#f8f5ff;border:2px solid var(--wrife-border);border-radius:16px;padding:16px 20px;">
+      <!-- Nouns section -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:var(--pwp-text-xs);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:#E05252;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <span style="background:#E05252;color:white;border-radius:4px;padding:1px 5px;font-size:9px;font-weight:900;">N</span>
+          Nouns
+        </div>
+        <div class="chip-row">
+          <button class="chip" style="background:#E05252;box-shadow:0 3px 0 0 #b03a3a;"><span class="chip-label">N</span> dog</button>
+          <button class="chip" style="background:#E05252;box-shadow:0 3px 0 0 #b03a3a;"><span class="chip-label">N</span> bird</button>
+          <button class="chip" style="background:#E05252;box-shadow:0 3px 0 0 #b03a3a;"><span class="chip-label">N</span> fish</button>
+          <button class="chip" style="background:#E05252;box-shadow:0 3px 0 0 #b03a3a;"><span class="chip-label">N</span> sun</button>
+          <button class="chip" style="background:#E05252;box-shadow:0 3px 0 0 #b03a3a;"><span class="chip-label">N</span> house</button>
+        </div>
+      </div>
+      <!-- Verbs section -->
+      <div>
+        <div style="font-size:var(--pwp-text-xs);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:#3B6FD4;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <span style="background:#3B6FD4;color:white;border-radius:4px;padding:1px 5px;font-size:9px;font-weight:900;">V</span>
+          Verbs
+        </div>
+        <div class="chip-row">
+          <button class="chip" style="background:#3B6FD4;box-shadow:0 3px 0 0 #1e4a99;"><span class="chip-label">V</span> ran</button>
+          <button class="chip" style="background:#3B6FD4;box-shadow:0 3px 0 0 #1e4a99;"><span class="chip-label">V</span> jumped</button>
+          <button class="chip" style="background:#3B6FD4;box-shadow:0 3px 0 0 #1e4a99;"><span class="chip-label">V</span> flew</button>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:var(--wrife-subtext);margin-top:12px;">
+      <strong>Data source:</strong> Bank words come from <code>step_config_json.bankWords</code> (verbs, distractors) combined with <code>word_banks</code> table entries (level nouns and adjectives). The <code>guessWordClass()</code> function in <code>wordClassColours.ts</code> determines chip colours automatically.
+    </p>
+  </section>
+
+  <!-- ─── 9. DO / DON'T ────────────────────────────────────────────── -->
+  <section id="dos-donts">
+    <h2 class="section-title">Do / Don't</h2>
+    <p class="section-desc">Key guardrails for consistent WriFe UI.</p>
+
+    <div class="do-dont" style="margin-bottom:16px;">
+      <div class="do-box">
+        <h4>✅ DO — Use chunky bottom-border buttons</h4>
+        <p>Apply <code>boxShadow: '0 4px 0 0 {darkerShade}'</code> and <code>whileTap={{ y: 4, boxShadow: '0 0 0 0 transparent' }}</code> on every primary CTA.</p>
+      </div>
+      <div class="dont-box">
+        <h4>❌ DON'T — Use CSS gradients or glow effects</h4>
+        <p>No <code>linear-gradient</code>, no <code>box-shadow</code> with blur or spread for glow. WriFe buttons are flat + thick bottom border only.</p>
+      </div>
+    </div>
+
+    <div class="do-dont" style="margin-bottom:16px;">
+      <div class="do-box">
+        <h4>✅ DO — Use fluid type tokens</h4>
+        <p>Always reference <code>font-size: var(--pwp-text-base)</code> etc. The clamp function handles responsive scaling automatically.</p>
+      </div>
+      <div class="dont-box">
+        <h4>❌ DON'T — Hardcode font sizes in px</h4>
+        <p>Never write <code>font-size: 16px</code> directly. This breaks the fluid scale and creates inconsistency across screen sizes.</p>
+      </div>
+    </div>
+
+    <div class="do-dont" style="margin-bottom:16px;">
+      <div class="do-box">
+        <h4>✅ DO — Use canonical word-class colours</h4>
+        <p>Import from <code>wordClassColours.ts</code>. Noun = coral red, Verb = royal blue, etc. These never change.</p>
+      </div>
+      <div class="dont-box">
+        <h4>❌ DON'T — Redefine word-class colours elsewhere</h4>
+        <p>The colours are a single source of truth. Defining them in component CSS creates drift and breaks the coherent colour grammar that pupils learn to associate with each class.</p>
+      </div>
+    </div>
+
+    <div class="do-dont">
+      <div class="do-box">
+        <h4>✅ DO — Slide feedback up from the bottom</h4>
+        <p>Use <code>position: fixed; bottom: 0</code> with a spring animation. This mirrors Duolingo's proven UX pattern and keeps the learning flow uninterrupted.</p>
+      </div>
+      <div class="dont-box">
+        <h4>❌ DON'T — Inline feedback inside the step card</h4>
+        <p>Inline feedback was the old pattern. It caused layout shifts and broke the visual hierarchy. Always use the full-width bottom panel.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer style="text-align:center;padding:32px;color:var(--wrife-subtext);font-size:13px;border-top:2px solid var(--wrife-border);margin-top:32px;background:white;">
+  WriFe Brand Framework — Single source of truth for all WriFe UI patterns &nbsp;·&nbsp; Last updated May 2026
+</footer>
+
+</body>
+</html>
