@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import { AuthProvider } from '@/lib/auth-context';
+import type { Viewport } from 'next';
 
 export const metadata = {
   title: "WriFe - Writing for Everyone",
@@ -9,6 +10,14 @@ export const metadata = {
     shortcut: '/favicon.png',
     apple: '/favicon.png',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({
