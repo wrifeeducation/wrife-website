@@ -142,12 +142,12 @@ function OverviewTab({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1
-            className="text-2xl font-extrabold"
+            className="text-3xl font-extrabold"
             style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
           >
             Good morning, {firstName}! 🌅
           </h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>
+          <p className="text-base mt-1" style={{ color: "var(--wrife-text-muted)" }}>
             Here&apos;s your class overview for today.
           </p>
         </div>
@@ -197,20 +197,20 @@ function OverviewTab({
         {statCards.map((card, i) => (
           <div
             key={i}
-            className="rounded-2xl p-5 border shadow-card"
-            style={{ backgroundColor: card.bg, borderColor: card.bg }}
+            className="rounded-2xl p-6 border"
+            style={{ backgroundColor: card.bg, borderColor: card.bg, boxShadow: "var(--shadow-card)" }}
           >
             <div
-              className="w-10 h-10 rounded-full mb-3"
+              className="w-11 h-11 rounded-full mb-4"
               style={{ backgroundColor: card.color }}
             />
             <p
-              className="text-3xl font-extrabold leading-none"
+              className="text-4xl font-extrabold leading-none"
               style={{ color: card.color, letterSpacing: "-0.03em" }}
             >
               {card.value}
             </p>
-            <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--wrife-text-muted)" }}>
+            <p className="text-base mt-2 font-semibold" style={{ color: "var(--wrife-text-main)" }}>
               {card.label}
             </p>
           </div>
@@ -219,56 +219,59 @@ function OverviewTab({
 
       {/* WriFe Apps */}
       <div>
-        <h2 className="text-base font-bold mb-3" style={{ color: "var(--wrife-text-muted)" }}>
+        <h2
+          className="text-xl font-extrabold mb-4"
+          style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+        >
           WriFe Apps
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Interactive Practice */}
           <a
             href="https://practice.wrife.co.uk"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-2xl p-4 border transition hover:shadow-md"
+            className="flex items-center gap-4 rounded-2xl p-5 border-2 transition hover:shadow-md hover:-translate-y-0.5"
             style={{ backgroundColor: "var(--wrife-electric-soft)", borderColor: "var(--wrife-electric)" }}
           >
-            <span className="text-2xl">🎮</span>
+            <span className="text-3xl shrink-0">🎮</span>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm leading-tight" style={{ color: "var(--wrife-text-main)" }}>Interactive Practice</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>Gamified lesson activities</p>
+              <p className="font-extrabold text-base leading-tight" style={{ color: "var(--wrife-text-main)" }}>Interactive Practice</p>
+              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>Gamified lesson activities</p>
             </div>
-            <span className="text-xs font-semibold shrink-0" style={{ color: "var(--wrife-electric)" }}>Open →</span>
+            <span className="text-sm font-bold shrink-0" style={{ color: "var(--wrife-electric)" }}>Open →</span>
           </a>
 
-          {/* Resources */}
-          <a
-            href="https://resources.wrife.co.uk"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-2xl p-4 border transition hover:shadow-md"
+          {/* AI Writing Tools — coming soon badge */}
+          <div
+            className="flex items-center gap-4 rounded-2xl p-5 border-2 opacity-60 cursor-not-allowed"
             style={{ backgroundColor: "var(--wrife-green-soft)", borderColor: "var(--wrife-green)" }}
+            title="Coming soon"
           >
-            <span className="text-2xl">🤖</span>
+            <span className="text-3xl shrink-0">🤖</span>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm leading-tight" style={{ color: "var(--wrife-text-main)" }}>AI Writing Tools</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>9 tools · real-time feedback</p>
+              <div className="flex items-center gap-2">
+                <p className="font-extrabold text-base leading-tight" style={{ color: "var(--wrife-text-main)" }}>AI Writing Tools</p>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "var(--wrife-yellow)", color: "#78350f" }}>Soon</span>
+              </div>
+              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>AI-powered writing feedback</p>
             </div>
-            <span className="text-xs font-semibold shrink-0" style={{ color: "var(--wrife-green)" }}>Open →</span>
-          </a>
+          </div>
 
           {/* PWP Studio */}
           <a
-            href="https://pwp.studio.wrife.co.uk"
+            href="https://pwp-studio.wrife.co.uk"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-2xl p-4 border transition hover:shadow-md"
+            className="flex items-center gap-4 rounded-2xl p-5 border-2 transition hover:shadow-md hover:-translate-y-0.5"
             style={{ backgroundColor: "var(--wrife-teal-soft)", borderColor: "var(--wrife-teal)" }}
           >
-            <span className="text-2xl">📝</span>
+            <span className="text-3xl shrink-0">📝</span>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm leading-tight" style={{ color: "var(--wrife-text-main)" }}>PWP Studio</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>Formula writing practice</p>
+              <p className="font-extrabold text-base leading-tight" style={{ color: "var(--wrife-text-main)" }}>PWP Studio</p>
+              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>Formula writing practice</p>
             </div>
-            <span className="text-xs font-semibold shrink-0" style={{ color: "var(--wrife-teal)" }}>Open →</span>
+            <span className="text-sm font-bold shrink-0" style={{ color: "var(--wrife-teal)" }}>Open →</span>
           </a>
         </div>
       </div>
@@ -322,45 +325,45 @@ function OverviewTab({
                 >
                   {/* Coloured header strip */}
                   <div
-                    className="px-5 py-4"
-                    style={{ backgroundColor: palette.bg, borderBottom: `2px solid ${palette.border}` }}
+                    className="px-5 py-5"
+                    style={{ backgroundColor: palette.bg, borderBottom: `3px solid ${palette.border}` }}
                   >
                     <p
-                      className="font-extrabold text-lg leading-tight"
+                      className="font-extrabold text-xl leading-tight"
                       style={{ fontFamily: "var(--font-display)", color: palette.text }}
                     >
                       {cls.name}
                     </p>
-                    <p className="text-sm mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>
+                    <p className="text-sm mt-1 font-medium" style={{ color: "var(--wrife-text-muted)" }}>
                       {classPupils} pupil{classPupils !== 1 ? 's' : ''} · Year {cls.year_group}
                     </p>
                   </div>
 
                   {/* Body */}
-                  <div className="px-5 py-4">
+                  <div className="px-5 py-5">
                     {/* Current lesson */}
                     {activeLesson ? (
-                      <div className="mb-3">
+                      <div className="mb-4">
                         <span
-                          className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full"
+                          className="inline-block text-sm font-semibold px-3 py-1.5 rounded-full"
                           style={{ backgroundColor: palette.bg, color: palette.text }}
                         >
                           {activeLesson.title}
                         </span>
                       </div>
                     ) : (
-                      <p className="text-xs mb-3" style={{ color: "var(--wrife-text-muted)" }}>No active lesson</p>
+                      <p className="text-sm mb-4" style={{ color: "var(--wrife-text-muted)" }}>No active lesson</p>
                     )}
 
                     {/* Completion bar */}
-                    <div className="mb-4">
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-xs font-medium" style={{ color: "var(--wrife-text-muted)" }}>Completion</span>
-                        <span className="text-xs font-bold" style={{ color: palette.text }}>{completion}%</span>
+                    <div className="mb-5">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-semibold" style={{ color: "var(--wrife-text-muted)" }}>Completion</span>
+                        <span className="text-sm font-extrabold" style={{ color: palette.text }}>{completion}%</span>
                       </div>
-                      <div className="w-full rounded-full h-2" style={{ backgroundColor: "var(--wrife-border)" }}>
+                      <div className="w-full rounded-full h-3" style={{ backgroundColor: "var(--wrife-border)" }}>
                         <div
-                          className="h-2 rounded-full transition-all"
+                          className="h-3 rounded-full transition-all"
                           style={{ width: `${completion}%`, backgroundColor: palette.bar }}
                         />
                       </div>
@@ -370,14 +373,14 @@ function OverviewTab({
                     <div className="flex gap-2">
                       <Link
                         href={`/classes/${cls.id}`}
-                        className="flex-1 text-center py-2 text-xs font-semibold rounded-xl border transition hover:opacity-80"
-                        style={{ borderColor: "var(--wrife-border)", color: "var(--wrife-text-main)" }}
+                        className="flex-1 text-center py-2.5 text-sm font-semibold rounded-xl border-2 transition hover:opacity-80"
+                        style={{ borderColor: palette.border, color: palette.text }}
                       >
                         View class
                       </Link>
                       <Link
                         href={`/classes/${cls.id}?tab=pwp`}
-                        className="flex-1 text-center py-2 text-xs font-semibold rounded-xl text-white transition hover:opacity-90"
+                        className="flex-1 text-center py-2.5 text-sm font-bold rounded-xl text-white transition hover:opacity-90"
                         style={{ backgroundColor: palette.border }}
                       >
                         PWP grid
@@ -399,11 +402,11 @@ function OverviewTab({
           className="bg-white rounded-2xl p-6 border"
           style={{ borderColor: "var(--wrife-border)", boxShadow: "var(--shadow-card)" }}
         >
-          <h3 className="font-bold text-base mb-4" style={{ color: "var(--wrife-text-main)" }}>
+          <h3 className="font-extrabold text-lg mb-4" style={{ color: "var(--wrife-text-main)" }}>
             Pending Reviews ({pendingReviews.length})
           </h3>
           {pendingReviews.length === 0 ? (
-            <p className="text-sm text-center py-6" style={{ color: "var(--wrife-text-muted)" }}>
+            <p className="text-base text-center py-6" style={{ color: "var(--wrife-text-muted)" }}>
               No submissions waiting for review ✓
             </p>
           ) : (
@@ -412,14 +415,14 @@ function OverviewTab({
                 <Link
                   key={review.id}
                   href={`/assignments/${review.assignment_id}/review`}
-                  className="flex items-center justify-between p-3 rounded-xl transition"
+                  className="flex items-center justify-between p-4 rounded-xl transition"
                   style={{ backgroundColor: "var(--wrife-yellow-soft)", border: "1px solid var(--wrife-yellow)" }}
                 >
                   <div>
-                    <p className="font-semibold text-sm" style={{ color: "var(--wrife-text-main)" }}>{review.pupil_name}</p>
-                    <p className="text-xs" style={{ color: "var(--wrife-text-muted)" }}>{review.assignment_title}</p>
+                    <p className="font-semibold text-base" style={{ color: "var(--wrife-text-main)" }}>{review.pupil_name}</p>
+                    <p className="text-sm mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>{review.assignment_title}</p>
                   </div>
-                  <span className="text-xs font-bold" style={{ color: "#B45309" }}>Review →</span>
+                  <span className="text-sm font-bold" style={{ color: "#B45309" }}>Review →</span>
                 </Link>
               ))}
             </div>
@@ -431,26 +434,26 @@ function OverviewTab({
           className="bg-white rounded-2xl p-6 border"
           style={{ borderColor: "var(--wrife-border)", boxShadow: "var(--shadow-card)" }}
         >
-          <h3 className="font-bold text-base mb-4" style={{ color: "var(--wrife-text-main)" }}>
+          <h3 className="font-extrabold text-lg mb-4" style={{ color: "var(--wrife-text-main)" }}>
             Recent Activity
           </h3>
           {activityFeed.length === 0 ? (
-            <p className="text-sm text-center py-6" style={{ color: "var(--wrife-text-muted)" }}>
+            <p className="text-base text-center py-6" style={{ color: "var(--wrife-text-muted)" }}>
               No recent activity yet
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {activityFeed.map((item) => (
                 <div key={item.key} className="flex items-start gap-3">
                   <div
-                    className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm"
+                    className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-lg"
                     style={{ backgroundColor: `${item.color}20` }}
                   >
                     {item.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm leading-snug" style={{ color: "var(--wrife-text-main)" }}>{item.text}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>Now</p>
+                    <p className="text-base leading-snug" style={{ color: "var(--wrife-text-main)" }}>{item.text}</p>
+                    <p className="text-sm mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>Now</p>
                   </div>
                 </div>
               ))}
