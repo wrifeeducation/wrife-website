@@ -167,6 +167,8 @@ export default function PupilDashboardPage() {
   // SSO URLs — computed on mount using the Supabase session
   const [practiceUrl, setPracticeUrl] = useState('https://practice.wrife.co.uk');
   const [studioUrl, setStudioUrl] = useState('https://pwp-studio.wrife.co.uk/dashboard');
+  const [dwpUrl, setDwpUrl] = useState('https://dailywrite.wrife.co.uk');
+  const [toolkitUrl, setToolkitUrl] = useState('https://resources.wrife.co.uk');
   const router = useRouter();
 
   useEffect(() => {
@@ -185,6 +187,8 @@ export default function PupilDashboardPage() {
       // Build SSO URLs in the background — falls back to plain URL if no session
       buildSSOUrl('https://practice.wrife.co.uk').then(setPracticeUrl).catch(() => {});
       buildSSOUrl('https://pwp-studio.wrife.co.uk/dashboard').then(setStudioUrl).catch(() => {});
+      buildSSOUrl('https://dailywrite.wrife.co.uk').then(setDwpUrl).catch(() => {});
+      buildSSOUrl('https://resources.wrife.co.uk/my-tasks').then(setToolkitUrl).catch(() => {});
 
       fetch(`/api/pupil/stats?pupilId=${parsed.pupilId}`)
         .then(res => res.ok ? res.json() : null)
@@ -522,7 +526,7 @@ export default function PupilDashboardPage() {
           <div className="grid grid-cols-3 gap-3">
 
             {/* Interactive Practice */}
-            <a href={practiceUrl} target="_blank" rel="noopener noreferrer" className="block group">
+            <a href={practiceUrl} className="block group">
               <div
                 className="rounded-2xl p-4 text-white h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
                 style={{ background: "linear-gradient(135deg, #6C5CE7 0%, #4834d4 100%)" }}
@@ -546,7 +550,7 @@ export default function PupilDashboardPage() {
             </a>
 
             {/* PWP Studio */}
-            <a href={studioUrl} target="_blank" rel="noopener noreferrer" className="block group">
+            <a href={studioUrl} className="block group">
               <div
                 className="rounded-2xl p-4 text-white h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
                 style={{ background: "linear-gradient(135deg, #F5A623 0%, #e07b10 100%)" }}
@@ -567,43 +571,32 @@ export default function PupilDashboardPage() {
               </div>
             </a>
 
-            {/* Daily Writing Practice */}
-            {nextDwp ? (
-              <Link href={`/pupil/dwp/${nextDwp.id}`} className="block group">
-                <div
-                  className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
-                  style={{
-                    background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)",
-                    border: "1.5px solid #c4b5fd",
-                  }}
-                >
-                  <div>
-                    <span className="text-xl">📖</span>
-                    <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#5b21b6" }}>
-                      Daily Writing
-                    </p>
-                    <p className="text-xs mt-1" style={{ color: "#7c3aed" }}>
-                      {activeDwpAssignments.length} task{activeDwpAssignments.length !== 1 ? 's' : ''} assigned
-                    </p>
-                  </div>
-                  <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold transition group-hover:opacity-90"
-                    style={{ backgroundColor: "#7c3aed", color: "white" }}>
-                    Start →
-                  </span>
-                </div>
-              </Link>
-            ) : (
+            {/* Daily Writing Practice — SSO tile, same pattern as IP and PWP */}
+            <a href={dwpUrl} className="block group">
               <div
-                className="rounded-2xl p-4 h-full flex flex-col"
-                style={{ backgroundColor: "#f3f4f6", border: "1.5px solid #e5e7eb" }}
+                className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                style={{
+                  background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)",
+                  border: "1.5px solid #c4b5fd",
+                }}
               >
-                <span className="text-xl" style={{ color: "#9ca3af" }}>📖</span>
-                <p className="font-bold text-sm mt-2" style={{ color: "#9ca3af", fontFamily: "var(--font-display)" }}>
-                  Daily Writing
-                </p>
-                <p className="text-xs mt-1" style={{ color: "#d1d5db" }}>No tasks yet</p>
+                <div>
+                  <span className="text-xl">📖</span>
+                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#5b21b6" }}>
+                    Daily Writing
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "#7c3aed" }}>
+                    {activeDwpAssignments.length > 0
+                      ? `${activeDwpAssignments.length} task${activeDwpAssignments.length !== 1 ? 's' : ''} assigned`
+                      : '40 levels · write every day'}
+                  </p>
+                </div>
+                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold transition group-hover:opacity-90"
+                  style={{ backgroundColor: "#7c3aed", color: "white" }}>
+                  Write →
+                </span>
               </div>
-            )}
+            </a>
 
             {/* Writing Assignments */}
             {pendingAssignments.length > 0 ? (
@@ -665,10 +658,35 @@ export default function PupilDashboardPage() {
               </div>
             </Link>
 
-            {/* Achievements */}
-            <Link href="#achievements" className="block group">
+            {/* Skills Toolkit — resources.wrife.co.uk SSO tile */}
+            <a href={toolkitUrl} className="block group">
               <div
                 className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                style={{
+                  background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+                  border: "1.5px solid #86efac",
+                }}
+              >
+                <div>
+                  <span className="text-xl">🛠️</span>
+                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#166534" }}>
+                    Skills Toolkit
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "#16a34a" }}>
+                    AI writing tools &amp; resources
+                  </p>
+                </div>
+                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold transition group-hover:opacity-90"
+                  style={{ backgroundColor: "#22c55e", color: "white" }}>
+                  Open →
+                </span>
+              </div>
+            </a>
+
+            {/* Achievements — spans full row so the 7-tile grid ends cleanly */}
+            <Link href="#achievements" className="block group col-span-3">
+              <div
+                className="rounded-2xl p-4 flex flex-row items-center justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
                 style={{
                   background: "linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)",
                   border: "1.5px solid #fbbf24",
@@ -707,9 +725,9 @@ export default function PupilDashboardPage() {
 
             <div className="space-y-3">
 
-              {/* Primary: next DWP (styled like prototype orange Practice card) */}
+              {/* Primary: next DWP — SSO redirect to dailywrite.wrife.co.uk (Route A) */}
               {nextDwp && (
-                <Link href={`/pupil/dwp/${nextDwp.id}`}>
+                <a href={dwpUrl}>
                   <div
                     className="rounded-2xl p-5 cursor-pointer transition hover:opacity-95 hover:shadow-lg"
                     style={{ background: "linear-gradient(135deg, #F5A623 0%, #e07b10 100%)" }}
@@ -730,14 +748,14 @@ export default function PupilDashboardPage() {
                       </span>
                     </div>
                   </div>
-                </Link>
+                </a>
               )}
 
               {/* PWP assignments */}
               {activePwpAssignments.slice(0, 2).map((pwp) => {
                 const isOverdue = pwp.due_date && new Date(pwp.due_date) < new Date();
                 return (
-                  <a key={pwp.id} href={studioUrl} target="_blank" rel="noopener noreferrer">
+                  <a key={pwp.id} href={studioUrl}>
                     <div
                       className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
                       style={{
