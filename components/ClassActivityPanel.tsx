@@ -17,6 +17,10 @@ export interface PupilActivity {
   ip_lessons_completed: number;
   ip_total_xp: number;
   ip_last_active: string | null;
+  // DWP
+  dwp_levels_completed: number;
+  dwp_total_xp: number;
+  dwp_last_active: string | null;
 }
 
 interface RecentEvent {
@@ -78,6 +82,15 @@ function eventLabel(event: RecentEvent): string {
       const to = event.event_data.to_level as number | undefined;
       return `${name} advanced to PWP L${to ?? '?'}`;
     }
+    case 'level_completed': {
+      const lvlId = event.event_data.level_id as string | undefined;
+      const pct   = event.event_data.percentage as number | undefined;
+      const band  = event.event_data.band as string | undefined;
+      const lvlLabel = lvlId ? lvlId.replace('dwp_', '').toUpperCase() : '?';
+      return `${name} completed DWP ${lvlLabel}${pct != null ? ` — ${pct}%` : ''}${band ? ` (${band})` : ''}`;
+    }
+    case 'daily_prompt_submitted':
+      return `${name} submitted a daily writing prompt ✍️`;
     case 'challenge_completed':
       return `${name} completed a challenge`;
     default:
@@ -165,12 +178,15 @@ export function ClassActivityPanel({ classId }: Props) {
 
   const anyPwp = pupils.some(p => p.pwp_formulas_completed > 0);
   const anyIp  = pupils.some(p => p.ip_lessons_completed  > 0);
-  const anyActivity = anyPwp || anyIp;
+  const anyDwp = pupils.some(p => p.dwp_levels_completed  > 0);
+  const anyActivity = anyPwp || anyIp || anyDwp;
 
   // Class totals for header stats
   const totalFormulas = pupils.reduce((s, p) => s + p.pwp_formulas_completed, 0);
   const totalLessons  = pupils.reduce((s, p) => s + p.ip_lessons_completed,   0);
   const totalXp       = pupils.reduce((s, p) => s + p.ip_total_xp,            0);
+  const totalDwpLevels = pupils.reduce((s, p) => s + p.dwp_levels_completed,  0);
+  const totalDwpXp     = pupils.reduce((s, p) => s + p.dwp_total_xp,          0);
 
   return (
     <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6">
@@ -182,7 +198,7 @@ export function ClassActivityPanel({ classId }: Props) {
           <div>
             <h3 className="text-base font-bold text-[var(--wrife-text-main)]">Sub-App Activity</h3>
             <p className="text-xs text-[var(--wrife-text-muted)]">
-              Live from PWP Studio &amp; Interactive Practice
+              Live from PWP Studio, Interactive Practice &amp; Daily Writing
             </p>
           </div>
         </div>
@@ -213,7 +229,19 @@ export function ClassActivityPanel({ classId }: Props) {
               </div>
               <div className="rounded-xl bg-[var(--wrife-yellow-soft)] px-4 py-2.5 text-center min-w-[90px]">
                 <p className="text-lg font-bold text-[var(--wrife-text-main)]">{totalXp.toLocaleString()}</p>
-                <p className="text-xs text-[var(--wrife-text-muted)]">⭐ Total XP</p>
+                <p className="text-xs text-[var(--wrife-text-muted)]">⭐ IP XP</p>
+              </div>
+            </>
+          )}
+          {anyDwp && (
+            <>
+              <div className="rounded-xl px-4 py-2.5 text-center min-w-[90px]" style={{ background: '#e8f4fd', border: '1px solid #90caf9' }}>
+                <p className="text-lg font-bold" style={{ color: '#1565c0' }}>{totalDwpLevels}</p>
+                <p className="text-xs text-[var(--wrife-text-muted)]">✍️ DWP levels</p>
+              </div>
+              <div className="rounded-xl px-4 py-2.5 text-center min-w-[90px]" style={{ background: '#e8f4fd', border: '1px solid #90caf9' }}>
+                <p className="text-lg font-bold" style={{ color: '#1565c0' }}>{totalDwpXp.toLocaleString()}</p>
+                <p className="text-xs text-[var(--wrife-text-muted)]">✍️ DWP XP</p>
               </div>
             </>
           )}
@@ -253,16 +281,19 @@ export function ClassActivityPanel({ classId }: Props) {
               <tr className="border-b border-[var(--wrife-border)]">
                 <th className="text-left py-2.5 px-2 font-semibold text-[var(--wrife-text-main)]">Pupil</th>
                 <th className="text-center py-2.5 px-3 font-semibold text-[var(--wrife-text-main)]">
-                  ✏️ PWP Level
+                  ✏️ PWP
                 </th>
                 <th className="text-right py-2.5 px-3 font-semibold text-[var(--wrife-text-main)]">
                   Formulas
                 </th>
                 <th className="text-right py-2.5 px-3 font-semibold text-[var(--wrife-text-main)]">
-                  🎮 IP Lessons
+                  🎮 IP
                 </th>
                 <th className="text-right py-2.5 px-3 font-semibold text-[var(--wrife-text-main)]">
-                  XP
+                  IP XP
+                </th>
+                <th className="text-right py-2.5 px-3 font-semibold text-[var(--wrife-text-main)]">
+                  ✍️ DWP
                 </th>
                 <th className="text-right py-2.5 px-3 font-semibold text-[var(--wrife-text-muted)]">
                   Last Active
@@ -271,7 +302,7 @@ export function ClassActivityPanel({ classId }: Props) {
             </thead>
             <tbody>
               {pupils.map(p => {
-                const lastActive = [p.pwp_last_active, p.ip_last_active]
+                const lastActive = [p.pwp_last_active, p.ip_last_active, p.dwp_last_active]
                   .filter(Boolean)
                   .sort()
                   .at(-1) ?? null;
@@ -316,6 +347,15 @@ export function ClassActivityPanel({ classId }: Props) {
                       {p.ip_total_xp > 0 ? (
                         <span className="text-xs font-semibold text-[var(--wrife-text-main)]">
                           ⭐ {p.ip_total_xp.toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="text-[var(--wrife-text-muted)]">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      {p.dwp_levels_completed > 0 ? (
+                        <span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: '#e8f4fd', color: '#1565c0' }}>
+                          {p.dwp_levels_completed} lvl{p.dwp_levels_completed !== 1 ? 's' : ''}
                         </span>
                       ) : (
                         <span className="text-[var(--wrife-text-muted)]">—</span>

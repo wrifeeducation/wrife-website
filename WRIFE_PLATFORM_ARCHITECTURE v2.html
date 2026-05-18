@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WriFe Platform Architecture — Authoritative Reference</title>
+<style>
+  :root {
+    --purple: #6C5CE7; --purple-light: #f0edff; --purple-mid: #4a40b8;
+    --green: #00b894; --green-light: #e8fdf7;
+    --orange: #F5A623; --orange-light: #fff8e8;
+    --blue: #0984e3; --blue-light: #e8f4fd;
+    --red: #e17055; --red-light: #fff5f5;
+    --text: #2D3436; --muted: #636e72; --border: #dfe6e9;
+    --bg: #f8f9fa; --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui,-apple-system,sans-serif; font-size: 14px; color: var(--text); background: var(--bg); }
+
+  /* ── HEADER ── */
+  .site-header { background: var(--purple); color: #fff; padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; }
+  .site-header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .site-header .meta { font-size: 11px; opacity: .75; text-align: right; }
+  .site-header .version { background: rgba(255,255,255,.18); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 10px; }
+
+  /* ── TAB NAV ── */
+  .tab-nav { background: #fff; border-bottom: 2px solid var(--border); display: flex; overflow-x: auto; padding: 0 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .tab-btn { padding: 14px 18px; font-size: 13px; font-weight: 600; color: var(--muted); border: none; background: none; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color .15s, border-color .15s; }
+  .tab-btn:hover { color: var(--purple); }
+  .tab-btn.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+  /* ── TAB PANELS ── */
+  .tab-panel { display: none; padding: 32px; max-width: 1100px; margin: 0 auto; }
+  .tab-panel.active { display: block; }
+
+  /* ── TYPOGRAPHY ── */
+  h2 { font-size: 20px; font-weight: 700; color: var(--purple); margin-bottom: 6px; margin-top: 32px; padding-bottom: 8px; border-bottom: 2px solid var(--purple-light); }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 20px 0 8px; }
+  h4 { font-size: 13px; font-weight: 700; color: var(--muted); margin: 14px 0 6px; text-transform: uppercase; letter-spacing: .5px; }
+  p { line-height: 1.65; color: var(--text); margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; margin-bottom: 10px; }
+  li { line-height: 1.7; }
+  code { background: var(--purple-light); color: var(--purple-mid); padding: 1px 5px; border-radius: 4px; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; }
+  pre { background: #1e1e2e; color: #cdd6f4; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 12px; line-height: 1.6; margin: 12px 0; font-family: 'SF Mono', 'Fira Code', monospace; }
+
+  /* ── CALLOUTS ── */
+  .callout { padding: 14px 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid; }
+  .callout.rule   { background: var(--purple-light); border-color: var(--purple); }
+  .callout.warn   { background: #fff3cd; border-color: #ffc107; }
+  .callout.danger { background: var(--red-light); border-color: var(--red); }
+  .callout.info   { background: var(--blue-light); border-color: var(--blue); }
+  .callout.good   { background: var(--green-light); border-color: var(--green); }
+  .callout strong { display: block; margin-bottom: 4px; font-size: 13px; }
+
+  /* ── TABLES ── */
+  .tbl-wrap { overflow-x: auto; margin: 14px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { background: var(--purple); color: #fff; padding: 9px 12px; text-align: left; font-weight: 600; white-space: nowrap; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--bg); }
+  tr:hover td { background: var(--purple-light); }
+
+  /* ── ROLE CARDS ── */
+  .role-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin: 16px 0; }
+  .role-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; background: #fff; }
+  .role-card .role-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-bottom: 10px; }
+  .role-card h3 { margin-top: 0; margin-bottom: 6px; }
+  .role-card .cap-list { margin: 8px 0; }
+  .role-card .cap-list li { font-size: 12px; list-style: none; padding: 2px 0; }
+
+  /* ── ROUTE CARDS ── */
+  .route-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin: 16px 0; }
+  .route-card { border-radius: 10px; padding: 16px; }
+  .route-card h3 { margin-top: 0; font-size: 14px; }
+  .route-card .step { font-size: 12px; line-height: 1.65; margin: 4px 0; padding-left: 12px; position: relative; }
+  .route-card .step::before { content: '→'; position: absolute; left: 0; color: var(--muted); }
+
+  /* ── APP PILLS ── */
+  .app-bar { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+  .app-pill { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+
+  /* ── STATUS BADGES ── */
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 8px; font-size: 11px; font-weight: 700; }
+  .badge.built  { background: var(--green-light); color: var(--green); }
+  .badge.gap    { background: var(--red-light); color: var(--red); }
+  .badge.soon   { background: var(--orange-light); color: #b36800; }
+
+  /* ── CHECKLIST ── */
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { padding: 5px 0 5px 26px; position: relative; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before { position: absolute; left: 0; top: 5px; font-size: 14px; }
+  .checklist li.ok::before { content: '✅'; }
+  .checklist li.bad::before { content: '❌'; }
+  .checklist li.warn::before { content: '⚠️'; }
+  .checklist li.todo::before { content: '☐'; }
+
+  /* ── DIAGRAM ── */
+  .diagram-wrap { background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 20px; overflow-x: auto; margin: 16px 0; }
+  .diagram-wrap svg { max-width: 100%; height: auto; }
+
+  /* ── ADR ── */
+  .adr { border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; margin: 14px 0; background: #fff; }
+  .adr .adr-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .adr h3 { margin-top: 0; font-size: 14px; }
+
+  /* ── SECTION DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  /* ── TWO-COL ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 14px 0; }
+  @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div>
+    <h1>WriFe Platform Architecture <span class="version">v1.0</span></h1>
+    <div style="font-size:12px;opacity:.8;margin-top:4px;">Authoritative reference — consult before any new development</div>
+  </div>
+  <div class="meta">Last updated: May 2026<br>Session 40 · 5 apps · 1 Supabase project</div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('overview')">Platform Overview</button>
+  <button class="tab-btn" onclick="showTab('users')">User Hierarchy</button>
+  <button class="tab-btn" onclick="showTab('auth')">Auth &amp; Login Routes</button>
+  <button class="tab-btn" onclick="showTab('apps')">App Ecosystem</button>
+  <button class="tab-btn" onclick="showTab('data')">Data Architecture</button>
+  <button class="tab-btn" onclick="showTab('curriculum')">Curriculum</button>
+  <button class="tab-btn" onclick="showTab('governance')">Dev Governance</button>
+  <button class="tab-btn" onclick="showTab('status')">Platform Status</button>
+  <button class="tab-btn" onclick="showTab('diagram')">Architecture Diagram</button>
+  <button class="tab-btn" onclick="showTab('adr')">Decision Log</button>
+  <button class="tab-btn" onclick="showTab('workflows')">User Workflows</button>
+  <button class="tab-btn" onclick="showTab('platformmap')">Platform Map</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 1: PLATFORM OVERVIEW -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-overview" class="tab-panel active">
+
+  <h2>What WriFe Is</h2>
+  <p>WriFe is a UK school writing platform for pupils aged 6–14 (Years 2–8, KS1–KS3). It combines structured grammar-based writing instruction with gamified practice, AI-assisted assessment, and a professional teacher resource toolkit. The platform is built across <strong>five distinct applications</strong> that share a single Supabase backend.</p>
+
+  <div class="callout rule">
+    <strong>The Golden Rule</strong>
+    All five apps share exactly one Supabase project: <code>gzmgjkbtsvezfclmreru</code> (WriFe Platform). Never create migrations targeting any other project ID for production work. The two legacy project IDs (<code>rxmitjrbrsqjeymsycoj</code>, <code>nxhkpqngnxshgotvuujb</code>) are retired and should be deleted to avoid confusion (see Data Architecture tab).
+  </div>
+
+  <h2>The Five Apps</h2>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>App</th><th>URL</th><th>Repo</th><th>Stack</th><th>Primary Role</th></tr>
+      <tr><td><strong>WriFe Platform</strong></td><td>wrife.co.uk</td><td>wrife-website</td><td>Next.js 14, App Router, Tailwind, Drizzle</td><td>School hub — teacher dashboard, admin panel, SSO gateway, marketing site</td></tr>
+      <tr><td><strong>PWP Studio</strong></td><td>pwp-studio.wrife.co.uk</td><td>wrifeapp</td><td>Vite + React 18, Zustand, React Query</td><td>Progressive Writing Practice — formula engine (L1–L67), chain practice, free practice, AI assessment</td></tr>
+      <tr><td><strong>Interactive Practice</strong></td><td>practice.wrife.co.uk</td><td>InteractivePracticeApp</td><td>Vite + React 18, Zustand, React Query</td><td>61-lesson grammar game — 6 worlds, XP, badges, boss challenges, streaks</td></tr>
+      <tr><td><strong>Daily Writing Practice</strong></td><td>dailywrite.wrife.co.uk</td><td>wrife-dwp</td><td>Vite + React 18</td><td>Daily free-writing — 40 levels, 365 daily prompts, AI assessment, Supabase Edge Functions</td></tr>
+      <tr><td><strong>Learning Toolkit</strong></td><td>resources.wrife.co.uk</td><td>resources.wrife</td><td>Next.js 14, App Router, Tailwind</td><td>Teacher resource hub — 9 AI-powered tools (Claude Haiku), downloadable PDFs, subscription tiers for teachers and schools</td></tr>
+    </table>
+  </div>
+
+  <div class="callout warn">
+    <strong>Critical repo boundary — do not cross</strong>
+    The <code>wrife-website</code> repo contains <strong>wrife.co.uk only</strong>. PWP Studio, IP, and DWP are separate repos with separate deployments. Never create <code>app/pwp/</code> routes or pupil experience components inside <code>wrife-website</code>. A previous session built an entire PWP implementation here by mistake; it required a full git reset (2026-05-13, commit 375d29d).
+  </div>
+
+  <h2>Infrastructure at a Glance</h2>
+  <div class="two-col">
+    <div>
+      <h3>Backend</h3>
+      <ul>
+        <li><strong>Database:</strong> Supabase Postgres (<code>gzmgjkbtsvezfclmreru</code>)</li>
+        <li><strong>Auth:</strong> Supabase Auth — unified across all four apps</li>
+        <li><strong>Edge Functions:</strong> Supabase (pupil-login, assess-formula, assess-paragraph, assess-writing, stripe-checkout, stripe-webhook, create-child-profile, dwp-assess, dwp-tts-feedback, pupil-create, invite-teacher)</li>
+        <li><strong>AI Assessment:</strong> Claude Haiku (formula/paragraph), gpt-4o-mini (formula), gpt-4o (full rubric writing)</li>
+        <li><strong>Payments:</strong> Stripe (subscriptions for schools + B2C home accounts)</li>
+        <li><strong>Email:</strong> Resend via <code>noreply@wrife.co.uk</code></li>
+        <li><strong>DB connection pool:</strong> <code>max: 2</code> in <code>lib/db.ts</code> — critical, do not raise on free tier</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Frontend / Deployment</h3>
+      <ul>
+        <li><strong>Hosting:</strong> Vercel (all four apps)</li>
+        <li><strong>DNS:</strong> wrife.co.uk + subdomains</li>
+        <li><strong>PWA:</strong> wrifeapp uses Workbox service worker; NetworkOnly rules required for <code>/functions/</code> and <code>/auth/</code> endpoints</li>
+        <li><strong>TypeScript:</strong> Strict mode, zero errors required before every push</li>
+        <li><strong>CSS tokens:</strong> No hardcoded hex colours in components — always use CSS variables</li>
+        <li><strong>CORS standard:</strong> All Edge Functions must include <code>authorization, x-client-info, apikey, content-type</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Mascot &amp; Brand</h2>
+  <p><strong>WriFi the Pencil</strong> — a friendly yellow/orange pencil character (body <code>#FFCF4A</code>, eraser <code>#FF7A64</code>) used across all pupil-facing interfaces. WriFi is encouraging, never critical, and appears in practice activities, feedback screens, badge awards, and celebration animations. Never use WriFi in formal or negative contexts.</p>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Token</th><th>Value</th><th>Use</th></tr>
+      <tr><td>Brand primary</td><td><code>#6C5CE7</code></td><td>Purple — all apps, teacher UI, navigation</td></tr>
+      <tr><td>Brand secondary</td><td><code>#F5A623</code></td><td>Orange — CTA buttons, highlights</td></tr>
+      <tr><td>Background</td><td><code>#FDF8EE</code></td><td>Cream — page backgrounds</td></tr>
+      <tr><td>Green success</td><td><code>#00b894</code></td><td>Pupil SSO, working features</td></tr>
+      <tr><td>Blue (DWP)</td><td><code>#0984e3</code></td><td>Daily Writing Practice accent</td></tr>
+      <tr><td>Toolkit green</td><td><code>#27AE60</code></td><td>resources.wrife.co.uk — Learning Toolkit brand colour</td></tr>
+    </table>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 2: USER HIERARCHY -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-users" class="tab-panel">
+
+  <h2>User Hierarchy</h2>
+  <p>WriFe has six distinct user types arranged in two access trees: the <strong>school tree</strong> (super admin → school admin → teacher → school pupil) and the <strong>B2C tree</strong> (parent → home learner / independent teacher → their pupils). All types authenticate against the same Supabase project.</p>
+
+  <div class="callout rule">
+    <strong>Role storage rule</strong>
+    The role lives in <code>profiles.role</code> — NOT in the JWT. Always fetch the profile after sign-in before making any routing or permission decision.
+  </div>
+
+  <div class="role-grid">
+
+    <div class="role-card" style="border-color: var(--purple);">
+      <span class="role-badge" style="background:var(--purple);color:#fff;">SUPER ADMIN</span>
+      <h3>Super Admin</h3>
+      <p style="font-size:12px;color:var(--muted);">Michael (wrife.education@gmail.com) — WriFe creator. Login: <code>/admin/login</code></p>
+      <ul class="cap-list">
+        <li>✅ Manage all schools (create, view, edit, delete)</li>
+        <li>✅ View all teachers, classes, pupils across all schools</li>
+        <li>✅ Create school admin accounts</li>
+        <li>✅ View analytics across all schools</li>
+        <li>✅ Review school registration requests (<code>/admin/registrations</code>)</li>
+        <li>❌ Cannot create classes or assign lessons (not a teacher)</li>
+        <li>❌ Cannot log in via regular <code>/login</code> (blocked by middleware)</li>
+      </ul>
+    </div>
+
+    <div class="role-card" style="border-color: var(--blue);">
+      <span class="role-badge" style="background:var(--blue);color:#fff;">SCHOOL ADMIN</span>
+      <h3>School Admin</h3>
+      <p style="font-size:12px;color:var(--muted);">School leadership — Head, Deputy Head, Curriculum Lead. Login: <code>wrife.co.uk/login</code></p>
+      <ul class="cap-list">
+        <li>✅ View all teachers, classes, pupils in their school</li>
+        <li>✅ View school-wide analytics and assignment completion rates</li>
+        <li>✅ View lesson assignments across all classes</li>
+        <li>❌ Cannot create/edit/delete classes (teacher only)</li>
+        <li>❌ Cannot assign lessons to classes</li>
+        <li>❌ Cannot view other schools' data</li>
+        <li>❌ Cannot change subscription tier</li>
+      </ul>
+    </div>
+
+    <div class="role-card" style="border-color: var(--purple);">
+      <span class="role-badge" style="background:var(--purple-light);color:var(--purple);">TEACHER</span>
+      <h3>School Teacher</h3>
+      <p style="font-size:12px;color:var(--muted);">Classroom teachers at schools with wrife.co.uk accounts. Login: <code>wrife.co.uk/login</code></p>
+      <ul class="cap-list">
+        <li>✅ Create and manage classes; add/remove pupils</li>
+        <li>✅ Browse all 67 lessons and 6 lesson tabs</li>
+        <li>✅ Assign IP lessons, PWP levels, DWP prompts with due dates</li>
+        <li>✅ View per-pupil progress via <code>learning_events</code> (ClassActivityPanel)</li>
+        <li>✅ Review pupil submissions; provide AI-assisted or manual feedback</li>
+        <li>✅ Download Word-format progress reports</li>
+        <li>❌ Cannot view other teachers' classes or pupils</li>
+      </ul>
+    </div>
+
+    <div class="role-card" style="border-color: var(--orange);">
+      <span class="role-badge" style="background:var(--orange-light);color:#b36800;">PARENT</span>
+      <h3>Parent (B2C)</h3>
+      <p style="font-size:12px;color:var(--muted);">Parents who sign up directly. Login: <code>pwp-studio.wrife.co.uk/parent</code>. Route C.</p>
+      <ul class="cap-list">
+        <li>✅ Sign up at <code>/home-signup</code> — creates home account + Stripe subscription</li>
+        <li>✅ Create child profiles (provisions pupils in auto-created home class)</li>
+        <li>✅ View child's progress via <code>learning_events</code></li>
+        <li>❌ Cannot manage school classes or school pupils</li>
+        <li>⚠️ Dashboard on IP app: not built — parents use pwp-studio for everything</li>
+      </ul>
+    </div>
+
+    <div class="role-card" style="border-color: var(--orange);">
+      <span class="role-badge" style="background:var(--orange-light);color:#b36800;">IND. TEACHER</span>
+      <h3>Independent Teacher (B2C)</h3>
+      <p style="font-size:12px;color:var(--muted);">Teachers with no school account. Route D — not yet built.</p>
+      <ul class="cap-list">
+        <li>⚠️ Sign up at sub-app <code>/teacher-signup</code> — stored in <code>home_accounts</code> with <code>account_type='independent_teacher'</code></li>
+        <li>⚠️ Creates classes in sub-apps with their own class codes</li>
+        <li>⚠️ Stripe subscription for access</li>
+        <li>❌ Route D not yet built on any sub-app</li>
+      </ul>
+    </div>
+
+    <div class="role-card" style="border-color: var(--green);">
+      <span class="role-badge" style="background:var(--green-light);color:var(--green);">PUPIL</span>
+      <h3>School Pupil</h3>
+      <p style="font-size:12px;color:var(--muted);">Students aged 6–11. Login: <code>wrife.co.uk/pupil/login</code> only (Route A). Class code + username + PIN.</p>
+      <ul class="cap-list">
+        <li>✅ View assigned lessons; open all 6 lesson tabs</li>
+        <li>✅ Practice via IP, PWP, DWP via SSO deep links</li>
+        <li>✅ Track writing streak, badges, XP</li>
+        <li>✅ See teacher feedback on submissions</li>
+        <li>❌ Cannot browse all 67 lessons (assigned only)</li>
+        <li>❌ Route B (direct sub-app login) is retired for school pupils</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <h2>Home Learner (B2C Pupil)</h2>
+  <p>Home learners are provisioned by parents via Route C. They are stored in the same <code>pupils</code> table as school pupils, but their <code>class_id</code> points to an auto-created "home" class owned by the parent's <code>home_accounts</code> record. They log in directly at sub-app <code>/login</code> using their parent code + username + PIN. They do not have access to wrife.co.uk.</p>
+
+  <h2>Subscription Tiers (School Accounts)</h2>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Tier</th><th>Teachers</th><th>Pupils</th><th>Price</th><th>Notes</th></tr>
+      <tr><td><strong>Trial</strong></td><td>5</td><td>150</td><td>Free</td><td>Default; unlimited duration during pilot phase; all features enabled</td></tr>
+      <tr><td><strong>Basic</strong></td><td>10</td><td>300</td><td>£500/yr</td><td>—</td></tr>
+      <tr><td><strong>Pro</strong></td><td>25</td><td>750</td><td>£1,200/yr</td><td>—</td></tr>
+      <tr><td><strong>Enterprise</strong></td><td>Unlimited</td><td>Unlimited</td><td>Custom</td><td>—</td></tr>
+    </table>
+  </div>
+  <p>Quota is enforced at creation time. Warning shown at 90% capacity. Teacher count is derived from distinct <code>teacher_id</code> values in <code>classes</code>; pupil count from <code>class_members</code>.</p>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 3: AUTH & LOGIN ROUTES -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-auth" class="tab-panel">
+
+  <h2>The Four Login Routes</h2>
+  <p>Understanding which route a user arrives through determines their interface, session flags, and data access. All routes authenticate against the single Supabase project.</p>
+
+  <div class="route-grid">
+
+    <div class="route-card" style="background:var(--green-light);border:1.5px solid var(--green);">
+      <h3 style="color:var(--green);">Route A — School Pupil Hub SSO ✅</h3>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px;">All school pupils. The ONLY valid login path for school-managed accounts.</p>
+      <div class="step">Pupil visits <code>wrife.co.uk/pupil/login</code></div>
+      <div class="step">Enters <code>class_code</code> + <code>username</code> + PIN</div>
+      <div class="step">POST <code>/api/pupil/login</code> → validates against <code>pupils</code> table</div>
+      <div class="step">Supabase Auth user provisioned (synthetic email: <code>pupil-{uuid}@practice.wrife.co.uk</code>)</div>
+      <div class="step">JWT minted → pupil dashboard at <code>/pupil/dashboard</code></div>
+      <div class="step">App tile clicked → JWT embedded in URL hash fragment</div>
+      <div class="step">Sub-app SDK auto-detects hash → <code>setSession()</code> called</div>
+      <div class="step"><code>sessionStorage.setItem('entryViaHub', '1')</code></div>
+      <div class="step">"← WriFe" back button shown in sub-app</div>
+    </div>
+
+    <div class="route-card" style="background:var(--purple-light);border:1.5px solid var(--purple);">
+      <h3 style="color:var(--purple);">Route B — Teacher / Admin Email Login ✅</h3>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px;">School teachers, school admins, super admin, independent teacher pupils, home learners.</p>
+      <div class="step">Teacher → <code>wrife.co.uk/login</code> (email + password)</div>
+      <div class="step">Admin → <code>wrife.co.uk/admin/login</code> (special portal)</div>
+      <div class="step">Supabase Auth cookie session created</div>
+      <div class="step">Profile fetched → role read from <code>profiles.role</code></div>
+      <div class="step">Routed to appropriate dashboard</div>
+      <div class="step" style="color:var(--red);">⚠️ Route B for school pupils on sub-apps is RETIRED — sub-app <code>/login</code> must reject school pupils and redirect to wrife.co.uk</div>
+    </div>
+
+    <div class="route-card" style="background:var(--orange-light);border:1.5px solid var(--orange);">
+      <h3 style="color:#b36800;">Route C — Parent Home Sign-up ✅ (partial)</h3>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px;">B2C parents purchasing access for their children.</p>
+      <div class="step">Parent visits <code>pwp-studio.wrife.co.uk/home-signup</code></div>
+      <div class="step">Account created in <code>home_accounts</code> (<code>account_type='parent'</code>)</div>
+      <div class="step">Stripe checkout → subscription attached</div>
+      <div class="step">Post-payment: <code>create-child-profile</code> Edge Function provisions pupil</div>
+      <div class="step">Auto-created home class with parent code (= class code)</div>
+      <div class="step">Child logs in at sub-app <code>/login</code> using parent code + username + PIN</div>
+      <div class="step" style="color:var(--red);">⚠️ Stripe webhook → pupil provisioning not yet fully built</div>
+    </div>
+
+    <div class="route-card" style="background:var(--red-light);border:1.5px solid var(--red);">
+      <h3 style="color:var(--red);">Route D — Independent Teacher Sign-up ❌ Not Built</h3>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px;">Teachers with no school account who sign up directly on sub-apps.</p>
+      <div class="step">Teacher signs up at <code>pwp-studio.wrife.co.uk/teacher-signup</code> or <code>practice.wrife.co.uk/teacher-signup</code></div>
+      <div class="step">Account in <code>home_accounts</code> (<code>account_type='independent_teacher'</code>)</div>
+      <div class="step">Stripe subscription attached</div>
+      <div class="step">Creates classes in sub-app → pupils login via Route B with class code</div>
+      <div class="step" style="color:var(--red);">All of the above is yet to be built on any sub-app</div>
+    </div>
+
+  </div>
+
+  <h2>The ← WriFe Back Button</h2>
+  <p>Shown in sub-apps <strong>only</strong> when the pupil arrived via Route A (hub hash token). Never shown for direct logins.</p>
+  <pre>// Run once on app init (both PWP Studio and Interactive Practice):
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' &amp;&amp; window.location.hash.includes('access_token')) {
+    sessionStorage.setItem('entryViaHub', '1')
+    window.history.replaceState(null, '', window.location.pathname)
+  }
+})
+
+// In nav component:
+const showBackToHub = sessionStorage.getItem('entryViaHub') === '1'
+// Render: &lt;a href="https://wrife.co.uk/pupil/dashboard"&gt;← WriFe&lt;/a&gt;</pre>
+  <p>Use <code>sessionStorage</code> (not <code>localStorage</code>) — clears on tab close so a fresh direct load never incorrectly shows the button.</p>
+
+  <h2>Pupil Session Storage</h2>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Key</th><th>Storage</th><th>Set by</th><th>Purpose</th></tr>
+      <tr><td><code>pupilSession</code></td><td>localStorage</td><td>pupil-login Edge Function</td><td>PIN-auth session record for school/home pupils</td></tr>
+      <tr><td><code>entryViaHub</code></td><td>sessionStorage</td><td>Sub-app init (Route A)</td><td>Controls ← WriFe back button visibility</td></tr>
+      <tr><td><code>wrife_pending_child</code></td><td>sessionStorage</td><td>home-signup flow</td><td>Written by home-signup, read by ParentPage</td></tr>
+      <tr><td><code>wrife_profile_v1</code></td><td>localStorage</td><td>wrifeapp auth</td><td>Stale-while-revalidate profile cache</td></tr>
+    </table>
+  </div>
+
+  <h2>Email Format Rules</h2>
+  <ul>
+    <li><strong>Teachers:</strong> Real email address (required for password reset)</li>
+    <li><strong>School pupils:</strong> Auto-generated <code>firstnamelastname[random]@wrife.co.uk</code> — must use <code>@wrife.co.uk</code> domain (not <code>.test</code> or <code>.temp</code>)</li>
+    <li><strong>Synthetic auth emails (Route A):</strong> <code>pupil-{uuid}@practice.wrife.co.uk</code></li>
+  </ul>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 4: APP ECOSYSTEM -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-apps" class="tab-panel">
+
+  <h2>wrife.co.uk — Platform Hub</h2>
+  <p>The central application. All school management, teacher workflows, and pupil SSO originate here. Built in Next.js 14 with App Router.</p>
+  <div class="two-col">
+    <div>
+      <h3>Teacher Dashboard (6 Tabs)</h3>
+      <ul>
+        <li><strong>Overview:</strong> Metric cards (PWP today, drafts awaiting review, average score, top skill gap), class progress chart, recent submissions</li>
+        <li><strong>Classes:</strong> Create/manage classes, add pupils, generate class codes, reset passwords</li>
+        <li><strong>Assignments:</strong> Assign IP lessons, PWP levels, DWP prompts with due dates and instructions</li>
+        <li><strong>Progress (ClassActivityPanel):</strong> Per-pupil PWP / IP / DWP data consumed from <code>learning_events</code> ✅</li>
+        <li><strong>Submissions:</strong> Review pupil work, AI feedback, mark as reviewed</li>
+        <li><strong>Reports:</strong> Download Word-format progress reports</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Pupil Dashboard</h3>
+      <ul>
+        <li>Greeting + writing streak counter</li>
+        <li>App tiles: Interactive Practice, PWP Studio, Daily Writing — each tile embeds JWT in URL hash for SSO</li>
+        <li>"My Assignments" list with due dates and status badges</li>
+        <li>Simple progress visualisation</li>
+      </ul>
+      <h3>Admin Panel (<code>/admin</code>)</h3>
+      <ul>
+        <li>School management (create, edit, delete with cascade)</li>
+        <li>School registration requests (<code>/admin/registrations</code>)</li>
+        <li>Public registration form at <code>/school-register</code></li>
+        <li>Teacher invitation via <code>/api/admin/invite-teacher</code> (Resend email)</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>PWP Studio — pwp-studio.wrife.co.uk</h2>
+  <p>Progressive Writing Practice. Repo: <code>wrifeapp</code>. Formula-based sentence construction engine tied directly to the 67-lesson curriculum.</p>
+  <div class="two-col">
+    <div>
+      <h3>Core Features</h3>
+      <ul>
+        <li><strong>Formula Practice (L1–L67):</strong> Sentence construction exercises for each curriculum formula. Primary progress table: <code>formula_progress</code>.</li>
+        <li><strong>Daily Chain Practice:</strong> Streak-based daily sentence chains. Progress in <code>pwp_chain_sessions</code>.</li>
+        <li><strong>Free Practice:</strong> Open sentence writing. Stored in <code>pwp_free_practice_sentences</code>.</li>
+        <li><strong>Connect Grid (L27–34):</strong> Planning tool for multi-sentence paragraph writing.</li>
+        <li><strong>Paragraph Builder:</strong> LSC scaffold for structured paragraph composition.</li>
+        <li><strong>AI Assessment:</strong> Claude Haiku + gpt-4o-mini via <code>assess-formula</code> and <code>assess-paragraph</code> Edge Functions.</li>
+        <li><strong>Writing Studio:</strong> Full writing submission with AI rubric scoring via <code>assess-writing</code>.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>B2C Features</h3>
+      <ul>
+        <li>Home sign-up at <code>/home-signup</code> (Route C)</li>
+        <li>Stripe subscriptions — checkout, webhook, customer portal</li>
+        <li>Parent dashboard showing child progress</li>
+        <li>Teacher assignments (PWP levels) from wrife.co.uk consumed here</li>
+      </ul>
+      <h3>Difficulty Profile</h3>
+      <p style="font-size:12px;">Rolling window of 5 scores on <code>formula_progress</code>. <code>ready_to_advance = true</code> when last 3 scores all &gt; 95.</p>
+      <h3>Key Rule</h3>
+      <div class="callout danger" style="margin:8px 0;">
+        <strong>formula_progress is the primary PWP table</strong>
+        All new gamification columns (XP, coins, streaks, badges) go on <code>formula_progress</code> with <code>NOT NULL DEFAULT &lt;value&gt;</code>. <code>pwp_pupil_progress</code> is legacy and not queried by the dashboard.
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Interactive Practice — practice.wrife.co.uk</h2>
+  <p>Gamified grammar game. Repo: <code>InteractivePracticeApp</code>. 61 lessons across 6 worlds with XP, badges, boss challenges, and streak tracking.</p>
+  <div class="two-col">
+    <div>
+      <h3>Game Structure</h3>
+      <ul>
+        <li><strong>6 Worlds</strong> — each with 9–12 lessons and a boss challenge</li>
+        <li><strong>61 Lessons</strong> — activities of types: multiple choice, write, match, fill-blank, checklist</li>
+        <li><strong>432+ Activities</strong> in <code>activities</code> table</li>
+        <li><strong>XP + Stars</strong> per lesson completion</li>
+        <li><strong>Badge System:</strong> 80 badge definitions; awarded on world completion, streaks, milestones</li>
+        <li><strong>Boss Challenges:</strong> End-of-world assessment gates</li>
+        <li><strong>Connect Grid:</strong> Available for L27–34 lessons</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Technical Notes</h3>
+      <ul>
+        <li>UserRole type: only <code>'pupil' | 'teacher' | 'admin'</code> — do not add parent</li>
+        <li>Teacher view in sub-app: ❌ not yet built</li>
+        <li>Home sign-up redirects to wrifeapp pricing (cross-origin)</li>
+        <li>Writes <code>lesson_completed</code>, <code>world_completed</code>, <code>badge_earned</code>, <code>streak_milestone</code> events to <code>learning_events</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Daily Writing Practice — dailywrite.wrife.co.uk</h2>
+  <p>Daily free-writing app. Repo: <code>wrife-dwp</code>. 40 structured levels of writing complexity, 365 daily prompts across 5 categories.</p>
+  <div class="two-col">
+    <div>
+      <h3>Content</h3>
+      <ul>
+        <li><strong>40 Levels</strong> — seeded in <code>dwp_levels</code></li>
+        <li><strong>365 Daily Prompts</strong> — seeded in <code>dwp_daily_prompts</code>: Sensory (60), Narrative (105), Reflection (60), Description (80), Argument (60)</li>
+        <li><strong>20 Feature Taxonomy entries</strong> in <code>dwp_feature_taxonomy</code></li>
+        <li><strong>AI Assessment</strong> via <code>dwp-assess</code> Edge Function</li>
+        <li><strong>TTS Feedback</strong> via <code>dwp-tts-feedback</code></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Key Technical Rules</h3>
+      <div class="callout rule" style="margin:0 0 8px;">
+        <strong>DWP RLS rule</strong>
+        DWP RLS policies must use <code>pupil_id IN (SELECT id FROM pupils WHERE auth_user_id = auth.uid())</code> — never <code>pupil_id = auth.uid()</code>.
+      </div>
+      <ul>
+        <li>Shares platform Supabase project — not isolated</li>
+        <li><code>home_accounts_app_origin_check</code> constraint includes <code>'dwp'</code></li>
+        <li>Writes <code>learning_events</code> with <code>app = 'dwp'</code>, event types: <code>level_completed</code>, <code>daily_prompt_submitted</code></li>
+        <li>Teacher view: ❌ not yet built</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Learning Toolkit — resources.wrife.co.uk</h2>
+  <p>Professional teacher resource hub. Repo: <code>resources.wrife</code>. Built with Next.js 14 App Router. Provides 9 AI-powered writing tools (Claude Haiku) for classroom use, plus 30+ downloadable PDF resources (anchor charts, templates, worksheets) for lessons L1–L67.</p>
+  <div class="two-col">
+    <div>
+      <h3>The 9 AI Tools</h3>
+      <ul>
+        <li><strong>PWP Practice</strong> <code>/daily/pwp</code> — formula sentence practice</li>
+        <li><strong>Daily Writing</strong> <code>/daily/dwp</code> — daily writing prompt</li>
+        <li><strong>Connect Grid</strong> <code>/lesson/connect-grid</code> — paragraph planning (L27–)</li>
+        <li><strong>Sentence Coach</strong> <code>/lesson/sentence-coach</code> — sentence improvement</li>
+        <li><strong>Story Type Identifier</strong> <code>/lesson/story-types</code> — narrative classification</li>
+        <li><strong>Composition Reviewer</strong> <code>/lesson/composition</code> — full text review</li>
+        <li><strong>Editing Doctor</strong> <code>/lesson/editing-doctor</code> — proofreading assistant</li>
+        <li><strong>Genre Coach</strong> <code>/lesson/genre-coach</code> — genre-specific guidance</li>
+        <li><strong>Project Mentor</strong> <code>/lesson/project-mentor</code> — extended project support</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Subscription Tiers</h3>
+      <ul>
+        <li><strong>free</strong> — no AI tools; PDFs accessible publicly at <code>/resources</code> (no login required)</li>
+        <li><strong>standard</strong> — (reserved; not currently mapped to tools)</li>
+        <li><strong>full</strong> — all 9 AI tools unlocked; individual subscription via Stripe</li>
+        <li><strong>school</strong> — all 9 AI tools; school licence grants full access to all staff</li>
+      </ul>
+      <p style="font-size:12px;margin-top:8px;">Tier is resolved by <code>get_user_tier()</code> DB function: checks school licence first, then individual subscription, defaults to <code>'free'</code>.</p>
+      <h3>Auth &amp; SSO</h3>
+      <ul>
+        <li>Teachers log in directly at <code>/login</code> (email + password via Supabase Auth)</li>
+        <li>Route A SSO: <code>hubEntry.ts</code> detects hash token, sets <code>sessionStorage.entryViaHub = '1'</code> — school pupils can be directed here from wrife.co.uk</li>
+        <li>Brand colour: <code>#27AE60</code></li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout warn">
+    <strong>⚠️ Critical — resources.wrife awaiting deployment</strong>
+    All 9 AI tools are built (Session 6, 2026-05-10) but the app has not yet been pushed to git or deployed to Vercel. Stripe integration is also pending (estimated pricing: £4.90/month standard, £9.90/month full).
+  </div>
+  <div class="callout danger">
+    <strong>🔴 Critical DB bug — learning_events CHECK constraint must be updated before resources.wrife goes live</strong>
+    <code>logToolUse.ts</code> inserts into <code>learning_events</code> with <code>app = 'resources'</code>, but the current CHECK constraint is <code>CHECK (app IN ('pwp', 'ip', 'dwp'))</code>. These inserts will silently fail until the constraint is updated. See Data Architecture tab for the required migration.
+  </div>
+
+  <h3>resources.wrife Owned Tables</h3>
+  <pre>ai_sessions         — per-user AI tool session records
+ai_attempts         — individual AI interaction attempts (tool use events)
+daily_streaks       — streak tracking for daily tools (pwp, dwp)
+usage_quotas        — tool usage limits per tier
+ai_tool_assignments — school/teacher assignments of specific tools to pupils</pre>
+
+  <h2>Assignment System</h2>
+  <p>Assignments are configured in wrife.co.uk and executed in sub-apps. The hub defines <em>what</em> to do and <em>by when</em>; the sub-apps handle <em>how</em> and report back via <code>learning_events</code>.</p>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Table</th><th>Owned By</th><th>Controls</th></tr>
+      <tr><td><code>pwp_assignments</code></td><td>wrife-website</td><td><code>level_from</code>, <code>level_to</code>, <code>due_date</code>, <code>status</code></td></tr>
+      <tr><td><code>ip_assignments</code></td><td>wrife-website</td><td>Which world/lesson range, <code>due_date</code></td></tr>
+      <tr><td><code>dwp_assignments</code></td><td>wrife-website</td><td>DWP level, prompt category, <code>due_date</code></td></tr>
+      <tr><td><code>formula_progress</code>, <code>pwp_pupil_levels</code></td><td>wrifeapp</td><td>Actual PWP practice engine state</td></tr>
+      <tr><td><code>pupil_progress</code>, <code>pupil_responses</code></td><td>InteractivePracticeApp</td><td>Actual IP lesson engine state</td></tr>
+    </table>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 5: DATA ARCHITECTURE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-data" class="tab-panel">
+
+  <h2>Shared Database</h2>
+  <p>All five apps share <strong>one Supabase Postgres project: <code>gzmgjkbtsvezfclmreru</code></strong>. Auth is unified — a user account created on any app works on all. Never target any other project ID for production migrations.</p>
+
+  <div class="callout danger">
+    <strong>Legacy project IDs — retired; recommend deletion</strong>
+    <code>rxmitjrbrsqjeymsycoj</code> (IP Practice legacy) and <code>nxhkpqngnxshgotvuujb</code> (PWP App legacy) are fully retired. All production work is on <code>gzmgjkbtsvezfclmreru</code>. <strong>Recommended action: export the schema from each legacy project for archival reference, then delete both from the Supabase dashboard.</strong> Keeping retired projects risks a future session accidentally targeting them for a migration. There is no active code pointing to these IDs.
+  </div>
+
+  <h2>Table Ownership — The Hard Rule</h2>
+  <p>Each repo owns specific tables. Never write a migration in one repo that alters, recreates, or removes a table owned by another repo.</p>
+
+  <h3>wrife-website owns</h3>
+  <pre>classes              — school and home classes; account_type = 'school' | 'home'
+pupils               — all pupil accounts (school + home)
+profiles             — all Supabase auth users (teachers, school admins)
+schools              — school organisations
+school_admins        — school admin accounts
+subscriptions        — Stripe subscription state for schools
+home_accounts        — parent and independent teacher direct accounts
+pupil_parent_links   — school parent access grants
+pwp_assignments      — teacher-configured PWP tasks
+ip_assignments       — teacher-configured IP tasks
+dwp_assignments      — teacher-configured DWP tasks
+learning_events      — shared progress bridge (written by sub-apps, read by wrife.co.uk)
+pupil_sessions       — legacy session cookies
+pupil_activity_log   — login events, audit trail
+school_registrations — public registration requests</pre>
+
+  <h3>wrifeapp (PWP Studio) owns</h3>
+  <pre>formula_levels          — 67 formula definitions
+formula_progress        — per-pupil formula completion state (PRIMARY progress table)
+formula_sessions        — individual practice session records
+pwp_pupil_levels        — current level assignment per pupil
+pwp_chain_sessions      — daily chain practice sessions
+pwp_chain_sentences     — sentences from chain sessions
+pwp_free_practice_sentences — free practice sentence history
+pwp_weekly_themes       — active theme per class per week
+paragraph_sessions      — LSC paragraph builder sessions
+paragraph_sentences     — sentences from paragraph sessions
+writing_pieces          — writing studio submissions</pre>
+
+  <h3>InteractivePracticeApp owns</h3>
+  <pre>activities              — 432+ lesson activities (mc, write, match, fillblank, checklist)
+lessons                 — 61 lesson definitions
+worlds                  — 6 world definitions
+pupil_progress          — per-pupil lesson completion + stars
+pupil_responses         — individual activity answers
+badge_definitions       — 80 badge catalogue entries
+pupil_badges            — earned badges per pupil
+streaks                 — daily activity streaks (IP-specific)</pre>
+
+  <h3>wrife-dwp owns</h3>
+  <pre>dwp_levels              — 40 writing complexity levels (seeded)
+dwp_daily_prompts       — 365 daily prompts, 5 categories (seeded)
+dwp_feature_taxonomy    — 20 feature definitions (seeded)
+dwp_progress            — per-pupil level completion
+dwp_submissions         — pupil daily prompt submissions
+dwp_assessments         — AI assessment results per submission</pre>
+
+  <h3>resources.wrife owns</h3>
+  <pre>ai_sessions             — per-user AI tool session records
+ai_attempts             — individual AI interaction attempts (tool use events)
+daily_streaks           — streak tracking for daily tools (pwp, dwp)
+usage_quotas            — tool usage limits per subscription tier
+ai_tool_assignments     — school/teacher assignments of specific tools to pupils</pre>
+
+  <h3>Shared (bridge)</h3>
+  <pre>learning_events         — owned by wrife-website; sub-apps INSERT only, never ALTER</pre>
+
+  <h2>The learning_events Bridge</h2>
+  <p>Sub-apps write a lightweight event row whenever significant pupil progress occurs. wrife.co.uk reads this table for the teacher class view (ClassActivityPanel). Sub-app internal tables remain private.</p>
+  <pre>CREATE TABLE learning_events (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  pupil_id     UUID NOT NULL,       -- = auth.uid() = pupils.id
+  app          TEXT NOT NULL CHECK (app IN ('pwp', 'ip', 'dwp', 'resources')),
+  event_type   TEXT NOT NULL,
+  event_data   JSONB DEFAULT '{}',
+  class_id     UUID REFERENCES classes(id),  -- nullable for home learners
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);</pre>
+
+  <div class="callout danger">
+    <strong>🔴 Pending migration — learning_events app CHECK constraint</strong>
+    The current production constraint is <code>CHECK (app IN ('pwp', 'ip', 'dwp'))</code>. The <code>resources.wrife</code> app inserts with <code>app = 'resources'</code> (see <code>lib/events/logToolUse.ts</code>). These inserts will silently fail (fire-and-forget, errors swallowed) until this migration is applied:
+    <pre style="margin-top:8px;">ALTER TABLE learning_events
+  DROP CONSTRAINT IF EXISTS learning_events_app_check,
+  ADD CONSTRAINT learning_events_app_check
+    CHECK (app IN ('pwp', 'ip', 'dwp', 'resources'));</pre>
+    Run this migration on <code>gzmgjkbtsvezfclmreru</code> BEFORE deploying resources.wrife.co.uk.
+  </div>
+
+  <div class="callout warn">
+    <strong>⚠️ Also check — home_accounts app_origin constraint</strong>
+    If resources.wrife.co.uk ever creates <code>home_accounts</code> records, the <code>home_accounts_app_origin_check</code> constraint (<code>CHECK (app_origin IN ('pwp', 'ip', 'dwp'))</code>) will also need <code>'resources'</code> added.
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>App</th><th>event_type</th><th>event_data keys</th></tr>
+      <tr><td>pwp</td><td><code>formula_completed</code></td><td><code>level, score, attempts</code></td></tr>
+      <tr><td>pwp</td><td><code>chain_session_completed</code></td><td><code>level, sentences_built, streak_day</code></td></tr>
+      <tr><td>pwp</td><td><code>free_practice_session</code></td><td><code>sentences_built, theme</code></td></tr>
+      <tr><td>pwp</td><td><code>pwp_level_advanced</code></td><td><code>from_level, to_level</code></td></tr>
+      <tr><td>ip</td><td><code>lesson_completed</code></td><td><code>lesson_id, stars, xp_earned</code></td></tr>
+      <tr><td>ip</td><td><code>world_completed</code></td><td><code>world_id, badge_earned</code></td></tr>
+      <tr><td>ip</td><td><code>badge_earned</code></td><td><code>badge_id, badge_name</code></td></tr>
+      <tr><td>ip</td><td><code>streak_milestone</code></td><td><code>streak_days</code></td></tr>
+      <tr><td>dwp</td><td><code>level_completed</code></td><td><code>level_id, score</code></td></tr>
+      <tr><td>dwp</td><td><code>daily_prompt_submitted</code></td><td><code>prompt_id, category, word_count</code></td></tr>
+      <tr><td>resources</td><td><code>tool_used</code></td><td><code>tool_slug, session_id, prompt_length</code></td></tr>
+    </table>
+  </div>
+
+  <h2>Known Schema Gotchas</h2>
+  <div class="callout danger">
+    <strong>pupils.class_id is INTEGER; classes.id is UUID</strong>
+    Legacy mismatch — never join them directly. Use <code>classes.home_account_id</code> or <code>class_members</code> instead. The <code>dwp_transfer_gap_metrics</code> table was skipped because of this mismatch; revisit when the legacy column is migrated to UUID.
+  </div>
+  <ul>
+    <li><code>home_accounts</code> uses <code>home_account_id</code> (not <code>owner_id</code>) for class ownership</li>
+    <li><code>pupil_parent_links</code> uses <code>parent_auth_id</code> (not <code>parent_account_id</code>)</li>
+    <li>DWP RLS: use <code>pupil_id IN (SELECT id FROM pupils WHERE auth_user_id = auth.uid())</code> — never <code>pupil_id = auth.uid()</code></li>
+    <li>New gamification columns on <code>formula_progress</code> MUST include <code>NOT NULL DEFAULT &lt;value&gt;</code> — existing rows get NULL otherwise causing dashboard crashes</li>
+    <li>Admin login must use <code>window.location.replace('/admin')</code> not <code>router.push</code> (forces middleware cookie re-read)</li>
+    <li>Pool <code>max: 2</code> in <code>lib/db.ts</code> — critical for free-tier Supabase, do not raise</li>
+  </ul>
+
+  <h2>Edge Functions</h2>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Function</th><th>Project</th><th>Purpose</th></tr>
+      <tr><td><code>pupil-login</code></td><td>Platform DB</td><td>Class code + username + PIN auth; returns Supabase tokens</td></tr>
+      <tr><td><code>stripe-checkout</code></td><td>wrifeapp</td><td>Creates Stripe checkout session</td></tr>
+      <tr><td><code>stripe-webhook</code></td><td>wrifeapp</td><td>Handles subscription events; updates <code>profiles.membership_tier</code></td></tr>
+      <tr><td><code>stripe-portal</code></td><td>wrifeapp</td><td>Opens Stripe Customer Portal</td></tr>
+      <tr><td><code>create-child-profile</code></td><td>wrifeapp</td><td>Provisions child auth account + home class after Stripe payment</td></tr>
+      <tr><td><code>assess-formula</code></td><td>wrifeapp</td><td>gpt-4o-mini formula validation</td></tr>
+      <tr><td><code>assess-paragraph</code></td><td>wrifeapp</td><td>gpt-4o-mini paragraph assessment</td></tr>
+      <tr><td><code>assess-writing</code></td><td>wrifeapp</td><td>gpt-4o full writing rubric scoring</td></tr>
+      <tr><td><code>invite-teacher</code></td><td>wrifeapp</td><td>Teacher onboarding email via Resend</td></tr>
+      <tr><td><code>dwp-assess</code></td><td>Platform DB</td><td>DWP submission AI assessment</td></tr>
+      <tr><td><code>dwp-tts-feedback</code></td><td>Platform DB</td><td>DWP text-to-speech feedback</td></tr>
+      <tr><td><code>pupil-create</code></td><td>Platform DB</td><td>Bulk pupil provisioning</td></tr>
+    </table>
+  </div>
+  <div class="callout warn">
+    <strong>CORS standard for ALL Edge Functions</strong>
+    Must include: <code>authorization, x-client-info, apikey, content-type</code>. Missing <code>apikey</code> causes a silent <code>TypeError: Failed to fetch</code> with no useful error message.
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 6: CURRICULUM -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-curriculum" class="tab-panel">
+
+  <h2>The WriFe Writing Curriculum</h2>
+  <p>68 lesson items (L1–L68, where L27 splits into L27a and L27b) organised into 7 chapters and 16 units. Designed for UK pupils across <strong>Key Stages 1–3 (Years 2–8, ages 6–14)</strong>. The curriculum spans primary and lower secondary — WriFe is <strong>not</strong> limited to primary only. PWP formula practice begins at Lesson 10. The final lesson, L68 "Celebrating the End Results", is a project celebration activity.</p>
+
+  <div class="callout warn">
+    <strong>⚠️ Platform data correction required</strong>
+    Legacy data in the <code>lessons</code> table and <code>WRIFE_SPECIFICATION.md</code> incorrectly maps upper lessons to Years 4–5 only. The correct year group mapping is shown below. Any lesson record with <code>year_group_max ≤ 5</code> for lessons L27+ should be reviewed and corrected.
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Key Stage</th><th>Year Group</th><th>Age</th><th>Lessons</th><th>Notes</th></tr>
+      <tr><td>KS1–KS2</td><td>Years 2–4</td><td>6–9</td><td>L1–L17</td><td>Stories, parts of speech, foundational grammar</td></tr>
+      <tr><td>KS2</td><td>Years 3–5</td><td>7–10</td><td>L18–L26</td><td>Sentences, phrases, clauses, active/passive</td></tr>
+      <tr><td>KS2–KS3</td><td>Years 5–8</td><td>9–13/14</td><td>L27–L67/68</td><td>Paragraphs, planning, editing, extended writing, project-based writing</td></tr>
+    </table>
+  </div>
+
+  <h3>Chapter 1 — Stories and Words (L1–L17)</h3>
+  <div class="tbl-wrap"><table>
+    <tr><th>Unit</th><th>Lessons</th><th>Topics</th></tr>
+    <tr><td>Unit 1 — Stories</td><td>L1–L3</td><td>Personal stories, telling stories, learning other stories</td></tr>
+    <tr><td>Unit 2 — Story Structure</td><td>L4–L6</td><td>Beginning–middle–end, story types</td></tr>
+    <tr><td>Unit 3 — Parts of Speech 1</td><td>L7–L10</td><td>Nouns, determiners, verbs, tenses — <strong>PWP begins at L10</strong></td></tr>
+    <tr><td>Unit 4 — Parts of Speech 2</td><td>L11–L15</td><td>Subject/verb/object, adjectives, adverbs, pronouns, prepositions</td></tr>
+    <tr><td>Unit 5 — Reading Comprehension</td><td>L16–L17</td><td>Retrieving information, identifying word meaning</td></tr>
+  </table></div>
+
+  <h3>Chapter 2 — Sentences and Paragraphs (L18–L34)</h3>
+  <div class="tbl-wrap"><table>
+    <tr><th>Unit</th><th>Lessons</th><th>Topics</th></tr>
+    <tr><td>Unit 6 — Sentence Types</td><td>L18–L19</td><td>Questions, statements, commands, exclamations</td></tr>
+    <tr><td>Unit 7 — Phrases and Clauses</td><td>L20–L22</td><td>Phrases, clauses, dependent/independent clauses</td></tr>
+    <tr><td>Unit 8 — Simple Sentences</td><td>L23–L26</td><td>What is a sentence, simple sentence forms, active vs passive</td></tr>
+    <tr><td>Unit 9 — Paragraphs + Connect Grid</td><td>L27a–L34</td><td><strong>Core planning tool begins at L27b.</strong> Connect Grid, compound/complex sentences, 7 story types, direct speech, personal pronouns</td></tr>
+  </table></div>
+
+  <h3>Chapter 3 — Planning and Drafting (L35–L41)</h3>
+  <p>Units 10–11: Storyline development, text deconstruction, adaptation, oral rehearsal, first draft.</p>
+
+  <h3>Chapter 4 — Editing (L42–L47)</h3>
+  <p>Unit 12: Checking sentences/punctuation, developing timelines, cohesion, imagery, show-don't-tell, feedback.</p>
+
+  <h3>Chapter 5 — Building Cohesion (L48–L51)</h3>
+  <p>Unit 13: Flow between paragraphs, filling gaps, final accuracy check, final draft.</p>
+
+  <h3>Chapter 6 — Writing for Different Purposes (L52–L63)</h3>
+  <p>Units 14–15: News reports, reports, diaries, argument, letters, explanations, biography, advertising, speech writing, descriptions, poetry, story types.</p>
+
+  <h3>Chapter 7 — Project Based Writing (L64–L68)</h3>
+  <p>Unit 16: Finding inspiration, developing concepts, planning and executing a writing project, group tutorials, celebration of results.</p>
+
+  <hr class="divider">
+
+  <h2>Lesson Structure (6 Tabs per Lesson)</h2>
+  <p>Every lesson in the platform has six components, accessible as tabs:</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>#</th><th>Tab</th><th>Content</th></tr>
+    <tr><td>1</td><td>Teacher Guide</td><td>Professional guidance notes for the teacher; WriFi with glasses icon</td></tr>
+    <tr><td>2</td><td>Lesson Presentation</td><td>Slides/content for classroom delivery</td></tr>
+    <tr><td>3</td><td>Practice Activities</td><td>Worksheets and exercises tied to PWP formulas</td></tr>
+    <tr><td>4</td><td>Worksheets</td><td>Printable or on-screen pupil worksheets</td></tr>
+    <tr><td>5</td><td>Progress Tracker</td><td>Assessment criteria and self-assessment tools</td></tr>
+    <tr><td>6</td><td>Assessment Package</td><td>AI assessment rubric materials; Forms 1–8</td></tr>
+  </table></div>
+
+  <h2>Database Representation</h2>
+  <pre>-- lessons table (owned by InteractivePracticeApp)
+id, lesson_number, part, title, summary, chapter_id, unit_id,
+year_group_min, year_group_max, duration_minutes
+
+-- Special case: L27 has two parts
+-- lesson_number = 27, part = 'a' → What is a Paragraph?
+-- lesson_number = 27, part = 'b' → Introduction to Connect Grid
+
+-- lesson duration
+-- Most lessons: 45–60 minutes
+-- L10 (PWP launch lesson): 60–70 minutes</pre>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 7: DEVELOPMENT GOVERNANCE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-governance" class="tab-panel">
+
+  <h2>Core Governance Rules</h2>
+
+  <div class="callout rule">
+    <strong>Rule 1 — Stay in your lane</strong>
+    When working in <code>wrifeapp</code>: only create/alter PWP-owned tables. When working in <code>InteractivePracticeApp</code>: only create/alter IP-owned tables. When working in <code>wrife-dwp</code>: only create/alter DWP-owned tables. When working in <code>wrife-website</code>: you may alter any table, but flag changes to shared tables explicitly.
+  </div>
+
+  <div class="callout rule">
+    <strong>Rule 2 — Cross-repo changes require an explicit plan</strong>
+    Complete in this order: (1) wrife-website schema/API changes first, (2) sub-app consumes the new schema, (3) verify cross-app checklist before merging either.
+  </div>
+
+  <div class="callout rule">
+    <strong>Rule 3 — When wrife.co.uk needs updating from a sub-app change</strong>
+    A sub-app change triggers a wrife.co.uk change ONLY when: a new assignment type is needed on the teacher dashboard; a new data point needs to appear in the teacher class view; the pupil dashboard SSO tile needs updating; a new <code>learning_events</code> event_type is introduced (document it in the Data Architecture tab first). All other sub-app changes are self-contained.
+  </div>
+
+  <div class="callout rule">
+    <strong>Rule 4 — Standalone mode always works</strong>
+    Both sub-apps must work when <code>class_id</code> is null (home learners). Every new progress/session table must have <code>class_id</code> nullable. Every upsert must use <code>pupil_id</code> as the sole conflict key when <code>class_id</code> is null.
+  </div>
+
+  <div class="callout rule">
+    <strong>Rule 5 — Feature parity</strong>
+    Any access pattern supported by one sub-app must be supported by both. Do not build a flow (e.g. home sign-up) in one sub-app and leave it missing from others.
+  </div>
+
+  <h2>Session Start Protocol (every session, no exceptions)</h2>
+  <ol>
+    <li>Run the <strong>wrife-supabase-health</strong> skill — wakes paused projects before any code runs</li>
+    <li>Read <code>PLATFORM_STATUS.md</code> — know what's built, what's not, which app owns what</li>
+    <li>Read the repo's <code>PROJECT_CONTEXT.md</code> — current sprint state and recent decisions</li>
+    <li>Read this document — consult User Hierarchy, Auth Routes, and Data Architecture before writing any schema or auth code</li>
+  </ol>
+
+  <h2>Cross-App Pre-Ship Checklist</h2>
+  <h3>Auth / Session</h3>
+  <ul class="checklist">
+    <li class="todo">Route A (hub hash-token): Supabase SDK auto-handles hash on load?</li>
+    <li class="todo">Route B (standalone direct login): only accepted for Route C/D users (home learners, independent teacher pupils)?</li>
+    <li class="todo">Sub-app <code>/login</code> redirects school pupils to wrife.co.uk?</li>
+    <li class="todo">Route C (home learner, parent code): login and all features work with home class?</li>
+    <li class="todo"><code>← WriFe</code> back button: shown only for Route A?</li>
+    <li class="todo"><code>class_id</code> nullable: all new tables and upserts handle null class?</li>
+  </ul>
+  <h3>Schema / Migrations</h3>
+  <ul class="checklist">
+    <li class="todo">Migration targets <code>gzmgjkbtsvezfclmreru</code> only?</li>
+    <li class="todo">Table owned by this repo (not another repo's table)?</li>
+    <li class="todo">New RLS policies use <code>auth.uid()</code> equality?</li>
+    <li class="todo">New gamification columns added to <code>formula_progress</code> (not <code>pwp_pupil_progress</code>) with <code>NOT NULL DEFAULT</code>?</li>
+    <li class="todo">If new <code>learning_events</code> event_type added, documented in Data Architecture tab first?</li>
+  </ul>
+  <h3>Post-Deploy Smoke Test</h3>
+  <ul class="checklist">
+    <li class="todo">Login at <code>wrife.co.uk/pupil/login</code> → SIL42495 / amab04 / 9543</li>
+    <li class="todo">Click "Play →" → <code>practice.wrife.co.uk</code> loads authenticated</li>
+    <li class="todo">Click "Write →" → <code>pwp-studio.wrife.co.uk</code> loads authenticated</li>
+    <li class="todo">Click "Write Daily →" → <code>dailywrite.wrife.co.uk</code> loads authenticated</li>
+    <li class="todo">All three show ← WriFe back button</li>
+    <li class="todo">Direct visit to <code>pwp-studio.wrife.co.uk/login</code> with school pupil credentials → redirected to wrife.co.uk</li>
+  </ul>
+
+  <h2>Coding Conventions</h2>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Convention</th><th>Rule</th></tr>
+      <tr><td>Supabase client</td><td>Always <code>src/lib/supabase.ts</code> singleton. Never import <code>@supabase/supabase-js</code> directly in components.</td></tr>
+      <tr><td>Colours</td><td>No hardcoded hex in components — always CSS variables (<code>var(--color-brand-primary)</code> etc.)</td></tr>
+      <tr><td>TypeScript</td><td>Strict mode. Run <code>npx tsc -b --noEmit</code> before every push. Zero errors required.</td></tr>
+      <tr><td>DB pool</td><td><code>max: 2</code> in <code>lib/db.ts</code> — critical for free-tier Supabase. Do not raise.</td></tr>
+      <tr><td>Pupil session</td><td><code>localStorage.getItem('pupilSession')</code> only. Never a Supabase cookie for pupils.</td></tr>
+      <tr><td>Admin navigation</td><td><code>window.location.replace('/admin')</code> not <code>router.push</code> — forces middleware cookie re-read.</td></tr>
+      <tr><td>Commit format</td><td><code>feat(scope): description</code>. One logical commit per repo per session.</td></tr>
+      <tr><td>Secrets</td><td>Never commit <code>.env</code>, <code>.env.local</code>, or any secret keys.</td></tr>
+    </table>
+  </div>
+
+  <h2>When to Update This Document</h2>
+  <p>Update <code>WRIFE_PLATFORM_ARCHITECTURE.html</code> and <code>PLATFORM_STATUS.md</code> (in all three repos) whenever:</p>
+  <ul>
+    <li>A new user type or login route is added or modified</li>
+    <li>A new app or major sub-system is introduced</li>
+    <li>A new <code>learning_events</code> event type is defined</li>
+    <li>A table ownership rule changes</li>
+    <li>A cross-repo convention is agreed or broken and fixed</li>
+    <li>A new schema gotcha is discovered</li>
+    <li>A significant architectural decision is made (add it to the Decision Log tab)</li>
+  </ul>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 8: PLATFORM STATUS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-status" class="tab-panel">
+
+  <h2>Feature Status Matrix</h2>
+  <p>As of Session 40, May 2026.</p>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Feature</th><th>wrife.co.uk</th><th>PWP Studio</th><th>Interactive Practice</th><th>DWP</th><th>Learning Toolkit</th></tr>
+      <tr><td>Teacher dashboard</td><td><span class="badge built">✅ Full (6 tabs)</span></td><td><span class="badge built">✅ Basic</span></td><td><span class="badge gap">❌ Not built</span></td><td><span class="badge gap">❌ Not built</span></td><td><span class="badge soon">⚠️ Pending deploy</span></td></tr>
+      <tr><td>Pupil dashboard</td><td><span class="badge built">✅ Full + SSO tiles</span></td><td><span class="badge built">✅ Full</span></td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>IP lesson play (61 lessons)</td><td>—</td><td>—</td><td><span class="badge built">✅ Full</span></td><td>—</td><td>—</td></tr>
+      <tr><td>World map + boss challenges</td><td>—</td><td>—</td><td><span class="badge built">✅ Full (6 worlds)</span></td><td>—</td><td>—</td></tr>
+      <tr><td>PWP formula practice (L1–L67)</td><td>—</td><td><span class="badge built">✅ Full</span></td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>PWP daily chain practice</td><td>—</td><td><span class="badge built">✅ Full</span></td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>PWP free practice</td><td>—</td><td><span class="badge built">✅ Full</span></td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Connect Grid (L27–34)</td><td>—</td><td><span class="badge built">✅ Full</span></td><td><span class="badge built">✅ Full</span></td><td>—</td><td><span class="badge soon">⚠️ Built, not deployed</span></td></tr>
+      <tr><td>Paragraph builder (LSC)</td><td>—</td><td><span class="badge built">✅ Full</span></td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>AI assessment / AI tools</td><td><span class="badge built">✅ DWP</span></td><td><span class="badge built">✅ Full (formula + writing)</span></td><td>—</td><td><span class="badge built">✅ Full</span></td><td><span class="badge soon">⚠️ 9 tools built, not deployed</span></td></tr>
+      <tr><td>DWP 40 levels + 365 prompts</td><td>—</td><td>—</td><td>—</td><td><span class="badge built">✅ Seeded live</span></td><td>—</td></tr>
+      <tr><td>Downloadable PDFs (L1–L67)</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="badge soon">⚠️ Built (30+), not deployed</span></td></tr>
+      <tr><td>Teacher assignments (IP+PWP+DWP)</td><td><span class="badge built">✅ Full</span></td><td><span class="badge built">✅ PWP only</span></td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>learning_events written</td><td>—</td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td><span class="badge gap">❌ DB constraint blocks it</span></td></tr>
+      <tr><td>learning_events consumed</td><td><span class="badge built">✅ ClassActivityPanel</span></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Stripe subscriptions</td><td><span class="badge built">✅ Schools</span></td><td><span class="badge built">✅ B2C home accounts</span></td><td>—</td><td>—</td><td><span class="badge gap">❌ Not yet integrated</span></td></tr>
+      <tr><td>Home sign-up (Route C)</td><td>—</td><td><span class="badge built">✅ Live</span></td><td><span class="badge soon">⚠️ Redirects to wrifeapp</span></td><td>—</td><td>—</td></tr>
+      <tr><td>Independent teacher (Route D)</td><td>—</td><td><span class="badge gap">❌ Not built</span></td><td><span class="badge gap">❌ Not built</span></td><td>—</td><td>—</td></tr>
+      <tr><td>Badge system</td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td>—</td><td>—</td></tr>
+      <tr><td>Streak tracking</td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td>—</td><td><span class="badge soon">⚠️ Built, not deployed</span></td></tr>
+      <tr><td>School admin analytics</td><td><span class="badge built">✅</span></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Progress Report (Word doc)</td><td><span class="badge built">✅</span></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Workbox NetworkOnly (SW)</td><td>—</td><td><span class="badge built">✅ Fixed Session 39</span></td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Route A SSO detection</td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td><span class="badge built">✅</span></td><td><span class="badge soon">⚠️ Built (hubEntry.ts), not deployed</span></td></tr>
+    </table>
+  </div>
+
+  <h2>Pending Work (as of Session 40)</h2>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>#</th><th>Task</th><th>Priority</th><th>Notes</th></tr>
+      <tr><td>1</td><td>Apply <code>20260511_school_registrations.sql</code> migration</td><td><span class="badge soon">Soon</span></td><td><code>npx supabase db push --project-id gzmgjkbtsvezfclmreru</code></td></tr>
+      <tr><td>2</td><td>Apply <code>20260511000001_ai_attempts.sql</code> migration</td><td><span class="badge soon">Soon</span></td><td>Same push command</td></tr>
+      <tr><td>3</td><td>Deploy <code>assess-formula</code> Edge Function</td><td><span class="badge soon">Soon</span></td><td><code>npx supabase functions deploy assess-formula --project-id gzmgjkbtsvezfclmreru</code></td></tr>
+      <tr><td>4</td><td>Sync local DWP Edge Function source files</td><td><span class="badge soon">Soon</span></td><td><code>dwp-assess</code>, <code>dwp-tts-feedback</code>, <code>pupil-create</code> — local source not synced with deployed</td></tr>
+      <tr><td>5</td><td>Stripe webhook → pupil provisioning (Route C)</td><td><span class="badge soon">Soon</span></td><td>Parent home sign-up redirects to <code>/pricing</code> but post-payment provisioning not fully built</td></tr>
+      <tr><td>6</td><td>Upgrade Platform Supabase to Pro (£22/month)</td><td><span class="badge soon">Soon</span></td><td>Prevents auto-pause when first paying school onboards</td></tr>
+      <tr><td>7</td><td><strong>🔴 Fix learning_events CHECK constraint — add 'resources'</strong></td><td><span class="badge soon">Before resources deploy</span></td><td>ALTER TABLE to expand constraint. Must happen before resources.wrife.co.uk goes live or all AI tool events silently fail.</td></tr>
+      <tr><td>8</td><td>Deploy resources.wrife.co.uk to Vercel (git push first)</td><td><span class="badge soon">Soon</span></td><td>All 9 tools built (Session 6, 2026-05-10). Awaiting git push + domain config.</td></tr>
+      <tr><td>9</td><td>Integrate Stripe into resources.wrife.co.uk</td><td><span class="badge soon">Soon</span></td><td>Estimated pricing: £4.90/month standard, £9.90/month full. School licence via school subscription.</td></tr>
+      <tr><td>10</td><td>Delete legacy Supabase projects</td><td><span class="badge soon">Soon</span></td><td>Export schema first, then delete <code>rxmitjrbrsqjeymsycoj</code> and <code>nxhkpqngnxshgotvuujb</code> from Supabase dashboard.</td></tr>
+      <tr><td>11</td><td>Route D — Independent teacher sign-up</td><td><span class="badge gap">Backlog</span></td><td>Build on wrifeapp + InteractivePracticeApp</td></tr>
+      <tr><td>12</td><td>Teacher views in IP + DWP sub-apps</td><td><span class="badge gap">Backlog</span></td><td>Teacher SSO to sub-apps (not just pupils)</td></tr>
+      <tr><td>13</td><td>Migrate <code>pupils.class_id</code> INTEGER → UUID</td><td><span class="badge gap">Backlog</span></td><td>Required before <code>dwp_transfer_gap_metrics</code> can be built</td></tr>
+      <tr><td>14</td><td>Correct <code>year_group_min/max</code> data for L27–L68 lessons</td><td><span class="badge gap">Backlog</span></td><td>Legacy data has upper lessons mapped to Years 4–5. Should be Years 5–8 per curriculum correction.</td></tr>
+    </table>
+  </div>
+
+  <h2>Test Credentials</h2>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Role</th><th>Credentials</th><th>Notes</th></tr>
+      <tr><td>School Pupil</td><td>SIL42495 / amab04 / 9543</td><td>Amadeo B, Silver Birch Y4, PWP L15</td></tr>
+      <tr><td>School Teacher</td><td>mankrah@kafed.org.uk / niiotin99</td><td>wrife.co.uk teacher dashboard</td></tr>
+      <tr><td>Parent (B2C)</td><td>Create fresh via <code>/home-signup</code></td><td>Stripe test card: 4242 4242 4242 4242</td></tr>
+    </table>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 9: ARCHITECTURE DIAGRAM -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-diagram" class="tab-panel">
+
+  <h2>Teacher &amp; Class Workflow Diagram</h2>
+  <p>This diagram shows how teachers at wrife.co.uk manage classes, make assignments, and how pupils access sub-apps via SSO. Red = broken/gap, Orange = aspirational, Green = working.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 910 730" xmlns="http://www.w3.org/2000/svg" role="img" font-family="system-ui, -apple-system, sans-serif">
+      <title>WriFe Platform Architecture — Teacher &amp; Class Workflow</title>
+      <rect width="900" height="720" fill="#f8f8f8"/>
+      <text x="450" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#2D3436">WriFe Platform — Teacher &amp; Class Workflow</text>
+      <text x="450" y="50" text-anchor="middle" font-size="11" fill="#636e72">Red = gap / broken · Orange = aspirational · Green = working</text>
+      <text x="14" y="92" font-size="10" font-weight="700" fill="#6C5CE7" transform="rotate(-90,14,92)">TEACHER</text>
+      <text x="14" y="340" font-size="10" font-weight="700" fill="#00b894" transform="rotate(-90,14,340)">PUPILS</text>
+      <rect x="30" y="60" width="840" height="200" rx="12" fill="white" stroke="#6C5CE7" stroke-width="2"/>
+      <text x="450" y="82" text-anchor="middle" font-size="12" font-weight="700" fill="#6C5CE7">wrife.co.uk — Teacher Dashboard</text>
+      <rect x="50" y="92" width="100" height="50" rx="8" fill="#6C5CE7"/>
+      <text x="100" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="white">Teacher</text>
+      <text x="100" y="128" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.85)">email + password</text>
+      <text x="100" y="142" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.85)">wrife.co.uk/login</text>
+      <line x1="152" y1="117" x2="185" y2="117" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowPurple2)"/>
+      <rect x="187" y="92" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="247" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="#6C5CE7">Class Management</text>
+      <text x="247" y="126" text-anchor="middle" font-size="9" fill="#4a40b8">Create classes</text>
+      <text x="247" y="138" text-anchor="middle" font-size="9" fill="#4a40b8">Add pupils</text>
+      <line x1="308" y1="117" x2="341" y2="117" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowPurple2)"/>
+      <rect x="343" y="92" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="403" y="109" text-anchor="middle" font-size="11" font-weight="700" fill="#6C5CE7">Assign Tasks</text>
+      <text x="403" y="123" text-anchor="middle" font-size="9" fill="#4a40b8">IP lessons</text>
+      <text x="403" y="135" text-anchor="middle" font-size="9" fill="#4a40b8">PWP levels</text>
+      <text x="403" y="147" text-anchor="middle" font-size="9" fill="#4a40b8">DWP prompts</text>
+      <line x1="464" y1="117" x2="497" y2="117" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowPurple2)"/>
+      <rect x="499" y="92" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="559" y="109" text-anchor="middle" font-size="11" font-weight="700" fill="#6C5CE7">View Progress</text>
+      <text x="559" y="123" text-anchor="middle" font-size="9" fill="#4a40b8">Class overview</text>
+      <text x="559" y="135" text-anchor="middle" font-size="9" fill="#4a40b8">learning_events ✅</text>
+      <text x="559" y="147" text-anchor="middle" font-size="9" fill="#00b894">now consumed ✅</text>
+      <rect x="653" y="88" width="200" height="168" rx="8" fill="#fff5f5" stroke="#e17055" stroke-width="2" stroke-dasharray="5,3"/>
+      <text x="753" y="107" text-anchor="middle" font-size="11" font-weight="700" fill="#e17055">WriFe Apps Tiles</text>
+      <text x="753" y="121" text-anchor="middle" font-size="9" fill="#e17055">(links only — no teacher SSO)</text>
+      <rect x="663" y="128" width="55" height="42" rx="6" fill="white" stroke="#00b894" stroke-width="1.5"/>
+      <text x="690" y="146" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">Interactive</text>
+      <text x="690" y="158" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">Practice ✅</text>
+      <rect x="725" y="128" width="55" height="42" rx="6" fill="white" stroke="#00b894" stroke-width="1.5"/>
+      <text x="752" y="146" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">PWP</text>
+      <text x="752" y="158" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">Studio ✅</text>
+      <rect x="787" y="128" width="58" height="42" rx="6" fill="white" stroke="#0984e3" stroke-width="1.5"/>
+      <text x="816" y="143" text-anchor="middle" font-size="9" font-weight="700" fill="#0984e3">Daily</text>
+      <text x="816" y="155" text-anchor="middle" font-size="9" font-weight="700" fill="#0984e3">Writing ✅</text>
+      <text x="753" y="198" text-anchor="middle" font-size="8.5" fill="#e17055" font-style="italic">Opens sub-app home, not teacher view</text>
+      <text x="753" y="210" text-anchor="middle" font-size="8.5" fill="#e17055" font-style="italic">No SSO for teachers. No class context.</text>
+      <rect x="30" y="282" width="840" height="70" rx="12" fill="white" stroke="#00b894" stroke-width="2"/>
+      <text x="450" y="300" text-anchor="middle" font-size="12" font-weight="700" fill="#00b894">Pupil SSO Gateway — wrife.co.uk/pupil/dashboard</text>
+      <rect x="55" y="308" width="115" height="34" rx="6" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="113" y="322" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">Pupil Login (Route A)</text>
+      <text x="113" y="334" text-anchor="middle" font-size="8" fill="#00b894">class_code + PIN ✅</text>
+      <rect x="190" y="308" width="115" height="34" rx="6" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="247" y="322" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">JWT Minted</text>
+      <text x="247" y="334" text-anchor="middle" font-size="8" fill="#00b894">Supabase Auth ✅</text>
+      <rect x="325" y="308" width="130" height="34" rx="6" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="390" y="322" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">Token in URL hash</text>
+      <text x="390" y="334" text-anchor="middle" font-size="8" fill="#00b894">→ sub-app setSession() ✅</text>
+      <rect x="475" y="308" width="100" height="34" rx="6" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="525" y="322" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">→ IP ✅</text>
+      <text x="525" y="334" text-anchor="middle" font-size="8" fill="#00b894">practice.wrife.co.uk</text>
+      <rect x="585" y="308" width="100" height="34" rx="6" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="635" y="322" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">→ PWP ✅</text>
+      <text x="635" y="334" text-anchor="middle" font-size="8" fill="#00b894">pwp-studio.wrife.co.uk</text>
+      <rect x="695" y="308" width="100" height="34" rx="6" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="745" y="322" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">→ DWP ✅</text>
+      <text x="745" y="334" text-anchor="middle" font-size="8" fill="#00b894">dailywrite.wrife.co.uk</text>
+      <rect x="30" y="374" width="260" height="110" rx="10" fill="white" stroke="#00b894" stroke-width="1.5"/>
+      <text x="160" y="393" text-anchor="middle" font-size="11" font-weight="700" fill="#00b894">Interactive Practice</text>
+      <text x="160" y="407" text-anchor="middle" font-size="9" fill="#636e72">practice.wrife.co.uk</text>
+      <rect x="44" y="413" width="70" height="28" rx="5" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="79" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#00b894">61 Lessons</text>
+      <text x="79" y="437" text-anchor="middle" font-size="8" fill="#00b894">XP + Badges ✅</text>
+      <rect x="124" y="413" width="80" height="28" rx="5" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="164" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#00b894">World Map ✅</text>
+      <text x="164" y="437" text-anchor="middle" font-size="8" fill="#00b894">6 worlds</text>
+      <rect x="214" y="413" width="65" height="28" rx="5" fill="#fff5f5" stroke="#e17055" stroke-width="1"/>
+      <text x="247" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#e17055">Teacher</text>
+      <text x="247" y="437" text-anchor="middle" font-size="8" fill="#e17055">View ❌</text>
+      <text x="160" y="464" text-anchor="middle" font-size="8" fill="#636e72">Writes: learning_events (lesson_completed, badge_earned)</text>
+      <rect x="310" y="374" width="260" height="110" rx="10" fill="white" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="440" y="393" text-anchor="middle" font-size="11" font-weight="700" fill="#6C5CE7">PWP Studio</text>
+      <text x="440" y="407" text-anchor="middle" font-size="9" fill="#636e72">pwp-studio.wrife.co.uk</text>
+      <rect x="324" y="413" width="75" height="28" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="362" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">Formula</text>
+      <text x="362" y="437" text-anchor="middle" font-size="8" fill="#6C5CE7">L1–L67 ✅</text>
+      <rect x="407" y="413" width="75" height="28" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="445" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">Assess AI ✅</text>
+      <text x="445" y="437" text-anchor="middle" font-size="8" fill="#6C5CE7">Claude Haiku</text>
+      <rect x="490" y="413" width="68" height="28" rx="5" fill="#fff5f5" stroke="#e17055" stroke-width="1"/>
+      <text x="524" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#e17055">Teacher</text>
+      <text x="524" y="437" text-anchor="middle" font-size="8" fill="#e17055">View ❌</text>
+      <text x="440" y="464" text-anchor="middle" font-size="8" fill="#636e72">Writes: learning_events (formula_completed)</text>
+      <rect x="590" y="374" width="280" height="110" rx="10" fill="white" stroke="#0984e3" stroke-width="1.5"/>
+      <text x="730" y="393" text-anchor="middle" font-size="11" font-weight="700" fill="#0984e3">Daily Writing Practice</text>
+      <text x="730" y="407" text-anchor="middle" font-size="9" fill="#636e72">dailywrite.wrife.co.uk</text>
+      <rect x="604" y="413" width="75" height="28" rx="5" fill="#e8f4fd" stroke="#0984e3" stroke-width="1"/>
+      <text x="642" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#0984e3">40 Levels ✅</text>
+      <text x="642" y="437" text-anchor="middle" font-size="8" fill="#0984e3">365 prompts ✅</text>
+      <rect x="687" y="413" width="85" height="28" rx="5" fill="#e8f4fd" stroke="#0984e3" stroke-width="1"/>
+      <text x="729" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#0984e3">AI Assess ✅</text>
+      <text x="729" y="437" text-anchor="middle" font-size="8" fill="#0984e3">DWP Edge Fns</text>
+      <rect x="780" y="413" width="78" height="28" rx="5" fill="#fff5f5" stroke="#e17055" stroke-width="1"/>
+      <text x="819" y="425" text-anchor="middle" font-size="8" font-weight="700" fill="#e17055">Teacher</text>
+      <text x="819" y="437" text-anchor="middle" font-size="8" fill="#e17055">View ❌</text>
+      <text x="730" y="464" text-anchor="middle" font-size="8" fill="#636e72">Writes: learning_events (level_completed, daily_prompt_submitted)</text>
+      <rect x="30" y="502" width="840" height="60" rx="10" fill="white" stroke="#b2bec3" stroke-width="1.5"/>
+      <text x="450" y="521" text-anchor="middle" font-size="11" font-weight="700" fill="#2D3436">Shared Supabase DB — gzmgjkbtsvezfclmreru</text>
+      <rect x="50" y="530" width="130" height="24" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="115" y="545" text-anchor="middle" font-size="9" fill="#2D3436">pupils / classes / schools</text>
+      <rect x="192" y="530" width="130" height="24" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="257" y="545" text-anchor="middle" font-size="9" fill="#2D3436">formula_progress (PWP)</text>
+      <rect x="334" y="530" width="130" height="24" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="399" y="545" text-anchor="middle" font-size="9" fill="#2D3436">pupil_progress (IP)</text>
+      <rect x="476" y="530" width="130" height="24" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="541" y="545" text-anchor="middle" font-size="9" fill="#2D3436">dwp_progress / levels</text>
+      <rect x="618" y="530" width="240" height="24" rx="5" fill="#fff8e8" stroke="#F5A623" stroke-width="1"/>
+      <text x="738" y="545" text-anchor="middle" font-size="9" font-weight="700" fill="#e65c00">learning_events ← KEY BRIDGE ✅ now consumed</text>
+      <rect x="30" y="578" width="840" height="128" rx="10" fill="#f0fff8" stroke="#00b894" stroke-width="1.5"/>
+      <text x="450" y="597" text-anchor="middle" font-size="12" font-weight="700" fill="#2D3436">Current Gaps — What Still Needs Building</text>
+      <text x="50" y="616" font-size="10" font-weight="700" fill="#e17055">🔴 Pending migrations</text>
+      <text x="50" y="632" font-size="9" fill="#636e72">1. school_registrations migration not yet applied</text>
+      <text x="50" y="646" font-size="9" fill="#636e72">2. ai_attempts migration not yet pushed</text>
+      <text x="50" y="660" font-size="9" fill="#636e72">3. assess-formula Edge Function not deployed</text>
+      <text x="50" y="674" font-size="9" fill="#636e72">4. DWP Edge Function source files not synced</text>
+      <text x="50" y="688" font-size="9" fill="#636e72">5. Stripe webhook → pupil provisioning incomplete</text>
+      <text x="320" y="616" font-size="10" font-weight="700" fill="#F5A623">🟠 Soon (needed for schools)</text>
+      <text x="320" y="632" font-size="9" fill="#636e72">6. Teacher views in IP + PWP + DWP sub-apps</text>
+      <text x="320" y="646" font-size="9" fill="#636e72">7. Teacher SSO to sub-apps (not just pupils)</text>
+      <text x="320" y="660" font-size="9" fill="#636e72">8. Route D — independent teacher sign-up</text>
+      <text x="320" y="674" font-size="9" fill="#636e72">9. Upgrade Supabase to Pro before first paying school</text>
+      <text x="590" y="616" font-size="10" font-weight="700" fill="#00b894">🟢 Working (don't break)</text>
+      <text x="590" y="632" font-size="9" fill="#636e72">✅ Route A: pupil SSO via hub hash token (all 4 apps)</text>
+      <text x="590" y="646" font-size="9" fill="#636e72">✅ learning_events consumed in ClassActivityPanel</text>
+      <text x="590" y="660" font-size="9" fill="#636e72">✅ DWP: 365 prompts seeded, Edge Functions live</text>
+      <text x="590" y="674" font-size="9" fill="#636e72">✅ PWP: formula practice + AI assess + chain</text>
+      <text x="590" y="688" font-size="9" fill="#636e72">✅ IP: 61 lessons + 6 worlds + gamification</text>
+      <text x="590" y="700" font-size="9" fill="#636e72">✅ Workbox NetworkOnly rules in wrifeapp</text>
+      <line x1="247" y1="262" x2="247" y2="280" stroke="#6C5CE7" stroke-width="1.5" marker-end="url(#arrowPurple2)" stroke-dasharray="4,2"/>
+      <line x1="160" y1="352" x2="160" y2="372" stroke="#00b894" stroke-width="1.5" marker-end="url(#arrowGreen2)"/>
+      <line x1="440" y1="352" x2="440" y2="372" stroke="#6C5CE7" stroke-width="1.5" marker-end="url(#arrowPurple2)"/>
+      <line x1="730" y1="352" x2="730" y2="372" stroke="#0984e3" stroke-width="1.5" marker-end="url(#arrowBlue2)"/>
+      <line x1="160" y1="484" x2="160" y2="500" stroke="#b2bec3" stroke-width="1.5" marker-end="url(#arrowGray2)"/>
+      <line x1="440" y1="484" x2="440" y2="500" stroke="#b2bec3" stroke-width="1.5" marker-end="url(#arrowGray2)"/>
+      <line x1="730" y1="484" x2="730" y2="500" stroke="#b2bec3" stroke-width="1.5" marker-end="url(#arrowGray2)"/>
+      <defs>
+        <marker id="arrowPurple2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#6C5CE7"/></marker>
+        <marker id="arrowGreen2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#00b894"/></marker>
+        <marker id="arrowBlue2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#0984e3"/></marker>
+        <marker id="arrowGray2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#b2bec3"/></marker>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="callout info">
+    <strong>About this diagram</strong>
+    Produced during Session 38 architecture audit. Updated in Session 39 to reflect: PWP Studio URL fix, DWP daily prompts seeded, learning_events now consumed in ClassActivityPanel, Workbox NetworkOnly rules added. Updated in Session 40 to add resources.wrife.co.uk (Learning Toolkit) as the 5th app. The "Teacher View ❌" panels in all three pupil sub-apps remain the primary outstanding UX gap.
+  </div>
+
+  <h2>5-App Platform Overview</h2>
+  <p>This diagram shows the complete WriFe platform — all five apps, all user types, the shared Supabase backend, and the learning_events data bridge.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 960 620" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, sans-serif">
+      <title>WriFe 5-App Platform Overview</title>
+      <!-- Background -->
+      <rect width="960" height="620" fill="#f8f9fa" rx="4"/>
+      <text x="480" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#2D3436">WriFe Platform — 5 Apps, 1 Supabase Backend</text>
+      <text x="480" y="44" text-anchor="middle" font-size="10" fill="#636e72">All apps share gzmgjkbtsvezfclmreru · learning_events is the data bridge</text>
+
+      <!-- ── USER TYPES ROW ── -->
+      <text x="10" y="100" font-size="9" font-weight="700" fill="#636e72" transform="rotate(-90,10,100)">USERS</text>
+
+      <!-- Super Admin -->
+      <rect x="24" y="58" width="82" height="44" rx="8" fill="#6C5CE7"/>
+      <text x="65" y="75" text-anchor="middle" font-size="9" font-weight="700" fill="white">Super Admin</text>
+      <text x="65" y="89" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">wrife.co.uk/admin</text>
+
+      <!-- School Admin -->
+      <rect x="114" y="58" width="82" height="44" rx="8" fill="#0984e3"/>
+      <text x="155" y="75" text-anchor="middle" font-size="9" font-weight="700" fill="white">School Admin</text>
+      <text x="155" y="89" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">Route B</text>
+
+      <!-- Teacher -->
+      <rect x="204" y="58" width="82" height="44" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="245" y="75" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">Teacher</text>
+      <text x="245" y="89" text-anchor="middle" font-size="8" fill="#4a40b8">Route B</text>
+
+      <!-- Parent -->
+      <rect x="294" y="58" width="82" height="44" rx="8" fill="#fff8e8" stroke="#F5A623" stroke-width="1.5"/>
+      <text x="335" y="75" text-anchor="middle" font-size="9" font-weight="700" fill="#b36800">Parent (B2C)</text>
+      <text x="335" y="89" text-anchor="middle" font-size="8" fill="#b36800">Route C</text>
+
+      <!-- School Pupil -->
+      <rect x="384" y="58" width="82" height="44" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="425" y="75" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">School Pupil</text>
+      <text x="425" y="89" text-anchor="middle" font-size="8" fill="#00b894">Route A only</text>
+
+      <!-- Home Learner -->
+      <rect x="474" y="58" width="82" height="44" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="515" y="75" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">Home Learner</text>
+      <text x="515" y="89" text-anchor="middle" font-size="8" fill="#00b894">Route B/C</text>
+
+      <!-- Resources Teacher -->
+      <rect x="564" y="58" width="100" height="44" rx="8" fill="#e8f8ee" stroke="#27AE60" stroke-width="1.5"/>
+      <text x="614" y="72" text-anchor="middle" font-size="9" font-weight="700" fill="#27AE60">Resources</text>
+      <text x="614" y="84" text-anchor="middle" font-size="9" font-weight="700" fill="#27AE60">Teacher</text>
+      <text x="614" y="97" text-anchor="middle" font-size="8" fill="#27AE60">resources.wrife/login</text>
+
+      <!-- Ind. Teacher -->
+      <rect x="672" y="58" width="82" height="44" rx="8" fill="#fff5f5" stroke="#e17055" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="713" y="75" text-anchor="middle" font-size="9" font-weight="700" fill="#e17055">Ind. Teacher</text>
+      <text x="713" y="89" text-anchor="middle" font-size="8" fill="#e17055">Route D ❌ TBD</text>
+
+      <!-- ── HUB: wrife.co.uk ── -->
+      <rect x="24" y="120" width="470" height="90" rx="10" fill="white" stroke="#6C5CE7" stroke-width="2"/>
+      <text x="259" y="137" text-anchor="middle" font-size="12" font-weight="700" fill="#6C5CE7">wrife.co.uk — School Hub &amp; SSO Gateway</text>
+      <rect x="36" y="144" width="90" height="28" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="81" y="156" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">Admin Panel</text>
+      <text x="81" y="167" text-anchor="middle" font-size="7.5" fill="#4a40b8">Schools / Users</text>
+      <rect x="134" y="144" width="90" height="28" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="179" y="156" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">Teacher Dashboard</text>
+      <text x="179" y="167" text-anchor="middle" font-size="7.5" fill="#4a40b8">6 tabs + Assignments</text>
+      <rect x="232" y="144" width="90" height="28" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="277" y="156" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">Pupil Dashboard</text>
+      <text x="277" y="167" text-anchor="middle" font-size="7.5" fill="#4a40b8">SSO tiles → all apps</text>
+      <rect x="330" y="144" width="90" height="28" rx="5" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="375" y="156" text-anchor="middle" font-size="8" font-weight="700" fill="#00b894">Pupil Login (Route A)</text>
+      <text x="375" y="167" text-anchor="middle" font-size="7.5" fill="#00b894">class_code + PIN ✅</text>
+      <rect x="36" y="178" width="484" height="26" rx="4" fill="#fff8e8" stroke="#F5A623" stroke-width="1"/>
+      <text x="278" y="194" text-anchor="middle" font-size="8" font-weight="700" fill="#e65c00">↕ learning_events consumed here — ClassActivityPanel reads PWP / IP / DWP / Resources events ✅</text>
+
+      <!-- ── RESOURCES.WRIFE ── -->
+      <rect x="502" y="120" width="180" height="90" rx="10" fill="white" stroke="#27AE60" stroke-width="2"/>
+      <text x="592" y="137" text-anchor="middle" font-size="11" font-weight="700" fill="#27AE60">Learning Toolkit</text>
+      <text x="592" y="150" text-anchor="middle" font-size="9" fill="#636e72">resources.wrife.co.uk</text>
+      <rect x="514" y="156" width="75" height="28" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="551" y="168" text-anchor="middle" font-size="8" font-weight="700" fill="#27AE60">9 AI Tools</text>
+      <text x="551" y="179" text-anchor="middle" font-size="7.5" fill="#27AE60">Claude Haiku</text>
+      <rect x="595" y="156" width="75" height="28" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="632" y="168" text-anchor="middle" font-size="8" font-weight="700" fill="#27AE60">30+ PDFs</text>
+      <text x="632" y="179" text-anchor="middle" font-size="7.5" fill="#27AE60">L1–L67 resources</text>
+      <text x="592" y="200" text-anchor="middle" font-size="8" fill="#e17055">⚠️ Built · Not deployed yet</text>
+
+      <!-- ── STRIPE (B2C) ── -->
+      <rect x="690" y="120" width="130" height="90" rx="10" fill="white" stroke="#635BFF" stroke-width="1.5"/>
+      <text x="755" y="137" text-anchor="middle" font-size="11" font-weight="700" fill="#635BFF">Stripe</text>
+      <text x="755" y="150" text-anchor="middle" font-size="9" fill="#636e72">Subscriptions</text>
+      <rect x="702" y="156" width="50" height="28" rx="5" fill="#f3f2ff" stroke="#635BFF" stroke-width="1"/>
+      <text x="727" y="168" text-anchor="middle" font-size="8" font-weight="700" fill="#635BFF">School</text>
+      <text x="727" y="179" text-anchor="middle" font-size="7.5" fill="#635BFF">Plans ✅</text>
+      <rect x="758" y="156" width="50" height="28" rx="5" fill="#f3f2ff" stroke="#635BFF" stroke-width="1"/>
+      <text x="783" y="168" text-anchor="middle" font-size="8" font-weight="700" fill="#635BFF">B2C Home</text>
+      <text x="783" y="179" text-anchor="middle" font-size="7.5" fill="#635BFF">Accounts ✅</text>
+      <text x="755" y="200" text-anchor="middle" font-size="8" fill="#e17055">⚠️ Resources: pending</text>
+
+      <!-- ── 4 SUB-APPS ── -->
+      <!-- IP -->
+      <rect x="24" y="240" width="200" height="100" rx="10" fill="white" stroke="#00b894" stroke-width="1.5"/>
+      <text x="124" y="257" text-anchor="middle" font-size="10" font-weight="700" fill="#00b894">Interactive Practice</text>
+      <text x="124" y="268" text-anchor="middle" font-size="8" fill="#636e72">practice.wrife.co.uk</text>
+      <rect x="36" y="274" width="80" height="24" rx="5" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="76" y="286" text-anchor="middle" font-size="8" font-weight="700" fill="#00b894">61 Lessons ✅</text>
+      <text x="76" y="296" text-anchor="middle" font-size="7" fill="#00b894">6 worlds + XP + Badges</text>
+      <rect x="124" y="274" width="88" height="24" rx="5" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="168" y="286" text-anchor="middle" font-size="8" font-weight="700" fill="#00b894">Connect Grid ✅</text>
+      <text x="168" y="296" text-anchor="middle" font-size="7" fill="#00b894">L27–34</text>
+      <text x="124" y="322" text-anchor="middle" font-size="7.5" fill="#636e72">→ learning_events: lesson_completed, badge_earned</text>
+      <text x="124" y="333" text-anchor="middle" font-size="7.5" fill="#e17055">Teacher View ❌ not built</text>
+
+      <!-- PWP -->
+      <rect x="234" y="240" width="200" height="100" rx="10" fill="white" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="334" y="257" text-anchor="middle" font-size="10" font-weight="700" fill="#6C5CE7">PWP Studio</text>
+      <text x="334" y="268" text-anchor="middle" font-size="8" fill="#636e72">pwp-studio.wrife.co.uk</text>
+      <rect x="246" y="274" width="80" height="24" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="286" y="286" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">Formula L1–L67 ✅</text>
+      <text x="286" y="296" text-anchor="middle" font-size="7" fill="#6C5CE7">AI Assess + Chain</text>
+      <rect x="334" y="274" width="88" height="24" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="378" y="286" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">B2C Home Signup ✅</text>
+      <text x="378" y="296" text-anchor="middle" font-size="7" fill="#6C5CE7">Route C + Stripe</text>
+      <text x="334" y="322" text-anchor="middle" font-size="7.5" fill="#636e72">→ learning_events: formula_completed, level_advanced</text>
+      <text x="334" y="333" text-anchor="middle" font-size="7.5" fill="#e17055">Teacher View ❌ not built</text>
+
+      <!-- DWP -->
+      <rect x="444" y="240" width="200" height="100" rx="10" fill="white" stroke="#0984e3" stroke-width="1.5"/>
+      <text x="544" y="257" text-anchor="middle" font-size="10" font-weight="700" fill="#0984e3">Daily Writing Practice</text>
+      <text x="544" y="268" text-anchor="middle" font-size="8" fill="#636e72">dailywrite.wrife.co.uk</text>
+      <rect x="456" y="274" width="80" height="24" rx="5" fill="#e8f4fd" stroke="#0984e3" stroke-width="1"/>
+      <text x="496" y="286" text-anchor="middle" font-size="8" font-weight="700" fill="#0984e3">40 Levels ✅</text>
+      <text x="496" y="296" text-anchor="middle" font-size="7" fill="#0984e3">365 Prompts seeded</text>
+      <rect x="544" y="274" width="88" height="24" rx="5" fill="#e8f4fd" stroke="#0984e3" stroke-width="1"/>
+      <text x="588" y="286" text-anchor="middle" font-size="8" font-weight="700" fill="#0984e3">AI Assess ✅</text>
+      <text x="588" y="296" text-anchor="middle" font-size="7" fill="#0984e3">dwp-assess Edge Fn</text>
+      <text x="544" y="322" text-anchor="middle" font-size="7.5" fill="#636e72">→ learning_events: level_completed, daily_prompt_submitted</text>
+      <text x="544" y="333" text-anchor="middle" font-size="7.5" fill="#e17055">Teacher View ❌ not built</text>
+
+      <!-- Resources as 5th sub-app tile -->
+      <rect x="654" y="240" width="200" height="100" rx="10" fill="white" stroke="#27AE60" stroke-width="2" stroke-dasharray="6,3"/>
+      <text x="754" y="257" text-anchor="middle" font-size="10" font-weight="700" fill="#27AE60">Learning Toolkit</text>
+      <text x="754" y="268" text-anchor="middle" font-size="8" fill="#636e72">resources.wrife.co.uk</text>
+      <rect x="666" y="274" width="80" height="24" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="706" y="286" text-anchor="middle" font-size="8" font-weight="700" fill="#27AE60">9 AI Tools ⚠️</text>
+      <text x="706" y="296" text-anchor="middle" font-size="7" fill="#27AE60">Built, not deployed</text>
+      <rect x="754" y="274" width="88" height="24" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="798" y="286" text-anchor="middle" font-size="8" font-weight="700" fill="#27AE60">30+ PDFs ⚠️</text>
+      <text x="798" y="296" text-anchor="middle" font-size="7" fill="#27AE60">Built, not deployed</text>
+      <text x="754" y="322" text-anchor="middle" font-size="7.5" fill="#636e72">→ learning_events: tool_used (blocked by DB constraint)</text>
+      <text x="754" y="333" text-anchor="middle" font-size="7.5" fill="#e17055">🔴 CHECK constraint fix required first</text>
+
+      <!-- ── SUPABASE DB ── -->
+      <rect x="24" y="362" width="830" height="60" rx="10" fill="white" stroke="#b2bec3" stroke-width="1.5"/>
+      <text x="439" y="380" text-anchor="middle" font-size="11" font-weight="700" fill="#2D3436">Shared Supabase DB — gzmgjkbtsvezfclmreru</text>
+      <rect x="36" y="386" width="120" height="24" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="96" y="401" text-anchor="middle" font-size="8" fill="#2D3436">pupils / classes / schools</text>
+      <rect x="164" y="386" width="120" height="24" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="224" y="401" text-anchor="middle" font-size="8" fill="#2D3436">formula_progress (PWP)</text>
+      <rect x="292" y="386" width="110" height="24" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="347" y="401" text-anchor="middle" font-size="8" fill="#2D3436">pupil_progress (IP)</text>
+      <rect x="410" y="386" width="110" height="24" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="465" y="401" text-anchor="middle" font-size="8" fill="#2D3436">dwp_progress / levels</text>
+      <rect x="528" y="386" width="120" height="24" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="588" y="401" text-anchor="middle" font-size="8" fill="#27AE60">ai_sessions / attempts</text>
+      <rect x="656" y="386" width="194" height="24" rx="5" fill="#fff8e8" stroke="#F5A623" stroke-width="1"/>
+      <text x="753" y="401" text-anchor="middle" font-size="8" font-weight="700" fill="#e65c00">learning_events ← KEY BRIDGE ✅</text>
+
+      <!-- ── CONNECTOR LINES ── -->
+      <!-- Hub → sub-apps -->
+      <line x1="124" y1="210" x2="124" y2="238" stroke="#00b894" stroke-width="1.5" marker-end="url(#arrowGreen3)"/>
+      <line x1="334" y1="210" x2="334" y2="238" stroke="#6C5CE7" stroke-width="1.5" marker-end="url(#arrowPurple3)"/>
+      <line x1="544" y1="210" x2="544" y2="238" stroke="#0984e3" stroke-width="1.5" marker-end="url(#arrowBlue3)"/>
+      <!-- Resources self-contained auth -->
+      <line x1="592" y1="210" x2="640" y2="238" stroke="#27AE60" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowResourceGreen)"/>
+      <!-- Sub-apps → DB -->
+      <line x1="124" y1="340" x2="124" y2="360" stroke="#b2bec3" stroke-width="1.2" marker-end="url(#arrowGray3)"/>
+      <line x1="334" y1="340" x2="334" y2="360" stroke="#b2bec3" stroke-width="1.2" marker-end="url(#arrowGray3)"/>
+      <line x1="544" y1="340" x2="544" y2="360" stroke="#b2bec3" stroke-width="1.2" marker-end="url(#arrowGray3)"/>
+      <line x1="754" y1="340" x2="754" y2="360" stroke="#b2bec3" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arrowGray3)"/>
+
+      <!-- ── STATUS LEGEND ── -->
+      <rect x="24" y="440" width="830" height="80" rx="8" fill="white" stroke="#dfe6e9" stroke-width="1"/>
+      <text x="439" y="458" text-anchor="middle" font-size="10" font-weight="700" fill="#2D3436">Platform Status Summary</text>
+      <circle cx="40" cy="472" r="5" fill="#00b894"/>
+      <text x="50" y="476" font-size="9" fill="#636e72">Pupil SSO (Route A) — all 4 sub-apps ✅</text>
+      <circle cx="40" cy="488" r="5" fill="#00b894"/>
+      <text x="50" y="492" font-size="9" fill="#636e72">learning_events consumed (ClassActivityPanel) ✅</text>
+      <circle cx="40" cy="504" r="5" fill="#00b894"/>
+      <text x="50" y="508" font-size="9" fill="#636e72">DWP 365 prompts + Edge Functions live ✅</text>
+      <circle cx="250" cy="472" r="5" fill="#F5A623"/>
+      <text x="260" y="476" font-size="9" fill="#636e72">resources.wrife.co.uk — built, awaiting deploy ⚠️</text>
+      <circle cx="250" cy="488" r="5" fill="#F5A623"/>
+      <text x="260" y="492" font-size="9" fill="#636e72">Stripe Route C webhook → provisioning incomplete ⚠️</text>
+      <circle cx="250" cy="504" r="5" fill="#F5A623"/>
+      <text x="260" y="508" font-size="9" fill="#636e72">School Supabase upgrade to Pro pending ⚠️</text>
+      <circle cx="480" cy="472" r="5" fill="#e17055"/>
+      <text x="490" y="476" font-size="9" fill="#636e72">learning_events CHECK constraint blocks resources ❌</text>
+      <circle cx="480" cy="488" r="5" fill="#e17055"/>
+      <text x="490" y="492" font-size="9" fill="#636e72">Teacher views in IP / DWP / PWP sub-apps ❌</text>
+      <circle cx="480" cy="504" r="5" fill="#e17055"/>
+      <text x="490" y="508" font-size="9" fill="#636e72">Route D (independent teacher) not built ❌</text>
+      <circle cx="700" cy="472" r="5" fill="#b2bec3"/>
+      <text x="710" y="476" font-size="9" fill="#636e72">Legacy Supabase projects: recommend deletion</text>
+      <circle cx="700" cy="488" r="5" fill="#b2bec3"/>
+      <text x="710" y="492" font-size="9" fill="#636e72">Curriculum data: L27+ year groups need update</text>
+
+      <!-- Defs -->
+      <defs>
+        <marker id="arrowPurple3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#6C5CE7"/></marker>
+        <marker id="arrowGreen3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#00b894"/></marker>
+        <marker id="arrowBlue3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#0984e3"/></marker>
+        <marker id="arrowGray3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#b2bec3"/></marker>
+        <marker id="arrowResourceGreen" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#27AE60"/></marker>
+      </defs>
+    </svg>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 10: DECISION LOG (ADR) -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-adr" class="tab-panel">
+
+  <h2>Architecture Decision Log</h2>
+  <p>Significant decisions that should not be re-opened without a deliberate review. Each entry records what was decided, why, and the implications for future work.</p>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-001 · 2026-03 · Auth</div>
+    <h3>Route B retired for school pupils on sub-apps</h3>
+    <p><strong>Decision:</strong> School pupils must ONLY log in via wrife.co.uk (Route A). Sub-app <code>/login</code> pages must detect school pupils and redirect them to wrife.co.uk.</p>
+    <p><strong>Why:</strong> Having two login paths for school pupils caused session confusion and stale <code>localStorage</code> issues. Pupils who logged in directly bypassed the hub SSO and ended up with incomplete session state that broke the "← WriFe" back-button and class context.</p>
+    <p><strong>Implication:</strong> Any new sub-app login form must include a guard: if the pupil's class is school-type, reject and redirect.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-002 · 2026-03 · Database</div>
+    <h3>Single Supabase project for all four apps</h3>
+    <p><strong>Decision:</strong> All apps share <code>gzmgjkbtsvezfclmreru</code>. The two previously isolated projects (<code>rxmitjrbrsqjeymsycoj</code>, <code>nxhkpqngnxshgotvuujb</code>) are retired.</p>
+    <p><strong>Why:</strong> Three isolated databases made cross-app features (teacher visibility, SSO, learning_events) impossible without expensive API bridges. A single project enables RLS-secured cross-app queries and a unified auth token.</p>
+    <p><strong>Implication:</strong> Every migration must target <code>gzmgjkbtsvezfclmreru</code> only. Table ownership rules (see Data Architecture tab) exist to prevent chaos.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-003 · 2026-04 · Data</div>
+    <h3>formula_progress is the primary PWP dashboard table</h3>
+    <p><strong>Decision:</strong> All new gamification columns (XP, coins, streaks, badges) must go on <code>formula_progress</code>, not on <code>pwp_pupil_progress</code>.</p>
+    <p><strong>Why:</strong> <code>DashboardPage.tsx</code> in wrifeapp queries <code>formula_progress</code>. <code>pwp_pupil_progress</code> is a legacy/parallel table that is not currently queried by the dashboard UI. Adding columns there caused them to silently not appear.</p>
+    <p><strong>Implication:</strong> Any new column must use <code>NOT NULL DEFAULT &lt;value&gt;</code> to backfill existing rows. A column without a default will cause NULL crashes for all existing pupils on next dashboard load.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-004 · 2026-04 · Database</div>
+    <h3>DWP RLS uses auth_user_id join pattern</h3>
+    <p><strong>Decision:</strong> DWP RLS policies must use <code>pupil_id IN (SELECT id FROM pupils WHERE auth_user_id = auth.uid())</code>.</p>
+    <p><strong>Why:</strong> The <code>pupils.id</code> is not the same as <code>auth.uid()</code> for DWP. Using <code>pupil_id = auth.uid()</code> directly returns no rows because DWP creates pupil records with their own UUID that doesn't match the auth user ID.</p>
+    <p><strong>Implication:</strong> Every new DWP table that RLS-protects pupil data must use this join pattern, not the simple equality check.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-005 · 2026-05-13 · Repo boundary</div>
+    <h3>wrife-website repo boundary enforced after mistaken PWP build</h3>
+    <p><strong>Decision:</strong> The wrife-website repo is for wrife.co.uk only. No PWP pupil experience, no IP game code, no DWP writing app. Any such code must be surgically removed.</p>
+    <p><strong>Why:</strong> A full PWP implementation (<code>app/pwp/</code> routes + <code>components/pwp2/</code>) was built inside wrife-website by mistake over a full session. It required a <code>git reset --hard 375d29d</code> to remove. Wasted a full day.</p>
+    <p><strong>Implication:</strong> At the start of any session touching wrife-website, confirm the task is about wrife.co.uk features (teacher dashboard, admin, marketing). If the task is about PWP/IP/DWP pupil experience, stop and connect the correct repo.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-006 · 2026-05 · Infrastructure</div>
+    <h3>DB connection pool max: 2 on free-tier Supabase</h3>
+    <p><strong>Decision:</strong> <code>lib/db.ts</code> in wrife-website must keep <code>max: 2</code> (with <code>idleTimeoutMillis: 10000</code>, <code>connectionTimeoutMillis: 8000</code>).</p>
+    <p><strong>Why:</strong> Vercel serverless functions each spawn a new connection pool. The original <code>max: 10</code> setting exhausted Supabase's free-tier ~100 connection limit at ~10 concurrent users, triggering a cascade of 504 errors on the teacher dashboard.</p>
+    <p><strong>Implication:</strong> When upgrading to Supabase Pro, switch the connection string to the Session Mode pooler URL (port 5432) to remove the ceiling. Until then, <code>max: 2</code> is non-negotiable.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-007 · 2026-05 · Infrastructure</div>
+    <h3>Workbox NetworkOnly rules required for Supabase endpoints in wrifeapp</h3>
+    <p><strong>Decision:</strong> <code>wrifeapp/vite.config.ts</code> must have NetworkOnly rules for <code>/functions/</code> and <code>/auth/</code> before any NetworkFirst REST rule.</p>
+    <p><strong>Why:</strong> The PWP Studio service worker was intercepting and serving cached responses for Supabase Edge Function and auth calls. This caused silent failures where pupils saw stale data or got auth errors even with valid sessions.</p>
+    <p><strong>Implication:</strong> Any new Supabase endpoint pattern added to wrifeapp must also be added to the NetworkOnly list before deployment.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-008 · 2026-05 · Cross-app</div>
+    <h3>learning_events CORS requirement: apikey header mandatory</h3>
+    <p><strong>Decision:</strong> All WriFe Edge Functions must include <code>apikey</code> in their CORS <code>Access-Control-Allow-Headers</code> list.</p>
+    <p><strong>Why:</strong> Missing <code>apikey</code> caused a silent <code>TypeError: Failed to fetch</code> with no useful error message in the console. The DWP Edge Functions were missing this header and silently failing for all cross-origin calls from the DWP SPA.</p>
+    <p><strong>Implication:</strong> The full required header list is: <code>authorization, x-client-info, apikey, content-type</code>. Validate this in the auth sweep skill after every Edge Function deployment.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-009 · 2026-05 · DWP</div>
+    <h3>DWP shares the platform Supabase project (not isolated)</h3>
+    <p><strong>Decision:</strong> DWP tables were created in <code>gzmgjkbtsvezfclmreru</code>, not in a separate DWP project.</p>
+    <p><strong>Why:</strong> Following ADR-002. DWP needs access to <code>pupils</code>, <code>classes</code>, and <code>learning_events</code> which are all owned by wrife-website. Isolation would require API bridges.</p>
+    <p><strong>Implication:</strong> DWP's <code>home_accounts_app_origin_check</code> constraint must include <code>'dwp'</code>. The DWP RLS pattern (ADR-004) applies to all DWP pupil tables.</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-010 · 2026-05 · Platform</div>
+    <h3>resources.wrife.co.uk joins as the 5th app on the shared Supabase project</h3>
+    <p><strong>Decision:</strong> The Learning Toolkit (resources.wrife.co.uk) uses <code>gzmgjkbtsvezfclmreru</code>, matching all other apps. It owns its own tables (<code>ai_sessions</code>, <code>ai_attempts</code>, <code>daily_streaks</code>, <code>usage_quotas</code>, <code>ai_tool_assignments</code>) and writes to <code>learning_events</code> with <code>app = 'resources'</code>.</p>
+    <p><strong>Why:</strong> Consistent with ADR-002. Resources needs access to <code>pupils</code> and <code>classes</code> for school-tier licence verification. Sharing the project enables the same RLS-secured patterns used by all other apps.</p>
+    <p><strong>Implication:</strong> The <code>learning_events.app</code> CHECK constraint must be updated to include <code>'resources'</code> before the app goes live. The <code>home_accounts_app_origin_check</code> constraint may also need updating if resources.wrife ever creates home accounts. Two pending migrations required (see Platform Status tab, items 7–8).</p>
+  </div>
+
+  <div class="adr">
+    <div class="adr-meta">ADR-011 · 2026-05 · Curriculum</div>
+    <h3>WriFe curriculum covers KS1–KS3 (Years 2–8), not primary only</h3>
+    <p><strong>Decision:</strong> The authoritative curriculum scope is Key Stages 1–3, Years 2–8 (ages 6–14). Lessons L27–L68 are designated for Years 5–8 (KS2 upper / KS3). Platform documentation and database year group fields should reflect this range.</p>
+    <p><strong>Why:</strong> Previous documentation incorrectly capped the curriculum at Years 4–5 (ages 8–10). The WriFe Bible ("Writing for Everyone") and the platform designer's explicit guidance confirm the curriculum extends into secondary (Year 7–8 for lessons L27+). WriFe is designed for the full transition from primary into lower secondary.</p>
+    <p><strong>Implication:</strong> The <code>year_group_max</code> values in the <code>lessons</code> table for L27+ need correcting. Any marketing copy, teacher documentation, or public-facing material referencing "primary only" should be updated. The platform subtitle and PAD Overview tab have been updated to reflect KS1–KS3.</p>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 11: USER WORKFLOWS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-workflows" class="tab-panel">
+
+  <h2>User Workflows</h2>
+  <p>Step-by-step journey maps for each of the seven WriFe user types. Each diagram shows the entry point, key actions, and what the user produces or sees at each stage.</p>
+
+  <!-- ── SUPER ADMIN ── -->
+  <h3>Super Admin Workflow</h3>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 160" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif">
+      <rect width="820" height="160" fill="#f8f9fa"/>
+      <!-- Steps -->
+      <rect x="10" y="30" width="110" height="50" rx="8" fill="#6C5CE7"/>
+      <text x="65" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="white">1. Login</text>
+      <text x="65" y="64" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">/admin/login</text>
+      <text x="65" y="76" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">email + password</text>
+
+      <line x1="122" y1="55" x2="145" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF1)"/>
+      <rect x="147" y="30" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="207" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">2. Platform Overview</text>
+      <text x="207" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">All schools · Users</text>
+      <text x="207" y="76" text-anchor="middle" font-size="8" fill="#4a40b8">Registration requests</text>
+
+      <line x1="269" y1="55" x2="292" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF1)"/>
+      <rect x="294" y="30" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="354" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">3. Approve / Create</text>
+      <text x="354" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">School + School Admin</text>
+      <text x="354" y="76" text-anchor="middle" font-size="8" fill="#4a40b8">Account provisioning</text>
+
+      <line x1="416" y1="55" x2="439" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF1)"/>
+      <rect x="441" y="30" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="501" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">4. View Analytics</text>
+      <text x="501" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">All schools' data</text>
+      <text x="501" y="76" text-anchor="middle" font-size="8" fill="#4a40b8">Platform-wide metrics</text>
+
+      <line x1="563" y1="55" x2="586" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF1)"/>
+      <rect x="588" y="30" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="648" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">5. Invite Teacher</text>
+      <text x="648" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">→ invite-teacher</text>
+      <text x="648" y="76" text-anchor="middle" font-size="8" fill="#4a40b8">Edge Function + Resend</text>
+
+      <text x="65" y="108" text-anchor="middle" font-size="8" fill="#636e72">Route B</text>
+      <text x="354" y="130" text-anchor="middle" font-size="8" fill="#636e72">schools + school_admins tables (wrife-website)</text>
+      <defs><marker id="arrowWF1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#6C5CE7"/></marker></defs>
+    </svg>
+  </div>
+
+  <!-- ── SCHOOL ADMIN ── -->
+  <h3>School Admin Workflow</h3>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 150" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif">
+      <rect width="820" height="150" fill="#f8f9fa"/>
+      <rect x="10" y="30" width="110" height="50" rx="8" fill="#0984e3"/>
+      <text x="65" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="white">1. Login</text>
+      <text x="65" y="64" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">wrife.co.uk/login</text>
+      <text x="65" y="76" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">email + password</text>
+      <line x1="122" y1="55" x2="145" y2="55" stroke="#0984e3" stroke-width="2" marker-end="url(#arrowWF2)"/>
+      <rect x="147" y="30" width="130" height="50" rx="8" fill="#e8f4fd" stroke="#0984e3" stroke-width="1.5"/>
+      <text x="212" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#0984e3">2. School Overview</text>
+      <text x="212" y="64" text-anchor="middle" font-size="8" fill="#0984e3">All teachers · All classes</text>
+      <text x="212" y="76" text-anchor="middle" font-size="8" fill="#0984e3">School-wide analytics</text>
+      <line x1="279" y1="55" x2="302" y2="55" stroke="#0984e3" stroke-width="2" marker-end="url(#arrowWF2)"/>
+      <rect x="304" y="30" width="130" height="50" rx="8" fill="#e8f4fd" stroke="#0984e3" stroke-width="1.5"/>
+      <text x="369" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#0984e3">3. View Assignments</text>
+      <text x="369" y="64" text-anchor="middle" font-size="8" fill="#0984e3">All classes' tasks</text>
+      <text x="369" y="76" text-anchor="middle" font-size="8" fill="#0984e3">Completion rates</text>
+      <line x1="436" y1="55" x2="459" y2="55" stroke="#0984e3" stroke-width="2" marker-end="url(#arrowWF2)"/>
+      <rect x="461" y="30" width="130" height="50" rx="8" fill="#e8f4fd" stroke="#0984e3" stroke-width="1.5"/>
+      <text x="526" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#0984e3">4. Review Progress</text>
+      <text x="526" y="64" text-anchor="middle" font-size="8" fill="#0984e3">learning_events view</text>
+      <text x="526" y="76" text-anchor="middle" font-size="8" fill="#0984e3">Per teacher / class</text>
+      <text x="400" y="112" text-anchor="middle" font-size="8" fill="#e17055">❌ Cannot edit classes / assign lessons — read-only school view</text>
+      <defs><marker id="arrowWF2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#0984e3"/></marker></defs>
+    </svg>
+  </div>
+
+  <!-- ── SCHOOL TEACHER ── -->
+  <h3>School Teacher Workflow</h3>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 190" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif">
+      <rect width="820" height="190" fill="#f8f9fa"/>
+      <rect x="10" y="30" width="110" height="50" rx="8" fill="#6C5CE7"/>
+      <text x="65" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="white">1. Login</text>
+      <text x="65" y="64" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">wrife.co.uk/login</text>
+      <text x="65" y="76" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">Route B</text>
+      <line x1="122" y1="55" x2="145" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF3)"/>
+      <rect x="147" y="30" width="110" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="202" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">2. Manage Classes</text>
+      <text x="202" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">Create · Add pupils</text>
+      <text x="202" y="76" text-anchor="middle" font-size="8" fill="#4a40b8">Generate class codes</text>
+      <line x1="259" y1="55" x2="282" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF3)"/>
+      <rect x="284" y="30" width="110" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="339" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">3. Browse Lessons</text>
+      <text x="339" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">All 68 lessons</text>
+      <text x="339" y="76" text-anchor="middle" font-size="8" fill="#4a40b8">6 tabs per lesson</text>
+      <line x1="396" y1="55" x2="419" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF3)"/>
+      <rect x="421" y="30" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="481" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">4. Assign Tasks</text>
+      <text x="481" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">IP lesson / PWP level</text>
+      <text x="481" y="76" text-anchor="middle" font-size="8" fill="#4a40b8">DWP prompt + due date</text>
+      <line x1="543" y1="55" x2="566" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF3)"/>
+      <rect x="568" y="30" width="120" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="628" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">5. Review Progress</text>
+      <text x="628" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">ClassActivityPanel</text>
+      <text x="628" y="76" text-anchor="middle" font-size="8" fill="#00b894">learning_events ✅</text>
+      <line x1="690" y1="55" x2="713" y2="55" stroke="#6C5CE7" stroke-width="2" marker-end="url(#arrowWF3)"/>
+      <rect x="715" y="30" width="90" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="760" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">6. Feedback</text>
+      <text x="760" y="64" text-anchor="middle" font-size="8" fill="#4a40b8">Review submissions</text>
+      <text x="760" y="76" text-anchor="middle" font-size="8" fill="#4a40b8">Download reports</text>
+      <!-- Resources branch -->
+      <line x1="339" y1="80" x2="339" y2="110" stroke="#27AE60" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowWF3G)"/>
+      <rect x="280" y="112" width="120" height="42" rx="8" fill="#e8f8ee" stroke="#27AE60" stroke-width="1.5"/>
+      <text x="340" y="128" text-anchor="middle" font-size="8" font-weight="700" fill="#27AE60">Also: Learning Toolkit</text>
+      <text x="340" y="140" text-anchor="middle" font-size="8" fill="#27AE60">resources.wrife.co.uk</text>
+      <text x="340" y="152" text-anchor="middle" font-size="7.5" fill="#27AE60">9 AI tools for classroom use</text>
+      <text x="400" y="175" text-anchor="middle" font-size="8" fill="#636e72">Teacher may use resources.wrife.co.uk independently — separate login, separate subscription</text>
+      <defs>
+        <marker id="arrowWF3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#6C5CE7"/></marker>
+        <marker id="arrowWF3G" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#27AE60"/></marker>
+      </defs>
+    </svg>
+  </div>
+
+  <!-- ── PARENT (B2C) ── -->
+  <h3>Parent (B2C) Workflow — Route C</h3>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 155" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif">
+      <rect width="820" height="155" fill="#f8f9fa"/>
+      <rect x="10" y="30" width="110" height="50" rx="8" fill="#F5A623"/>
+      <text x="65" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="white">1. Sign Up</text>
+      <text x="65" y="64" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">pwp-studio / home-signup</text>
+      <text x="65" y="76" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">home_accounts (parent)</text>
+      <line x1="122" y1="55" x2="145" y2="55" stroke="#F5A623" stroke-width="2" marker-end="url(#arrowWF4)"/>
+      <rect x="147" y="30" width="120" height="50" rx="8" fill="#fff8e8" stroke="#F5A623" stroke-width="1.5"/>
+      <text x="207" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#b36800">2. Stripe Payment</text>
+      <text x="207" y="64" text-anchor="middle" font-size="8" fill="#b36800">Checkout → Webhook</text>
+      <text x="207" y="76" text-anchor="middle" font-size="8" fill="#e17055">⚠️ Provisioning incomplete</text>
+      <line x1="269" y1="55" x2="292" y2="55" stroke="#F5A623" stroke-width="2" marker-end="url(#arrowWF4)"/>
+      <rect x="294" y="30" width="120" height="50" rx="8" fill="#fff8e8" stroke="#F5A623" stroke-width="1.5"/>
+      <text x="354" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#b36800">3. Create Child Profile</text>
+      <text x="354" y="64" text-anchor="middle" font-size="8" fill="#b36800">create-child-profile EF</text>
+      <text x="354" y="76" text-anchor="middle" font-size="8" fill="#b36800">→ pupils + home class</text>
+      <line x1="416" y1="55" x2="439" y2="55" stroke="#F5A623" stroke-width="2" marker-end="url(#arrowWF4)"/>
+      <rect x="441" y="30" width="120" height="50" rx="8" fill="#fff8e8" stroke="#F5A623" stroke-width="1.5"/>
+      <text x="501" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#b36800">4. Share Login Details</text>
+      <text x="501" y="64" text-anchor="middle" font-size="8" fill="#b36800">Parent code = class code</text>
+      <text x="501" y="76" text-anchor="middle" font-size="8" fill="#b36800">username + PIN</text>
+      <line x1="563" y1="55" x2="586" y2="55" stroke="#F5A623" stroke-width="2" marker-end="url(#arrowWF4)"/>
+      <rect x="588" y="30" width="120" height="50" rx="8" fill="#fff8e8" stroke="#F5A623" stroke-width="1.5"/>
+      <text x="648" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#b36800">5. Monitor Progress</text>
+      <text x="648" y="64" text-anchor="middle" font-size="8" fill="#b36800">Parent dashboard</text>
+      <text x="648" y="76" text-anchor="middle" font-size="8" fill="#b36800">learning_events view</text>
+      <text x="400" y="118" text-anchor="middle" font-size="8" fill="#636e72">Parent logs in at pwp-studio.wrife.co.uk/parent · Child logs in directly at sub-app /login using parent code + username + PIN</text>
+      <defs><marker id="arrowWF4" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#F5A623"/></marker></defs>
+    </svg>
+  </div>
+
+  <!-- ── SCHOOL PUPIL ── -->
+  <h3>School Pupil Workflow — Route A</h3>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 175" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif">
+      <rect width="820" height="175" fill="#f8f9fa"/>
+      <rect x="10" y="30" width="120" height="50" rx="8" fill="#00b894"/>
+      <text x="70" y="50" text-anchor="middle" font-size="9" font-weight="700" fill="white">1. Login (Route A)</text>
+      <text x="70" y="63" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">wrife.co.uk/pupil/login</text>
+      <text x="70" y="76" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">class_code + PIN ✅</text>
+      <line x1="132" y1="55" x2="155" y2="55" stroke="#00b894" stroke-width="2" marker-end="url(#arrowWF5)"/>
+      <rect x="157" y="30" width="110" height="50" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="212" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">2. Pupil Dashboard</text>
+      <text x="212" y="64" text-anchor="middle" font-size="8" fill="#00b894">Assignments + Streak</text>
+      <text x="212" y="76" text-anchor="middle" font-size="8" fill="#00b894">SSO tiles ✅</text>
+      <line x1="269" y1="55" x2="292" y2="55" stroke="#00b894" stroke-width="2" marker-end="url(#arrowWF5)"/>
+      <!-- Three branches -->
+      <line x1="303" y1="55" x2="303" y2="35" stroke="#00b894" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <line x1="303" y1="35" x2="540" y2="35" stroke="#00b894" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <line x1="303" y1="35" x2="303" y2="75" stroke="#00b894" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <rect x="294" y="30" width="88" height="50" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="338" y="50" text-anchor="middle" font-size="8" font-weight="700" fill="#00b894">3a. Interactive</text>
+      <text x="338" y="62" text-anchor="middle" font-size="8" fill="#00b894">Practice ✅</text>
+      <text x="338" y="74" text-anchor="middle" font-size="7.5" fill="#00b894">practice.wrife.co.uk</text>
+      <rect x="393" y="30" width="88" height="50" rx="8" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="437" y="50" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">3b. PWP</text>
+      <text x="437" y="62" text-anchor="middle" font-size="8" fill="#6C5CE7">Studio ✅</text>
+      <text x="437" y="74" text-anchor="middle" font-size="7.5" fill="#6C5CE7">pwp-studio.wrife.co.uk</text>
+      <rect x="492" y="30" width="88" height="50" rx="8" fill="#e8f4fd" stroke="#0984e3" stroke-width="1.5"/>
+      <text x="536" y="50" text-anchor="middle" font-size="8" font-weight="700" fill="#0984e3">3c. Daily Writing</text>
+      <text x="536" y="62" text-anchor="middle" font-size="8" fill="#0984e3">Practice ✅</text>
+      <text x="536" y="74" text-anchor="middle" font-size="7.5" fill="#0984e3">dailywrite.wrife.co.uk</text>
+      <line x1="582" y1="55" x2="605" y2="55" stroke="#00b894" stroke-width="2" marker-end="url(#arrowWF5)"/>
+      <rect x="607" y="30" width="100" height="50" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="657" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">4. Complete Task</text>
+      <text x="657" y="64" text-anchor="middle" font-size="8" fill="#00b894">→ learning_events</text>
+      <text x="657" y="76" text-anchor="middle" font-size="8" fill="#00b894">Teacher sees progress</text>
+      <line x1="709" y1="55" x2="732" y2="55" stroke="#00b894" stroke-width="2" marker-end="url(#arrowWF5)"/>
+      <rect x="734" y="30" width="76" height="50" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="772" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">5. ← WriFe</text>
+      <text x="772" y="64" text-anchor="middle" font-size="8" fill="#00b894">Back button</text>
+      <text x="772" y="76" text-anchor="middle" font-size="8" fill="#00b894">→ hub ✅</text>
+      <text x="400" y="118" text-anchor="middle" font-size="8" fill="#636e72">JWT embedded in URL hash → sub-app SDK auto-handles setSession() · sessionStorage.entryViaHub = '1' shown in sub-apps</text>
+      <defs><marker id="arrowWF5" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#00b894"/></marker></defs>
+    </svg>
+  </div>
+
+  <!-- ── HOME LEARNER ── -->
+  <h3>Home Learner Workflow — Route B/C</h3>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 145" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif">
+      <rect width="820" height="145" fill="#f8f9fa"/>
+      <rect x="10" y="30" width="120" height="50" rx="8" fill="#00b894"/>
+      <text x="70" y="50" text-anchor="middle" font-size="9" font-weight="700" fill="white">1. Login</text>
+      <text x="70" y="63" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">sub-app /login</text>
+      <text x="70" y="76" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">parent code + PIN</text>
+      <line x1="132" y1="55" x2="155" y2="55" stroke="#00b894" stroke-width="2" marker-end="url(#arrowWF6)"/>
+      <rect x="157" y="30" width="120" height="50" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="217" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">2. Sub-App Dashboard</text>
+      <text x="217" y="64" text-anchor="middle" font-size="8" fill="#00b894">PWP / IP / DWP</text>
+      <text x="217" y="76" text-anchor="middle" font-size="8" fill="#00b894">No hub SSO needed</text>
+      <line x1="279" y1="55" x2="302" y2="55" stroke="#00b894" stroke-width="2" marker-end="url(#arrowWF6)"/>
+      <rect x="304" y="30" width="120" height="50" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="364" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">3. Practice</text>
+      <text x="364" y="64" text-anchor="middle" font-size="8" fill="#00b894">Formulas · Lessons</text>
+      <text x="364" y="76" text-anchor="middle" font-size="8" fill="#00b894">Daily writing</text>
+      <line x1="426" y1="55" x2="449" y2="55" stroke="#00b894" stroke-width="2" marker-end="url(#arrowWF6)"/>
+      <rect x="451" y="30" width="120" height="50" rx="8" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="511" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">4. Progress Tracked</text>
+      <text x="511" y="64" text-anchor="middle" font-size="8" fill="#00b894">→ learning_events</text>
+      <text x="511" y="76" text-anchor="middle" font-size="8" fill="#00b894">Parent sees via dashboard</text>
+      <text x="400" y="118" text-anchor="middle" font-size="8" fill="#636e72">Home class: class_id points to auto-created home class owned by home_accounts · No wrife.co.uk access</text>
+      <defs><marker id="arrowWF6" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#00b894"/></marker></defs>
+    </svg>
+  </div>
+
+  <!-- ── RESOURCES TEACHER ── -->
+  <h3>Resources Teacher Workflow — Learning Toolkit</h3>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 165" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif">
+      <rect width="820" height="165" fill="#f8f9fa"/>
+      <rect x="10" y="30" width="120" height="50" rx="8" fill="#27AE60"/>
+      <text x="70" y="50" text-anchor="middle" font-size="9" font-weight="700" fill="white">1. Login / Subscribe</text>
+      <text x="70" y="63" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">resources.wrife.co.uk/login</text>
+      <text x="70" y="76" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">Stripe: full/school tier</text>
+      <line x1="132" y1="55" x2="155" y2="55" stroke="#27AE60" stroke-width="2" marker-end="url(#arrowWF7)"/>
+      <rect x="157" y="30" width="120" height="50" rx="8" fill="#e8f8ee" stroke="#27AE60" stroke-width="1.5"/>
+      <text x="217" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#27AE60">2. Dashboard</text>
+      <text x="217" y="64" text-anchor="middle" font-size="8" fill="#27AE60">2 daily tools</text>
+      <text x="217" y="76" text-anchor="middle" font-size="8" fill="#27AE60">7 lesson tools</text>
+      <line x1="279" y1="55" x2="302" y2="55" stroke="#27AE60" stroke-width="2" marker-end="url(#arrowWF7)"/>
+      <rect x="304" y="30" width="120" height="50" rx="8" fill="#e8f8ee" stroke="#27AE60" stroke-width="1.5"/>
+      <text x="364" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#27AE60">3. Use AI Tool</text>
+      <text x="364" y="64" text-anchor="middle" font-size="8" fill="#27AE60">Claude Haiku powered</text>
+      <text x="364" y="76" text-anchor="middle" font-size="8" fill="#27AE60">Classroom use</text>
+      <line x1="426" y1="55" x2="449" y2="55" stroke="#27AE60" stroke-width="2" marker-end="url(#arrowWF7)"/>
+      <rect x="451" y="30" width="120" height="50" rx="8" fill="#e8f8ee" stroke="#27AE60" stroke-width="1.5"/>
+      <text x="511" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#27AE60">4. Download PDFs</text>
+      <text x="511" y="64" text-anchor="middle" font-size="8" fill="#27AE60">/resources (free)</text>
+      <text x="511" y="76" text-anchor="middle" font-size="8" fill="#27AE60">30+ anchor charts</text>
+      <line x1="573" y1="55" x2="596" y2="55" stroke="#27AE60" stroke-width="2" marker-end="url(#arrowWF7)"/>
+      <rect x="598" y="30" width="120" height="50" rx="8" fill="#e8f8ee" stroke="#27AE60" stroke-width="1.5"/>
+      <text x="658" y="51" text-anchor="middle" font-size="9" font-weight="700" fill="#27AE60">5. Direct Pupils</text>
+      <text x="658" y="64" text-anchor="middle" font-size="8" fill="#27AE60">ai_tool_assignments</text>
+      <text x="658" y="76" text-anchor="middle" font-size="8" fill="#27AE60">Pupils follow up independently</text>
+      <text x="400" y="110" text-anchor="middle" font-size="8" fill="#e17055">⚠️ App built but not yet deployed · learning_events fix required before tool use events are recorded</text>
+      <text x="400" y="125" text-anchor="middle" font-size="8" fill="#636e72">SSO: school pupils can arrive via Route A hub token (hubEntry.ts detects hash) · Independent teachers login directly</text>
+      <defs><marker id="arrowWF7" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#27AE60"/></marker></defs>
+    </svg>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 12: PLATFORM MAP -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="tab-platformmap" class="tab-panel">
+
+  <h2>Overarching Platform Map</h2>
+  <p>A single view of the entire WriFe platform — all user types, all five apps, auth routes, the shared database, Stripe, and the learning_events bridge that connects everything.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 1000 740" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif">
+      <title>WriFe Complete Platform Map</title>
+      <rect width="1000" height="740" fill="#f0f2f5" rx="6"/>
+
+      <!-- Title -->
+      <text x="500" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#2D3436">WriFe Complete Platform Map</text>
+      <text x="500" y="46" text-anchor="middle" font-size="10" fill="#636e72">5 Apps · 7 User Types · 1 Supabase Backend · May 2026</text>
+
+      <!-- ══ ZONE 1: USERS ══ -->
+      <rect x="16" y="60" width="968" height="80" rx="10" fill="white" stroke="#dfe6e9" stroke-width="1.5"/>
+      <text x="24" y="76" font-size="9" font-weight="700" fill="#636e72">USER TYPES</text>
+
+      <rect x="28" y="82" width="80" height="42" rx="7" fill="#6C5CE7"/>
+      <text x="68" y="99" text-anchor="middle" font-size="9" font-weight="700" fill="white">Super Admin</text>
+      <text x="68" y="113" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.8)">1 (Michael)</text>
+
+      <rect x="118" y="82" width="80" height="42" rx="7" fill="#0984e3"/>
+      <text x="158" y="99" text-anchor="middle" font-size="9" font-weight="700" fill="white">School Admin</text>
+      <text x="158" y="113" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.8)">Per school</text>
+
+      <rect x="208" y="82" width="80" height="42" rx="7" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="248" y="99" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">Teacher</text>
+      <text x="248" y="113" text-anchor="middle" font-size="8" fill="#4a40b8">School (Route B)</text>
+
+      <rect x="298" y="82" width="80" height="42" rx="7" fill="#fff8e8" stroke="#F5A623" stroke-width="1.5"/>
+      <text x="338" y="99" text-anchor="middle" font-size="9" font-weight="700" fill="#b36800">Parent</text>
+      <text x="338" y="113" text-anchor="middle" font-size="8" fill="#b36800">B2C (Route C)</text>
+
+      <rect x="388" y="82" width="80" height="42" rx="7" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="428" y="99" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">School Pupil</text>
+      <text x="428" y="113" text-anchor="middle" font-size="8" fill="#00b894">Route A only</text>
+
+      <rect x="478" y="82" width="80" height="42" rx="7" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="518" y="99" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">Home Learner</text>
+      <text x="518" y="113" text-anchor="middle" font-size="8" fill="#00b894">Route B/C</text>
+
+      <rect x="568" y="82" width="100" height="42" rx="7" fill="#e8f8ee" stroke="#27AE60" stroke-width="1.5"/>
+      <text x="618" y="96" text-anchor="middle" font-size="9" font-weight="700" fill="#27AE60">Resources</text>
+      <text x="618" y="108" text-anchor="middle" font-size="9" font-weight="700" fill="#27AE60">Teacher</text>
+      <text x="618" y="120" text-anchor="middle" font-size="8" fill="#27AE60">Separate login</text>
+
+      <rect x="678" y="82" width="90" height="42" rx="7" fill="#fff5f5" stroke="#e17055" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="723" y="99" text-anchor="middle" font-size="9" font-weight="700" fill="#e17055">Ind. Teacher</text>
+      <text x="723" y="113" text-anchor="middle" font-size="8" fill="#e17055">Route D ❌ TBD</text>
+
+      <!-- ══ ZONE 2: HUB ══ -->
+      <rect x="16" y="158" width="650" height="110" rx="10" fill="white" stroke="#6C5CE7" stroke-width="2"/>
+      <text x="341" y="175" text-anchor="middle" font-size="13" font-weight="700" fill="#6C5CE7">wrife.co.uk — Central Hub</text>
+
+      <rect x="28" y="182" width="100" height="36" rx="6" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="78" y="197" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">Admin Panel</text>
+      <text x="78" y="210" text-anchor="middle" font-size="7.5" fill="#4a40b8">Schools / Registrations</text>
+
+      <rect x="136" y="182" width="110" height="36" rx="6" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="191" y="197" text-anchor="middle" font-size="8" font-weight="700" fill="#6C5CE7">Teacher Dashboard</text>
+      <text x="191" y="210" text-anchor="middle" font-size="7.5" fill="#4a40b8">6 tabs · Assignments</text>
+
+      <rect x="254" y="182" width="110" height="36" rx="6" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="309" y="197" text-anchor="middle" font-size="8" font-weight="700" fill="#00b894">Pupil Dashboard</text>
+      <text x="309" y="210" text-anchor="middle" font-size="7.5" fill="#00b894">SSO tiles → sub-apps</text>
+
+      <rect x="372" y="182" width="110" height="36" rx="6" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="427" y="197" text-anchor="middle" font-size="8" font-weight="700" fill="#00b894">Pupil Login Route A</text>
+      <text x="427" y="210" text-anchor="middle" font-size="7.5" fill="#00b894">class_code + PIN → JWT ✅</text>
+
+      <rect x="490" y="182" width="110" height="36" rx="6" fill="#fff8e8" stroke="#F5A623" stroke-width="1"/>
+      <text x="545" y="197" text-anchor="middle" font-size="8" font-weight="700" fill="#e65c00">ClassActivityPanel</text>
+      <text x="545" y="210" text-anchor="middle" font-size="7.5" fill="#e65c00">Reads learning_events ✅</text>
+
+      <rect x="28" y="224" width="618" height="36" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="337" y="238" text-anchor="middle" font-size="9" fill="#636e72">Auth: Supabase unified · Email: Resend noreply@wrife.co.uk · Sub-app SSO via JWT hash fragment</text>
+      <text x="337" y="252" text-anchor="middle" font-size="8" fill="#636e72">Role in profiles.role (not JWT) · Pool max:2 · Admin nav: window.location.replace('/admin')</text>
+
+      <!-- ══ ZONE 3: STRIPE ══ -->
+      <rect x="674" y="158" width="310" height="110" rx="10" fill="white" stroke="#635BFF" stroke-width="1.5"/>
+      <text x="829" y="175" text-anchor="middle" font-size="13" font-weight="700" fill="#635BFF">Payments — Stripe</text>
+      <rect x="686" y="182" width="130" height="36" rx="6" fill="#f3f2ff" stroke="#635BFF" stroke-width="1"/>
+      <text x="751" y="197" text-anchor="middle" font-size="8" font-weight="700" fill="#635BFF">School Subscriptions ✅</text>
+      <text x="751" y="210" text-anchor="middle" font-size="7.5" fill="#635BFF">Trial / Basic / Pro / Enterprise</text>
+      <rect x="826" y="182" width="146" height="36" rx="6" fill="#f3f2ff" stroke="#635BFF" stroke-width="1"/>
+      <text x="899" y="197" text-anchor="middle" font-size="8" font-weight="700" fill="#635BFF">B2C Home Accounts ✅</text>
+      <text x="899" y="210" text-anchor="middle" font-size="7.5" fill="#635BFF">Parent + Home Learner</text>
+      <rect x="686" y="224" width="286" height="36" rx="5" fill="#fff3f2" stroke="#e17055" stroke-width="1"/>
+      <text x="829" y="238" text-anchor="middle" font-size="8" font-weight="700" fill="#e17055">⚠️ resources.wrife.co.uk Stripe: NOT YET INTEGRATED</text>
+      <text x="829" y="252" text-anchor="middle" font-size="8" fill="#e17055">Estimated: £4.90/mo standard · £9.90/mo full · School licence via school sub</text>
+
+      <!-- ══ ZONE 4: FOUR SUB-APPS ══ -->
+      <!-- IP -->
+      <rect x="16" y="286" width="220" height="120" rx="10" fill="white" stroke="#00b894" stroke-width="1.5"/>
+      <text x="126" y="303" text-anchor="middle" font-size="11" font-weight="700" fill="#00b894">Interactive Practice ✅</text>
+      <text x="126" y="315" text-anchor="middle" font-size="8" fill="#636e72">practice.wrife.co.uk</text>
+      <rect x="28" y="320" width="90" height="26" rx="5" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="73" y="333" text-anchor="middle" font-size="7.5" font-weight="700" fill="#00b894">61 Lessons</text>
+      <text x="73" y="344" text-anchor="middle" font-size="7" fill="#00b894">6 worlds · XP · Badges</text>
+      <rect x="126" y="320" width="98" height="26" rx="5" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="175" y="333" text-anchor="middle" font-size="7.5" font-weight="700" fill="#00b894">Boss Challenges</text>
+      <text x="175" y="344" text-anchor="middle" font-size="7" fill="#00b894">Connect Grid (L27–34)</text>
+      <text x="126" y="376" text-anchor="middle" font-size="7.5" fill="#636e72">↑ learning_events:</text>
+      <text x="126" y="387" text-anchor="middle" font-size="7.5" fill="#636e72">lesson_completed, badge_earned</text>
+      <text x="126" y="398" text-anchor="middle" font-size="7.5" fill="#e17055">Teacher view ❌</text>
+
+      <!-- PWP -->
+      <rect x="246" y="286" width="220" height="120" rx="10" fill="white" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="356" y="303" text-anchor="middle" font-size="11" font-weight="700" fill="#6C5CE7">PWP Studio ✅</text>
+      <text x="356" y="315" text-anchor="middle" font-size="8" fill="#636e72">pwp-studio.wrife.co.uk</text>
+      <rect x="258" y="320" width="90" height="26" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="303" y="333" text-anchor="middle" font-size="7.5" font-weight="700" fill="#6C5CE7">Formula L1–L67</text>
+      <text x="303" y="344" text-anchor="middle" font-size="7" fill="#6C5CE7">AI Assess · Chain</text>
+      <rect x="356" y="320" width="98" height="26" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="405" y="333" text-anchor="middle" font-size="7.5" font-weight="700" fill="#6C5CE7">B2C Home Signup</text>
+      <text x="405" y="344" text-anchor="middle" font-size="7" fill="#6C5CE7">Route C · Stripe ✅</text>
+      <text x="356" y="376" text-anchor="middle" font-size="7.5" fill="#636e72">↑ learning_events:</text>
+      <text x="356" y="387" text-anchor="middle" font-size="7.5" fill="#636e72">formula_completed, level_advanced</text>
+      <text x="356" y="398" text-anchor="middle" font-size="7.5" fill="#e17055">Teacher view ❌</text>
+
+      <!-- DWP -->
+      <rect x="476" y="286" width="220" height="120" rx="10" fill="white" stroke="#0984e3" stroke-width="1.5"/>
+      <text x="586" y="303" text-anchor="middle" font-size="11" font-weight="700" fill="#0984e3">Daily Writing Practice ✅</text>
+      <text x="586" y="315" text-anchor="middle" font-size="8" fill="#636e72">dailywrite.wrife.co.uk</text>
+      <rect x="488" y="320" width="90" height="26" rx="5" fill="#e8f4fd" stroke="#0984e3" stroke-width="1"/>
+      <text x="533" y="333" text-anchor="middle" font-size="7.5" font-weight="700" fill="#0984e3">40 Levels</text>
+      <text x="533" y="344" text-anchor="middle" font-size="7" fill="#0984e3">365 prompts seeded ✅</text>
+      <rect x="586" y="320" width="98" height="26" rx="5" fill="#e8f4fd" stroke="#0984e3" stroke-width="1"/>
+      <text x="635" y="333" text-anchor="middle" font-size="7.5" font-weight="700" fill="#0984e3">AI Assess ✅</text>
+      <text x="635" y="344" text-anchor="middle" font-size="7" fill="#0984e3">dwp-assess Edge Fn</text>
+      <text x="586" y="376" text-anchor="middle" font-size="7.5" fill="#636e72">↑ learning_events:</text>
+      <text x="586" y="387" text-anchor="middle" font-size="7.5" fill="#636e72">level_completed, prompt_submitted</text>
+      <text x="586" y="398" text-anchor="middle" font-size="7.5" fill="#e17055">Teacher view ❌</text>
+
+      <!-- Resources -->
+      <rect x="706" y="286" width="278" height="120" rx="10" fill="white" stroke="#27AE60" stroke-width="2" stroke-dasharray="6,3"/>
+      <text x="845" y="303" text-anchor="middle" font-size="11" font-weight="700" fill="#27AE60">Learning Toolkit ⚠️</text>
+      <text x="845" y="315" text-anchor="middle" font-size="8" fill="#636e72">resources.wrife.co.uk (built, not deployed)</text>
+      <rect x="718" y="320" width="120" height="26" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="778" y="333" text-anchor="middle" font-size="7.5" font-weight="700" fill="#27AE60">9 AI Tools (Claude Haiku)</text>
+      <text x="778" y="344" text-anchor="middle" font-size="7" fill="#27AE60">Connect Grid · Sentence Coach…</text>
+      <rect x="846" y="320" width="126" height="26" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="909" y="333" text-anchor="middle" font-size="7.5" font-weight="700" fill="#27AE60">30+ PDFs (free)</text>
+      <text x="909" y="344" text-anchor="middle" font-size="7" fill="#27AE60">Anchor charts · Templates</text>
+      <text x="845" y="376" text-anchor="middle" font-size="7.5" fill="#636e72">↑ learning_events (blocked by DB constraint)</text>
+      <text x="845" y="387" text-anchor="middle" font-size="7.5" fill="#e17055">🔴 Fix CHECK constraint before deploy</text>
+      <text x="845" y="398" text-anchor="middle" font-size="7.5" fill="#e17055">🔴 Stripe integration pending</text>
+
+      <!-- ══ ZONE 5: SHARED DB ══ -->
+      <rect x="16" y="424" width="968" height="70" rx="10" fill="white" stroke="#636e72" stroke-width="1.5"/>
+      <text x="500" y="441" text-anchor="middle" font-size="12" font-weight="700" fill="#2D3436">Shared Supabase DB — gzmgjkbtsvezfclmreru (WriFe Platform)</text>
+      <rect x="28" y="448" width="110" height="34" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="83" y="461" text-anchor="middle" font-size="8" fill="#2D3436">pupils / classes</text>
+      <text x="83" y="473" text-anchor="middle" font-size="8" fill="#2D3436">schools / profiles</text>
+      <rect x="148" y="448" width="110" height="34" rx="5" fill="#f0edff" stroke="#6C5CE7" stroke-width="1"/>
+      <text x="203" y="461" text-anchor="middle" font-size="8" fill="#6C5CE7">formula_progress</text>
+      <text x="203" y="473" text-anchor="middle" font-size="8" fill="#6C5CE7">pwp_chain_sessions</text>
+      <rect x="268" y="448" width="110" height="34" rx="5" fill="#e8fdf7" stroke="#00b894" stroke-width="1"/>
+      <text x="323" y="461" text-anchor="middle" font-size="8" fill="#00b894">pupil_progress (IP)</text>
+      <text x="323" y="473" text-anchor="middle" font-size="8" fill="#00b894">badge_definitions</text>
+      <rect x="388" y="448" width="110" height="34" rx="5" fill="#e8f4fd" stroke="#0984e3" stroke-width="1"/>
+      <text x="443" y="461" text-anchor="middle" font-size="8" fill="#0984e3">dwp_progress</text>
+      <text x="443" y="473" text-anchor="middle" font-size="8" fill="#0984e3">dwp_submissions</text>
+      <rect x="508" y="448" width="110" height="34" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="563" y="461" text-anchor="middle" font-size="8" fill="#27AE60">ai_sessions</text>
+      <text x="563" y="473" text-anchor="middle" font-size="8" fill="#27AE60">ai_attempts</text>
+      <rect x="628" y="448" width="110" height="34" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="683" y="461" text-anchor="middle" font-size="8" fill="#2D3436">home_accounts</text>
+      <text x="683" y="473" text-anchor="middle" font-size="8" fill="#2D3436">subscriptions</text>
+      <rect x="748" y="448" width="224" height="34" rx="5" fill="#fff8e8" stroke="#F5A623" stroke-width="1.5"/>
+      <text x="860" y="461" text-anchor="middle" font-size="9" font-weight="700" fill="#e65c00">learning_events — THE BRIDGE ✅</text>
+      <text x="860" y="474" text-anchor="middle" font-size="8" fill="#e65c00">app IN ('pwp','ip','dwp','resources*') *fix needed</text>
+
+      <!-- ══ ZONE 6: AUTH ROUTES ══ -->
+      <rect x="16" y="512" width="968" height="80" rx="10" fill="white" stroke="#dfe6e9" stroke-width="1.5"/>
+      <text x="24" y="528" font-size="9" font-weight="700" fill="#636e72">AUTH ROUTES</text>
+      <rect x="28" y="534" width="200" height="48" rx="7" fill="#e8fdf7" stroke="#00b894" stroke-width="1.5"/>
+      <text x="128" y="549" text-anchor="middle" font-size="9" font-weight="700" fill="#00b894">Route A — School Pupil Hub SSO ✅</text>
+      <text x="128" y="562" text-anchor="middle" font-size="8" fill="#00b894">wrife.co.uk/pupil/login → JWT hash → sub-app setSession()</text>
+      <text x="128" y="574" text-anchor="middle" font-size="8" fill="#00b894">sessionStorage.entryViaHub = '1' → ← WriFe button</text>
+      <rect x="238" y="534" width="200" height="48" rx="7" fill="#f0edff" stroke="#6C5CE7" stroke-width="1.5"/>
+      <text x="338" y="549" text-anchor="middle" font-size="9" font-weight="700" fill="#6C5CE7">Route B — Teacher / Admin Email ✅</text>
+      <text x="338" y="562" text-anchor="middle" font-size="8" fill="#4a40b8">wrife.co.uk/login · Supabase Auth cookie</text>
+      <text x="338" y="574" text-anchor="middle" font-size="8" fill="#4a40b8">profiles.role → dashboard routing</text>
+      <rect x="448" y="534" width="200" height="48" rx="7" fill="#fff8e8" stroke="#F5A623" stroke-width="1.5"/>
+      <text x="548" y="549" text-anchor="middle" font-size="9" font-weight="700" fill="#b36800">Route C — Parent B2C Home ✅ (partial)</text>
+      <text x="548" y="562" text-anchor="middle" font-size="8" fill="#b36800">pwp-studio/home-signup → Stripe → child provisioned</text>
+      <text x="548" y="574" text-anchor="middle" font-size="8" fill="#e17055">⚠️ Stripe webhook provisioning incomplete</text>
+      <rect x="658" y="534" width="200" height="48" rx="7" fill="#fff5f5" stroke="#e17055" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="758" y="549" text-anchor="middle" font-size="9" font-weight="700" fill="#e17055">Route D — Ind. Teacher ❌ Not Built</text>
+      <text x="758" y="562" text-anchor="middle" font-size="8" fill="#e17055">teacher-signup on sub-apps → home_accounts</text>
+      <text x="758" y="574" text-anchor="middle" font-size="8" fill="#e17055">Stripe sub + own classes + Route B pupil login</text>
+
+      <!-- ══ ZONE 7: EDGE FUNCTIONS ══ -->
+      <rect x="16" y="610" width="968" height="90" rx="10" fill="white" stroke="#dfe6e9" stroke-width="1.5"/>
+      <text x="24" y="626" font-size="9" font-weight="700" fill="#636e72">EDGE FUNCTIONS &amp; AI — gzmgjkbtsvezfclmreru</text>
+      <rect x="28" y="632" width="130" height="28" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="93" y="649" text-anchor="middle" font-size="7.5" fill="#2D3436">pupil-login ✅</text>
+      <rect x="166" y="632" width="130" height="28" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="231" y="649" text-anchor="middle" font-size="7.5" fill="#2D3436">stripe-checkout / webhook ✅</text>
+      <rect x="304" y="632" width="130" height="28" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="369" y="649" text-anchor="middle" font-size="7.5" fill="#2D3436">create-child-profile ✅</text>
+      <rect x="442" y="632" width="130" height="28" rx="5" fill="#fff8e8" stroke="#F5A623" stroke-width="1"/>
+      <text x="507" y="649" text-anchor="middle" font-size="7.5" fill="#e65c00">assess-formula ⚠️ not deployed</text>
+      <rect x="580" y="632" width="130" height="28" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="645" y="649" text-anchor="middle" font-size="7.5" fill="#2D3436">dwp-assess / dwp-tts ✅</text>
+      <rect x="718" y="632" width="130" height="28" rx="5" fill="#e8f8ee" stroke="#27AE60" stroke-width="1"/>
+      <text x="783" y="649" text-anchor="middle" font-size="7.5" fill="#27AE60">Resources: Claude Haiku (9 tools)</text>
+      <rect x="856" y="632" width="116" height="28" rx="5" fill="#f8f9fa" stroke="#b2bec3" stroke-width="1"/>
+      <text x="914" y="649" text-anchor="middle" font-size="7.5" fill="#2D3436">pupil-create / invite-teacher</text>
+      <text x="500" y="694" text-anchor="middle" font-size="8" fill="#636e72">CORS standard (ALL functions): authorization · x-client-info · apikey · content-type</text>
+
+      <!-- Connector lines hub → sub-apps -->
+      <line x1="309" y1="268" x2="126" y2="284" stroke="#00b894" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arrowPM1)"/>
+      <line x1="341" y1="268" x2="356" y2="284" stroke="#6C5CE7" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arrowPM2)"/>
+      <line x1="341" y1="268" x2="586" y2="284" stroke="#0984e3" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arrowPM3)"/>
+      <!-- Sub-apps → DB -->
+      <line x1="126" y1="406" x2="126" y2="422" stroke="#b2bec3" stroke-width="1.2" marker-end="url(#arrowPM4)"/>
+      <line x1="356" y1="406" x2="356" y2="422" stroke="#b2bec3" stroke-width="1.2" marker-end="url(#arrowPM4)"/>
+      <line x1="586" y1="406" x2="586" y2="422" stroke="#b2bec3" stroke-width="1.2" marker-end="url(#arrowPM4)"/>
+      <line x1="845" y1="406" x2="845" y2="422" stroke="#b2bec3" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arrowPM4)"/>
+
+      <defs>
+        <marker id="arrowPM1" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#00b894"/></marker>
+        <marker id="arrowPM2" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#6C5CE7"/></marker>
+        <marker id="arrowPM3" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#0984e3"/></marker>
+        <marker id="arrowPM4" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#b2bec3"/></marker>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="callout good">
+    <strong>How to read this map</strong>
+    Top row: user types enter through their respective auth routes. The hub (wrife.co.uk) is the central manager for school accounts and the SSO gateway for pupils. The four pupil sub-apps (IP, PWP, DWP, Resources) sit to the right. All five apps write to the single Supabase backend at the bottom. The <strong>learning_events</strong> table (orange, bottom-right) is the single bridge — sub-apps INSERT, wrife.co.uk reads. Dashed borders on resources.wrife.co.uk indicate it is built but not yet deployed.
+  </div>
+
+</section>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

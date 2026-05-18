@@ -164,7 +164,7 @@ export default function PupilDashboardPage() {
   const [resourceAssignments, setResourceAssignments] = useState<ResourceAssignment[]>([]);
   const [stats, setStats] = useState<PupilStats | null>(null);
   const [loading, setLoading] = useState(true);
-  // SSO URLs — computed on mount using the Supabase session
+  // SSO URLs — built on mount from stored pupilSSOTokens (Route A hash-token injection)
   const [practiceUrl, setPracticeUrl] = useState('https://practice.wrife.co.uk');
   const [studioUrl, setStudioUrl] = useState('https://pwp-studio.wrife.co.uk/dashboard');
   const [dwpUrl, setDwpUrl] = useState('https://dailywrite.wrife.co.uk');
@@ -184,7 +184,7 @@ export default function PupilDashboardPage() {
       sessionRef.current = parsed;
       fetchAssignments(parsed.classId, parsed.pupilId);
 
-      // Build SSO URLs in the background — falls back to plain URL if no session
+      // Build SSO URLs — falls back to plain URL if no tokens / expired
       buildSSOUrl('https://practice.wrife.co.uk').then(setPracticeUrl).catch(() => {});
       buildSSOUrl('https://pwp-studio.wrife.co.uk/dashboard').then(setStudioUrl).catch(() => {});
       buildSSOUrl('https://dailywrite.wrife.co.uk').then(setDwpUrl).catch(() => {});
@@ -234,7 +234,6 @@ export default function PupilDashboardPage() {
       setDwpAssignments(data.dwpAssignments || []);
       setWritingAttempts(data.writingAttempts || []);
 
-      // Fetch teacher-pushed resources for this class (non-blocking)
       fetch('/api/pupil/resource-assignments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -311,17 +310,9 @@ export default function PupilDashboardPage() {
     return { label: 'Start', className: 'bg-[var(--wrife-blue)] hover:opacity-90 text-white' };
   }
 
-  function getAssignmentCardBorder(assignmentId: number) {
-    const subStatus = getSubmissionStatus(assignmentId);
-    if (subStatus === 'reviewed')  return 'border-green-300 bg-green-50';
-    if (subStatus === 'submitted') return 'border-blue-200 bg-blue-50';
-    if (subStatus === 'draft')     return 'border-amber-200 bg-amber-50';
-    return 'border-[var(--wrife-border)] bg-white';
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--wrife-bg)] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--wrife-blue)] border-r-transparent"></div>
           <p className="mt-4 text-sm text-[var(--wrife-text-muted)]">Loading...</p>
@@ -354,7 +345,6 @@ export default function PupilDashboardPage() {
     (a) => ['submitted', 'reviewed'].includes(getSubmissionStatus(a.id))
   );
 
-  // DWP: separate into attempted and unstarted
   const attemptedDwp = dwpAssignments
     .filter((d) => !!getDWPAttempt(d.id))
     .sort((a, b) => (a.writing_levels?.level_number ?? 0) - (b.writing_levels?.level_number ?? 0));
@@ -370,7 +360,6 @@ export default function PupilDashboardPage() {
     .sort((a, b) => (a.writing_levels?.level_number ?? 0) - (b.writing_levels?.level_number ?? 0));
 
   const activeDwpAssignments = [...attemptedDwp, ...unstartedDwp.slice(0, 3)];
-  const hiddenDwpCount = dwpAssignments.length - activeDwpAssignments.length;
   const nextDwp = unstartedDwp[0];
 
   const streakCurrent = stats?.streak?.current ?? 0;
@@ -378,20 +367,17 @@ export default function PupilDashboardPage() {
   const allBadges = stats?.badges ?? [];
   const latestBadges = allBadges.slice(0, 3);
 
-  // XP / level — 100 sentences per level
   const xpLevel = Math.floor(totalSentences / 100) + 1;
   const xpIntoLevel = totalSentences % 100;
-  const xpBarPct = xpIntoLevel; // out of 100
+  const xpBarPct = xpIntoLevel;
 
-  // Current PWP level — highest level_to seen across assignments
   const currentPwpLevel = pwpAssignments.length > 0
     ? Math.max(...pwpAssignments.map(a => a.level_to))
     : null;
 
-  // Active PWP assignments (not yet assessed)
   const activePwpAssignments = pwpAssignments.filter((a) => {
     const sub = getPWPSubmission(a.id);
-    if (sub?.has_assessment) return false; // completed
+    if (sub?.has_assessment) return false;
     if (!a.due_date) return true;
     const due = new Date(a.due_date);
     due.setHours(0, 0, 0, 0);
@@ -399,151 +385,144 @@ export default function PupilDashboardPage() {
   });
 
   const hasPendingWork = pendingAssignments.length > 0 || unstartedDwp.length > 0 || activePwpAssignments.length > 0;
+  const pendingCount = pendingAssignments.length + unstartedDwp.length + activePwpAssignments.length;
+  const firstName = session.pupilName.split(' ')[0];
+
+  /* ── Shared style helpers ─────────────────────────────────── */
+  const bannerChip: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.18)',
+    borderRadius: '8px',
+    padding: '4px 10px',
+    color: 'white',
+    fontWeight: 700,
+    fontSize: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--wrife-bg)" }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
 
-      {/* ── Slim pupil nav ─────────────────────────────────── */}
+      {/* ── Slim sticky nav ─────────────────────────────────────── */}
       <header
-        className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6"
-        style={{ backgroundColor: "var(--wrife-blue)", height: "52px" }}
+        className="sticky top-0 z-40 w-full"
+        style={{ backgroundColor: 'var(--wrife-blue)', height: '52px' }}
       >
-        <Link href="/">
-          <span className="font-extrabold text-xl text-white" style={{ fontFamily: "var(--font-display)" }}>
-            WriFe
-          </span>
-        </Link>
-
-        {/* Right: streak + sentences pills */}
-        <div className="flex items-center gap-3">
-          {streakCurrent > 0 && (
-            <span className="text-sm font-bold text-white flex items-center gap-1">
-              🔥 {streakCurrent}
+        <div className="max-w-4xl mx-auto px-4 h-full flex items-center justify-between">
+          <Link href="/">
+            <span className="font-extrabold text-xl text-white" style={{ fontFamily: 'var(--font-display)' }}>
+              WriFe
             </span>
-          )}
-          <span className="text-sm font-bold text-white flex items-center gap-1">
-            ✏️ {totalSentences}
-          </span>
-          <button
-            onClick={handleLogout}
-            className="text-sm font-semibold ml-2 transition"
-            style={{ color: "rgba(255,255,255,0.65)" }}
-          >
-            Log out
-          </button>
+          </Link>
+          <div className="flex items-center gap-2">
+            {streakCurrent > 0 && (
+              <span style={bannerChip}>🔥 {streakCurrent}</span>
+            )}
+            <span style={bannerChip}>✏️ {totalSentences}</span>
+            <button
+              onClick={handleLogout}
+              className="text-sm font-semibold ml-2 transition"
+              style={{ color: 'rgba(255,255,255,0.65)' }}
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* ── Hero: greeting + XP bar ────────────────────────── */}
-      <div className="max-w-3xl mx-auto px-4 pt-6 pb-2">
-        <h1
-          className="text-3xl sm:text-4xl font-extrabold mb-1"
-          style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+      {/* ── Hero banner (Pattern 1 — wrife-design-world) ────────── */}
+      <div className="max-w-4xl mx-auto px-4 pt-5">
+        <div
+          className="rounded-2xl px-6 py-5"
+          style={{ background: 'var(--wrife-blue)' }}
         >
-          Hi {session.pupilName.split(' ')[0]}! 🌅
-        </h1>
+          {/* Top row: level pill + stat chips */}
+          <div className="flex items-center justify-between mb-3">
+            <span
+              className="text-xs font-bold uppercase tracking-wide"
+              style={{ background: 'rgba(255,255,255,0.18)', borderRadius: '20px', padding: '4px 12px', color: 'white' }}
+            >
+              Level {xpLevel}
+            </span>
+            <div className="flex items-center gap-2">
+              {streakCurrent >= 3 && (
+                <span style={bannerChip}>🔥 {streakCurrent}-day streak</span>
+              )}
+              {allBadges.length > 0 && (
+                <span style={bannerChip}>🏆 {allBadges.length}</span>
+              )}
+            </div>
+          </div>
 
-        {/* XP bar — sentences written as proxy for XP */}
-        <div className="flex items-center justify-between text-xs font-semibold mb-2 mt-3"
-          style={{ color: "var(--wrife-text-muted)" }}>
-          <span>Sentences written: {totalSentences}</span>
-          <span style={{ color: "var(--wrife-blue)" }}>
-            LEVEL {xpLevel} → {xpLevel + 1}
-          </span>
-        </div>
-        <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#e5e7eb" }}>
-          <div
-            className="h-3 rounded-full transition-all"
-            style={{
-              width: `${xpBarPct}%`,
-              background: "linear-gradient(90deg, var(--wrife-blue) 0%, #7c3aed 100%)",
-            }}
-          />
+          {/* Greeting */}
+          <h1
+            className="font-extrabold text-white"
+            style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontFamily: 'var(--font-display)', lineHeight: 1.2 }}
+          >
+            Hi {firstName}! 🌅
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.72)' }}>
+            {hasPendingWork
+              ? `You have ${pendingCount} task${pendingCount !== 1 ? 's' : ''} to do`
+              : 'All caught up — great work! ✓'}
+          </p>
+
+          {/* XP progress bar */}
+          <div className="mt-4">
+            <div className="flex justify-between text-xs mb-1.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <span>{xpIntoLevel} sentences this level</span>
+              <span>{100 - xpIntoLevel} to Level {xpLevel + 1}</span>
+            </div>
+            <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.22)' }}>
+              <div
+                className="h-2 rounded-full transition-all"
+                style={{ width: `${xpBarPct}%`, background: 'var(--wrife-orange)' }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <main className="max-w-3xl mx-auto px-4 py-5 space-y-7">
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-8">
 
-        {/* ── 4 stat cards ─────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            {
-              value: streakCurrent > 0 ? `${streakCurrent}-day` : '—',
-              label: 'Streak',
-              color: 'var(--wrife-orange)',
-              pulse: streakCurrent >= 7,
-            },
-            {
-              value: `${pendingAssignments.length + unstartedDwp.length + activePwpAssignments.length}`,
-              label: 'Tasks to Do',
-              color: pendingAssignments.length + unstartedDwp.length + activePwpAssignments.length > 0
-                ? '#ef4444'
-                : '#22c55e',
-              pulse: false,
-            },
-            {
-              value: `${totalSentences}`,
-              label: 'Sentences Written',
-              color: 'var(--wrife-blue)',
-              pulse: false,
-            },
-            {
-              value: currentPwpLevel ? `L${currentPwpLevel}` : allBadges.length > 0 ? `${allBadges.length}` : '—',
-              label: currentPwpLevel ? 'PWP Level' : 'Badges Earned',
-              color: '#7c3aed',
-              pulse: false,
-            },
-          ].map((card) => (
-            <div
-              key={card.label}
-              className="rounded-2xl p-4"
-              style={{
-                backgroundColor: "var(--wrife-surface)",
-                border: "1.5px solid var(--wrife-border)",
-              }}
-            >
-              <p
-                className={`text-2xl font-extrabold leading-none ${card.pulse ? 'animate-pulse' : ''}`}
-                style={{ color: card.color, fontFamily: "var(--font-display)" }}
-              >
-                {card.value}
-              </p>
-              <p className="text-xs mt-1.5 font-medium" style={{ color: "var(--wrife-text-muted)" }}>
-                {card.label}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Your Apps (6-card grid, like "Your Worlds") ───── */}
-        <div>
+        {/* ── Your Apps (6+1 tile grid) ─────────────────────────── */}
+        <section>
           <h2
-            className="text-xl font-extrabold mb-3"
-            style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+            className="text-xl font-extrabold mb-4"
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--wrife-text-main)' }}
           >
             Your Apps
           </h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-4">
 
             {/* Interactive Practice */}
             <a href={practiceUrl} className="block group">
               <div
-                className="rounded-2xl p-4 text-white h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
-                style={{ background: "linear-gradient(135deg, #6C5CE7 0%, #4834d4 100%)" }}
+                className="rounded-2xl p-5 text-white h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #6C5CE7 0%, #4834d4 100%)' }}
               >
                 <div>
-                  <span className="text-xl">🎮</span>
-                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+                  <span className="text-2xl">🎮</span>
+                  <p className="font-bold text-base mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
                     Interactive Practice
                   </p>
-                  <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  <p className="text-xs mt-1 font-medium" style={{ color: 'rgba(255,255,255,0.72)' }}>
                     {progressRecords.length > 0
                       ? `In progress · L${progressRecords[progressRecords.length - 1]?.lesson_id ?? '?'}`
                       : '61 lessons'}
                   </p>
                 </div>
-                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold bg-white transition group-hover:bg-purple-50"
-                  style={{ color: "#4834d4" }}>
+                {/* Chunky bottom-border CTA — Pattern 2 */}
+                <span
+                  className="mt-4 block text-center rounded-xl text-sm font-bold transition group-hover:opacity-90"
+                  style={{
+                    background: 'rgba(255,255,255,0.92)',
+                    color: '#4834d4',
+                    padding: '9px 0',
+                    borderBottom: '3px solid rgba(72,52,212,0.3)',
+                  }}
+                >
                   Play →
                 </span>
               </div>
@@ -552,47 +531,61 @@ export default function PupilDashboardPage() {
             {/* PWP Studio */}
             <a href={studioUrl} className="block group">
               <div
-                className="rounded-2xl p-4 text-white h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
-                style={{ background: "linear-gradient(135deg, #F5A623 0%, #e07b10 100%)" }}
+                className="rounded-2xl p-5 text-white h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #F5A623 0%, #e07b10 100%)' }}
               >
                 <div>
-                  <span className="text-xl">✏️</span>
-                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+                  <span className="text-2xl">✏️</span>
+                  <p className="font-bold text-base mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
                     PWP Studio
                   </p>
-                  <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
+                  <p className="text-xs mt-1 font-medium" style={{ color: 'rgba(255,255,255,0.78)' }}>
                     {currentPwpLevel ? `Level ${currentPwpLevel} · keep going!` : '67 levels · build sentences'}
                   </p>
                 </div>
-                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold bg-white transition group-hover:bg-orange-50"
-                  style={{ color: "#e07b10" }}>
+                <span
+                  className="mt-4 block text-center rounded-xl text-sm font-bold transition group-hover:opacity-90"
+                  style={{
+                    background: 'rgba(255,255,255,0.92)',
+                    color: '#e07b10',
+                    padding: '9px 0',
+                    borderBottom: '3px solid rgba(224,123,16,0.3)',
+                  }}
+                >
                   Write →
                 </span>
               </div>
             </a>
 
-            {/* Daily Writing Practice — SSO tile, same pattern as IP and PWP */}
+            {/* Daily Writing Practice */}
             <a href={dwpUrl} className="block group">
               <div
-                className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                className="rounded-2xl p-5 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
                 style={{
-                  background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)",
-                  border: "1.5px solid #c4b5fd",
+                  background: 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)',
+                  border: '1.5px solid #c4b5fd',
                 }}
               >
                 <div>
-                  <span className="text-xl">📖</span>
-                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#5b21b6" }}>
+                  <span className="text-2xl">📖</span>
+                  <p className="font-bold text-base mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)', color: '#5b21b6' }}>
                     Daily Writing
                   </p>
-                  <p className="text-xs mt-1" style={{ color: "#7c3aed" }}>
+                  <p className="text-xs mt-1 font-medium" style={{ color: '#7c3aed' }}>
                     {activeDwpAssignments.length > 0
                       ? `${activeDwpAssignments.length} task${activeDwpAssignments.length !== 1 ? 's' : ''} assigned`
                       : '40 levels · write every day'}
                   </p>
                 </div>
-                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold transition group-hover:opacity-90"
-                  style={{ backgroundColor: "#7c3aed", color: "white" }}>
+                <span
+                  className="mt-4 block text-center rounded-xl text-sm font-bold transition group-hover:opacity-90"
+                  style={{
+                    backgroundColor: '#7c3aed',
+                    color: 'white',
+                    padding: '9px 0',
+                    borderBottom: '3px solid #5b21b6',
+                  }}
+                >
                   Write →
                 </span>
               </div>
@@ -600,150 +593,179 @@ export default function PupilDashboardPage() {
 
             {/* Writing Assignments */}
             {pendingAssignments.length > 0 ? (
-              <div className="rounded-2xl p-4 h-full flex flex-col justify-between"
+              <div
+                className="rounded-2xl p-5 h-full flex flex-col justify-between"
                 style={{
-                  background: "linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)",
-                  border: "1.5px solid #fde047",
-                }}>
+                  background: 'linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)',
+                  border: '1.5px solid #fde047',
+                }}
+              >
                 <div>
-                  <span className="text-xl">📝</span>
-                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#854d0e" }}>
+                  <span className="text-2xl">📝</span>
+                  <p className="font-bold text-base mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)', color: '#854d0e' }}>
                     Assignments
                   </p>
-                  <p className="text-xs mt-1" style={{ color: "#a16207" }}>
+                  <p className="text-xs mt-1 font-medium" style={{ color: '#a16207' }}>
                     {pendingAssignments.length} to do
                     {activeAssignments.length > 0 && ` · ${completedAssignments.length}/${activeAssignments.length} done`}
                   </p>
                 </div>
                 {activeAssignments.length > 0 && (
-                  <div className="mt-3 w-full rounded-full h-1.5" style={{ backgroundColor: "#fef08a" }}>
-                    <div className="h-1.5 rounded-full" style={{
-                      width: `${Math.round((completedAssignments.length / activeAssignments.length) * 100)}%`,
-                      backgroundColor: "#eab308",
-                    }} />
+                  <div className="mt-3 w-full rounded-full h-1.5" style={{ backgroundColor: '#fef08a' }}>
+                    <div
+                      className="h-1.5 rounded-full"
+                      style={{
+                        width: `${Math.round((completedAssignments.length / activeAssignments.length) * 100)}%`,
+                        backgroundColor: '#eab308',
+                      }}
+                    />
                   </div>
                 )}
               </div>
             ) : (
-              <div className="rounded-2xl p-4 h-full flex flex-col"
-                style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac" }}>
-                <span className="text-xl">📝</span>
-                <p className="font-bold text-sm mt-2" style={{ fontFamily: "var(--font-display)", color: "#166534" }}>
+              <div
+                className="rounded-2xl p-5 h-full flex flex-col"
+                style={{ backgroundColor: '#f0fdf4', border: '1.5px solid #86efac' }}
+              >
+                <span className="text-2xl">📝</span>
+                <p className="font-bold text-base mt-2" style={{ fontFamily: 'var(--font-display)', color: '#166534' }}>
                   Assignments
                 </p>
-                <p className="text-xs mt-1" style={{ color: "#16a34a" }}>All done! ✓</p>
+                <p className="text-xs mt-1 font-medium" style={{ color: '#16a34a' }}>All done! ✓</p>
               </div>
             )}
 
-            {/* AI Writing Coach */}
+            {/* Writing Coach */}
             <Link href="/pupil/writing-coach" className="block group">
               <div
-                className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                className="rounded-2xl p-5 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
                 style={{
-                  background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
-                  border: "1.5px solid #6ee7b7",
+                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                  border: '1.5px solid #6ee7b7',
                 }}
               >
                 <div>
-                  <span className="text-xl">✍️</span>
-                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#065f46" }}>
+                  <span className="text-2xl">✍️</span>
+                  <p className="font-bold text-base mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)', color: '#065f46' }}>
                     Writing Coach
                   </p>
-                  <p className="text-xs mt-1" style={{ color: "#059669" }}>AI-powered feedback</p>
+                  <p className="text-xs mt-1 font-medium" style={{ color: '#059669' }}>AI-powered feedback</p>
                 </div>
-                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold transition group-hover:opacity-90"
-                  style={{ backgroundColor: "#10b981", color: "white" }}>
+                <span
+                  className="mt-4 block text-center rounded-xl text-sm font-bold transition group-hover:opacity-90"
+                  style={{
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    padding: '9px 0',
+                    borderBottom: '3px solid #059669',
+                  }}
+                >
                   Open →
                 </span>
               </div>
             </Link>
 
-            {/* Skills Toolkit — resources.wrife.co.uk SSO tile */}
+            {/* Skills Toolkit */}
             <a href={toolkitUrl} className="block group">
               <div
-                className="rounded-2xl p-4 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
+                className="rounded-2xl p-5 h-full flex flex-col justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
                 style={{
-                  background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
-                  border: "1.5px solid #86efac",
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                  border: '1.5px solid #86efac',
                 }}
               >
                 <div>
-                  <span className="text-xl">🛠️</span>
-                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#166534" }}>
+                  <span className="text-2xl">🛠️</span>
+                  <p className="font-bold text-base mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)', color: '#166534' }}>
                     Skills Toolkit
                   </p>
-                  <p className="text-xs mt-1" style={{ color: "#16a34a" }}>
+                  <p className="text-xs mt-1 font-medium" style={{ color: '#16a34a' }}>
                     AI writing tools &amp; resources
                   </p>
                 </div>
-                <span className="mt-3 block text-center py-1.5 rounded-full text-xs font-bold transition group-hover:opacity-90"
-                  style={{ backgroundColor: "#22c55e", color: "white" }}>
+                <span
+                  className="mt-4 block text-center rounded-xl text-sm font-bold transition group-hover:opacity-90"
+                  style={{
+                    backgroundColor: '#22c55e',
+                    color: 'white',
+                    padding: '9px 0',
+                    borderBottom: '3px solid #16a34a',
+                  }}
+                >
                   Open →
                 </span>
               </div>
             </a>
 
-            {/* Achievements — spans full row so the 7-tile grid ends cleanly */}
+            {/* Achievements — spans full row */}
             <Link href="#achievements" className="block group col-span-3">
               <div
                 className="rounded-2xl p-4 flex flex-row items-center justify-between transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg"
                 style={{
-                  background: "linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)",
-                  border: "1.5px solid #fbbf24",
+                  background: 'linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)',
+                  border: '1.5px solid #fbbf24',
                 }}
               >
                 <div>
                   <span className="text-xl">🏆</span>
-                  <p className="font-bold text-sm mt-2 leading-tight" style={{ fontFamily: "var(--font-display)", color: "#92400e" }}>
+                  <p className="font-bold text-sm mt-1.5 leading-tight" style={{ fontFamily: 'var(--font-display)', color: '#92400e' }}>
                     Achievements
                   </p>
-                  <p className="text-xs mt-1" style={{ color: "#b45309" }}>
-                    {allBadges.length > 0 ? `${allBadges.length} badge${allBadges.length !== 1 ? 's' : ''} earned` : 'Earn your first badge!'}
+                  <p className="text-xs mt-0.5" style={{ color: '#b45309' }}>
+                    {allBadges.length > 0
+                      ? `${allBadges.length} badge${allBadges.length !== 1 ? 's' : ''} earned`
+                      : 'Earn your first badge!'}
                   </p>
                 </div>
                 {latestBadges.length > 0 && (
-                  <div className="mt-2 flex gap-1">
+                  <div className="flex gap-1.5">
                     {latestBadges.map((b, i) => (
-                      <span key={i} className="text-base" title={b.badgeName}>{b.badgeIcon || '🎖️'}</span>
+                      <span key={i} className="text-xl" title={b.badgeName}>{b.badgeIcon || '🎖️'}</span>
                     ))}
                   </div>
                 )}
               </div>
             </Link>
           </div>
-        </div>
+        </section>
 
-        {/* ── Today's Tasks ─────────────────────────────────── */}
+        {/* ── Today's Tasks ─────────────────────────────────────── */}
         {(nextDwp || pendingAssignments.length > 0 || activePwpAssignments.length > 0) && (
-          <div>
+          <section>
             <h2
-              className="text-xl font-extrabold mb-3"
-              style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+              className="text-xl font-extrabold mb-4"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--wrife-text-main)' }}
             >
-              Today's Tasks
+              Today&apos;s Tasks
             </h2>
 
             <div className="space-y-3">
 
-              {/* Primary: next DWP — SSO redirect to dailywrite.wrife.co.uk (Route A) */}
+              {/* Primary: next DWP — SSO → dailywrite.wrife.co.uk */}
               {nextDwp && (
                 <a href={dwpUrl}>
                   <div
                     className="rounded-2xl p-5 cursor-pointer transition hover:opacity-95 hover:shadow-lg"
-                    style={{ background: "linear-gradient(135deg, #F5A623 0%, #e07b10 100%)" }}
+                    style={{ background: 'linear-gradient(135deg, #F5A623 0%, #e07b10 100%)' }}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-bold text-white opacity-80">📖 Daily Writing Practice</span>
                     </div>
-                    <p className="text-white font-extrabold text-base" style={{ fontFamily: "var(--font-display)" }}>
+                    <p className="text-white font-extrabold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
                       {nextDwp.writing_levels?.activity_name || `Writing Level ${nextDwp.writing_levels?.level_number}`}
                     </p>
-                    <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.8)" }}>
+                    <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.82)' }}>
                       Tier {nextDwp.writing_levels?.tier_number} · {nextDwp.writing_levels?.learning_objective?.slice(0, 60)}…
                     </p>
-                    <div className="mt-4 flex gap-3">
-                      <span className="px-5 py-2 rounded-full text-sm font-bold bg-white transition hover:bg-orange-50"
-                        style={{ color: "#e07b10" }}>
+                    <div className="mt-4">
+                      <span
+                        className="inline-block px-6 py-2.5 rounded-xl text-sm font-bold"
+                        style={{
+                          background: 'white',
+                          color: '#e07b10',
+                          borderBottom: '3px solid rgba(224,123,16,0.28)',
+                        }}
+                      >
                         Start Writing →
                       </span>
                     </div>
@@ -759,20 +781,22 @@ export default function PupilDashboardPage() {
                     <div
                       className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
                       style={{
-                        backgroundColor: "var(--wrife-surface)",
-                        border: "1.5px solid var(--wrife-border)",
+                        backgroundColor: 'var(--wrife-surface)',
+                        border: '1.5px solid var(--wrife-border)',
                       }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
-                          style={{ backgroundColor: "var(--wrife-blue-soft)" }}>
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
+                          style={{ backgroundColor: 'var(--wrife-blue-soft)' }}
+                        >
                           ✏️
                         </div>
                         <div>
-                          <p className="font-bold text-sm" style={{ color: "var(--wrife-text-main)" }}>
+                          <p className="font-bold text-sm" style={{ color: 'var(--wrife-text-main)' }}>
                             PWP Studio · L{pwp.level_from}–{pwp.level_to}
                           </p>
-                          <p className="text-xs" style={{ color: isOverdue ? "var(--wrife-danger)" : "var(--wrife-text-muted)" }}>
+                          <p className="text-xs" style={{ color: isOverdue ? 'var(--wrife-danger)' : 'var(--wrife-text-muted)' }}>
                             {pwp.due_date
                               ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(pwp.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
                               : 'No due date'}
@@ -781,14 +805,14 @@ export default function PupilDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {getPWPStatusBadge(pwp.id)}
-                        <span className="text-xs font-bold shrink-0" style={{ color: "var(--wrife-blue)" }}>Open →</span>
+                        <span className="text-xs font-bold shrink-0" style={{ color: 'var(--wrife-blue)' }}>Open →</span>
                       </div>
                     </div>
                   </a>
                 );
               })}
 
-              {/* IP assignments */}
+              {/* IP / writing assignments */}
               {pendingAssignments.map((assignment) => {
                 const subStatus = getSubmissionStatus(assignment.id);
                 const overallStatus = getOverallStatus(assignment.id, assignment.lesson_id);
@@ -803,34 +827,38 @@ export default function PupilDashboardPage() {
                     <div
                       className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
                       style={{
-                        border: subStatus === 'reviewed' ? "1.5px solid #86efac"
-                          : subStatus === 'submitted' ? "1.5px solid #93c5fd"
-                          : subStatus === 'draft' ? "1.5px solid #fcd34d"
-                          : "1.5px solid var(--wrife-border)",
-                        backgroundColor: subStatus === 'reviewed' ? "#f0fdf4"
-                          : subStatus === 'submitted' ? "#eff6ff"
-                          : subStatus === 'draft' ? "#fffbeb"
-                          : "var(--wrife-surface)",
+                        border: subStatus === 'reviewed' ? '1.5px solid #86efac'
+                          : subStatus === 'submitted' ? '1.5px solid #93c5fd'
+                          : subStatus === 'draft' ? '1.5px solid #fcd34d'
+                          : '1.5px solid var(--wrife-border)',
+                        backgroundColor: subStatus === 'reviewed' ? '#f0fdf4'
+                          : subStatus === 'submitted' ? '#eff6ff'
+                          : subStatus === 'draft' ? '#fffbeb'
+                          : 'var(--wrife-surface)',
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
-                          style={{ backgroundColor: "var(--wrife-bg)" }}>
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
+                          style={{ backgroundColor: 'var(--wrife-bg)' }}
+                        >
                           📝
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold text-sm truncate" style={{ color: "var(--wrife-text-main)" }}>
+                            <p className="font-bold text-sm truncate" style={{ color: 'var(--wrife-text-main)' }}>
                               {assignment.title}
                             </p>
                             {subStatus === 'reviewed' && hasTeacherFeedback && (
-                              <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-bold text-white"
-                                style={{ backgroundColor: "var(--wrife-orange)" }}>
+                              <span
+                                className="shrink-0 px-2 py-0.5 rounded-full text-xs font-bold text-white"
+                                style={{ backgroundColor: 'var(--wrife-orange)' }}
+                              >
                                 New Feedback!
                               </span>
                             )}
                           </div>
-                          <p className="text-xs" style={{ color: isOverdue ? "var(--wrife-danger)" : "var(--wrife-text-muted)" }}>
+                          <p className="text-xs" style={{ color: isOverdue ? 'var(--wrife-danger)' : 'var(--wrife-text-muted)' }}>
                             {assignment.due_date
                               ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(assignment.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
                               : overallStatus === 'practice_complete' ? 'Practice done · ready to submit'
@@ -855,20 +883,22 @@ export default function PupilDashboardPage() {
                     <div
                       className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
                       style={{
-                        border: subStatus === 'reviewed' ? "1.5px solid #86efac" : "1.5px solid #93c5fd",
-                        backgroundColor: subStatus === 'reviewed' ? "#f0fdf4" : "#eff6ff",
+                        border: subStatus === 'reviewed' ? '1.5px solid #86efac' : '1.5px solid #93c5fd',
+                        backgroundColor: subStatus === 'reviewed' ? '#f0fdf4' : '#eff6ff',
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
-                          style={{ backgroundColor: subStatus === 'reviewed' ? "#dcfce7" : "#dbeafe" }}>
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
+                          style={{ backgroundColor: subStatus === 'reviewed' ? '#dcfce7' : '#dbeafe' }}
+                        >
                           {subStatus === 'reviewed' ? '✅' : '⏳'}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-sm truncate" style={{ color: "var(--wrife-text-main)" }}>
+                          <p className="font-bold text-sm truncate" style={{ color: 'var(--wrife-text-main)' }}>
                             {assignment.title}
                           </p>
-                          <p className="text-xs" style={{ color: "var(--wrife-text-muted)" }}>
+                          <p className="text-xs" style={{ color: 'var(--wrife-text-muted)' }}>
                             {subStatus === 'reviewed' ? 'Reviewed by teacher' : 'Submitted · awaiting review'}
                           </p>
                         </div>
@@ -882,15 +912,15 @@ export default function PupilDashboardPage() {
               })}
 
             </div>
-          </div>
+          </section>
         )}
 
-        {/* ── Resources from your teacher ──────────────────── */}
+        {/* ── Resources from your teacher ──────────────────────── */}
         {resourceAssignments.length > 0 && (
-          <div>
+          <section>
             <h2
-              className="text-xl font-extrabold mb-3"
-              style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+              className="text-xl font-extrabold mb-4"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--wrife-text-main)' }}
             >
               Resources from Your Teacher
             </h2>
@@ -906,36 +936,31 @@ export default function PupilDashboardPage() {
                   : '📎';
 
                 return (
-                  <a
-                    key={r.id}
-                    href={r.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a key={r.id} href={r.file_url} target="_blank" rel="noopener noreferrer">
                     <div
                       className="rounded-2xl p-4 flex items-center justify-between gap-3 transition hover:shadow-md cursor-pointer"
                       style={{
-                        backgroundColor: "var(--wrife-surface)",
-                        border: "1.5px solid var(--wrife-border)",
+                        backgroundColor: 'var(--wrife-surface)',
+                        border: '1.5px solid var(--wrife-border)',
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
-                          style={{ backgroundColor: "var(--wrife-green-soft,#e8f5e9)" }}
+                          style={{ backgroundColor: 'var(--wrife-green-soft,#e8f5e9)' }}
                         >
                           {fileIcon}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-sm truncate" style={{ color: "var(--wrife-text-main)" }}>
+                          <p className="font-bold text-sm truncate" style={{ color: 'var(--wrife-text-main)' }}>
                             {r.title}
                           </p>
                           {r.message && (
-                            <p className="text-xs truncate italic" style={{ color: "var(--wrife-text-muted)" }}>
+                            <p className="text-xs truncate italic" style={{ color: 'var(--wrife-text-muted)' }}>
                               &ldquo;{r.message}&rdquo;
                             </p>
                           )}
-                          <p className="text-xs mt-0.5" style={{ color: isOverdue ? "var(--wrife-danger)" : "var(--wrife-text-muted)" }}>
+                          <p className="text-xs mt-0.5" style={{ color: isOverdue ? 'var(--wrife-danger)' : 'var(--wrife-text-muted)' }}>
                             {lessonLabel && `${lessonLabel} · `}
                             {r.due_date
                               ? `${isOverdue ? 'Overdue: ' : 'Due: '}${new Date(r.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
@@ -944,8 +969,8 @@ export default function PupilDashboardPage() {
                         </div>
                       </div>
                       <span
-                        className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition"
-                        style={{ backgroundColor: "var(--wrife-green-soft,#e8f5e9)", color: "var(--wrife-green,#27ae60)" }}
+                        className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold"
+                        style={{ backgroundColor: 'var(--wrife-green-soft,#e8f5e9)', color: 'var(--wrife-green,#27ae60)' }}
                       >
                         Open →
                       </span>
@@ -954,15 +979,15 @@ export default function PupilDashboardPage() {
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* ── Achievements ─────────────────────────────────── */}
+        {/* ── Achievements ─────────────────────────────────────── */}
         {allBadges.length > 0 && (
-          <div id="achievements">
+          <section id="achievements">
             <h2
-              className="text-xl font-extrabold mb-3"
-              style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}
+              className="text-xl font-extrabold mb-4"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--wrife-text-main)' }}
             >
               Your Achievements
             </h2>
@@ -973,24 +998,24 @@ export default function PupilDashboardPage() {
                   <div key={i} className={`rounded-2xl p-3.5 border ${border} ${bg} flex items-center gap-3`}>
                     <span className="text-2xl shrink-0">{badge.badgeIcon || '🎖️'}</span>
                     <div className="min-w-0">
-                      <p className="font-bold text-sm" style={{ color: "var(--wrife-text-main)" }}>{badge.badgeName}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--wrife-text-muted)" }}>{badge.badgeDescription}</p>
+                      <p className="font-bold text-sm" style={{ color: 'var(--wrife-text-main)' }}>{badge.badgeName}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--wrife-text-muted)' }}>{badge.badgeDescription}</p>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Empty state when nothing to do */}
+        {/* Empty state */}
         {!nextDwp && pendingAssignments.length === 0 && activePwpAssignments.length === 0 && (
           <div className="text-center py-12">
             <WrifeMascot pose="celebrating" size="lg" decorative className="mx-auto mb-4 drop-shadow mascot-float-a" />
-            <p className="text-xl font-extrabold" style={{ fontFamily: "var(--font-display)", color: "var(--wrife-text-main)" }}>
+            <p className="text-xl font-extrabold" style={{ fontFamily: 'var(--font-display)', color: 'var(--wrife-text-main)' }}>
               All caught up! 🎉
             </p>
-            <p className="text-sm mt-2" style={{ color: "var(--wrife-text-muted)" }}>
+            <p className="text-sm mt-2" style={{ color: 'var(--wrife-text-muted)' }}>
               No tasks right now. Why not practise in Interactive Practice or PWP Studio?
             </p>
           </div>

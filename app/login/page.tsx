@@ -85,7 +85,7 @@ export default function LoginPage() {
         setError('Admin accounts must use the Admin Portal.');
         await supabase.auth.signOut();
         setLoading(false);
-        router.push('/admin/login');
+        router.push('/staffhub/login');
         return;
       }
 

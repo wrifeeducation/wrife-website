@@ -139,7 +139,22 @@ export async function GET(request: NextRequest) {
 
          MAX(le.created_at) FILTER (
            WHERE le.app = 'ip'
-         )                       AS ip_last_active
+         )                       AS ip_last_active,
+
+         -- DWP: levels completed + total XP + last active
+         COUNT(*) FILTER (
+           WHERE le.app = 'dwp' AND le.event_type = 'level_completed'
+         )::int                  AS dwp_levels_completed,
+
+         COALESCE(SUM(
+           CASE WHEN le.app = 'dwp' AND le.event_type = 'level_completed'
+           THEN COALESCE((le.event_data->>'xp_earned')::int, 0)
+           ELSE 0 END
+         ), 0)::int              AS dwp_total_xp,
+
+         MAX(le.created_at) FILTER (
+           WHERE le.app = 'dwp'
+         )                       AS dwp_last_active
 
        FROM class_members cm
        JOIN pupils p ON cm.pupil_id = p.id

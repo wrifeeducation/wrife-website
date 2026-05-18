@@ -1,0 +1,390 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/admin-fetch';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+import AnalyticsSection from '@/components/AnalyticsSection';
+
+interface School {
+  id: string;
+  name: string;
+  domain: string;
+  subscription_tier: 'trial' | 'basic' | 'pro' | 'enterprise';
+  teacher_limit: number;
+  pupil_limit: number;
+  is_active: boolean;
+  teacherCount: number;
+  pupilCount: number;
+}
+
+function getQuotaColor(used: number, limit: number): string {
+  const percentage = (used / limit) * 100;
+  if (percentage >= 95) return 'bg-red-500';
+  if (percentage >= 80) return 'bg-yellow-500';
+  return 'bg-green-500';
+}
+
+function getTierBadgeStyle(tier: string): string {
+  switch (tier) {
+    case 'trial':
+      return 'bg-yellow-100 text-yellow-700';
+    case 'basic':
+      return 'bg-blue-100 text-blue-700';
+    case 'pro':
+      return 'bg-purple-100 text-purple-700';
+    case 'enterprise':
+      return 'bg-green-100 text-green-700';
+    default:
+      return 'bg-gray-100 text-gray-700';
+  }
+}
+
+function SchoolCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6 animate-pulse">
+      <div className="flex items-start justify-between mb-4">
+        <div className="h-6 w-32 bg-gray-200 rounded"></div>
+        <div className="h-5 w-16 bg-gray-200 rounded-full"></div>
+      </div>
+      <div className="h-4 w-24 bg-gray-200 rounded mb-4"></div>
+      <div className="space-y-3 mb-4">
+        <div className="h-4 w-full bg-gray-200 rounded"></div>
+        <div className="h-2 w-full bg-gray-200 rounded"></div>
+        <div className="h-4 w-full bg-gray-200 rounded"></div>
+        <div className="h-2 w-full bg-gray-200 rounded"></div>
+      </div>
+      <div className="h-10 w-full bg-gray-200 rounded-full"></div>
+    </div>
+  );
+}
+
+interface AdminUser {
+  email: string;
+  display_name: string;
+}
+
+export default function AdminDashboard() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [schools, setSchools] = useState<School[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push('/staffhub/login?redirectTo=/staffhub');
+        return;
+      }
+      if (user.role !== 'admin') {
+        router.push('/dashboard');
+        return;
+      }
+      fetchSchools();
+      fetchAdminUsers();
+    }
+  }, [user, authLoading, router]);
+
+  async function fetchSchools() {
+    try {
+      const response = await adminFetch('/api/admin/school-stats');
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      setSchools(data.schools || []);
+    } catch (err) {
+      console.error('Error fetching schools:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchAdminUsers() {
+    try {
+      const response = await adminFetch('/api/admin/users');
+      const data = await response.json();
+      if (!data.error) {
+        const admins = (data.profiles || []).filter((p: { role: string; email: string; display_name: string }) => p.role === 'admin');
+        setAdminUsers(admins);
+      }
+    } catch (err) {
+      console.error('Error fetching admin users:', err);
+    }
+  }
+
+  async function toggleSchoolActive(schoolId: string, currentStatus: boolean) {
+    try {
+      const response = await adminFetch('/api/admin/schools', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: schoolId, is_active: !currentStatus }),
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      fetchSchools();
+    } catch (err) {
+      console.error('Error toggling school status:', err);
+    }
+  }
+
+  // During auth check, render nothing — avoids flashing the admin UI for non-admin users
+  if (authLoading) {
+    return null;
+  }
+
+  // If auth resolved and user is not an admin, render nothing — the useEffect handles redirect
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
+
+  // We know the user is admin — safe to show the data-loading skeleton
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
+          <div className="mx-auto max-w-6xl px-4">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-32 bg-gray-200 rounded mt-2 animate-pulse"></div>
+              </div>
+              <div className="h-12 w-32 bg-gray-200 rounded-full animate-pulse"></div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <SchoolCardSkeleton />
+              <SchoolCardSkeleton />
+              <SchoolCardSkeleton />
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">Super Admin Dashboard</h1>
+              <p className="text-sm text-[var(--wrife-text-muted)] mt-1">
+                Manage all schools and subscriptions
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:gap-3">
+              <Link href="/staffhub/help" className="contents">
+                <button className="rounded-full border border-[var(--wrife-border)] px-3 py-2 lg:px-4 lg:py-3 text-xs lg:text-sm font-semibold text-[var(--wrife-text-muted)] hover:bg-gray-50 transition whitespace-nowrap">
+                  ? Help
+                </button>
+              </Link>
+              <Link href="/staffhub/lessons" className="contents">
+                <button className="rounded-full border border-[var(--wrife-yellow)] bg-[var(--wrife-yellow)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-[var(--wrife-text-main)] hover:opacity-90 transition whitespace-nowrap">
+                  Manage Lessons
+                </button>
+              </Link>
+              <Link href="/staffhub/lessons/files" className="contents">
+                <button className="rounded-full border border-teal-500 bg-teal-500 px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition whitespace-nowrap">
+                  Lesson Files
+                </button>
+              </Link>
+              <Link href="/staffhub/lessons/presentations" className="contents">
+                <button className="rounded-full border border-[var(--wrife-blue)] bg-[var(--wrife-blue)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition whitespace-nowrap">
+                  🖥️ Presentations
+                </button>
+              </Link>
+              <Link href="/staffhub/practice-files" className="contents">
+                <button className="rounded-full border border-green-500 bg-green-500 px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition whitespace-nowrap">
+                  Practice Files
+                </button>
+              </Link>
+              <Link href="/staffhub/pwp-activities" className="contents">
+                <button className="rounded-full border border-purple-500 bg-purple-500 px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition whitespace-nowrap">
+                  PWP Activities
+                </button>
+              </Link>
+              <Link href="/staffhub/dwp-levels" className="contents">
+                <button className="rounded-full border border-orange-500 bg-orange-500 px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition whitespace-nowrap">
+                  DWP Levels
+                </button>
+              </Link>
+              <Link href="/staffhub/users" className="contents">
+                <button className="rounded-full border border-[var(--wrife-blue)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition whitespace-nowrap">
+                  Manage Users
+                </button>
+              </Link>
+              <Link href="/staffhub/account" className="contents">
+                <button className="rounded-full border border-slate-400 px-3 py-2 lg:px-4 lg:py-3 text-xs lg:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                  🔑 My Account
+                </button>
+              </Link>
+              <Link href="/staffhub/registrations" className="contents">
+                <button className="rounded-full border border-yellow-500 bg-yellow-50 px-3 py-2 lg:px-4 lg:py-3 text-xs lg:text-sm font-semibold text-yellow-700 hover:bg-yellow-100 transition whitespace-nowrap">
+                  📬 Registrations
+                </button>
+              </Link>
+              <Link href="/staffhub/schools/new" className="col-span-2 sm:col-span-1 contents">
+                <button className="rounded-full bg-[var(--wrife-blue)] px-3 py-2 lg:px-6 lg:py-3 text-xs lg:text-sm font-semibold text-white shadow-soft hover:opacity-90 transition whitespace-nowrap">
+                  + New School
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          <AnalyticsSection />
+
+          <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-lg flex-shrink-0">
+                    🛡️
+                  </div>
+                  <div>
+                    <p className="font-bold text-[var(--wrife-text-main)] text-sm">Admin Accounts</p>
+                    <p className="text-xs text-[var(--wrife-text-muted)]">
+                      {adminUsers.length > 0
+                        ? `${adminUsers.length} administrator${adminUsers.length !== 1 ? 's' : ''}`
+                        : 'Grant or revoke administrator access'}
+                    </p>
+                  </div>
+                </div>
+                <Link href="/staffhub/users?filter=admin">
+                  <button className="rounded-full border border-[var(--wrife-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition whitespace-nowrap flex-shrink-0">
+                    Manage Admins
+                  </button>
+                </Link>
+              </div>
+              {adminUsers.length > 0 && (
+                <ul className="space-y-1">
+                  {adminUsers.slice(0, 3).map((a) => (
+                    <li key={a.email} className="flex items-center gap-2 text-xs text-[var(--wrife-text-muted)]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                      <span className="truncate">{a.display_name || a.email}</span>
+                      <span className="text-slate-400 truncate hidden sm:inline">({a.email})</span>
+                    </li>
+                  ))}
+                  {adminUsers.length > 3 && (
+                    <li className="text-xs text-[var(--wrife-text-muted)] pl-3.5">
+                      +{adminUsers.length - 3} more
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-lg flex-shrink-0">
+                  🔑
+                </div>
+                <div>
+                  <p className="font-bold text-[var(--wrife-text-main)] text-sm">My Account</p>
+                  <p className="text-xs text-[var(--wrife-text-muted)]">Change your admin password</p>
+                </div>
+              </div>
+              <Link href="/staffhub/account">
+                <button className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition whitespace-nowrap flex-shrink-0">
+                  Security settings
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {schools.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-12 text-center">
+              <div className="mb-4">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--wrife-blue-soft)] mb-4">
+                  <span className="text-3xl">🏫</span>
+                </div>
+              </div>
+              <h3 className="text-lg font-bold text-[var(--wrife-text-main)] mb-2">No schools yet</h3>
+              <p className="text-sm text-[var(--wrife-text-muted)] mb-6">
+                Create your first school to start managing subscriptions
+              </p>
+              <Link href="/staffhub/schools/new">
+                <button className="rounded-full bg-[var(--wrife-blue)] px-6 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90 transition">
+                  Create Your First School
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {schools.map((school) => (
+                <div
+                  key={school.id}
+                  className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6 hover:shadow-strong transition"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleSchoolActive(school.id, school.is_active)}
+                        className={`h-3 w-3 rounded-full transition ${
+                          school.is_active ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                        title={school.is_active ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
+                      />
+                      <h3 className="text-lg font-bold text-[var(--wrife-text-main)]">{school.name}</h3>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${getTierBadgeStyle(school.subscription_tier)}`}>
+                      {school.subscription_tier}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[var(--wrife-text-muted)] mb-4">{school.domain}</p>
+
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-[var(--wrife-text-muted)]">Teachers</span>
+                        <span className="font-semibold text-[var(--wrife-text-main)]">
+                          {school.teacherCount}/{school.teacher_limit}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${getQuotaColor(school.teacherCount, school.teacher_limit)} transition-all`}
+                          style={{ width: `${Math.min((school.teacherCount / school.teacher_limit) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-[var(--wrife-text-muted)]">Pupils</span>
+                        <span className="font-semibold text-[var(--wrife-text-main)]">
+                          {school.pupilCount}/{school.pupil_limit}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${getQuotaColor(school.pupilCount, school.pupil_limit)} transition-all`}
+                          style={{ width: `${Math.min((school.pupilCount / school.pupil_limit) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link href={`/staffhub/schools/${school.id}`}>
+                    <button className="w-full rounded-full border border-[var(--wrife-blue)] px-4 py-2 text-sm font-semibold text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition">
+                      View Details
+                    </button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
