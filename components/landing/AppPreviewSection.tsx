@@ -304,6 +304,7 @@ function AppCard({ app, onOpen }: { app: AppDef; onOpen: () => void }) {
         transition: "transform 0.15s ease, box-shadow 0.15s ease",
         display: "flex",
         flexDirection: "column",
+        height: "100%",
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
@@ -341,11 +342,11 @@ function AppCard({ app, onOpen }: { app: AppDef; onOpen: () => void }) {
         <p style={{ color: "rgba(255,255,255,0.88)", fontSize: 11, margin: 0, lineHeight: 1.4 }}>{app.tagline}</p>
       </div>
 
-      {/* Live CSS mockup — auto-cycles */}
+      {/* Live CSS mockup — auto-cycles, fixed height so all cards align */}
       <div
         style={{
-          flex: 1,
-          minHeight: 148,
+          height: 168,
+          flexShrink: 0,
           background: "#FAFAFA",
           borderTop: "1px solid var(--wrife-border)",
           overflow: "hidden",
@@ -580,6 +581,7 @@ export default function AppPreviewSection() {
               gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
               gap: "1.25rem",
               maxWidth: 1400,
+              alignItems: "stretch",
             }}
           >
             {APPS.map((app) => (

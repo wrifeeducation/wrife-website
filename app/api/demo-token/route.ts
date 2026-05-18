@@ -14,12 +14,13 @@ import { createClient } from '@supabase/supabase-js';
 
 const DEMO_EMAIL = 'demo@wrife.co.uk';
 
-// Sub-app landing URLs — the magic link redirects here after auth verification
+// Sub-app landing URLs — the magic link redirects here after auth verification.
+// Resources uses /auth/hub because its SSO entry handler lives there.
 const APP_URLS: Record<string, string> = {
   pwp:       'https://pwp-studio.wrife.co.uk/dashboard',
-  dwp:       'https://daily.wrife.co.uk/dashboard',
+  dwp:       'https://dailywrite.wrife.co.uk/dashboard',
   ip:        'https://practice.wrife.co.uk',
-  resources: 'https://resources.wrife.co.uk',
+  resources: 'https://resources.wrife.co.uk/auth/hub',
 };
 
 export async function GET(request: NextRequest) {
