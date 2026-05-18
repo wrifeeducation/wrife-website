@@ -83,8 +83,13 @@ export async function POST(request: NextRequest) {
     const { lessonFileId, lessonId, classId, title, fileType, fileUrl, message, dueDate } =
       await request.json();
 
-    if (!lessonFileId || !lessonId || !classId || !title || !fileType || !fileUrl) {
-      return NextResponse.json({ error: 'lessonFileId, lessonId, classId, title, fileType, and fileUrl are required' }, { status: 400 });
+    const isAiTool = fileType === 'ai_tool';
+
+    if (!classId || !title || !fileType || !fileUrl) {
+      return NextResponse.json({ error: 'classId, title, fileType, and fileUrl are required' }, { status: 400 });
+    }
+    if (!isAiTool && (!lessonFileId || !lessonId)) {
+      return NextResponse.json({ error: 'lessonFileId and lessonId are required for non-ai_tool resources' }, { status: 400 });
     }
 
     const hasAccess = await verifyClassOwnership(authResult, Number(classId));
@@ -94,12 +99,12 @@ export async function POST(request: NextRequest) {
 
     const pool = getPool();
 
-    // Prevent exact duplicates (same file already pushed to same class and still active)
+    // Prevent exact duplicates
     const existing = await pool.query(
-      `SELECT id FROM resource_assignments
-       WHERE lesson_file_id = $1 AND class_id = $2 AND status = 'active'
-       LIMIT 1`,
-      [lessonFileId, classId]
+      isAiTool
+        ? `SELECT id FROM resource_assignments WHERE file_url = $1 AND class_id = $2 AND status = 'active' LIMIT 1`
+        : `SELECT id FROM resource_assignments WHERE lesson_file_id = $1 AND class_id = $2 AND status = 'active' LIMIT 1`,
+      isAiTool ? [fileUrl, classId] : [lessonFileId, classId]
     );
     if (existing.rows.length > 0) {
       return NextResponse.json(

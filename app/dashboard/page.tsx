@@ -242,21 +242,19 @@ function OverviewTab({
             <span className="text-sm font-bold shrink-0" style={{ color: "var(--wrife-electric)" }}>Open →</span>
           </a>
 
-          {/* AI Writing Tools — coming soon badge */}
-          <div
-            className="flex items-center gap-4 rounded-2xl p-5 border-2 opacity-60 cursor-not-allowed"
+          {/* AI Writing Tools */}
+          <button
+            onClick={() => handleTabChange('resources')}
+            className="flex items-center gap-4 rounded-2xl p-5 border-2 transition hover:shadow-md hover:-translate-y-0.5 text-left w-full"
             style={{ backgroundColor: "var(--wrife-green-soft)", borderColor: "var(--wrife-green)" }}
-            title="Coming soon"
           >
             <span className="text-3xl shrink-0">🤖</span>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="font-extrabold text-base leading-tight" style={{ color: "var(--wrife-text-main)" }}>AI Writing Tools</p>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "var(--wrife-yellow)", color: "#78350f" }}>Soon</span>
-              </div>
-              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>AI-powered writing feedback</p>
+              <p className="font-extrabold text-base leading-tight" style={{ color: "var(--wrife-text-main)" }}>AI Writing Tools</p>
+              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>Push AI tools to your class</p>
             </div>
-          </div>
+            <span className="text-sm font-bold shrink-0" style={{ color: "var(--wrife-green)" }}>Open →</span>
+          </button>
 
           {/* PWP Studio */}
           <a
@@ -466,6 +464,235 @@ function OverviewTab({
   );
 }
 
+// ── ResourcesTab ─────────────────────────────────────────────────────────────
+const AI_TOOLS = [
+  { slug: 'sentence-coach',  label: 'Sentence Quality Coach', desc: 'Scores vocab, grammar & originality',  emoji: '🎯', url: 'https://resources.wrife.co.uk/lesson/sentence-coach' },
+  { slug: 'editing-doctor',  label: 'Editing Doctor',         desc: '10 editing modes for L42–L51',         emoji: '🩺', url: 'https://resources.wrife.co.uk/lesson/editing-doctor' },
+  { slug: 'connect-grid',    label: 'Connect Grid Tutor',     desc: 'AI coaching for 3×3 planning grids',   emoji: '🔲', url: 'https://resources.wrife.co.uk/lesson/connect-grid' },
+  { slug: 'composition',     label: 'Composition Reviewer',   desc: 'LSC scaffold: Lead/Support/Close',      emoji: '📐', url: 'https://resources.wrife.co.uk/lesson/composition' },
+  { slug: 'genre-coach',     label: 'Genre Coach',            desc: 'Narrative, non-fiction, persuasive',    emoji: '🎭', url: 'https://resources.wrife.co.uk/lesson/genre-coach' },
+  { slug: 'story-types',     label: 'Story Type Identifier',  desc: 'Identifies 1 of 12 WriFe story types', emoji: '📖', url: 'https://resources.wrife.co.uk/lesson/story-types' },
+  { slug: 'project-mentor',  label: 'Project Mentor',         desc: '5-stage idea → publishing guide',       emoji: '🚀', url: 'https://resources.wrife.co.uk/lesson/project-mentor' },
+  { slug: 'pwp',             label: 'PWP Practice',           desc: 'Formula sentence building with AI',     emoji: '✏️', url: 'https://resources.wrife.co.uk/daily/pwp' },
+  { slug: 'dwp',             label: 'DWP Daily Writing',      desc: 'Daily prompts with AI feedback',        emoji: '📝', url: 'https://resources.wrife.co.uk/daily/dwp' },
+];
+
+interface ResourcesTabProps { classes: ClassData[]; }
+
+function ResourcesTab({ classes }: ResourcesTabProps) {
+  const [selectedTool, setSelectedTool] = useState<string>('');
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [pushMessage, setPushMessage] = useState('');
+  const [pushing, setPushing] = useState(false);
+  const [pushError, setPushError] = useState('');
+  const [pushSuccess, setPushSuccess] = useState('');
+  const [pushed, setPushed] = useState<{ id: number; title: string; class_id: number; message: string | null; created_at: string }[]>([]);
+  const [loadingPushed, setLoadingPushed] = useState(false);
+
+  // Fetch already-pushed AI tools when a class is selected
+  useEffect(() => {
+    if (!selectedClass) { setPushed([]); return; }
+    setLoadingPushed(true);
+    fetch(`/api/teacher/resource-assignments?classId=${selectedClass}`)
+      .then(r => r.json())
+      .then(d => setPushed((d.resourceAssignments || []).filter((r: { file_type: string }) => r.file_type === 'ai_tool')))
+      .catch(() => setPushed([]))
+      .finally(() => setLoadingPushed(false));
+  }, [selectedClass, pushSuccess]);
+
+  async function handlePush() {
+    if (!selectedTool || !selectedClass) return;
+    const tool = AI_TOOLS.find(t => t.slug === selectedTool);
+    if (!tool) return;
+    setPushing(true); setPushError(''); setPushSuccess('');
+    try {
+      const res = await fetch('/api/teacher/resource-assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          classId: selectedClass,
+          title: tool.label,
+          fileType: 'ai_tool',
+          fileUrl: tool.url,
+          message: pushMessage.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to push tool');
+      const cls = classes.find(c => c.id === selectedClass);
+      setPushSuccess(`✅ "${tool.label}" pushed to ${cls?.name ?? 'class'}!`);
+      setPushMessage('');
+    } catch (err: unknown) {
+      setPushError(err instanceof Error ? err.message : 'Failed to push tool');
+    } finally {
+      setPushing(false);
+    }
+  }
+
+  async function handleRemove(assignmentId: number) {
+    if (!confirm('Remove this tool from the class? Pupils will no longer see it.')) return;
+    await fetch(`/api/teacher/resource-assignments?id=${assignmentId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'archived' }),
+    });
+    setPushed(prev => prev.filter(p => p.id !== assignmentId));
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Hero */}
+      <div
+        className="rounded-2xl p-6 border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        style={{ background: 'linear-gradient(to right, #f0fdf4, #dcfce7)', borderColor: '#86efac' }}
+      >
+        <div>
+          <h2 className="text-xl font-bold" style={{ color: "var(--wrife-text-main)" }}>🤖 AI Writing Tools — Learning Toolkit</h2>
+          <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>
+            9 curriculum-aligned AI tools on <strong>resources.wrife.co.uk</strong>. Push specific tools to your class so pupils see them on their dashboard.
+          </p>
+        </div>
+        <a
+          href="https://resources.wrife.co.uk"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 px-5 py-2.5 rounded-full text-sm font-bold text-white hover:opacity-90 transition"
+          style={{ backgroundColor: '#22c55e' }}
+        >
+          Open Toolkit →
+        </a>
+      </div>
+
+      {/* Push to class */}
+      <div className="bg-white rounded-2xl p-6 border" style={{ borderColor: "var(--wrife-border)", boxShadow: "var(--shadow-card)" }}>
+        <h3 className="text-lg font-bold mb-4" style={{ color: "var(--wrife-text-main)" }}>Push a Tool to Your Class</h3>
+        <p className="text-sm mb-5" style={{ color: "var(--wrife-text-muted)" }}>
+          Pupils will see the tool in a &ldquo;Resources from Your Teacher&rdquo; section on their dashboard.
+        </p>
+
+        <div className="grid sm:grid-cols-3 gap-3 mb-4">
+          {/* Tool selector */}
+          <div>
+            <label className="block text-xs font-semibold mb-1" style={{ color: "var(--wrife-text-muted)" }}>Choose a tool</label>
+            <select
+              value={selectedTool}
+              onChange={e => setSelectedTool(e.target.value)}
+              className="w-full rounded-xl px-3 py-2.5 text-sm border-2 focus:outline-none"
+              style={{ borderColor: selectedTool ? 'var(--wrife-green)' : 'var(--wrife-border)' }}
+            >
+              <option value="">— Select tool —</option>
+              {AI_TOOLS.map(t => (
+                <option key={t.slug} value={t.slug}>{t.emoji} {t.label}</option>
+              ))}
+            </select>
+          </div>
+          {/* Class selector */}
+          <div>
+            <label className="block text-xs font-semibold mb-1" style={{ color: "var(--wrife-text-muted)" }}>Choose a class</label>
+            <select
+              value={selectedClass}
+              onChange={e => setSelectedClass(e.target.value)}
+              className="w-full rounded-xl px-3 py-2.5 text-sm border-2 focus:outline-none"
+              style={{ borderColor: selectedClass ? 'var(--wrife-green)' : 'var(--wrife-border)' }}
+            >
+              <option value="">— Select class —</option>
+              {classes.map(c => (
+                <option key={c.id} value={c.id}>{c.name} (Y{c.year_group})</option>
+              ))}
+            </select>
+          </div>
+          {/* Optional message */}
+          <div>
+            <label className="block text-xs font-semibold mb-1" style={{ color: "var(--wrife-text-muted)" }}>Message (optional)</label>
+            <input
+              type="text"
+              value={pushMessage}
+              onChange={e => setPushMessage(e.target.value)}
+              placeholder="e.g. Use this to check your sentences"
+              className="w-full rounded-xl px-3 py-2.5 text-sm border-2 focus:outline-none"
+              style={{ borderColor: 'var(--wrife-border)' }}
+              maxLength={120}
+            />
+          </div>
+        </div>
+
+        {pushError && <p className="text-sm mb-3" style={{ color: 'var(--wrife-danger)' }}>{pushError}</p>}
+        {pushSuccess && <p className="text-sm mb-3 font-semibold" style={{ color: 'var(--wrife-green)' }}>{pushSuccess}</p>}
+
+        <button
+          onClick={handlePush}
+          disabled={!selectedTool || !selectedClass || pushing}
+          className="rounded-full px-6 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+          style={{ backgroundColor: '#22c55e' }}
+        >
+          {pushing ? 'Pushing…' : '📤 Push to class'}
+        </button>
+      </div>
+
+      {/* Currently pushed tools for selected class */}
+      {selectedClass && (
+        <div className="bg-white rounded-2xl p-6 border" style={{ borderColor: "var(--wrife-border)", boxShadow: "var(--shadow-card)" }}>
+          <h3 className="text-lg font-bold mb-4" style={{ color: "var(--wrife-text-main)" }}>
+            Active for {classes.find(c => c.id === selectedClass)?.name ?? 'Class'}
+          </h3>
+          {loadingPushed ? (
+            <Spinner />
+          ) : pushed.length === 0 ? (
+            <p className="text-sm" style={{ color: 'var(--wrife-text-muted)' }}>No AI tools pushed to this class yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {pushed.map(p => {
+                const tool = AI_TOOLS.find(t => t.label === p.title);
+                return (
+                  <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3" style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac' }}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xl">{tool?.emoji ?? '🤖'}</span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate" style={{ color: 'var(--wrife-text-main)' }}>{p.title}</p>
+                        {p.message && <p className="text-xs italic truncate" style={{ color: 'var(--wrife-text-muted)' }}>&ldquo;{p.message}&rdquo;</p>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemove(p.id)}
+                      className="shrink-0 text-xs font-semibold px-3 py-1 rounded-full transition hover:opacity-80"
+                      style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* All 9 tools grid */}
+      <div>
+        <h3 className="text-lg font-bold mb-4" style={{ color: "var(--wrife-text-main)" }}>All 9 AI Tools</h3>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {AI_TOOLS.map(tool => (
+            <a
+              key={tool.slug}
+              href={tool.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 rounded-2xl p-4 border-2 transition hover:shadow-md hover:-translate-y-0.5"
+              style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac' }}
+            >
+              <span className="text-2xl mt-0.5">{tool.emoji}</span>
+              <div>
+                <p className="font-bold text-sm" style={{ color: 'var(--wrife-text-main)' }}>{tool.label}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#16a34a' }}>{tool.desc}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main DashboardContent ────────────────────────────────────────────────────
 function DashboardContent() {
   const { user, loading, refreshProfile } = useAuth();
@@ -474,7 +701,7 @@ function DashboardContent() {
   const [authChecked, setAuthChecked] = useState(false);
 
   const tabParam = searchParams?.get('tab') ?? null;
-  const validTabs = ['overview', 'lessons', 'pwp', 'dwp', 'pupils', 'assignments', 'classes'] as const;
+  const validTabs = ['overview', 'lessons', 'pwp', 'dwp', 'pupils', 'assignments', 'classes', 'resources'] as const;
   type TabType = typeof validTabs[number];
   const initialTab: TabType = tabParam && (validTabs as readonly string[]).includes(tabParam)
     ? tabParam as TabType
@@ -761,6 +988,11 @@ function DashboardContent() {
                 )}
               </div>
             </div>
+          )}
+
+          {/* ── AI Toolkit (resources.wrife.co.uk) ── */}
+          {activeTab === 'resources' && (
+            <ResourcesTab classes={classes} />
           )}
 
           {/* ── Pupils ── */}
