@@ -1,5 +1,5 @@
 # WriFe Platform
-*Last updated: 2026-05-18 · Session 41*
+*Last updated: 2026-05-18 · Session 42*
 
 ---
 
@@ -25,15 +25,15 @@ This rule exists because a previous session built an entire `app/pwp/` implement
 ## Current state
 Teacher dashboard is live with improved visual hierarchy and correct app URLs. The `learning_events` bridge is now fully consumed — `ClassActivityPanel` shows PWP, IP, and DWP per-pupil data in the teacher class view. All 365 DWP daily prompts are seeded in the live database. PWP Studio service worker now has NetworkOnly rules for `/functions/` and `/auth/` so the SW never intercepts Supabase Edge Function or auth calls.
 
-## Next Steps (Session 41 priority order)
+## Next Steps (Session 42 priority order)
 1. 🔴 **Fix learning_events CHECK constraint** — must run before resources.wrife.co.uk deploys:
    ```sql
    ALTER TABLE learning_events DROP CONSTRAINT IF EXISTS learning_events_app_check,
    ADD CONSTRAINT learning_events_app_check CHECK (app IN ('pwp', 'ip', 'dwp', 'resources'));
    ```
-2. **Deploy resources.wrife.co.uk** — all 9 AI tools built (Session 6). git push + Vercel deploy + domain config.
-3. **Integrate Stripe into resources.wrife** — estimated pricing: £4.90/mo standard, £9.90/mo full; school licence via school subscription.
-4. **Delete legacy Supabase projects** — export schema, then delete `rxmitjrbrsqjeymsycoj` and `nxhkpqngnxshgotvuujb`.
+2. **Delete legacy Supabase projects** — `rxmitjrbrsqjeymsycoj` (legacy IP) and `nxhkpqngnxshgotvuujb` (legacy PWP) are now safe to delete. `pwp_audio_assets` (153 rows) migrated to live project. No other unique data remains.
+3. **Deploy resources.wrife.co.uk** — all 9 AI tools built (Session 6). git push + Vercel deploy + domain config.
+4. **Integrate Stripe into resources.wrife** — estimated pricing: £4.90/mo standard, £9.90/mo full; school licence via school subscription.
 5. **Apply DB migration** — `supabase/migrations/20260511_school_registrations.sql` against `gzmgjkbtsvezfclmreru`
 6. **Apply Supabase migration** — `20260511000001_ai_attempts.sql`: `npx supabase db push --project-id gzmgjkbtsvezfclmreru`
 7. **Deploy assess-formula Edge Function** — `npx supabase functions deploy assess-formula --project-id gzmgjkbtsvezfclmreru`
@@ -59,12 +59,21 @@ Teacher dashboard is live with improved visual hierarchy and correct app URLs. T
 
 ## Files & Locations
 
+### Session 42 — Security: /admin → /staffhub across all repos (2026-05-18)
+- `app/admin/` renamed to `app/staffhub/` — all internal links updated; old folder deleted
+- `app/login/page.tsx` — redirect for admin role updated to `/staffhub/login`
+- Public "Admin" links removed from all pupil/teacher-facing pages across all three apps
+- **Admin URLs (do not publish):** `wrife.co.uk/staffhub/login`, `practice.wrife.co.uk/staffhub`, `pwp-studio.wrife.co.uk/staffhub/login`
+- `pwp_audio_assets` — 153 rows migrated from legacy PWP project (`nxhkpqngnxshgotvuujb`) to live shared project (`gzmgjkbtsvezfclmreru`); seed SQL saved at `wrifeapp/supabase/migrations/20260518_pwp_audio_assets_seed.sql`
+- DWP SSO fixed (`wrife-dwp/src/lib/supabase.ts`): removed `flowType: 'pkce'`, added synchronous hash-token detection before `createClient()`
+- PWP back-button fixed (`wrifeapp/src/pages/pwp/DashboardPage.tsx`): both desktop + mobile ← WriFe Hub buttons now use `<a href="https://wrife.co.uk/pupil/dashboard">` (hard navigation)
+
 ### Session 41 — Pupil dashboard design world upgrade + master skill (2026-05-18)
 - `app/pupil/dashboard/page.tsx` — full wrife-design-world upgrade: white background, Pattern 1 purple hero banner with level/streak/XP chips, `max-w-4xl` container (was `max-w-3xl`), Pattern 2 border-bottom CTAs on all app tiles, full-width header with inner max-w-4xl, `w-full` on sticky nav
 - `WRIFE_MASTER_SKILL_DRAFT.md` (wrife-website) + `wrife-brand-ecosystem.skill` — merged wrife-brand-ecosystem + wrife-app-architecture into one mandatory session primer; packaged as installable .skill file
-- ⚠️ **DWP SSO broken** — `buildSSOUrl` emits correct hash URL but `dailywrite.wrife.co.uk` (wrife-dwp repo) does not have hash-token detection. Need to add `onAuthStateChange` hash listener to wrife-dwp app init.
-- ⚠️ **PWP ← WriFe button failing** — `entryViaHub` detection is in wrifeapp. Possible URL bug (must link to `https://wrife.co.uk/pupil/dashboard` not root).
-- ⚠️ **Interactive Practice "page can't be reached"** — `practice.wrife.co.uk` appears to be down or not deployed. Check Vercel / InteractivePracticeApp repo.
+- ✅ **DWP SSO fixed (Session 42)** — `flowType: 'pkce'` removed; synchronous hash-token detection added before `createClient()` in wrife-dwp.
+- ✅ **PWP ← WriFe button fixed (Session 42)** — both desktop + mobile buttons now hard-navigate to `https://wrife.co.uk/pupil/dashboard`.
+- ✅ **Interactive Practice deployed (Session 41)** — `practice.wrife.co.uk` live; Workbox SW corrected to target live Supabase project.
 
 ### Session 39 — Close all critical gaps (2026-05-17)
 - `app/api/teacher/class-activity/route.ts` — added DWP aggregates (`dwp_levels_completed`, `dwp_total_xp`, `dwp_last_active`) to per-pupil SQL query
