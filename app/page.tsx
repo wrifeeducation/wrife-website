@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 import Navbar from "../components/Navbar";
 import HeroSection from "../components/HeroSection";
 import ProductTilesSection from "../components/landing/ProductTilesSection";
-import DemoSection from "../components/landing/DemoSection";
+import AppPreviewSection from "../components/landing/AppPreviewSection";
 import FeaturedLessons from "../components/FeaturedLessons";
 import FeaturesSection from "../components/FeaturesSection";
 import PricingSection from "../components/PricingSection";
@@ -28,7 +28,7 @@ export default function Home() {
       <Navbar />
       <HeroSection />
       <ProductTilesSection />
-      <DemoSection />
+      <AppPreviewSection />
       <FeaturedLessons />
       <FeaturesSection />
       <PricingSection />
