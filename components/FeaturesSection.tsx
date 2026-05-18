@@ -122,7 +122,7 @@ export default function FeaturesSection() {
               Ready to transform your writing lessons?
             </h3>
             <p className="text-white/80 mb-6">
-              Join hundreds of teachers using WriFe to help their pupils become confident writers.
+              Join a programme that guarantees success for every pupil.
             </p>
             <a
               href="/signup"
