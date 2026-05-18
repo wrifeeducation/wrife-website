@@ -117,12 +117,12 @@ export default function FeaturesSection() {
               className="drop-shadow-lg"
             />
           </div>
-          <div className="text-center md:text-left text-white">
+          <div className="text-center text-white">
             <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
               Ready to transform your writing lessons?
             </h3>
             <p className="text-white/80 mb-6">
-              Join a programme that guarantees success for every pupil.
+              Join a programme that guarantees success for every pupil in your school.
             </p>
             <a
               href="/signup"
