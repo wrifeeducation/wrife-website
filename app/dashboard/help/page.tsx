@@ -31,7 +31,7 @@ export default function TeacherHelpPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-[var(--wrife-bg)] py-8">
-        <div className="mx-auto max-w-4xl px-4">
+        <div className="mx-auto max-w-7xl px-4">
           <div className="mb-6">
             <Link href="/dashboard" className="text-[var(--wrife-blue)] hover:underline text-sm">
               ← Back to Dashboard

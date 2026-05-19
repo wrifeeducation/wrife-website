@@ -122,7 +122,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
   return (
     <div className="min-h-screen bg-[var(--wrife-bg)]">
       <div className="bg-white border-b border-[var(--wrife-border)]">
-        <div className="mx-auto max-w-6xl px-4 py-6">
+        <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-start gap-4">
             <div className="flex h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0 items-center justify-center rounded-full bg-[var(--wrife-blue-soft)] text-2xl sm:text-3xl font-bold text-[var(--wrife-blue)]">
               L{lessonNumber}
@@ -188,7 +188,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
       )}
 
       <div className="bg-white border-b border-[var(--wrife-border)] overflow-x-auto">
-        <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto max-w-7xl px-4">
           <nav className="flex gap-6 whitespace-nowrap">
             {fileTypeOrder.filter(type => type !== 'resource' || (filesByType['resource']?.length ?? 0) > 0).map((type) => {
               const locked = isTabLocked(type);
@@ -213,7 +213,7 @@ export function LessonDetailPage({ lesson, files }: LessonDetailPageProps) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-6">
         {isTabLocked(activeTab) && (
           <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-[var(--wrife-yellow)]/20 to-[var(--wrife-blue-soft)] border border-[var(--wrife-yellow)]">
             <div className="flex items-center gap-3">

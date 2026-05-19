@@ -122,7 +122,7 @@ export default function LoginCardsPage({ params }: { params: Promise<{ id: strin
       `}</style>
 
       <div className="no-print bg-gray-100 py-4 px-6 border-b sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <Link href={`/classes/${resolvedParams.id}`} className="text-sm text-blue-500 hover:underline">
               Back to {classData.name}
@@ -145,7 +145,7 @@ export default function LoginCardsPage({ params }: { params: Promise<{ id: strin
       </div>
 
       <div className="bg-white min-h-screen p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {pupils.map((pupil) => (
               <div

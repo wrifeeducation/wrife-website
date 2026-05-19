@@ -169,7 +169,7 @@ export default function PupilDashboardPage() {
   const [practiceUrl, setPracticeUrl] = useState('https://practice.wrife.co.uk');
   const [studioUrl, setStudioUrl] = useState('https://pwp-studio.wrife.co.uk/dashboard');
   const [dwpUrl, setDwpUrl] = useState('https://dailywrite.wrife.co.uk');
-  const [toolkitUrl, setToolkitUrl] = useState('https://resources.wrife.co.uk/auth/hub');
+  const toolkitUrl = 'https://resources.wrife.co.uk';
   const router = useRouter();
 
   useEffect(() => {
@@ -189,7 +189,7 @@ export default function PupilDashboardPage() {
       buildSSOUrl('https://practice.wrife.co.uk').then(setPracticeUrl).catch(() => {});
       buildSSOUrl('https://pwp-studio.wrife.co.uk/dashboard').then(setStudioUrl).catch(() => {});
       buildSSOUrl('https://dailywrite.wrife.co.uk').then(setDwpUrl).catch(() => {});
-      buildSSOUrl('https://resources.wrife.co.uk/auth/hub').then(setToolkitUrl).catch(() => {});
+      // toolkitUrl is a plain constant — resources.wrife.co.uk doesn't use pupil SSO tokens
 
       fetch(`/api/pupil/stats?pupilId=${parsed.pupilId}`)
         .then(res => res.ok ? res.json() : null)

@@ -84,7 +84,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               WriFe
             </span>
           </Link>
-          <p className="text-white/40 text-xs mt-1">Teacher Dashboard</p>
+          <p className="text-white/70 text-xs mt-1">Teacher Dashboard</p>
         </div>
 
         {/* Nav items */}
@@ -97,13 +97,13 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   isActive
-                    ? 'bg-white/20 text-white'
-                    : 'text-white/60 hover:text-white hover:bg-white/10'
+                    ? 'bg-white/25 text-white'
+                    : 'text-white/85 hover:text-white hover:bg-white/15'
                 }`}
               >
                 <span
                   className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center transition-all ${
-                    isActive ? 'border-white/50 bg-white/15' : 'border-white/20'
+                    isActive ? 'border-white/60 bg-white/20' : 'border-white/35'
                   }`}
                 >
                   {item.icon}
@@ -123,11 +123,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             >
               {initials}
             </div>
-            <span className="text-white/55 text-xs truncate">{user?.display_name ?? user?.email}</span>
+            <span className="text-white/80 text-xs truncate">{user?.display_name ?? user?.email}</span>
           </div>
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/45 hover:text-white hover:bg-white/10 w-full text-sm transition-all"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/75 hover:text-white hover:bg-white/15 w-full text-sm transition-all"
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

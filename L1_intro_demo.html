@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WriFe IP — Lesson 1 Demo (Level Intro Scripts)</title>
+<style>
+  :root {
+    --brand-purple: #6C5CE7;
+    --brand-purple-dark: #3d35a0;
+    --brand-orange: #F5A623;
+    --brand-orange-dark: #c47a0a;
+    --brand-green: #00B894;
+    --brand-green-dark: #007d67;
+    --brand-red: #D63031;
+    --bg: #FDF8EE;
+    --bg-card: #ffffff;
+    --text: #2D3436;
+    --text-soft: #636e72;
+    --gold: #F5C500;
+    --radius: 14px;
+    --shadow: 0 4px 16px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ─── SESSION HEADER ─── */
+  .session-header {
+    background: var(--brand-purple);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-back {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .header-lesson { font-size: 14px; font-weight: 700; flex: 1; text-align: center; }
+  .header-stats { display: flex; gap: 12px; align-items: center; }
+  .stat-pill {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px; padding: 4px 10px;
+    font-size: 13px; font-weight: 700;
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-wrap { padding: 0 20px; background: var(--brand-purple); padding-bottom: 14px; }
+  .progress-track {
+    background: rgba(255,255,255,0.25);
+    border-radius: 99px; height: 10px; overflow: hidden;
+  }
+  .progress-fill {
+    background: var(--gold);
+    height: 100%; border-radius: 99px;
+    transition: width 0.5s ease;
+  }
+  .progress-label {
+    color: rgba(255,255,255,0.8);
+    font-size: 11px; margin-top: 4px; text-align: right;
+  }
+
+  /* ─── MAIN CONTENT ─── */
+  .main { padding: 24px 20px 120px; max-width: 640px; margin: 0 auto; }
+
+  /* ─── ACTIVITY CARD ─── */
+  .activity-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 0;
+  }
+  .activity-band-tag {
+    display: inline-block;
+    background: var(--brand-purple);
+    color: white; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 6px; letter-spacing: 0.5px;
+    margin-bottom: 14px;
+  }
+  .activity-question {
+    font-size: 17px; font-weight: 600; line-height: 1.5;
+    margin-bottom: 18px; color: var(--text);
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    background: #f5f5f5; border: 2px solid transparent;
+    border-radius: 10px; padding: 14px 16px;
+    font-size: 15px; text-align: left; cursor: pointer;
+    transition: all 0.2s; font-family: inherit; color: var(--text);
+    border-bottom: 3px solid #ddd;
+  }
+  .option-btn:hover:not(:disabled) {
+    background: #f0ecff; border-color: var(--brand-purple);
+    border-bottom-color: var(--brand-purple-dark);
+  }
+  .option-btn.correct {
+    background: #d4f5e9; border-color: var(--brand-green);
+    border-bottom-color: var(--brand-green-dark); cursor: default;
+  }
+  .option-btn.wrong {
+    background: #fde8e8; border-color: var(--brand-red);
+    border-bottom-color: #a32020; cursor: default; opacity: 0.7;
+  }
+
+  /* ─── FEEDBACK PANEL (bottom slide-up) ─── */
+  .feedback-panel {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0, 0, 1);
+    z-index: 20;
+  }
+  .feedback-panel.visible { transform: translateY(0); }
+  .feedback-inner {
+    padding: 20px 24px 28px;
+    display: flex; align-items: flex-start; gap: 16px;
+  }
+  .feedback-panel.correct-fb .feedback-inner { background: #00B894; }
+  .feedback-panel.wrong-fb .feedback-inner { background: #D63031; }
+  .feedback-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+  .feedback-text { flex: 1; }
+  .feedback-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 4px; }
+  .feedback-message { font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.4; }
+  .feedback-continue {
+    background: white;
+    border: none; border-bottom: 3px solid rgba(0,0,0,0.2);
+    border-radius: 10px; padding: 14px 24px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: inherit; width: 100%; margin-top: 14px;
+    color: var(--text);
+  }
+  .feedback-continue:active { border-bottom-width: 1px; transform: translateY(2px); }
+
+  /* ─── LEVEL INTRO PANEL ─── */
+  .intro-overlay {
+    position: fixed; inset: 0; z-index: 30;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    background: rgba(0,0,0,0.5);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .intro-overlay.visible { opacity: 1; pointer-events: all; }
+  .intro-panel {
+    background: var(--bg-card);
+    border-radius: 24px 24px 0 0;
+    width: 100%; max-width: 640px;
+    padding: 0 0 32px;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.32, 0, 0, 1);
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .intro-overlay.visible .intro-panel { transform: translateY(0); }
+
+  .intro-header {
+    background: var(--brand-purple);
+    padding: 20px 24px 18px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .intro-band-badge {
+    background: rgba(255,255,255,0.2);
+    color: white; font-size: 12px; font-weight: 800;
+    padding: 4px 12px; border-radius: 99px; letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .intro-band-title {
+    color: white; font-size: 17px; font-weight: 700;
+    flex: 1;
+  }
+
+  .intro-body { padding: 0 24px; }
+
+  .mascot-bubble-row {
+    display: flex; align-items: flex-end; gap: 14px;
+    margin: 20px 0 18px;
+  }
+  .mascot {
+    width: 72px; height: 72px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
+  }
+  .speech-bubble {
+    flex: 1;
+    background: #f0ecff;
+    border: 2px solid #d8d0ff;
+    border-radius: 16px 16px 16px 4px;
+    padding: 14px 16px;
+    position: relative;
+  }
+  .speech-bubble::before {
+    content: '';
+    position: absolute; bottom: 10px; left: -10px;
+    border: 6px solid transparent;
+    border-right-color: #d8d0ff;
+  }
+  .speech-bubble-text {
+    font-size: 15px; line-height: 1.6; color: var(--text);
+  }
+  .speech-bubble-text p { margin-bottom: 6px; }
+  .speech-bubble-text p:last-child { margin-bottom: 0; }
+
+  .intro-footer { padding: 0 24px; }
+  .intro-cta {
+    width: 100%;
+    background: var(--brand-orange);
+    border: none; border-bottom: 4px solid var(--brand-orange-dark);
+    border-radius: 12px; padding: 16px;
+    font-size: 18px; font-weight: 800; color: white;
+    cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .intro-cta:active {
+    border-bottom-width: 1px; transform: translateY(3px);
+  }
+  .skip-link {
+    display: block; text-align: center; margin-top: 12px;
+    font-size: 13px; color: var(--text-soft); cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* ─── AUDIO PLAYER ─── */
+  .audio-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(108,92,231,0.08);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+  }
+  .audio-play-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--brand-purple);
+    border: none; color: white; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .audio-label { font-size: 13px; color: var(--text-soft); flex: 1; }
+  .audio-wave { font-size: 18px; }
+
+  /* ─── W-BAND TRANSITION ─── */
+  .band-transition {
+    text-align: center;
+    padding: 16px 0 10px;
+    font-size: 13px; font-weight: 700;
+    color: var(--text-soft); letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .band-transition::before, .band-transition::after {
+    content: ''; flex: 1; height: 1px; background: #e0ddf5;
+  }
+
+  /* ─── DEMO NOTES ─── */
+  .demo-note {
+    background: #fff8e1; border: 1.5px solid #ffe082;
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;
+    font-size: 13px; color: #5d4037; line-height: 1.5;
+  }
+  .demo-note strong { color: #f57f17; }
+
+  /* ─── LESSON COMPLETE ─── */
+  .complete-card {
+    text-align: center; padding: 40px 24px;
+    background: var(--bg-card); border-radius: var(--radius);
+    box-shadow: var(--shadow); display: none;
+  }
+  .complete-card.visible { display: block; }
+  .complete-trophy { font-size: 64px; margin-bottom: 12px; }
+  .complete-title { font-size: 28px; font-weight: 800; color: var(--brand-purple); margin-bottom: 8px; }
+  .complete-stars { font-size: 36px; margin: 12px 0; }
+  .complete-xp { font-size: 16px; color: var(--text-soft); font-weight: 600; }
+  .restart-btn {
+    margin-top: 24px;
+    background: var(--brand-purple); border: none; border-bottom: 4px solid var(--brand-purple-dark);
+    border-radius: 12px; padding: 14px 32px;
+    font-size: 16px; font-weight: 700; color: white;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ─── WRITE ACTIVITY ─── */
+  .write-prompt { font-size: 13px; color: var(--text-soft); margin-bottom: 8px; }
+  .write-area {
+    width: 100%; padding: 12px; border: 2px solid #e0ddf5;
+    border-radius: 10px; font-size: 15px; font-family: inherit;
+    min-height: 100px; resize: vertical; color: var(--text);
+    background: #fafafa;
+  }
+  .write-area:focus { border-color: var(--brand-purple); outline: none; background: white; }
+  .submit-btn {
+    margin-top: 14px; width: 100%;
+    background: var(--brand-orange); border: none; border-bottom: 4px solid var(--brand-orange-dark);
+    border-radius: 12px; padding: 14px;
+    font-size: 16px; font-weight: 700; color: white;
+    cursor: pointer; font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<!-- SESSION HEADER -->
+<div class="session-header">
+  <button class="header-back">← Map</button>
+  <div class="header-lesson">Lesson 1: Personal Stories</div>
+  <div class="header-stats">
+    <div class="stat-pill">❤️ <span id="lives">5</span></div>
+    <div class="stat-pill">⭐ <span id="xp">0</span></div>
+  </div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">Activity 1 of 8</div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="mainContent">
+
+  <div class="demo-note">
+    <strong>📋 Demo note:</strong> This shows the level intro panel appearing at the start of each W-band. W1 fires immediately. W2 fires when you cross into the second group of activities. The scripts are the real text from your Google Drive script files.
+  </div>
+
+  <!-- ACTIVITY AREA -->
+  <div id="activityArea">
+    <div class="activity-card" id="activityCard">
+      <div class="activity-band-tag" id="bandTag">W1 — Recognition</div>
+      <div class="activity-question" id="questionText"></div>
+      <div id="optionsArea"></div>
+    </div>
+  </div>
+
+  <!-- COMPLETE CARD -->
+  <div class="complete-card" id="completeCard">
+    <div class="complete-trophy">🏆</div>
+    <div class="complete-title">Lesson Complete!</div>
+    <div class="complete-stars" id="finalStars">⭐⭐⭐</div>
+    <div class="complete-xp" id="finalXP">You earned 60 XP</div>
+    <button class="restart-btn" onclick="restartDemo()">▶ Try Again</button>
+  </div>
+</div>
+
+<!-- ─── FEEDBACK PANEL ─── -->
+<div class="feedback-panel" id="feedbackPanel">
+  <div class="feedback-inner">
+    <div class="feedback-icon" id="feedbackIcon"></div>
+    <div class="feedback-text">
+      <div class="feedback-title" id="feedbackTitle"></div>
+      <div class="feedback-message" id="feedbackMsg"></div>
+    </div>
+  </div>
+  <div style="padding: 0 24px;">
+    <button class="feedback-continue" id="feedbackBtn" onclick="advanceActivity()">Continue →</button>
+  </div>
+</div>
+
+<!-- ─── LEVEL INTRO OVERLAY ─── -->
+<div class="intro-overlay" id="introOverlay">
+  <div class="intro-panel" id="introPanel">
+    <div class="intro-header">
+      <div class="intro-band-badge" id="introBadge">W1</div>
+      <div class="intro-band-title" id="introTitle">Recognition</div>
+    </div>
+    <div class="intro-body">
+      <div class="mascot-bubble-row">
+        <div class="mascot" id="introMascot">✏️</div>
+        <div class="speech-bubble">
+          <div class="speech-bubble-text" id="introScriptText"></div>
+        </div>
+      </div>
+      <div class="audio-bar">
+        <button class="audio-play-btn" id="audioPlayBtn" onclick="toggleAudio()">▶</button>
+        <div class="audio-label" id="audioLabel">Tap to hear the WriFe pencil</div>
+        <div class="audio-wave" id="audioWave">🔊</div>
+      </div>
+    </div>
+    <div class="intro-footer">
+      <button class="intro-cta" id="introCTA" onclick="dismissIntro()">
+        Let's go! →
+      </button>
+      <span class="skip-link" onclick="dismissIntro()">Skip intro</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA — Real content from DB + Google Drive scripts
+// ─────────────────────────────────────────────
+
+const SCRIPTS = {
+  w1: {
+    band: 'W1', title: 'Recognition',
+    mascot: '✏️',
+    lines: [
+      'Hello, and welcome to your very first WriFe lesson.',
+      'Today we will learn what a personal story is.',
+      'A personal story is something real that happened to you.',
+      'First, I will show you an example, so watch it carefully.',
+      'Then you will have a turn.',
+      'There is nothing to worry about — so let\'s begin.'
+    ]
+  },
+  w2: {
+    band: 'W2', title: 'Identification',
+    mascot: '🤔',
+    lines: [
+      'Well done for getting this far.',
+      'Now we will look at the people, places, and things in your life.',
+      'These are the parts your stories are made from.',
+      'Read each list carefully, then choose what kind of list it is.',
+      'Take your time.',
+      'If you are unsure, have a good think first.'
+    ]
+  },
+  w3: {
+    band: 'W3', title: 'Sorting & Matching',
+    mascot: '😊',
+    lines: [
+      'You are doing really well.',
+      'In this part, you will add detail to make writing come alive.',
+      'You will sort items and match them up.',
+      'Detail means the things you can see, hear, and feel.',
+      'Look closely at each one.',
+      'Trust yourself — and remember you can try again.'
+    ]
+  },
+  w5: {
+    band: 'W5', title: 'Construction',
+    mascot: '✍️',
+    lines: [
+      'This is the writing part, and you have learned everything you need.',
+      'You will write your own beginning, middle, and end.',
+      'There is no single right answer here.',
+      'Just write what really happened to you.',
+      'Take your time, and do your best.',
+      'I know you can do this.'
+    ]
+  }
+};
+
+// Real activities (bronze W1, bronze W2, silver W3, gold W5 sample)
+const ACTIVITIES = [
+  // ── W1 ──
+  {
+    wBand: 'w1',
+    type: 'mc',
+    question: 'Choose the best answer.\n\nRead the sentence:\n\n"Once upon a time, there was a princess in a tall tower."\n\nIs this a PERSONAL story or NOT PERSONAL?',
+    options: [
+      { text: 'Personal — because the storyteller is the princess', correct: false },
+      { text: 'NOT PERSONAL — this is a made-up story', correct: true },
+      { text: 'It is both at the same time', correct: false },
+      { text: 'It cannot be a story at all', correct: false }
+    ],
+    feedbackCorrect: 'Correct! "Once upon a time" is the start of a NOT PERSONAL story. Personal stories tell what really happened to YOU.',
+    feedbackWrong: 'A personal story is something that REALLY happened to YOU. "Once upon a time, there was a princess" is a made-up story.'
+  },
+  {
+    wBand: 'w1',
+    type: 'mc',
+    question: 'Choose the best answer.\n\nA "personal story" is a story about something that happened to YOU.\n\nWhich of these is a personal story?',
+    options: [
+      { text: 'A made-up story about a dragon who lives on the moon', correct: false },
+      { text: 'The day my dog ran into the kitchen and stole the sausages!', correct: true },
+      { text: 'A book about how the planets were formed', correct: false },
+      { text: 'A list of dinosaur names', correct: false }
+    ],
+    feedbackCorrect: 'Correct! A personal story is a real event from YOUR life. The dog stealing sausages is something that actually happened — that is a personal story.',
+    feedbackWrong: 'A personal story is something REAL that happened to YOU. Made-up adventures, facts, and lists are not personal stories.'
+  },
+  {
+    wBand: 'w1',
+    type: 'mc',
+    question: 'Choose the BEST answer.\n\nWhy is it good to write about things from YOUR life?',
+    options: [
+      { text: 'Because you cannot make anything up', correct: false },
+      { text: 'Because only YOU have lived your life — nobody else can tell your stories', correct: true },
+      { text: 'Because lists are easier to write', correct: false },
+      { text: 'Because writing must always be true', correct: false }
+    ],
+    feedbackCorrect: 'Correct! Only YOU have lived your life. Only you know what happened on your first day of school, what your nan\'s kitchen smelled like. These are stories only YOU can write.',
+    feedbackWrong: 'Personal stories matter because only YOU have lived your life. Nobody else can tell your stories the way you can.'
+  },
+
+  // ── W2 ──
+  {
+    wBand: 'w2',
+    type: 'mc',
+    question: 'Choose the best answer.\n\nLook at this list:\n\nMum, Dad, my sister Lily, my best friend Tom, my teacher Mrs Smith, my dog Buddy\n\nWhat KIND of list is this?',
+    options: [
+      { text: 'A list of people in my life', correct: true },
+      { text: 'A list of foods', correct: false },
+      { text: 'A list of places', correct: false },
+      { text: 'A list of times of day', correct: false }
+    ],
+    feedbackCorrect: 'Correct! This is a list of PEOPLE in your life. Your personal stories will often be ABOUT these people — they are the characters of your life.',
+    feedbackWrong: 'This is a list of PEOPLE — your family, friends, teachers, and pets. People are usually the main characters in personal stories.'
+  },
+  {
+    wBand: 'w2',
+    type: 'mc',
+    question: 'Choose the best answer.\n\nLook at this list:\n\nmy bedroom, the school playground, Grandma\'s garden, the park near my house, the seaside where we go on holiday\n\nWhat KIND of list is this?',
+    options: [
+      { text: 'A list of foods', correct: false },
+      { text: 'A list of places I go', correct: true },
+      { text: 'A list of toys', correct: false },
+      { text: 'A list of feelings', correct: false }
+    ],
+    feedbackCorrect: 'Correct! This is a list of PLACES. Personal stories always happen SOMEWHERE — the setting brings the story alive in the reader\'s mind.',
+    feedbackWrong: 'This is a list of PLACES — the locations where your stories happen. Every story has a setting.'
+  },
+
+  // ── W3 (silver) ──
+  {
+    wBand: 'w3',
+    type: 'mc',
+    question: 'Every story has three parts.\n\nLook at this story:\n\n"We arrived at the beach and found a good spot near the rocks."\n\nThis is the BEGINNING. Which part is MISSING from the story below?\n\n"We paddled in the sea for hours. Then we drove home tired but happy."\n\nWhere is the MIDDLE?',
+    options: [
+      { text: 'The story has no beginning', correct: false },
+      { text: 'The story is missing its middle — the main action that happened at the beach', correct: true },
+      { text: 'The story is missing its end', correct: false },
+      { text: 'Nothing is missing — it is complete', correct: false }
+    ],
+    feedbackCorrect: 'Correct! The story jumps from arriving straight to going home — the middle (what actually happened at the beach) is missing.',
+    feedbackWrong: 'Beginning → Middle → End. This story has a beginning (arrived at beach) and an end (drove home) but skips the middle entirely.'
+  },
+
+  // ── W5 (construction — write) ──
+  {
+    wBand: 'w5',
+    type: 'write',
+    question: 'In your PWP Booklet, write your reflection on personal stories.\n\n3–4 sentences. Cover:\n1. What a personal story is\n2. The three parts every story needs\n3. ONE personal story idea you would like to write next.',
+    prompt: 'A personal story is...\nEvery story needs...\nThe story I would like to write next is...',
+    feedbackCorrect: 'Great work! Your reflection shows you understand what makes a personal story special. Keep this in your PWP Booklet.',
+    feedbackWrong: ''
+  }
+];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let currentIndex = 0;
+let xp = 0;
+let lives = 5;
+let answeredCorrect = 0;
+let pendingAdvance = false;
+let introPending = null;
+let shownBands = new Set();
+let answerSelected = false;
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init() {
+  currentIndex = 0; xp = 0; lives = 5; answeredCorrect = 0;
+  shownBands = new Set(); answerSelected = false;
+  updateHeader();
+  showIntroForBand('w1', () => renderActivity(0));
+}
+
+// ─────────────────────────────────────────────
+// INTRO PANEL
+// ─────────────────────────────────────────────
+function showIntroForBand(band, callback) {
+  if (shownBands.has(band)) { if (callback) callback(); return; }
+  shownBands.add(band);
+  introPending = callback;
+
+  const s = SCRIPTS[band];
+  if (!s) { if (callback) callback(); return; }
+
+  document.getElementById('introBadge').textContent = s.band;
+  document.getElementById('introTitle').textContent = s.title;
+  document.getElementById('introMascot').textContent = s.mascot;
+
+  const textEl = document.getElementById('introScriptText');
+  textEl.innerHTML = s.lines.map(l => `<p>${l}</p>`).join('');
+
+  document.getElementById('introOverlay').classList.add('visible');
+}
+
+function dismissIntro() {
+  document.getElementById('introOverlay').classList.remove('visible');
+  if (introPending) { const fn = introPending; introPending = null; fn(); }
+}
+
+// ─────────────────────────────────────────────
+// AUDIO (simulated — shows how it would work)
+// ─────────────────────────────────────────────
+let audioPlaying = false;
+let audioTimer = null;
+function toggleAudio() {
+  const btn = document.getElementById('audioPlayBtn');
+  const lbl = document.getElementById('audioLabel');
+  const wave = document.getElementById('audioWave');
+
+  if (audioPlaying) {
+    clearTimeout(audioTimer);
+    audioPlaying = false;
+    btn.textContent = '▶';
+    lbl.textContent = 'Tap to hear the WriFe pencil';
+    wave.textContent = '🔊';
+  } else {
+    audioPlaying = true;
+    btn.textContent = '⏸';
+    lbl.textContent = 'Playing… (simulated in demo)';
+    wave.textContent = '🎵';
+    audioTimer = setTimeout(() => {
+      audioPlaying = false;
+      btn.textContent = '▶';
+      lbl.textContent = '✓ Played — tap to replay';
+      wave.textContent = '🔊';
+    }, 4000);
+  }
+}
+
+// ─────────────────────────────────────────────
+// ACTIVITY RENDERING
+// ─────────────────────────────────────────────
+function renderActivity(index) {
+  if (index >= ACTIVITIES.length) { showComplete(); return; }
+  answerSelected = false;
+
+  const a = ACTIVITIES[index];
+  const totalCount = ACTIVITIES.length;
+  const pct = Math.round((index / totalCount) * 100);
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `Activity ${index + 1} of ${totalCount}`;
+
+  // Band tag
+  const bandLabels = {
+    w1: 'W1 — Recognition',
+    w2: 'W2 — Identification',
+    w3: 'W3 — Sorting & Matching',
+    w4: 'W4 — Fill in the Blank',
+    w5: 'W5 — Construction',
+    w6: 'W6 — Application'
+  };
+  document.getElementById('bandTag').textContent = bandLabels[a.wBand] || a.wBand.toUpperCase();
+
+  // Question
+  document.getElementById('questionText').textContent = a.question;
+
+  // Options
+  const area = document.getElementById('optionsArea');
+  area.innerHTML = '';
+
+  if (a.type === 'mc') {
+    const opts = document.createElement('div');
+    opts.className = 'options';
+    (a.options || []).forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt.text;
+      btn.onclick = () => handleAnswer(opt.correct, a, btn, opts);
+      opts.appendChild(btn);
+    });
+    area.appendChild(opts);
+  } else if (a.type === 'write') {
+    const prompt = document.createElement('div');
+    prompt.className = 'write-prompt';
+    prompt.textContent = a.prompt || '';
+    const textarea = document.createElement('textarea');
+    textarea.className = 'write-area';
+    textarea.placeholder = 'Write your answer here…';
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'submit-btn';
+    submitBtn.textContent = 'Submit my answer';
+    submitBtn.onclick = () => handleWriteSubmit(a, textarea.value);
+    area.appendChild(prompt);
+    area.appendChild(textarea);
+    area.appendChild(submitBtn);
+  }
+}
+
+function handleAnswer(isCorrect, activity, clickedBtn, container) {
+  if (answerSelected) return;
+  answerSelected = true;
+
+  // Mark all buttons
+  Array.from(container.children).forEach(btn => {
+    btn.disabled = true;
+    if (btn === clickedBtn) {
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+    } else if (!isCorrect) {
+      // Show correct answer
+      const idx = Array.from(container.children).indexOf(btn);
+      if (activity.options[idx].correct) btn.classList.add('correct');
+    }
+  });
+
+  showFeedback(isCorrect, activity.feedbackCorrect, activity.feedbackWrong);
+  if (isCorrect) { xp += 10; answeredCorrect++; }
+  else { lives = Math.max(0, lives - 1); }
+  updateHeader();
+}
+
+function handleWriteSubmit(activity, text) {
+  if (text.trim().length < 10) {
+    alert('Try writing a little more — at least a sentence or two!');
+    return;
+  }
+  xp += 10; answeredCorrect++;
+  updateHeader();
+  showFeedback(true, activity.feedbackCorrect, '');
+}
+
+function showFeedback(correct, correctMsg, wrongMsg) {
+  const panel = document.getElementById('feedbackPanel');
+  panel.className = 'feedback-panel visible ' + (correct ? 'correct-fb' : 'wrong-fb');
+  document.getElementById('feedbackIcon').textContent = correct ? '✓' : '✗';
+  document.getElementById('feedbackTitle').textContent = correct ? 'Correct!' : 'Not quite!';
+  document.getElementById('feedbackMsg').textContent = correct ? correctMsg : wrongMsg;
+}
+
+function advanceActivity() {
+  // Hide feedback
+  document.getElementById('feedbackPanel').className = 'feedback-panel';
+  currentIndex++;
+
+  if (currentIndex >= ACTIVITIES.length) { showComplete(); return; }
+
+  const nextBand = ACTIVITIES[currentIndex].wBand;
+  const prevBand = ACTIVITIES[currentIndex - 1].wBand;
+
+  if (nextBand !== prevBand && !shownBands.has(nextBand)) {
+    showIntroForBand(nextBand, () => renderActivity(currentIndex));
+  } else {
+    renderActivity(currentIndex);
+  }
+}
+
+function updateHeader() {
+  document.getElementById('lives').textContent = lives;
+  document.getElementById('xp').textContent = xp;
+}
+
+// ─────────────────────────────────────────────
+// COMPLETE
+// ─────────────────────────────────────────────
+function showComplete() {
+  document.getElementById('activityArea').style.display = 'none';
+  document.getElementById('feedbackPanel').className = 'feedback-panel';
+  const card = document.getElementById('completeCard');
+  card.classList.add('visible');
+
+  const pct = answeredCorrect / ACTIVITIES.length;
+  const stars = pct >= 0.85 ? '⭐⭐⭐' : pct >= 0.6 ? '⭐⭐' : '⭐';
+  document.getElementById('finalStars').textContent = stars;
+  document.getElementById('finalXP').textContent = `You earned ${xp} XP`;
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressLabel').textContent = 'Lesson complete!';
+}
+
+function restartDemo() {
+  document.getElementById('activityArea').style.display = 'block';
+  document.getElementById('completeCard').classList.remove('visible');
+  init();
+}
+
+// ─────────────────────────────────────────────
+// START
+// ─────────────────────────────────────────────
+window.onload = () => setTimeout(init, 300);
+</script>
+</body>
+</html>

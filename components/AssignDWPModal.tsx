@@ -28,9 +28,11 @@ interface AssignDWPModalProps {
   yearGroup: number;
   teacherId: string;
   onAssigned: () => void;
+  /** Level IDs already assigned to this class — shown dimmed in the picker */
+  assignedLevelIds?: string[];
 }
 
-export function AssignDWPModal({ isOpen, onClose, classId, className, yearGroup, teacherId, onAssigned }: AssignDWPModalProps) {
+export function AssignDWPModal({ isOpen, onClose, classId, className, yearGroup, teacherId, onAssigned, assignedLevelIds = [] }: AssignDWPModalProps) {
   const [levels, setLevels] = useState<WritingLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLevel, setSelectedLevel] = useState<WritingLevel | null>(null);
@@ -185,41 +187,52 @@ export function AssignDWPModal({ isOpen, onClose, classId, className, yearGroup,
                         <div className="sticky top-0 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 text-sm font-semibold text-[var(--wrife-text-main)]">
                           Tier {tier}: {TIER_NAMES[parseInt(tier)]}
                         </div>
-                        {tierLevels.map((level) => (
-                          <button
-                            key={level.id}
-                            onClick={() => setSelectedLevel(level)}
-                            className={`w-full text-left px-4 py-3 border-b border-[var(--wrife-border)] transition ${
-                              selectedLevel?.id === level.id
-                                ? 'bg-blue-50 border-l-4 border-l-[var(--wrife-blue)]'
-                                : 'hover:bg-gray-50'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-bold ${
-                                level.programme_finale ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                                level.tier_finale ? 'bg-purple-500' :
-                                level.milestone ? 'bg-green-500' :
-                                'bg-blue-500'
-                              }`}>
-                                {level.level_number}
-                              </span>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium text-[var(--wrife-text-main)] text-sm">{level.activity_name}</p>
-                                  {level.tier_finale && (
-                                    <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-semibold">
-                                      FINALE
-                                    </span>
-                                  )}
+                        {tierLevels.map((level) => {
+                          const alreadyAssigned = assignedLevelIds.includes(level.level_id);
+                          return (
+                            <button
+                              key={level.id}
+                              onClick={() => !alreadyAssigned && setSelectedLevel(level)}
+                              disabled={alreadyAssigned}
+                              className={`w-full text-left px-4 py-3 border-b border-[var(--wrife-border)] transition ${
+                                alreadyAssigned
+                                  ? 'opacity-50 cursor-not-allowed bg-gray-50'
+                                  : selectedLevel?.id === level.id
+                                    ? 'bg-blue-50 border-l-4 border-l-[var(--wrife-blue)]'
+                                    : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-bold ${
+                                  level.programme_finale ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                                  level.tier_finale ? 'bg-purple-500' :
+                                  level.milestone ? 'bg-green-500' :
+                                  'bg-blue-500'
+                                }`}>
+                                  {level.level_number}
+                                </span>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-[var(--wrife-text-main)] text-sm">{level.activity_name}</p>
+                                    {level.tier_finale && (
+                                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-semibold">
+                                        FINALE
+                                      </span>
+                                    )}
+                                    {alreadyAssigned && (
+                                      <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-semibold">
+                                        ✓ Assigned
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-[var(--wrife-text-muted)]">
+                                    {level.expected_time_minutes} mins • {level.passing_threshold}% to pass
+                                  </p>
                                 </div>
-                                <p className="text-xs text-[var(--wrife-text-muted)]">
-                                  {level.expected_time_minutes} mins • {level.passing_threshold}% to pass
-                                </p>
                               </div>
-                            </div>
-                          </button>
-                        ))}
+                            </button>
+                          );
+                        })}
                       </div>
                     ))}
                 </div>
