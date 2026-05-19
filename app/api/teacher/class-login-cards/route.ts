@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
     }
 
     const pupilsResult = await pool.query(
-      `SELECT p.id, p.first_name, p.last_name, p.username, p.password_hash, p.year_group, p.is_active
+      `SELECT p.id, p.first_name, p.last_name, p.username, p.pin_plaintext, p.password_hash, p.year_group, p.is_active
        FROM pupils p
        JOIN class_members cm ON cm.pupil_id = p.id
        WHERE cm.class_id = $1 AND p.is_active = TRUE
@@ -104,9 +104,13 @@ export async function GET(request: NextRequest) {
       [classId]
     );
 
-    // Return pin_display from password_hash only if still plain text (not yet bcrypt-upgraded)
+    // pin_display priority:
+    //  1. pin_plaintext column (set by pupil-create v5+ and manual resets)
+    //  2. password_hash if it is plaintext (legacy pupils created before bcrypt was enforced)
+    //  3. null → card shows ••••
     const pupils = pupilsResult.rows.map((p: any) => {
       const isHashed = p.password_hash?.startsWith('$2b$') || p.password_hash?.startsWith('$2a$');
+      const pin_display = p.pin_plaintext || (isHashed ? null : (p.password_hash || null));
       return {
         id: p.id,
         first_name: p.first_name,
@@ -114,7 +118,7 @@ export async function GET(request: NextRequest) {
         username: p.username,
         year_group: p.year_group,
         is_active: p.is_active,
-        pin_display: isHashed ? null : (p.password_hash || null),
+        pin_display,
       };
     });
 
