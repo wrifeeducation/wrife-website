@@ -10,7 +10,7 @@ interface AssignLessonModalProps {
 }
 
 interface ClassOption {
-  id: number;
+  id: string;
   name: string;
   year_group: number;
 }
@@ -68,7 +68,7 @@ export function AssignLessonModal({ isOpen, onClose, lessonId, lessonTitle }: As
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           lessonId,
-          classId: Number(selectedClassId),
+          classId: selectedClassId,
           title: lessonTitle,
           instructions: instructions.trim() || null,
           dueDate: dueDate || null,
