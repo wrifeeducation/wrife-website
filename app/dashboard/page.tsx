@@ -368,7 +368,7 @@ function OverviewTab({
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mb-2">
                       <Link
                         href={`/classes/${cls.id}`}
                         className="flex-1 text-center py-2.5 text-sm font-semibold rounded-xl border-2 transition hover:opacity-80"
@@ -384,6 +384,14 @@ function OverviewTab({
                         PWP grid
                       </Link>
                     </div>
+                    {/* Leaderboard shortcut */}
+                    <Link
+                      href={`/classes/${cls.id}?tab=ip-leaderboard`}
+                      className="w-full text-center py-2 text-xs font-semibold rounded-xl transition hover:opacity-80 flex items-center justify-center gap-1.5"
+                      style={{ backgroundColor: 'var(--wrife-blue-soft)', color: 'var(--wrife-blue)' }}
+                    >
+                      🏆 Class Leaderboard
+                    </Link>
                   </div>
                 </div>
               );

@@ -33,6 +33,7 @@ interface Pupil {
   pin_display: string | null;
   year_group: number;
   is_active: boolean;
+  // pin_display is returned by the pupils API
 }
 
 interface Assignment {
@@ -590,7 +591,7 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
                     : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
                 }`}
               >
-                🏆 DWP Leaderboard
+                🏆 Writing Leaderboard
               </button>
               <button
                 onClick={() => setActiveTab('pwp-leaderboard')}
@@ -653,38 +654,53 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
                 {pupils.map((pupil) => (
                   <div
                     key={pupil.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)] transition"
+                    className="p-4 rounded-lg border border-[var(--wrife-border)] hover:bg-[var(--wrife-bg)] transition"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[var(--wrife-blue-soft)] flex items-center justify-center text-sm font-bold text-[var(--wrife-blue)] uppercase">
-                        {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[var(--wrife-text-main)]">
-                          {pupil.first_name} {pupil.last_name || ''}
-                        </p>
-                        {pupil.username && (
-                          <p className="text-xs text-[var(--wrife-text-muted)] font-mono">
-                            {pupil.username}
+                    {/* Top row: avatar + name + remove */}
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-[var(--wrife-blue-soft)] flex items-center justify-center text-sm font-bold text-[var(--wrife-blue)] uppercase shrink-0">
+                          {pupil.first_name.charAt(0)}{pupil.last_name?.charAt(0) || ''}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--wrife-text-main)] leading-tight">
+                            {pupil.first_name} {pupil.last_name || ''}
                           </p>
-                        )}
+                          {pupil.username && (
+                            <p className="text-xs text-[var(--wrife-text-muted)] font-mono">
+                              {pupil.username}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleResetPin(pupil)}
-                        disabled={pinResetting === pupil.id}
-                        className="text-[var(--wrife-text-muted)] hover:text-[var(--wrife-blue)] transition text-sm px-2 py-1 rounded"
-                        title="Reset pupil PIN"
-                      >
-                        {pinResetting === pupil.id ? '…' : '🔑'}
-                      </button>
                       <button
                         onClick={() => handleRemovePupil(pupil.id)}
-                        className="text-red-400 hover:text-red-600 transition text-sm px-2 py-1 rounded"
+                        className="text-red-300 hover:text-red-600 transition text-sm px-1 py-0.5 rounded shrink-0"
                         title="Remove pupil"
                       >
                         ✕
+                      </button>
+                    </div>
+
+                    {/* PIN row */}
+                    <div className="flex items-center justify-between bg-[var(--wrife-bg)] rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[var(--wrife-text-muted)]">PIN</span>
+                        {pupil.pin_display ? (
+                          <span className="text-base font-mono font-bold text-[var(--wrife-text-main)] tracking-widest">
+                            {pupil.pin_display}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-amber-600 font-semibold">Reset to reveal</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleResetPin(pupil)}
+                        disabled={pinResetting === pupil.id}
+                        className="text-xs font-semibold px-2 py-1 rounded-full border border-[var(--wrife-blue)] text-[var(--wrife-blue)] hover:bg-[var(--wrife-blue-soft)] transition disabled:opacity-50"
+                        title="Reset pupil PIN"
+                      >
+                        {pinResetting === pupil.id ? '…' : '🔑 Reset'}
                       </button>
                     </div>
                   </div>

@@ -54,6 +54,7 @@ export async function GET(
     // Fetch pupils via class_members join table
     const result = await pool.query(
       `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username,
+              p.pin_plaintext, p.password_hash,
               p.year_group, p.is_active, p.last_login_at, p.created_at,
               (SELECT COUNT(*) FROM pupil_activity_log pal WHERE pal.pupil_id = p.id) as activity_count
        FROM pupils p
@@ -63,7 +64,19 @@ export async function GET(
       [classId]
     );
 
-    return NextResponse.json({ pupils: result.rows });
+    // Compute pin_display the same way as class-login-cards
+    const pupils = result.rows.map((p: Record<string, unknown>) => {
+      const isHashed =
+        (p.password_hash as string)?.startsWith('$2b$') ||
+        (p.password_hash as string)?.startsWith('$2a$');
+      const pin_display =
+        (p.pin_plaintext as string | null) ||
+        (isHashed ? null : ((p.password_hash as string | null) || null));
+      const { password_hash: _ph, pin_plaintext: _pp, ...rest } = p;
+      return { ...rest, pin_display };
+    });
+
+    return NextResponse.json({ pupils });
   } catch (error) {
     console.error('Error fetching pupils:', error);
     return NextResponse.json({ error: 'Failed to fetch pupils' }, { status: 500 });
@@ -108,12 +121,12 @@ export async function POST(
     const passwordHash = await bcrypt.hash(pin, 10);
     const displayName = lastName ? `${firstName} ${lastName}` : firstName;
 
-    // Insert pupil (no class_id — relationship is via class_members)
+    // Insert pupil — save pin_plaintext so login cards always show the PIN
     const pupilResult = await pool.query(
-      `INSERT INTO pupils (first_name, last_name, display_name, username, password_hash, year_group)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO pupils (first_name, last_name, display_name, username, password_hash, pin_plaintext, year_group)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, first_name, last_name, display_name, username, year_group, is_active, created_at`,
-      [firstName, lastName || null, displayName, username, passwordHash, pupilYearGroup]
+      [firstName, lastName || null, displayName, username, passwordHash, pin, pupilYearGroup]
     );
 
     const pupil = pupilResult.rows[0];
@@ -179,10 +192,10 @@ export async function PUT(
       const displayName = lastName ? `${firstName} ${lastName}` : firstName;
 
       const result = await pool.query(
-        `INSERT INTO pupils (first_name, last_name, display_name, username, password_hash, year_group)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO pupils (first_name, last_name, display_name, username, password_hash, pin_plaintext, year_group)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, first_name, last_name, display_name, username, year_group`,
-        [firstName, lastName || null, displayName, username, passwordHash, pupilYearGroup]
+        [firstName, lastName || null, displayName, username, passwordHash, pin, pupilYearGroup]
       );
 
       const newPupil = result.rows[0];

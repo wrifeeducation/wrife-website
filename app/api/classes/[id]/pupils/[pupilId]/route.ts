@@ -131,9 +131,9 @@ export async function POST(
     const newPin = generatePin();
     const passwordHash = await bcrypt.hash(newPin, 10);
     const result = await pool.query(
-      `UPDATE pupils SET password_hash = $1, updated_at = NOW()
-       WHERE id = $2 RETURNING id, first_name, last_name, display_name, username`,
-      [passwordHash, pupilId]
+      `UPDATE pupils SET password_hash = $1, pin_plaintext = $2, updated_at = NOW()
+       WHERE id = $3 RETURNING id, first_name, last_name, display_name, username`,
+      [passwordHash, newPin, pupilId]
     );
     if (result.rows.length === 0) return NextResponse.json({ error: 'Pupil not found' }, { status: 404 });
 

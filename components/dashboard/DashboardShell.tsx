@@ -84,7 +84,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               WriFe
             </span>
           </Link>
-          <p className="text-white/70 text-xs mt-1">Teacher Dashboard</p>
+          <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.75)' }}>Teacher Dashboard</p>
         </div>
 
         {/* Nav items */}
@@ -95,16 +95,31 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <Link
                 key={item.key}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  isActive
-                    ? 'bg-white/25 text-white'
-                    : 'text-white/85 hover:text-white hover:bg-white/15'
-                }`}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={{
+                  color: 'white',
+                  backgroundColor: isActive ? 'rgba(255,255,255,0.22)' : 'transparent',
+                  opacity: isActive ? 1 : 0.88,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'rgba(255,255,255,0.12)';
+                    (e.currentTarget as HTMLAnchorElement).style.opacity = '1';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'transparent';
+                    (e.currentTarget as HTMLAnchorElement).style.opacity = '0.88';
+                  }
+                }}
               >
                 <span
-                  className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center transition-all ${
-                    isActive ? 'border-white/60 bg-white/20' : 'border-white/35'
-                  }`}
+                  className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all"
+                  style={{
+                    border: isActive ? '1.5px solid rgba(255,255,255,0.7)' : '1.5px solid rgba(255,255,255,0.4)',
+                    backgroundColor: isActive ? 'rgba(255,255,255,0.18)' : 'transparent',
+                  }}
                 >
                   {item.icon}
                 </span>
@@ -123,11 +138,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             >
               {initials}
             </div>
-            <span className="text-white/80 text-xs truncate">{user?.display_name ?? user?.email}</span>
+            <span className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>{user?.display_name ?? user?.email}</span>
           </div>
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/75 hover:text-white hover:bg-white/15 w-full text-sm transition-all"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl w-full text-sm transition-all"
+            style={{ color: 'rgba(255,255,255,0.82)' }}
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
