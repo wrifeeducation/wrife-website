@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { buildSSOUrl } from '@/lib/pupil-sso';
 import WrifeMascot from '@/components/mascots/WrifeMascot';
+import { PupilLeaderboardWidget } from '@/components/PupilLeaderboardWidget';
 
 interface PupilSession {
   pupilId: string;
@@ -409,7 +410,7 @@ export default function PupilDashboardPage() {
         className="sticky top-0 z-40 w-full"
         style={{ backgroundColor: 'var(--wrife-blue)', height: '52px' }}
       >
-        <div className="max-w-4xl mx-auto px-4 h-full flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <Link href="/">
             <span className="font-extrabold text-xl text-white" style={{ fontFamily: 'var(--font-display)' }}>
               WriFe
@@ -432,7 +433,7 @@ export default function PupilDashboardPage() {
       </header>
 
       {/* ── Hero banner (Pattern 1 — wrife-design-world) ────────── */}
-      <div className="max-w-4xl mx-auto px-4 pt-5">
+      <div className="max-w-7xl mx-auto px-4 pt-5">
         <div
           className="rounded-2xl px-6 py-5"
           style={{ background: 'var(--wrife-blue)' }}
@@ -484,7 +485,7 @@ export default function PupilDashboardPage() {
         </div>
       </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
 
         {/* ── Your Apps (6+1 tile grid) ─────────────────────────── */}
         <section>
@@ -728,6 +729,9 @@ export default function PupilDashboardPage() {
             </Link>
           </div>
         </section>
+
+        {/* ── Class Leaderboard widget ──────────────────────────── */}
+        <PupilLeaderboardWidget pupilId={session.pupilId} practiceUrl={practiceUrl} />
 
         {/* ── Today's Tasks ─────────────────────────────────────── */}
         {(nextDwp || pendingAssignments.length > 0 || activePwpAssignments.length > 0) && (
