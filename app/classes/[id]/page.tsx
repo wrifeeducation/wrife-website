@@ -14,6 +14,7 @@ import { PWPChainTab } from '@/components/PWPChainTab';
 import { TeacherAssignmentsTab } from '@/components/TeacherAssignmentsTab';
 import { ClassActivityPanel } from '@/components/ClassActivityPanel';
 import { DWPLeaderboardTab } from '@/components/DWPLeaderboardTab';
+import { PWPLeaderboardTab } from '@/components/PWPLeaderboardTab';
 
 interface Class {
   id: string;
@@ -93,10 +94,10 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   const [showAddPupil, setShowAddPupil] = useState(false);
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get('tab');
-  const initialTab = tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'pwp-chain', 'assignments', 'dwp-leaderboard'].includes(tabParam)
-    ? tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments' | 'dwp-leaderboard'
+  const initialTab = tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'pwp-chain', 'assignments', 'dwp-leaderboard', 'pwp-leaderboard'].includes(tabParam)
+    ? tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments' | 'dwp-leaderboard' | 'pwp-leaderboard'
     : 'pupils';
-  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments' | 'dwp-leaderboard'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments' | 'dwp-leaderboard' | 'pwp-leaderboard'>(initialTab);
   const [dwpAssignments, setDwpAssignments] = useState<DWPAssignment[]>([]);
   const [writingAttempts, setWritingAttempts] = useState<WritingAttempt[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<{
@@ -126,8 +127,8 @@ function ClassDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   }, [user, authLoading, resolvedParams.id, router]);
 
   useEffect(() => {
-    if (tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'pwp-chain', 'assignments', 'dwp-leaderboard'].includes(tabParam)) {
-      setActiveTab(tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments' | 'dwp-leaderboard');
+    if (tabParam && ['pupils', 'progress', 'interactive-practice', 'pwp-studio', 'pwp-chain', 'assignments', 'dwp-leaderboard', 'pwp-leaderboard'].includes(tabParam)) {
+      setActiveTab(tabParam as 'pupils' | 'progress' | 'interactive-practice' | 'pwp-studio' | 'pwp-chain' | 'assignments' | 'dwp-leaderboard' | 'pwp-leaderboard');
     }
   }, [tabParam]);
 
@@ -590,6 +591,16 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
               >
                 🏆 DWP Leaderboard
               </button>
+              <button
+                onClick={() => setActiveTab('pwp-leaderboard')}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  activeTab === 'pwp-leaderboard'
+                    ? 'bg-[var(--wrife-blue)] text-white'
+                    : 'bg-white border border-[var(--wrife-border)] text-[var(--wrife-text-main)] hover:bg-[var(--wrife-bg)]'
+                }`}
+              >
+                🏆 PWP Leaderboard
+              </button>
             </div>
             <Link
               href={`/classes/${resolvedParams.id}/report`}
@@ -938,6 +949,10 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
 
           {activeTab === 'dwp-leaderboard' && (
             <DWPLeaderboardTab classId={resolvedParams.id} />
+          )}
+
+          {activeTab === 'pwp-leaderboard' && (
+            <PWPLeaderboardTab classId={resolvedParams.id} />
           )}
 
         </div>
