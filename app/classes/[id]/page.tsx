@@ -370,7 +370,7 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
     setPinResetting(pupil.id);
     try {
       const res = await fetch(`/api/classes/${resolvedParams.id}/pupils/${pupil.id}`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reset-password' }),
       });
