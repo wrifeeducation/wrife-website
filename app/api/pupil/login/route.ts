@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       isValidPassword = true;
       const newHash = await bcrypt.hash(pin, 10);
       pool
-        .query('UPDATE pupils SET password_hash = $1 WHERE id = $2', [newHash, pupil.id])
+        .query('UPDATE pupils SET password_hash = $1, pin_plaintext = $2 WHERE id = $3', [newHash, pin, pupil.id])
         .catch(() => {});
     }
 
