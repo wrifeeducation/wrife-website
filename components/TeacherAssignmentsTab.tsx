@@ -315,10 +315,19 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
                   <button
                     onClick={() => deleteIPAssignment(a.id)}
                     disabled={deletingIPId === a.id}
-                    className="ml-3 text-red-400 hover:text-red-600 text-xs font-semibold transition disabled:opacity-50 shrink-0"
-                    title="Archive assignment"
+                    className="ml-3 shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 text-xs font-semibold transition disabled:opacity-50"
+                    title="Recall this assignment — removes it from pupils' dashboards"
                   >
-                    ✕
+                    {deletingIPId === a.id ? (
+                      <span className="opacity-60">Recalling…</span>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                        Recall
+                      </>
+                    )}
                   </button>
                 </div>
               );
@@ -360,9 +369,19 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
                 <button
                   onClick={() => deletePWPAssignment(a.id)}
                   disabled={deletingPWPId === a.id}
-                  className="ml-3 text-red-400 hover:text-red-600 text-xs font-semibold transition disabled:opacity-50 shrink-0"
+                  className="ml-3 shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 text-xs font-semibold transition disabled:opacity-50"
+                  title="Recall this assignment"
                 >
-                  ✕
+                  {deletingPWPId === a.id ? (
+                    <span className="opacity-60">Recalling…</span>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      </svg>
+                      Recall
+                    </>
+                  )}
                 </button>
               </div>
             ))}
@@ -426,10 +445,19 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteDWPAssignment(a.id); }}
                         disabled={deletingDWPId === a.id}
-                        className="text-red-400 hover:text-red-600 text-xs font-semibold transition disabled:opacity-50"
-                        title="Remove assignment"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 text-xs font-semibold transition disabled:opacity-50"
+                        title="Recall this assignment"
                       >
-                        ✕
+                        {deletingDWPId === a.id ? (
+                          <span className="opacity-60">Recalling…</span>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                            Recall
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -526,10 +554,19 @@ export function TeacherAssignmentsTab({ classId, className, yearGroup }: Props) 
                   <button
                     onClick={() => archiveResource(r.id)}
                     disabled={archivingResourceId === r.id}
-                    title="Remove from pupils' dashboards"
-                    className="text-red-400 hover:text-red-600 text-xs font-semibold transition disabled:opacity-50 shrink-0 mt-1"
+                    title="Recall — removes from pupils' dashboards"
+                    className="shrink-0 mt-1 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 text-xs font-semibold transition disabled:opacity-50"
                   >
-                    {archivingResourceId === r.id ? '…' : '✕'}
+                    {archivingResourceId === r.id ? (
+                      <span className="opacity-60">Recalling…</span>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                        Recall
+                      </>
+                    )}
                   </button>
                 </div>
               );

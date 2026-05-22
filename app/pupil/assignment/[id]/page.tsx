@@ -87,6 +87,8 @@ export default function PupilAssignmentPage() {
   const [practiceCompleted, setPracticeCompleted] = useState(false);
   const [practiceInProgress, setPracticeInProgress] = useState(false);
   const [markingComplete, setMarkingComplete] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);         // increment to reload iframe
+  const [revertingSubmission, setRevertingSubmission] = useState(false);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -249,6 +251,38 @@ export default function PupilAssignmentPage() {
       setError('Could not save your progress');
     } finally {
       setMarkingComplete(false);
+    }
+  }
+
+  function handleRestartActivity() {
+    setIframeKey(k => k + 1);
+    setPracticeCompleted(false);
+    setPracticeInProgress(false);
+  }
+
+  async function handleEditResponse() {
+    if (!session || !assignment || !submission) return;
+    setRevertingSubmission(true);
+    setError('');
+    try {
+      const response = await fetch('/api/pupil/assignment', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assignmentId: assignment.id,
+          pupilId: session.pupilId,
+          content: submission.content,
+          status: 'draft',
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setSubmission(data.submission);
+    } catch (err) {
+      console.error('Error reverting submission:', err);
+      setError('Could not revert — please try again.');
+    } finally {
+      setRevertingSubmission(false);
     }
   }
 
@@ -520,12 +554,32 @@ export default function PupilAssignmentPage() {
           )}
 
           {isSubmitted && (
-            <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-center">
-              <p className="text-sm font-semibold text-green-700">
-                ✓ Submitted on {new Date(submission!.submitted_at!).toLocaleDateString('en-GB', {
-                  day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
-                })}
-              </p>
+            <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <p className="text-sm font-semibold text-green-700">
+                  ✓ Submitted on {new Date(submission!.submitted_at!).toLocaleDateString('en-GB', {
+                    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+                  })}
+                </p>
+                {submission?.status === 'submitted' && (
+                  <button
+                    onClick={handleEditResponse}
+                    disabled={revertingSubmission}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition disabled:opacity-50"
+                    title="Take back your submission so you can change your answer"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    {revertingSubmission ? 'Reverting…' : 'Edit my response'}
+                  </button>
+                )}
+              </div>
+              {submission?.status === 'submitted' && (
+                <p className="text-xs text-green-600 mt-1">
+                  You can edit your response until your teacher reviews it.
+                </p>
+              )}
             </div>
           )}
 
@@ -612,18 +666,31 @@ export default function PupilAssignmentPage() {
               <h2 className="text-lg font-bold text-[var(--wrife-text-main)] flex items-center gap-2">
                 <span>🎮</span> Practice Activity
               </h2>
-              <button
-                onClick={handleCloseActivity}
-                className="w-10 h-10 rounded-full bg-white border border-[var(--wrife-border)] flex items-center justify-center hover:bg-gray-50 transition"
-                title="Close activity"
-              >
-                <svg className="w-5 h-5 text-[var(--wrife-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRestartActivity}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition"
+                  title="Restart the activity from the beginning"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582M20 20v-5h-.581M5.635 19A9 9 0 104.582 9" />
+                  </svg>
+                  Restart
+                </button>
+                <button
+                  onClick={handleCloseActivity}
+                  className="w-10 h-10 rounded-full bg-white border border-[var(--wrife-border)] flex items-center justify-center hover:bg-gray-50 transition"
+                  title="Close activity"
+                >
+                  <svg className="w-5 h-5 text-[var(--wrife-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-hidden">
               <iframe
+                key={iframeKey}
                 src={`/api/fetch-html?url=${encodeURIComponent(interactiveHtml)}`}
                 className="w-full h-full border-0"
                 title="Practice Activity"
