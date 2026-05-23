@@ -13,7 +13,6 @@ import { AddPupilModal } from '@/components/AddPupilModal';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import { AssignPWPModal } from '@/components/AssignPWPModal';
 import { AssignDWPModal } from '@/components/AssignDWPModal';
-import { buildTeacherSSOUrl } from '@/lib/teacher-sso';
 
 const LessonLibrary = dynamicImport(() => import('@/components/LessonLibrary'), {
   ssr: false,
@@ -106,12 +105,6 @@ function OverviewTab({
   // Quick-assign state: which app the teacher clicked + which class they chose
   const [quickAssignApp, setQuickAssignApp] = useState<'pwp' | 'dwp' | null>(null);
   const [quickAssignClass, setQuickAssignClass] = useState<ClassData | null>(null);
-
-  // Pre-compute SSO URL for Interactive Practice on mount so the <a> href is ready immediately
-  const [ipSsoUrl, setIpSsoUrl] = useState('https://practice.wrife.co.uk/teacher');
-  useEffect(() => {
-    buildTeacherSSOUrl('https://practice.wrife.co.uk', '/teacher').then(setIpSsoUrl);
-  }, []);
 
   const statCards = [
     { value: stats.totalClasses,         label: 'Active Classes',    color: 'var(--wrife-blue)',   bg: 'var(--wrife-blue-soft)'  },
@@ -239,21 +232,19 @@ function OverviewTab({
           WriFe Apps
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Interactive Practice — SSO link (URL pre-computed on mount) */}
-          <a
-            href={ipSsoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 rounded-2xl p-5 border-2 transition hover:shadow-md hover:-translate-y-0.5"
+          {/* Interactive Practice — navigates to Lessons tab to browse & assign */}
+          <button
+            onClick={() => handleTabChange('lessons')}
+            className="flex items-center gap-4 rounded-2xl p-5 border-2 transition hover:shadow-md hover:-translate-y-0.5 text-left w-full"
             style={{ backgroundColor: "var(--wrife-electric-soft)", borderColor: "var(--wrife-electric)" }}
           >
             <span className="text-3xl shrink-0">🎮</span>
             <div className="flex-1 min-w-0">
               <p className="font-extrabold text-base leading-tight" style={{ color: "var(--wrife-text-main)" }}>Interactive Practice</p>
-              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>Gamified lesson activities</p>
+              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>Browse lessons &amp; assign to class</p>
             </div>
             <span className="text-sm font-bold shrink-0" style={{ color: "var(--wrife-electric)" }}>Open →</span>
-          </a>
+          </button>
 
           {/* AI Writing Tools */}
           <button
