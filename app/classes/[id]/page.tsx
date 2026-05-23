@@ -382,6 +382,12 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
         username: data.credentials.username,
         pin: data.credentials.pin,
       });
+      // Update the pupil list so the new PIN shows immediately — teacher must always see it
+      setPupils((prev: Pupil[]) =>
+        prev.map((p: Pupil) =>
+          p.id === pupil.id ? { ...p, pin_display: data.credentials.pin } : p
+        )
+      );
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to reset PIN');
     } finally {
@@ -686,13 +692,9 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
                     <div className="flex items-center justify-between bg-[var(--wrife-bg)] rounded-lg px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-[var(--wrife-text-muted)]">PIN</span>
-                        {pupil.pin_display ? (
-                          <span className="text-base font-mono font-bold text-[var(--wrife-text-main)] tracking-widest">
-                            {pupil.pin_display}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-amber-600 font-semibold">Reset to reveal</span>
-                        )}
+                        <span className="text-base font-mono font-bold text-[var(--wrife-text-main)] tracking-widest">
+                          {pupil.pin_display ?? '—'}
+                        </span>
                       </div>
                       <button
                         onClick={() => handleResetPin(pupil)}
@@ -1019,7 +1021,7 @@ function getWritingAttemptForPupil(pupilId: string, dwpAssignmentId: number): Wr
               </div>
             </div>
             <p className="text-xs text-[var(--wrife-text-muted)] text-center mb-4">
-              Note this down — the PIN won&apos;t be shown again.
+              The new PIN is saved and will always be visible on the class page.
             </p>
             <button
               onClick={() => setPinResetResult(null)}

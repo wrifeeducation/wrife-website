@@ -64,14 +64,15 @@ export async function GET(
       [classId]
     );
 
-    // Compute pin_display the same way as class-login-cards
+    // pin_display: teachers must always see the PIN.
+    // Priority: pin_plaintext (canonical) → plaintext password_hash (legacy pre-pin_plaintext pupils)
     const pupils = result.rows.map((p: Record<string, unknown>) => {
       const isHashed =
         (p.password_hash as string)?.startsWith('$2b$') ||
         (p.password_hash as string)?.startsWith('$2a$');
       const pin_display =
         (p.pin_plaintext as string | null) ||
-        (isHashed ? null : ((p.password_hash as string | null) || null));
+        (!isHashed ? ((p.password_hash as string | null) || null) : null);
       const { password_hash: _ph, pin_plaintext: _pp, ...rest } = p;
       return { ...rest, pin_display };
     });

@@ -104,13 +104,11 @@ export async function GET(request: NextRequest) {
       [classId]
     );
 
-    // pin_display priority:
-    //  1. pin_plaintext column (set by pupil-create v5+ and manual resets)
-    //  2. password_hash if it is plaintext (legacy pupils created before bcrypt was enforced)
-    //  3. null → card shows ••••
+    // pin_display: teachers must always see the PIN on login cards.
+    // Priority: pin_plaintext (canonical) → plaintext password_hash (legacy fallback)
     const pupils = pupilsResult.rows.map((p: any) => {
       const isHashed = p.password_hash?.startsWith('$2b$') || p.password_hash?.startsWith('$2a$');
-      const pin_display = p.pin_plaintext || (isHashed ? null : (p.password_hash || null));
+      const pin_display = p.pin_plaintext || (!isHashed ? (p.password_hash || null) : null);
       return {
         id: p.id,
         first_name: p.first_name,
