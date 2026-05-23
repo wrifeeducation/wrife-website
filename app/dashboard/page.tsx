@@ -11,6 +11,8 @@ import { getEntitlements } from '@/lib/entitlements';
 import UpgradeModal from '@/components/UpgradeModal';
 import { AddPupilModal } from '@/components/AddPupilModal';
 import DashboardShell from '@/components/dashboard/DashboardShell';
+import { AssignPWPModal } from '@/components/AssignPWPModal';
+import { AssignDWPModal } from '@/components/AssignDWPModal';
 
 const LessonLibrary = dynamicImport(() => import('@/components/LessonLibrary'), {
   ssr: false,
@@ -81,7 +83,7 @@ function Spinner() {
 
 // ── Overview ─────────────────────────────────────────────────────────────────
 interface OverviewProps {
-  user: { display_name?: string };
+  user: { display_name?: string; id?: string };
   stats: DashboardStats;
   classes: ClassData[];
   pupils: PupilData[];
@@ -99,6 +101,10 @@ function OverviewTab({
 }: OverviewProps) {
 
   const firstName = user.display_name?.split(' ')[0] || 'there';
+
+  // Quick-assign state: which app the teacher clicked + which class they chose
+  const [quickAssignApp, setQuickAssignApp] = useState<'pwp' | 'dwp' | null>(null);
+  const [quickAssignClass, setQuickAssignClass] = useState<ClassData | null>(null);
 
   const statCards = [
     { value: stats.totalClasses,         label: 'Active Classes',    color: 'var(--wrife-blue)',   bg: 'var(--wrife-blue-soft)'  },
@@ -225,7 +231,7 @@ function OverviewTab({
         >
           WriFe Apps
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Interactive Practice */}
           <a
             href="https://practice.wrife.co.uk"
@@ -256,23 +262,111 @@ function OverviewTab({
             <span className="text-sm font-bold shrink-0" style={{ color: "var(--wrife-green)" }}>Open →</span>
           </button>
 
-          {/* PWP Studio */}
-          <a
-            href="https://pwp-studio.wrife.co.uk"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 rounded-2xl p-5 border-2 transition hover:shadow-md hover:-translate-y-0.5"
+          {/* PWP Studio — opens class picker → AssignPWPModal */}
+          <button
+            onClick={() => { setQuickAssignApp('pwp'); setQuickAssignClass(null); }}
+            className="flex items-center gap-4 rounded-2xl p-5 border-2 transition hover:shadow-md hover:-translate-y-0.5 text-left w-full"
             style={{ backgroundColor: "var(--wrife-teal-soft)", borderColor: "var(--wrife-teal)" }}
           >
-            <span className="text-3xl shrink-0">📝</span>
+            <span className="text-3xl shrink-0">✏️</span>
             <div className="flex-1 min-w-0">
               <p className="font-extrabold text-base leading-tight" style={{ color: "var(--wrife-text-main)" }}>PWP Studio</p>
-              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>Formula writing practice</p>
+              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>Assign formula levels</p>
             </div>
-            <span className="text-sm font-bold shrink-0" style={{ color: "var(--wrife-teal)" }}>Open →</span>
-          </a>
+            <span className="text-sm font-bold shrink-0" style={{ color: "var(--wrife-teal)" }}>Assign →</span>
+          </button>
+
+          {/* Daily Writing (DWP) — opens class picker → AssignDWPModal */}
+          <button
+            onClick={() => { setQuickAssignApp('dwp'); setQuickAssignClass(null); }}
+            className="flex items-center gap-4 rounded-2xl p-5 border-2 transition hover:shadow-md hover:-translate-y-0.5 text-left w-full"
+            style={{ backgroundColor: "#EDE9FE", borderColor: "#7C3AED" }}
+          >
+            <span className="text-3xl shrink-0">✍️</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-extrabold text-base leading-tight" style={{ color: "var(--wrife-text-main)" }}>Daily Writing</p>
+              <p className="text-sm mt-1" style={{ color: "var(--wrife-text-muted)" }}>Assign DWP levels</p>
+            </div>
+            <span className="text-sm font-bold shrink-0" style={{ color: "#7C3AED" }}>Assign →</span>
+          </button>
         </div>
       </div>
+
+      {/* ── Quick-assign: class picker ───────────────────────── */}
+      {quickAssignApp && !quickAssignClass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-[var(--wrife-border)] w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--wrife-border)]">
+              <div>
+                <h2 className="text-lg font-bold text-[var(--wrife-text-main)]">
+                  {quickAssignApp === 'pwp' ? '✏️ Assign PWP Studio' : '✍️ Assign Daily Writing'}
+                </h2>
+                <p className="text-sm text-[var(--wrife-text-muted)] mt-0.5">Choose which class to assign to</p>
+              </div>
+              <button
+                onClick={() => setQuickAssignApp(null)}
+                className="w-9 h-9 rounded-full border border-[var(--wrife-border)] flex items-center justify-center hover:bg-gray-50 transition text-[var(--wrife-text-muted)]"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
+              {classes.length === 0 ? (
+                <p className="text-sm text-center text-[var(--wrife-text-muted)] py-6">
+                  No classes yet — create a class first.
+                </p>
+              ) : (
+                classes.map((cls, idx) => {
+                  const palette = CLASS_PALETTE[idx % CLASS_PALETTE.length];
+                  return (
+                    <button
+                      key={cls.id}
+                      onClick={() => setQuickAssignClass(cls)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition hover:shadow-sm hover:-translate-y-0.5"
+                      style={{ backgroundColor: palette.bg, borderColor: palette.border }}
+                    >
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+                        style={{ backgroundColor: palette.border }}>
+                        {cls.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm text-[var(--wrife-text-main)]">{cls.name}</p>
+                        <p className="text-xs text-[var(--wrife-text-muted)]">Year {cls.year_group} · {cls.class_code}</p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PWP Assign Modal (after class chosen) ─────────── */}
+      {quickAssignApp === 'pwp' && quickAssignClass && user.id && (
+        <AssignPWPModal
+          isOpen={true}
+          onClose={() => { setQuickAssignApp(null); setQuickAssignClass(null); }}
+          classId={quickAssignClass.id}
+          className={quickAssignClass.name}
+          yearGroup={quickAssignClass.year_group}
+          teacherId={user.id}
+          onAssigned={() => { setQuickAssignApp(null); setQuickAssignClass(null); }}
+        />
+      )}
+
+      {/* ── DWP Assign Modal (after class chosen) ─────────── */}
+      {quickAssignApp === 'dwp' && quickAssignClass && user.id && (
+        <AssignDWPModal
+          isOpen={true}
+          onClose={() => { setQuickAssignApp(null); setQuickAssignClass(null); }}
+          classId={quickAssignClass.id}
+          className={quickAssignClass.name}
+          yearGroup={quickAssignClass.year_group}
+          teacherId={user.id}
+          onAssigned={() => { setQuickAssignApp(null); setQuickAssignClass(null); }}
+        />
+      )}
 
       {/* My Classes */}
       <div>
