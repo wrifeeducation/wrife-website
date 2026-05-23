@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     // Look up pupil via class_members join — also fetch auth_user_id for SSO provisioning
     const result = await pool.query(
       `SELECT p.id, p.first_name, p.last_name, p.display_name, p.username,
-              p.password_hash, p.year_group, p.is_active, p.auth_user_id,
+              p.password_hash, p.pin_hash, p.year_group, p.is_active, p.auth_user_id,
               c.id as class_uuid, c.name as class_name, c.class_code,
               t.display_name as teacher_name
        FROM pupils p
@@ -156,15 +156,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify PIN — bcrypt first, then auto-upgrade legacy plain PINs
-    let isValidPassword = await bcrypt.compare(pin, pupil.password_hash);
+    // Verify PIN — priority: bcrypt password_hash → plaintext password_hash → pin_hash fallback
+    // Guard against null: bcrypt.compare throws if hash argument is null/undefined
+    let isValidPassword = false;
+    const effectiveHash = pupil.password_hash ?? pupil.pin_hash;
 
-    if (!isValidPassword && /^\d{4}$/.test(pupil.password_hash) && pin === pupil.password_hash) {
-      isValidPassword = true;
-      const newHash = await bcrypt.hash(pin, 10);
-      pool
-        .query('UPDATE pupils SET password_hash = $1, pin_plaintext = $2 WHERE id = $3', [newHash, pin, pupil.id])
-        .catch(() => {});
+    if (effectiveHash) {
+      const looksLikeBcrypt = effectiveHash.startsWith('$2');
+      if (looksLikeBcrypt) {
+        // Proper bcrypt hash — compare directly
+        isValidPassword = await bcrypt.compare(pin, effectiveHash);
+      } else if (/^\d{4}$/.test(effectiveHash) && pin === effectiveHash) {
+        // Legacy plaintext 4-digit PIN — accept and upgrade
+        isValidPassword = true;
+        const newHash = await bcrypt.hash(pin, 10);
+        pool
+          .query('UPDATE pupils SET password_hash = $1, pin_plaintext = $2 WHERE id = $3', [newHash, pin, pupil.id])
+          .catch(() => {});
+      }
     }
 
     if (!isValidPassword) {
