@@ -90,10 +90,10 @@ export async function GET(request: NextRequest) {
     let schoolTier: string | null = null;
     if (profile.school_id) {
       const schoolRes = await pool.query(
-        'SELECT membership_tier FROM schools WHERE id = $1 LIMIT 1',
+        'SELECT subscription_tier FROM schools WHERE id = $1 LIMIT 1',
         [profile.school_id]
       );
-      schoolTier = schoolRes.rows[0]?.membership_tier ?? null;
+      schoolTier = schoolRes.rows[0]?.subscription_tier ?? null;
     }
 
     const entitlements = getEntitlements(profile.membership_tier, schoolTier);
