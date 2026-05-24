@@ -10,9 +10,9 @@ async function main() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS resource_assignments (
       id              SERIAL PRIMARY KEY,
-      lesson_file_id  INTEGER NOT NULL,
-      lesson_id       INTEGER NOT NULL,
-      class_id        INTEGER NOT NULL,
+      lesson_file_id  INTEGER,
+      lesson_id       INTEGER,
+      class_id        UUID    NOT NULL REFERENCES classes(id),
       teacher_id      UUID    NOT NULL,
       title           VARCHAR NOT NULL,
       file_type       VARCHAR NOT NULL,

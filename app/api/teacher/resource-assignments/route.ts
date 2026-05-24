@@ -48,7 +48,7 @@ async function authenticateTeacher(): Promise<AuthResult | { error: string; stat
   return { userId: profileRow.id, role: profileRow.role, schoolId: profileRow.school_id };
 }
 
-async function verifyClassOwnership(auth: AuthResult, classId: number): Promise<boolean> {
+async function verifyClassOwnership(auth: AuthResult, classId: string): Promise<boolean> {
   if (auth.role === 'admin') return true;
   const pool = getPool();
   if (auth.role === 'teacher') {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'lessonFileId and lessonId are required for non-ai_tool resources' }, { status: 400 });
     }
 
-    const hasAccess = await verifyClassOwnership(authResult, Number(classId));
+    const hasAccess = await verifyClassOwnership(authResult, classId);
     if (!hasAccess) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'classId is required' }, { status: 400 });
     }
 
-    const hasAccess = await verifyClassOwnership(authResult, Number(classId));
+    const hasAccess = await verifyClassOwnership(authResult, classId);
     if (!hasAccess) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
