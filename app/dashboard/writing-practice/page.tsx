@@ -24,12 +24,19 @@ interface ClassData {
 
 interface PWPActivity {
   id: string;
-  level: number;
-  level_name: string;
-  grammar_focus: string;
-  sentence_structure: string;
-  year_group_min: number;
-  year_group_max: number;
+  level_number: number;
+  tier_number: number;
+  level_id: string;
+  activity_name: string;
+  activity_type: string;
+  learning_objective: string;
+  prompt_title: string;
+  expected_time_minutes: number;
+  difficulty_level: string;
+  age_range: string;
+  tier_finale: boolean;
+  milestone: boolean;
+  display_order: number;
   locked: boolean;
 }
 
@@ -138,7 +145,7 @@ export default function WritingPracticePage() {
     : getEntitlements('free');
 
   function openAssignPWP(activity: PWPActivity) {
-    setAssignState({ type: 'pwp', itemId: activity.id, itemName: `Level ${activity.level}: ${activity.level_name}` });
+    setAssignState({ type: 'pwp', itemId: activity.id, itemName: `Level ${activity.level_number}: ${activity.activity_name}` });
     setSelectedClassId(classes[0]?.id || '');
     setInstructions('');
     setDueDate('');
@@ -314,14 +321,14 @@ export default function WritingPracticePage() {
                             <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${
                               activity.locked ? 'bg-gray-400' : 'bg-green-500'
                             }`}>
-                              {activity.locked ? '🔒' : activity.level}
+                              {activity.locked ? '🔒' : activity.level_number}
                             </span>
-                            <span className="text-xs text-[var(--wrife-text-muted)]">Year {activity.year_group_min}–{activity.year_group_max}</span>
+                            <span className="text-xs text-[var(--wrife-text-muted)]">{activity.age_range}</span>
                           </div>
                           <h3 className="font-bold text-[var(--wrife-text-main)] text-sm leading-tight mb-1">
-                            Level {activity.level}: {activity.level_name}
+                            Level {activity.level_number}: {activity.activity_name}
                           </h3>
-                          <p className="text-xs text-[var(--wrife-text-muted)] mb-3 line-clamp-2">{activity.grammar_focus}</p>
+                          <p className="text-xs text-[var(--wrife-text-muted)] mb-3 line-clamp-2">{activity.learning_objective}</p>
 
                           {activity.locked ? (
                             <Link
