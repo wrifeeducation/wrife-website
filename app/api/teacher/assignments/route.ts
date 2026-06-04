@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
          l.title AS lesson_title,
          l.lesson_number,
          (SELECT COUNT(*) FROM class_members cm WHERE cm.class_id = a.class_id) AS total_pupils,
-         (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id) AS submitted_count,
+         (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id AND s.status IN ('submitted', 'reviewed')) AS submitted_count,
          (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id AND s.status = 'reviewed') AS reviewed_count,
          COALESCE(
            (SELECT json_agg(json_build_object(

@@ -43,46 +43,35 @@ export async function GET(
       [assignment.class_id]
     );
 
-    // Fetch writing attempts for pupils in this class (DWP/PWP writing data)
-    const pupilIds = pupilsResult.rows.map(p => p.id);
-    let writingAttempts: any[] = [];
-    if (pupilIds.length > 0) {
-      const attemptsResult = await pool.query(
-        `SELECT wa.id, wa.pupil_id, wa.level_id, wa.pupil_writing, wa.status,
-                wa.score, wa.percentage, wa.passed, wa.performance_band,
-                wa.ai_assessment, wa.teacher_reviewed, wa.teacher_notes,
-                wa.flagged_for_review, wa.time_submitted, wa.created_at,
-                p.first_name, p.last_name
-         FROM writing_attempts wa
-         JOIN pupils p ON p.id = wa.pupil_id
-         WHERE wa.pupil_id = ANY($1)
-         ORDER BY wa.time_submitted DESC NULLS LAST`,
-        [pupilIds]
-      );
-      writingAttempts = attemptsResult.rows.map(row => ({
-        id: row.id,
-        pupil_id: row.pupil_id,
-        pupil_name: `${row.first_name} ${row.last_name || ''}`.trim(),
-        level_id: row.level_id,
-        content: row.pupil_writing,
-        status: row.status || 'submitted',
-        submitted_at: row.time_submitted,
-        teacher_reviewed: row.teacher_reviewed,
-        teacher_notes: row.teacher_notes,
-        score: row.score,
-        percentage: row.percentage,
-        passed: row.passed,
-        performance_band: row.performance_band,
-        ai_assessment: row.ai_assessment,
-        flagged_for_review: row.flagged_for_review,
-        created_at: row.created_at,
-      }));
-    }
+    // Fetch submissions FOR THIS ASSIGNMENT from the canonical `submissions`
+    // table — the same source the teacher dashboard counts. Previously this read
+    // `writing_attempts` (the DWP/PWP system, which has no link to lesson
+    // assignments and is scoped by pupil, not assignment), so the review page's
+    // counts could never match the dashboard's pending-review count (bug B4).
+    const submissionsResult = await pool.query(
+      `SELECT s.id, s.pupil_id, s.content, s.status, s.submitted_at, s.teacher_note,
+              CONCAT(p.first_name, ' ', COALESCE(p.last_name, '')) AS pupil_name
+       FROM submissions s
+       JOIN pupils p ON p.id = s.pupil_id
+       WHERE s.assignment_id = $1
+       ORDER BY s.submitted_at DESC NULLS LAST`,
+      [assignmentId]
+    );
+
+    const submissions = submissionsResult.rows.map(row => ({
+      id: row.id,
+      pupil_id: row.pupil_id,
+      pupil_name: (row.pupil_name || '').trim(),
+      content: row.content,
+      status: row.status || 'submitted',
+      submitted_at: row.submitted_at,
+      teacher_feedback: row.teacher_note,
+    }));
 
     return NextResponse.json({
       assignment,
       pupils: pupilsResult.rows,
-      submissions: writingAttempts,
+      submissions,
       assessments: [],
       progressRecords: [],
     });
@@ -118,13 +107,20 @@ export async function PATCH(
       return NextResponse.json({ error: 'Assignment not found or access denied' }, { status: 404 });
     }
 
-    // Save teacher feedback on the writing attempt
+    // Save feedback on the canonical `submissions` row AND mark it reviewed, so
+    // the dashboard's pending-review count (which reads submissions.status)
+    // decrements. Scoped to this assignment so a teacher can't review another
+    // assignment's submission by id. (Previously this wrote
+    // writing_attempts.teacher_reviewed, a different table neither counter reads.)
     const result = await pool.query(
-      `UPDATE writing_attempts
-       SET teacher_notes = $1, teacher_reviewed = true
-       WHERE id = $2
-       RETURNING id, teacher_reviewed, teacher_notes`,
-      [teacherFeedback || null, submissionId]
+      `UPDATE submissions
+       SET status       = 'reviewed',
+           teacher_note = $1,
+           reviewed_at  = now(),
+           reviewed_by  = $2
+       WHERE id = $3 AND assignment_id = $4
+       RETURNING id, status, teacher_note AS teacher_feedback, reviewed_at`,
+      [teacherFeedback || null, user.id, submissionId, assignmentId]
     );
 
     if (result.rows.length === 0) {
