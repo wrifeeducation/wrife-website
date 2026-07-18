@@ -16,12 +16,12 @@ export async function GET(request: NextRequest) {
       const [teachersResult, pupilProfilesResult, classesResult] = await Promise.all([
         supabaseAdmin
           .from('profiles')
-          .select('id, email, display_name, first_name, last_name, created_at')
+          .select('id, email, display_name, first_name, created_at')
           .eq('school_id', schoolId)
           .eq('role', 'teacher'),
         supabaseAdmin
           .from('profiles')
-          .select('id, email, display_name, first_name, last_name, created_at')
+          .select('id, email, display_name, first_name, created_at')
           .eq('school_id', schoolId)
           .eq('role', 'pupil'),
         supabaseAdmin
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
             email: p.email || null,
             display_name: p.display_name || null,
             first_name: p.first_name || null,
-            last_name: p.last_name || null,
+            last_name: null, // `profiles` has no last_name column — only `pupils` (class_member source below) does
             created_at: p.created_at,
             source: 'profile',
           });
