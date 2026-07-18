@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
           .eq('role', 'pupil'),
         supabaseAdmin
           .from('classes')
-          .select('id')
+          .select('id, name, year_group, class_code, teacher_id, created_at')
           .eq('school_id', schoolId)
       ]);
 
@@ -58,37 +58,40 @@ export async function GET(request: NextRequest) {
         }
       }
       
-      const classIds = (classesResult.data || []).map(c => c.id);
-      
+      const schoolClasses = classesResult.data || [];
+      const classIds = schoolClasses.map(c => c.id);
+      const memberCountByClass: Record<string, number> = {};
+
       if (classIds.length > 0) {
         const { data: membersData, error: membersError } = await supabaseAdmin
           .from('class_members')
-          .select('id, pupil_id, pupil_name, pupil_email, created_at')
+          .select('id, class_id, pupil_id, pupil_name, pupil_email, created_at')
           .in('class_id', classIds);
-        
+
         if (!membersError && membersData) {
           const pupilIds: string[] = [];
-          
+
           for (const m of membersData) {
+            memberCountByClass[m.class_id] = (memberCountByClass[m.class_id] || 0) + 1;
             if (m.pupil_id) {
               pupilIds.push(m.pupil_id);
             }
           }
-          
+
           let pupilsLookup: Record<string, any> = {};
           if (pupilIds.length > 0) {
             const { data: pupilsData } = await supabaseAdmin
               .from('pupils')
               .select('id, first_name, last_name, display_name')
               .in('id', pupilIds);
-            
+
             if (pupilsData) {
               for (const p of pupilsData) {
                 pupilsLookup[p.id] = p;
               }
             }
           }
-          
+
           for (const m of membersData) {
             const id = m.pupil_id || `member_${m.id}`;
             if (!seenPupilIds.has(id)) {
@@ -108,11 +111,36 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Look up display info for each class's teacher (service role bypasses RLS)
+      const classTeacherIds = Array.from(new Set(schoolClasses.map(c => c.teacher_id).filter(Boolean)));
+      let classTeachersById: Record<string, { display_name: string | null; email: string | null }> = {};
+      if (classTeacherIds.length > 0) {
+        const { data: classTeachersData } = await supabaseAdmin
+          .from('profiles')
+          .select('id, display_name, email')
+          .in('id', classTeacherIds);
+        for (const t of (classTeachersData || [])) {
+          classTeachersById[t.id] = { display_name: t.display_name, email: t.email };
+        }
+      }
+
+      const classesWithDetails = schoolClasses.map(c => ({
+        id: c.id,
+        name: c.name,
+        year_group: c.year_group,
+        class_code: c.class_code,
+        created_at: c.created_at,
+        teacher: c.teacher_id ? (classTeachersById[c.teacher_id] || null) : null,
+        memberCount: memberCountByClass[c.id] || 0,
+      }));
+
       return NextResponse.json({
         teachers: teachersResult.data || [],
         teacherCount: teachersResult.data?.length || 0,
         pupils: allPupils,
         pupilCount: allPupils.length,
+        classes: classesWithDetails,
+        classCount: classesWithDetails.length,
       });
     }
 

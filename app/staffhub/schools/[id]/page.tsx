@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/admin-fetch';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -14,7 +15,7 @@ interface School {
   subscription_tier: 'trial' | 'basic' | 'pro' | 'enterprise';
   teacher_limit: number;
   pupil_limit: number;
-  is_active: boolean;
+  active: boolean;
   created_at: string;
 }
 
@@ -25,17 +26,16 @@ interface ClassData {
   class_code: string;
   created_at: string;
   teacher: {
-    display_name: string;
-    email: string;
+    display_name: string | null;
+    email: string | null;
   } | null;
-  class_members: { count: number }[];
+  memberCount: number;
 }
 
 interface Profile {
   id: string;
-  email: string;
-  display_name: string;
-  role: string;
+  email: string | null;
+  display_name: string | null;
 }
 
 export default function SchoolDetailPage() {
@@ -76,33 +76,16 @@ export default function SchoolDetailPage() {
       if (schoolError) throw schoolError;
       setSchool(schoolData);
 
-      const { data: classesData } = await supabase
-        .from('classes')
-        .select(`
-          *,
-          teacher:profiles!teacher_id(display_name, email),
-          class_members(count)
-        `)
-        .eq('school_id', schoolId);
+      // Teachers, pupils and classes must go through the admin API (service role) —
+      // client-side RLS on `profiles`/`classes` only allows a user to read their own
+      // row/classes, so a direct supabase query here always returns empty for admins.
+      const statsRes = await adminFetch(`/api/admin/school-stats?schoolId=${schoolId}`);
+      const statsData = await statsRes.json();
+      if (statsData.error) throw new Error(statsData.error);
 
-      console.log('Classes query result:', classesData);
-      setClasses(classesData || []);
-
-      const { data: teachersData } = await supabase
-        .from('profiles')
-        .select('id, email, display_name, role')
-        .eq('school_id', schoolId)
-        .eq('role', 'teacher');
-
-      setTeachers(teachersData || []);
-
-      const { data: pupilsData } = await supabase
-        .from('profiles')
-        .select('id, email, display_name, role')
-        .eq('school_id', schoolId)
-        .eq('role', 'pupil');
-
-      setPupils(pupilsData || []);
+      setClasses(statsData.classes || []);
+      setTeachers(statsData.teachers || []);
+      setPupils(statsData.pupils || []);
 
     } catch (err) {
       console.error('Error fetching school data:', err);
@@ -177,7 +160,7 @@ export default function SchoolDetailPage() {
           <div className="bg-white rounded-2xl shadow-soft border border-[var(--wrife-border)] p-6 mb-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className={`h-4 w-4 rounded-full ${school.is_active ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <div className={`h-4 w-4 rounded-full ${school.active ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                 <h1 className="text-2xl font-extrabold text-[var(--wrife-text-main)]">{school.name}</h1>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${getTierBadgeStyle(school.subscription_tier)}`}>
                   {school.subscription_tier}
@@ -207,7 +190,7 @@ export default function SchoolDetailPage() {
             <div className="bg-white rounded-xl shadow-soft border border-[var(--wrife-border)] p-4">
               <p className="text-xs text-[var(--wrife-text-muted)] mb-1">Status</p>
               <p className="text-lg font-bold text-[var(--wrife-text-main)]">
-                {school.is_active ? '✓ Active' : '✗ Inactive'}
+                {school.active ? '✓ Active' : '✗ Inactive'}
               </p>
             </div>
           </div>
@@ -282,7 +265,7 @@ export default function SchoolDetailPage() {
                         <td className="px-6 py-4">
                           <code className="bg-gray-100 px-2 py-1 rounded text-sm">{cls.class_code}</code>
                         </td>
-                        <td className="px-6 py-4 text-[var(--wrife-text-muted)]">{cls.class_members?.[0]?.count || 0}</td>
+                        <td className="px-6 py-4 text-[var(--wrife-text-muted)]">{cls.memberCount || 0}</td>
                       </tr>
                     ))}
                   </tbody>

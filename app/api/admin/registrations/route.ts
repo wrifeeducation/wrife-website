@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest) {
 
       // Insert school via DB
       const result = await db.query(
-        `INSERT INTO schools (name, domain, teacher_limit, pupil_limit, subscription_tier, is_active, created_at, updated_at)
+        `INSERT INTO schools (name, domain, teacher_limit, pupil_limit, subscription_tier, active, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW())
          RETURNING id`,
         [

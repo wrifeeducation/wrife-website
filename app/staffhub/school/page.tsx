@@ -14,7 +14,7 @@ interface School {
   subscription_tier: 'trial' | 'basic' | 'pro' | 'enterprise';
   teacher_limit: number;
   pupil_limit: number;
-  is_active: boolean;
+  active: boolean;
 }
 
 interface Profile {
@@ -482,8 +482,8 @@ export default function SchoolAdminDashboard() {
             </div>
             <div className="bg-white rounded-xl shadow-soft border border-[var(--wrife-border)] p-4">
               <p className="text-xs text-[var(--wrife-text-muted)] mb-1">Status</p>
-              <p className={`text-lg font-bold ${school.is_active ? 'text-green-600' : 'text-red-500'}`}>
-                {school.is_active ? '✓ Active' : '✗ Inactive'}
+              <p className={`text-lg font-bold ${school.active ? 'text-green-600' : 'text-red-500'}`}>
+                {school.active ? '✓ Active' : '✗ Inactive'}
               </p>
             </div>
           </div>

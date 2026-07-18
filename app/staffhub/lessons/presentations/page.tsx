@@ -62,7 +62,9 @@ export default function AdminPresentationsPage() {
         }
       }
 
-      const enriched: Lesson[] = (lessonsData.lessons || []).map((l: any) => ({
+      // /api/lessons returns the lessons as a raw JSON array, not wrapped in { lessons: [...] }
+      const lessonsArray: any[] = Array.isArray(lessonsData) ? lessonsData : (lessonsData.lessons || []);
+      const enriched: Lesson[] = lessonsArray.map((l: any) => ({
         id: l.id,
         lesson_number: l.lesson_number,
         part: l.part,

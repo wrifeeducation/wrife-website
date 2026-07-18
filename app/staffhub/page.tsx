@@ -16,7 +16,7 @@ interface School {
   subscription_tier: 'trial' | 'basic' | 'pro' | 'enterprise';
   teacher_limit: number;
   pupil_limit: number;
-  is_active: boolean;
+  active: boolean;
   teacherCount: number;
   pupilCount: number;
 }
@@ -327,11 +327,11 @@ export default function AdminDashboard() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => toggleSchoolActive(school.id, school.is_active)}
+                        onClick={() => toggleSchoolActive(school.id, school.active)}
                         className={`h-3 w-3 rounded-full transition ${
-                          school.is_active ? 'bg-green-500' : 'bg-gray-300'
+                          school.active ? 'bg-green-500' : 'bg-gray-300'
                         }`}
-                        title={school.is_active ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
+                        title={school.active ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
                       />
                       <h3 className="text-lg font-bold text-[var(--wrife-text-main)]">{school.name}</h3>
                     </div>

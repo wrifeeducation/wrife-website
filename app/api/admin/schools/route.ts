@@ -53,6 +53,10 @@ export async function POST(request: NextRequest) {
       pupil_limit: pupil_limit || 300,
       subscription_tier: subscription_tier || 'trial',
     };
+    // The DB column is `active`, not `is_active` — map the request field to the real column.
+    if (is_active !== undefined) {
+      insertData.active = !!is_active;
+    }
 
     const { data: school, error } = await supabase
       .from('schools')
@@ -94,6 +98,10 @@ export async function PUT(request: NextRequest) {
     if (pupil_limit !== undefined) allowedUpdates.pupil_limit = Math.max(1, parseInt(pupil_limit) || 300);
     if (subscription_tier !== undefined && ['trial', 'basic', 'pro', 'enterprise'].includes(subscription_tier)) {
       allowedUpdates.subscription_tier = subscription_tier;
+    }
+    // The DB column is `active`, not `is_active` — map the request field to the real column.
+    if (is_active !== undefined) {
+      allowedUpdates.active = !!is_active;
     }
     if (Object.keys(allowedUpdates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
