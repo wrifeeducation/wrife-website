@@ -76,8 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getDashboardPath = () => {
     if (!user) return '/login';
-    if (user.role === 'admin') return '/admin';
-    if (user.role === 'school_admin') return '/admin/school';
+    if (user.role === 'admin') return '/staffhub';
+    if (user.role === 'school_admin') return '/staffhub/school';
     if (user.role === 'teacher') return '/dashboard';
     if (user.role === 'pupil') return '/pupil/dashboard';
     return '/dashboard';
